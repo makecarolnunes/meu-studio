@@ -2897,12 +2897,15 @@ function renderActGcalSection(e) {
     return;
   }
 
-  // Oculta "Fechar e Agendar" para evitar duplicar financeiro
-  if (fechArea) fechArea.style.display = 'none';
+  // Só oculta "Fechar e Agendar" se o fluxo completo já foi executado
+  // (SinalFech é gravado apenas pelo painel de fechamento)
+  const fluxoCompleto = e.SinalFech !== undefined && e.SinalFech !== '' && e.SinalFech !== '0';
+  if (fechArea) fechArea.style.display = fluxoCompleto ? 'none' : 'block';
+
+  // Google Agenda sempre visível para fechados
+  section.style.display = 'block';
 
   if (getAgendaCriada(e)) {
-    // Agenda já criada — substituir botão por indicador
-    section.style.display = 'block';
     const btn = document.getElementById('act-gcal-btn');
     const res = document.getElementById('act-gcal-result');
     if (btn) {
@@ -2912,7 +2915,6 @@ function renderActGcalSection(e) {
     }
     if (res) { res.className = 'gcal-status'; res.textContent = ''; }
   } else {
-    section.style.display = 'block';
     const btn = document.getElementById('act-gcal-btn');
     const res = document.getElementById('act-gcal-result');
     if (btn) { btn.textContent = '📅 Adicionar ao Google Agenda'; btn.classList.remove('ok'); btn.disabled = false; }
