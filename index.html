@@ -5,454 +5,651 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <title>✨ Meu Studio</title>
+  <meta name="apple-mobile-web-app-title" content="Meu Studio">
+  <title>@makecarolnunes Studio</title>
   <style>
     :root {
-      --brown:   #6d4c41;
-      --brown-d: #3e2723;
-      --brown-l: #efebe9;
-      --purple:  #7d3c6e;
-      --purple-l:#f5edf3;
-      --ok:      #2d7d3a;
-      --ok-l:    #e8f5e9;
-      --blue:    #1565c0;
-      --blue-l:  #e3f2fd;
-      --amber:   #e8a000;
-      --amber-l: #fff8e1;
-      --pink:    #c2185b;
-      --pink-l:  #fce4ec;
-      --red:     #c62828;
-      --red-l:   #ffebee;
-      --muted:   #6b7280;
-      --border:  #e0d5dc;
-      --bg:      #f3ede8;
-      --card:    #ffffff;
-      --text:    #1a1a1a;
+      --bg:       #FAF8F6;
+      --card:     #ffffff;
+      --text:     #2C2420;
+      --muted:    #888780;
+      --subtle:   #B4B2A9;
+      --border:   #EDE4DF;
+      --rose:     #D4537E;
+      --rose-l:   #FBEAF0;
+      --rose-d:   #993556;
+      --amber:    #BA7517;
+      --amber-l:  #FAEEDA;
+      --amber-m:  #FAC775;
+      --amber-d:  #633806;
+      --green:    #3B6D11;
+      --green-l:  #EAF3DE;
+      --brown:    #8B6B61;
+      --brown-l:  #FAF3EE;
+      --mauve-l:  #F5EDF3;
     }
+
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       background: var(--bg);
       color: var(--text);
-      max-width: 480px;
-      margin: 0 auto;
       min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
     }
 
-    /* ── HERO HEADER ── */
+    .wrap {
+      max-width: 600px;
+      margin: 0 auto;
+      padding-bottom: 48px;
+    }
+
+    /* ─── HEADER ─────────────────────────────────── */
     .hero {
-      background: linear-gradient(150deg, var(--brown-d) 0%, var(--brown) 55%, #9c5a8a 100%);
+      background: #38190b;
       color: white;
-      padding: 32px 22px 28px;
-      position: relative;
-      overflow: hidden;
+      padding: 32px 20px 28px;
+      border-radius: 0 0 22px 22px;
     }
-    .hero::before {
-      content: '';
-      position: absolute;
-      top: -40px; right: -40px;
-      width: 180px; height: 180px;
-      background: rgba(255,255,255,0.06);
-      border-radius: 50%;
-    }
-    .hero::after {
-      content: '';
-      position: absolute;
-      bottom: -30px; left: -20px;
-      width: 120px; height: 120px;
-      background: rgba(255,255,255,0.04);
-      border-radius: 50%;
-    }
-    .greeting {
-      font-size: 0.8rem;
-      opacity: 0.75;
-      font-weight: 500;
-      margin-bottom: 4px;
-      letter-spacing: 0.03em;
-    }
-    .hero-title {
-      font-size: 1.7rem;
-      font-weight: 800;
-      line-height: 1.15;
-      margin-bottom: 6px;
-    }
-    .hero-date {
-      font-size: 0.76rem;
-      opacity: 0.7;
-      font-weight: 500;
-      text-transform: capitalize;
-    }
-
-    /* ── BODY ── */
-    .body { padding: 20px 14px 40px; }
-
-    /* ── SECTION LABEL ── */
-    .section-lbl {
-      font-size: 0.65rem;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 0.07em;
-      color: var(--muted);
-      margin-bottom: 12px;
-      padding-left: 2px;
+    .hero-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
+      margin-bottom: 16px;
     }
-    .reload-btn {
-      background: none;
-      border: none;
-      cursor: pointer;
-      font-size: 0.9rem;
-      opacity: 0.5;
-      padding: 2px 4px;
-      border-radius: 6px;
-      transition: opacity 0.2s;
-      line-height: 1;
+    .greeting {
+      font-size: 13px;
+      color: rgba(255,255,255,0.58);
+      font-weight: 400;
+      letter-spacing: 0.01em;
     }
-    .reload-btn:active { opacity: 1; }
-    .reload-btn.spinning { animation: spin 1s linear infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    .sync-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(255,255,255,0.1);
+      border: 0.5px solid rgba(255,255,255,0.2);
+      border-radius: 20px;
+      padding: 5px 11px;
+      font-size: 10px;
+      color: rgba(255,255,255,0.65);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    .sync-pill .dot {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: #9FE1CB;
+    }
+    .sync-pill.syncing .dot { background: #FAC775; animation: blink 1s infinite; }
+    .sync-pill.offline  .dot { background: #F09595; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.35} }
 
-    /* ── SYSTEM GRID ── */
+    .hero-title {
+      font-size: 22px;
+      font-weight: 500;
+      color: #fff;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      margin-bottom: 5px;
+    }
+    .hero-title span { color: #F4C0D1; }
+    .hero-date {
+      font-size: 12px;
+      color: rgba(255,255,255,0.42);
+      text-transform: capitalize;
+    }
+
+    /* ─── BODY ───────────────────────────────────── */
+    .body { padding: 22px 16px 0; }
+
+    /* ─── SECTION LABELS ─────────────────────────── */
+    .section-lbl {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 26px 0 12px;
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--muted);
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+    }
+    .section-lbl:first-of-type { margin-top: 6px; }
+    .section-lbl::after {
+      content: '';
+      flex: 1;
+      height: 0.5px;
+      background: var(--border);
+    }
+    .section-lbl-creative { color: var(--amber); }
+
+    /* ─── GRID — mobile first: 1 coluna ─────────── */
     .sys-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      margin-bottom: 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
     }
 
-    /* ── SYSTEM CARD ── */
+    /* ─── ORÇAMENTOS — card horizontal de destaque ─ */
+    .card-orca {
+      background: var(--card);
+      border: 0.5px solid var(--border);
+      border-radius: 16px;
+      padding: 18px 18px 16px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      text-decoration: none;
+      color: var(--text);
+      transition: border-color 0.18s;
+      -webkit-user-select: none;
+    }
+    .card-orca:hover  { border-color: var(--rose); }
+    .card-orca:active { transform: scale(0.99); }
+
+    .card-orca .sys-icon-wrap {
+      width: 50px; height: 50px;
+      border-radius: 13px;
+      font-size: 22px;
+      background: var(--rose-l);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .orca-text { flex: 1; min-width: 0; }
+    .orca-badge {
+      display: inline-block;
+      background: var(--rose-l);
+      color: var(--rose-d);
+      font-size: 9px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 2px 8px;
+      border-radius: 20px;
+      margin-bottom: 5px;
+    }
+    .card-orca .sys-name {
+      font-size: 16px;
+      font-weight: 500;
+      color: var(--text);
+      margin-bottom: 2px;
+    }
+    .card-orca .sys-desc {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+    .card-orca .sys-arrow {
+      width: 34px; height: 34px;
+      border-radius: 50%;
+      background: var(--bg);
+      border: 0.5px solid var(--border);
+      color: var(--rose);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+
+    /* mini-stats */
+    .orca-stats {
+      display: flex;
+      gap: 6px;
+      margin-top: 10px;
+    }
+    .orca-stat {
+      flex: 1;
+      background: var(--bg);
+      border: 0.5px solid var(--border);
+      border-radius: 9px;
+      padding: 6px 6px;
+      text-align: center;
+    }
+    .orca-stat-val { font-size: 15px; font-weight: 500; color: var(--text); line-height: 1.1; }
+    .orca-stat-lbl { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 2px; }
+    .orca-stat.alert { background: var(--amber-l); border-color: var(--amber-m); }
+    .orca-stat.alert .orca-stat-val { color: var(--amber-d); }
+    .orca-stat.alert .orca-stat-lbl { color: var(--amber); }
+
+    /* ─── SECONDARY CARDS — mobile: horizontal list ─ */
     .sys-card {
       background: var(--card);
-      border-radius: 16px;
-      padding: 18px 15px 16px;
+      border: 0.5px solid var(--border);
+      border-radius: 14px;
+      padding: 0 16px;
+      text-decoration: none;
+      color: var(--text);
+      display: grid;
+      grid-template-columns: 46px 1fr auto;
+      grid-template-rows: auto auto;
+      column-gap: 12px;
+      min-height: 72px;
+      align-content: center;
+      transition: border-color 0.18s;
+      -webkit-user-select: none;
+    }
+    .sys-card:hover  { border-color: var(--accent, var(--rose)); }
+    .sys-card:active { transform: scale(0.99); }
+
+    .sys-icon-wrap {
+      grid-column: 1; grid-row: 1 / 3;
+      align-self: center;
+      width: 40px; height: 40px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      background: var(--icon-bg, #F5F5F5);
+    }
+    .sys-name {
+      grid-column: 2; grid-row: 1;
+      align-self: end;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text);
+      padding-bottom: 2px;
+    }
+    .sys-desc {
+      grid-column: 2; grid-row: 2;
+      align-self: start;
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+    .sys-arrow {
+      grid-column: 3; grid-row: 1 / 3;
+      align-self: center;
+      font-size: 15px;
+      color: var(--subtle);
+      display: flex; align-items: center;
+    }
+    .sys-arrow .lbl { display: none; }
+
+    /* Card variants */
+    .card-fin    { --accent: var(--green);  --icon-bg: var(--green-l);  }
+    .card-client { --accent: var(--brown);  --icon-bg: var(--brown-l);  }
+    .card-conf   { --accent: var(--rose-d); --icon-bg: var(--mauve-l);  }
+
+    /* ─── CONTEÚDO ───────────────────────────────── */
+    .creative-section {
+      background: #FFFCF8;
+      border: 0.5px solid #EDD5A7;
+      border-radius: 14px;
+      padding: 12px;
+    }
+    .creative-card {
+      background: var(--card);
+      border-radius: 10px;
+      border: 0.5px solid #F0E6D0;
+      padding: 14px 16px;
       text-decoration: none;
       color: var(--text);
       display: flex;
-      flex-direction: column;
-      gap: 0;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
-      transition: transform 0.15s, box-shadow 0.15s;
-      position: relative;
-      overflow: hidden;
+      align-items: center;
+      gap: 13px;
+      min-height: 64px;
+      transition: border-color 0.18s;
       -webkit-user-select: none;
     }
-    .sys-card:active { transform: scale(0.96); box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+    .creative-card:hover  { border-color: var(--amber); }
+    .creative-card:active { transform: scale(0.99); }
+    .creative-icon {
+      width: 40px; height: 40px;
+      border-radius: 10px;
+      background: var(--amber-l);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+    .creative-text { flex: 1; min-width: 0; }
+    .creative-name { font-size: 14px; font-weight: 500; }
+    .creative-desc { font-size: 12px; color: var(--muted); margin-top: 2px; line-height: 1.4; }
+    .creative-arrow { font-size: 16px; color: var(--amber); flex-shrink: 0; }
 
-    /* accent top bar */
-    .sys-card::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 3px;
-      background: var(--accent, #ccc);
-      border-radius: 16px 16px 0 0;
-    }
-
-    .sys-icon-wrap {
-      width: 46px; height: 46px;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.5rem;
-      margin-bottom: 12px;
-      background: var(--icon-bg, #f5f5f5);
-    }
-    .sys-name {
-      font-size: 0.88rem;
-      font-weight: 800;
-      color: var(--text);
-      margin-bottom: 3px;
-      line-height: 1.2;
-    }
-    .sys-desc {
-      font-size: 0.68rem;
-      color: var(--muted);
-      line-height: 1.4;
-      flex: 1;
-    }
-    .sys-arrow {
-      margin-top: 10px;
-      font-size: 0.7rem;
-      font-weight: 700;
-      color: var(--accent, #ccc);
-      display: flex;
-      align-items: center;
-      gap: 3px;
-    }
-
-    /* ── SKELETON LOADING ── */
-    .skeleton {
+    /* ─── HINT ───────────────────────────────────── */
+    .hint-card {
       background: var(--card);
-      border-radius: 16px;
-      padding: 18px 15px 16px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
-      overflow: hidden;
-      position: relative;
+      border-radius: 12px;
+      border: 0.5px solid var(--border);
+      border-left: 2px solid #EDD5A7;
+      padding: 13px 15px;
+      margin-top: 16px;
     }
-    .skeleton::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.6) 50%, transparent 100%);
-      animation: shimmer 1.2s infinite;
-    }
-    @keyframes shimmer {
-      0%   { transform: translateX(-100%); }
-      100% { transform: translateX(100%); }
-    }
-    .skel-line {
-      background: #e9e3e0;
-      border-radius: 6px;
-      margin-bottom: 8px;
-    }
-    .skel-icon  { width: 46px; height: 46px; border-radius: 12px; background: #e9e3e0; margin-bottom: 12px; }
-    .skel-title { height: 12px; width: 70%; }
-    .skel-desc1 { height: 9px;  width: 90%; }
-    .skel-desc2 { height: 9px;  width: 60%; }
+    .hint-text { font-size: 12px; color: var(--muted); line-height: 1.65; }
+    .hint-text strong { color: var(--brown); font-weight: 500; }
 
-    /* ── ERROR STATE ── */
-    .error-card {
-      grid-column: 1 / -1;
-      background: #fff5f5;
-      border: 1px solid #fed7d7;
-      border-radius: 14px;
-      padding: 18px;
-      text-align: center;
-    }
-    .error-card .error-icon { font-size: 1.6rem; margin-bottom: 8px; }
-    .error-card p { font-size: 0.78rem; color: #c53030; line-height: 1.5; }
-    .error-card small { font-size: 0.68rem; color: var(--muted); display: block; margin-top: 6px; }
-
-    /* ── FOOTER ── */
+    /* ─── FOOTER ─────────────────────────────────── */
     .footer {
       text-align: center;
-      font-size: 0.67rem;
-      color: var(--muted);
-      padding: 0 20px 10px;
+      font-size: 11px;
+      color: var(--subtle);
+      padding: 22px 20px 0;
       line-height: 1.7;
     }
-    .footer strong { color: var(--brown); }
 
-    /* ── DICA ── */
-    .tip-box {
-      background: white;
-      border-radius: 14px;
-      padding: 14px 16px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-      margin-bottom: 20px;
+    /* ─── TABLET 600px+ — grid vertical ─────────── */
+    @media (min-width: 600px) {
+      .wrap { max-width: 700px; }
+      .hero { padding: 36px 28px 30px; border-radius: 0 0 24px 24px; }
+      .hero-title { font-size: 26px; }
+      .body { padding: 26px 24px 0; }
+
+      .sys-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+      }
+      .card-orca { grid-column: 1 / -1; }
+
+      /* Reset secondary cards to vertical */
+      .sys-card {
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        padding: 18px 16px 16px;
+        min-height: 130px;
+        grid-template-columns: unset;
+      }
+      .sys-icon-wrap {
+        grid-column: unset; grid-row: unset;
+        align-self: unset;
+        width: 38px; height: 38px;
+        margin-bottom: 11px;
+      }
+      .sys-name {
+        grid-column: unset; grid-row: unset;
+        align-self: unset;
+        font-size: 13px;
+        padding-bottom: 0;
+        margin-bottom: 3px;
+      }
+      .sys-desc {
+        grid-column: unset; grid-row: unset;
+        align-self: unset;
+        flex: 1;
+        font-size: 11px;
+      }
+      .sys-arrow {
+        grid-column: unset; grid-row: unset;
+        align-self: unset;
+        margin-top: 12px;
+        font-size: 11px;
+        color: var(--subtle);
+      }
+      .sys-arrow .lbl { display: inline; }
     }
-    .tip-label {
-      font-size: 0.7rem;
-      font-weight: 800;
-      text-transform: uppercase;
-      color: var(--muted);
-      letter-spacing: 0.06em;
-      margin-bottom: 8px;
+
+    /* ─── DESKTOP 860px+ ──────────────────────────── */
+    @media (min-width: 860px) {
+      .wrap { max-width: 860px; }
+      .hero { padding: 40px 32px 32px; }
+      .hero-title { font-size: 28px; }
+      .body { padding: 28px 28px 0; }
+
+      .sys-grid { grid-template-columns: repeat(3, 1fr); gap: 12px; }
+
+      .card-orca { padding: 22px 24px 20px; }
+      .card-orca .sys-icon-wrap { width: 54px; height: 54px; font-size: 24px; border-radius: 14px; }
+      .card-orca .sys-name { font-size: 17px; }
+      .card-orca .sys-desc { font-size: 13px; }
+
+      .sys-card { min-height: 140px; padding: 20px 18px 18px; }
+      .sys-icon-wrap { width: 40px; height: 40px; font-size: 19px; }
+      .sys-name { font-size: 14px; }
+      .sys-desc { font-size: 12px; }
+
+      .creative-section { padding: 14px 16px; }
+      .creative-card { padding: 16px 18px; }
     }
-    .tip-text {
-      font-size: 0.78rem;
-      color: var(--muted);
-      line-height: 1.7;
-    }
-    .tip-sub {
-      margin-top: 10px;
-      font-size: 0.73rem;
-      font-weight: 600;
-      color: var(--brown);
+
+    /* ─── TELAS MUITO PEQUENAS < 360px ─────────────── */
+    @media (max-width: 359px) {
+      .hero-title { font-size: 19px; }
+      .body { padding: 18px 14px 0; }
+      .card-orca { padding: 16px 14px; gap: 12px; }
+      .card-orca .sys-icon-wrap { width: 44px; height: 44px; font-size: 20px; }
     }
   </style>
 </head>
 <body>
+<div class="wrap">
 
-<!-- HERO -->
-<div class="hero">
-  <div class="greeting" id="greeting">Bem-vinda de volta</div>
-  <div class="hero-title">Meu Studio ✨</div>
-  <div class="hero-date" id="hero-date"></div>
-</div>
-
-<!-- BODY -->
-<div class="body">
-
-  <div class="section-lbl">
-    <span>Seus sistemas</span>
-    <button class="reload-btn" id="reload-btn" title="Atualizar" onclick="loadCards(true)">↻</button>
-  </div>
-
-  <div class="sys-grid" id="sys-grid">
-    <!-- skeletons iniciais -->
-    <div class="skeleton"><div class="skel-icon"></div><div class="skel-line skel-title"></div><div class="skel-line skel-desc1"></div><div class="skel-line skel-desc2"></div></div>
-    <div class="skeleton"><div class="skel-icon"></div><div class="skel-line skel-title"></div><div class="skel-line skel-desc1"></div><div class="skel-line skel-desc2"></div></div>
-    <div class="skeleton"><div class="skel-icon"></div><div class="skel-line skel-title"></div><div class="skel-line skel-desc1"></div><div class="skel-line skel-desc2"></div></div>
-    <div class="skeleton"><div class="skel-icon"></div><div class="skel-line skel-title"></div><div class="skel-line skel-desc1"></div><div class="skel-line skel-desc2"></div></div>
-  </div>
-
-  <!-- Dica de acesso rápido -->
-  <div class="tip-box">
-    <div class="tip-label">💡 Acesso rápido</div>
-    <div class="tip-text">
-      Adicione esta página à tela inicial do seu celular para acessar todos os sistemas rapidamente, como um app.
+  <!-- HEADER -->
+  <div class="hero">
+    <div class="hero-row">
+      <div class="greeting" id="greeting">Bem-vinda de volta</div>
+      <span class="sync-pill" id="sync-pill"><span class="dot"></span><span id="sync-text">Carregando</span></span>
     </div>
-    <div class="tip-sub">
-      iOS: Compartilhar → Adicionar à Tela de Início<br>
-      Android: Menu do navegador → Adicionar à tela inicial
-    </div>
+    <div class="hero-title">@makecarolnunes <span>Studio</span></div>
+    <div class="hero-date" id="hero-date"></div>
   </div>
 
-</div>
+  <div class="body">
 
-<!-- FOOTER -->
-<div class="footer" id="footer-status">
-  <strong>Meu Studio</strong>
+    <!-- OPERAÇÃO -->
+    <div class="section-lbl">Operação diária</div>
+    <div class="sys-grid" id="ops-grid"></div>
+
+    <!-- CONTEÚDO -->
+    <div class="section-lbl section-lbl-creative">Conteúdo</div>
+    <div class="creative-section" id="creative-section"></div>
+
+    <!-- HINT -->
+    <div class="hint-card">
+      <div class="hint-text">
+        Adicione esta página à tela inicial do celular para usar como app — <strong>iOS:</strong> Compartilhar → Adicionar à Tela de Início · <strong>Android:</strong> Menu → Adicionar à tela inicial
+      </div>
+    </div>
+
+  </div>
+
+  <div class="footer">
+    @makecarolnunes Studio · Painel central · Links sincronizados com a planilha HUB
+  </div>
+
 </div>
 
 <script>
-  // ── CONFIG ──────────────────────────────────────────────────────────────
-  // URL do Google Apps Script (planilha permanece privada)
-  const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxRoMVHD8s8yZZBJzbayw6n3lsCun6W4msJ56ZHYl2vkukRjykSw8uBd8AuUt7zJtgC/exec';
+  // ══════════════════════════════════════════════════════════
+  //  HUB — busca links dos sistemas no Apps Script da planilha
+  // ══════════════════════════════════════════════════════════
 
-  // Cards padrão usados como fallback se a planilha não carregar
-  const FALLBACK_CARDS = [
-    { nome:'Confirmação', descricao:'Gera mensagem e salva no Google Agenda', icone:'📅', url:'confirmacao/confirmacao.html', cor:'purple' },
-    { nome:'Clientes',    descricao:'Atendimentos realizados e previstos',    icone:'👥', url:'clientes/lista-clientes.html',  cor:'brown'  },
-    { nome:'Financeiro',  descricao:'Entradas, saídas e resumo do mês',       icone:'💰', url:'financeiro/index.html',           cor:'green'  },
-    { nome:'Conteúdo',    descricao:'Ideias e planejamento de posts',          icone:'📱', url:'conteudo/planejamento-conteudo.html', cor:'amber' },
+  var HUB_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxRoMVHD8s8yZZBJzbayw6n3lsCun6W4msJ56ZHYl2vkukRjykSw8uBd8AuUt7zJtgC/exec';
+
+  var ORDER_OPS = ['orcamentos', 'financeiro', 'clientes', 'agendamentos'];
+
+  var FALLBACK = [
+    { nome: 'Orçamentos',   descricao: 'Início do fluxo — feche tudo em um clique', icone: '💰', url: 'orcamentos/orcamentos_novo.html', cor: 'purple'       },
+    { nome: 'Financeiro',   descricao: 'Entradas, saídas e resumo do mês',          icone: '💵', url: 'financeiro/index.html',          cor: 'green'        },
+    { nome: 'Clientes',     descricao: 'Atendimentos realizados e previstos',       icone: '👥', url: 'clientes/index.html',            cor: 'brown'        },
+    { nome: 'Agendamentos', descricao: 'Confirmação avulsa de agenda',              icone: '📅', url: 'confirmacao/confirmacao.html',   cor: 'purple-light' },
+    { nome: 'Conteúdo',     descricao: 'Planejamento de posts e ideias',            icone: '📱', url: 'conteudo/index.html',            cor: 'amber'        },
   ];
-  // ────────────────────────────────────────────────────────────────────────
 
-  const COLOR_MAP = {
-    purple:'#7d3c6e', roxo:'#7d3c6e',
-    brown:'#6d4c41',  marrom:'#6d4c41',
-    green:'#2d7d3a',  verde:'#2d7d3a',
-    amber:'#e8a000',  laranja:'#e8a000', orange:'#e8a000',
-    blue:'#1565c0',   azul:'#1565c0',
-    pink:'#c2185b',   rosa:'#c2185b',
-    red:'#c62828',    vermelho:'#c62828',
-    gray:'#6b7280',   cinza:'#6b7280',
-  };
-
-  function resolveColor(raw) {
-    if (!raw) return '#9c5a8a';
-    const k = raw.trim().toLowerCase();
-    return COLOR_MAP[k] || (raw.trim().startsWith('#') ? raw.trim() : '#9c5a8a');
+  // ── UTILS ──
+  function safeJSON(s, fb) { try { return s ? JSON.parse(s) : fb; } catch(e) { return fb; } }
+  function pad(n) { return String(n).padStart(2,'0'); }
+  function todayStr() {
+    var t = new Date();
+    return t.getFullYear() + '-' + pad(t.getMonth()+1) + '-' + pad(t.getDate());
+  }
+  function setSync(state, text) {
+    var pill = document.getElementById('sync-pill');
+    pill.className = 'sync-pill ' + (state || '');
+    document.getElementById('sync-text').textContent = text || '';
+  }
+  function norm(s) {
+    return String(s || '')
+      .normalize('NFD').replace(/[̀-ͯ]/g,'')
+      .toLowerCase().trim();
+  }
+  function keyFor(item) {
+    var n = norm(item.nome || item.name || item.titulo || '');
+    if (n.indexOf('orcamento') >= 0) return 'orcamentos';
+    if (n.indexOf('financ')    >= 0) return 'financeiro';
+    if (n.indexOf('client')    >= 0) return 'clientes';
+    if (n.indexOf('agendam')   >= 0) return 'agendamentos';
+    if (n.indexOf('confirma')  >= 0) return 'agendamentos';
+    if (n.indexOf('conteudo')  >= 0) return 'conteudo';
+    if (n.indexOf('content')   >= 0) return 'conteudo';
+    return n;
+  }
+  function normItem(raw) {
+    return {
+      nome:      raw.nome      || raw.name      || raw.titulo     || raw.title       || '',
+      descricao: raw.descricao || raw.descrição  || raw.descricao_ || raw.description || raw.desc || '',
+      icone:     raw.icone     || raw.ícone      || raw.icon       || '🌸',
+      url:       raw.url       || raw.link       || raw.href       || '',
+      cor:       raw.cor       || raw.color      || ''
+    };
   }
 
-  function hexToRgba(hex, alpha) {
-    const r = parseInt(hex.slice(1,3),16);
-    const g = parseInt(hex.slice(3,5),16);
-    const b = parseInt(hex.slice(5,7),16);
-    return `rgba(${r},${g},${b},${alpha})`;
+  // ── Estatísticas de orçamentos ──
+  function getOrcaStats() {
+    var entries = safeJSON(localStorage.getItem('orca_entries'), []);
+    var today   = todayStr();
+    var ativos   = entries.filter(function(e){ return !['Fechado','Perdido'].includes(e.Status); }).length;
+    var followup = entries.filter(function(e){
+      return !['Fechado','Perdido'].includes(e.Status) && e.ProxFollowup && e.ProxFollowup <= today;
+    }).length;
+    var fechados = entries.filter(function(e){ return e.Status === 'Fechado'; }).length;
+    return { ativos: ativos, followup: followup, fechados: fechados };
   }
 
-  function buildCard(card) {
-    const color     = resolveColor(card.cor || card.color || '');
-    const iconBg    = hexToRgba(color, 0.12);
-    const nome      = card.nome || card.name || 'Sistema';
-    const descricao = card.descricao || card.description || '';
-    const icone     = card.icone || card.icon || '🔗';
-    const url       = card.url || card.link || '#';
+  // ── Renderiza os cards ──
+  function buildCards(systems) {
+    var byKey = {};
+    systems.forEach(function(raw) {
+      var item = normItem(raw);
+      if (!item.nome) return;
+      byKey[keyFor(item)] = item;
+    });
 
-    const a = document.createElement('a');
-    a.className = 'sys-card';
-    a.href      = url;
-    a.style.cssText = `--accent:${color};--icon-bg:${iconBg}`;
-    a.innerHTML = `
-      <div class="sys-icon-wrap">${icone}</div>
-      <div class="sys-name">${escHtml(nome)}</div>
-      <div class="sys-desc">${escHtml(descricao)}</div>
-      <div class="sys-arrow">Abrir →</div>
-    `;
-    return a;
-  }
+    if (!byKey.orcamentos) byKey.orcamentos = normItem(FALLBACK[0]);
+    if (!byKey.orcamentos.url) byKey.orcamentos.url = 'orcamentos/orcamentos_novo.html';
 
-  function escHtml(s) {
-    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  }
-
-  function renderCards(cards, fromCache) {
-    const grid = document.getElementById('sys-grid');
-    grid.innerHTML = '';
-    if (!cards.length) {
-      grid.innerHTML = `<div class="error-card"><div class="error-icon">📋</div><p>Nenhum sistema encontrado na planilha.<br>Verifique se há dados nas linhas abaixo do cabeçalho.</p></div>`;
-      return;
-    }
-    cards.forEach(c => grid.appendChild(buildCard(c)));
-    const footer = document.getElementById('footer-status');
-    const now    = new Date().toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
-    footer.innerHTML = `<strong>Meu Studio</strong> · Atualizado às ${now}${fromCache ? ' (cache)' : ''}`;
-  }
-
-  function renderError(msg) {
-    const grid = document.getElementById('sys-grid');
-    grid.innerHTML = `
-      <div class="error-card">
-        <div class="error-icon">⚠️</div>
-        <p>${msg}</p>
-        <small>Carregando dados locais como fallback…</small>
-      </div>
-    `;
-    setTimeout(() => renderCards(FALLBACK_CARDS, false), 1200);
-  }
-
-  async function loadCards(manual = false) {
-    const btn = document.getElementById('reload-btn');
-    btn.classList.add('spinning');
-
-    if (!manual) {
-      const cached   = localStorage.getItem('hub_cards');
-      const cachedAt = parseInt(localStorage.getItem('hub_cards_ts') || '0');
-      const age      = Date.now() - cachedAt;
-      if (cached && age < 5 * 60 * 1000) {
-        try {
-          renderCards(JSON.parse(cached), true);
-          btn.classList.remove('spinning');
-          fetchAndRender();
-          return;
-        } catch(e) {}
+    // ── Operação ──
+    var opsHtml = '';
+    ORDER_OPS.forEach(function(k) {
+      var item = byKey[k];
+      if (!item) {
+        var fb = FALLBACK.find(function(f){ return keyFor(f) === k; });
+        if (!fb) return;
+        item = normItem(fb);
       }
-    }
 
-    await fetchAndRender();
-    btn.classList.remove('spinning');
+      if (k === 'orcamentos') {
+        var st = getOrcaStats();
+        var fuClass = st.followup > 0 ? 'alert' : '';
+        opsHtml +=
+          '<a href="' + esc(item.url) + '" class="card-orca">' +
+            '<div class="sys-icon-wrap">' + esc(item.icone || '💰') + '</div>' +
+            '<div class="orca-text">' +
+              '<div class="orca-badge">Principal</div>' +
+              '<div class="sys-name">' + esc(item.nome || 'Orçamentos') + '</div>' +
+              '<div class="sys-desc">' + esc(item.descricao || 'Início do fluxo — feche tudo em um clique') + '</div>' +
+              '<div class="orca-stats">' +
+                '<div class="orca-stat"><div class="orca-stat-val">' + st.ativos + '</div><div class="orca-stat-lbl">Ativos</div></div>' +
+                '<div class="orca-stat"><div class="orca-stat-val">' + st.fechados + '</div><div class="orca-stat-lbl">Fechados</div></div>' +
+                '<div class="orca-stat ' + fuClass + '"><div class="orca-stat-val">' + st.followup + '</div><div class="orca-stat-lbl">Follow-up</div></div>' +
+              '</div>' +
+            '</div>' +
+            '<div class="sys-arrow">&#8594;</div>' +
+          '</a>';
+      } else {
+        var cls =
+          k === 'financeiro'   ? 'card-fin'    :
+          k === 'clientes'     ? 'card-client' :
+          k === 'agendamentos' ? 'card-conf'   : '';
+        var defaultDesc =
+          k === 'financeiro'   ? 'Entradas e saídas do mês'     :
+          k === 'clientes'     ? 'Atendimentos previstos'       :
+          k === 'agendamentos' ? 'Confirmação avulsa de agenda' : '';
+        opsHtml +=
+          '<a href="' + esc(item.url) + '" class="sys-card ' + cls + '">' +
+            '<div class="sys-icon-wrap">' + esc(item.icone || '🔗') + '</div>' +
+            '<div class="sys-name">' + esc(item.nome) + '</div>' +
+            '<div class="sys-desc">' + esc(item.descricao || defaultDesc) + '</div>' +
+            '<div class="sys-arrow"><span class="lbl">Abrir </span>&#8594;</div>' +
+          '</a>';
+      }
+    });
+    document.getElementById('ops-grid').innerHTML = opsHtml;
+
+    // ── Conteúdo ──
+    var cont = byKey.conteudo;
+    if (!cont) {
+      var fbCont = FALLBACK.find(function(f){ return keyFor(f) === 'conteudo'; });
+      if (fbCont) cont = normItem(fbCont);
+    }
+    if (cont) {
+      document.getElementById('creative-section').innerHTML =
+        '<a href="' + esc(cont.url) + '" class="creative-card">' +
+          '<div class="creative-icon">' + esc(cont.icone || '📱') + '</div>' +
+          '<div class="creative-text">' +
+            '<div class="creative-name">' + esc(cont.nome || 'Conteúdo') + '</div>' +
+            '<div class="creative-desc">' + esc(cont.descricao || 'Planejamento de posts e ideias') + '</div>' +
+          '</div>' +
+          '<span class="creative-arrow">&#8594;</span>' +
+        '</a>';
+    } else {
+      document.getElementById('creative-section').innerHTML =
+        '<div style="text-align:center;padding:14px;color:var(--muted);font-size:12px;">Sem itens de conteúdo cadastrados na planilha.</div>';
+    }
   }
 
-  async function fetchAndRender() {
+  function esc(s) {
+    return String(s)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // ── Carrega a planilha (com cache localStorage) ──
+  async function loadHub() {
+    var cached = safeJSON(localStorage.getItem('hub_systems'), null);
+    buildCards(cached || FALLBACK);
+    setSync('syncing', 'Sincronizando');
+
     try {
-      const res = await fetch(SCRIPT_URL + '?t=' + Date.now());
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const cards = await res.json();
-      if (!Array.isArray(cards) || !cards.length) throw new Error('Resposta vazia');
-      localStorage.setItem('hub_cards', JSON.stringify(cards));
-      localStorage.setItem('hub_cards_ts', Date.now());
-      renderCards(cards, false);
-    } catch(err) {
-      console.warn('Erro ao buscar planilha:', err);
-      const cached = localStorage.getItem('hub_cards');
-      if (cached) {
-        try { renderCards(JSON.parse(cached), true); return; }
-        catch(e) {}
+      var url = HUB_SCRIPT_URL + (HUB_SCRIPT_URL.indexOf('?') >= 0 ? '&' : '?') + '_=' + Date.now();
+      var r = await fetch(url);
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      var data = await r.json();
+      var items =
+        Array.isArray(data)         ? data         :
+        Array.isArray(data.items)   ? data.items   :
+        Array.isArray(data.rows)    ? data.rows    :
+        Array.isArray(data.systems) ? data.systems :
+        Array.isArray(data.data)    ? data.data    : null;
+
+      if (items && items.length) {
+        localStorage.setItem('hub_systems', JSON.stringify(items));
+        buildCards(items);
+        setSync('', 'Atualizado');
+      } else {
+        setSync('offline', cached ? 'Cache' : 'Sem dados');
       }
-      renderError('Não foi possível carregar os sistemas.<br>Verifique sua conexão ou tente novamente.');
-    } finally {
-      document.getElementById('reload-btn').classList.remove('spinning');
+    } catch(err) {
+      setSync('offline', cached ? 'Cache' : 'Offline');
     }
   }
 
-  // ── DATA / SAUDAÇÃO ──────────────────────────────────────────────────────
-  const h = new Date().getHours();
-  const greet = h < 12 ? 'Bom dia ☀️' : h < 18 ? 'Boa tarde 🌤️' : 'Boa noite 🌙';
-  document.getElementById('greeting').textContent = greet;
+  // ── Greeting + data ──
+  (function init() {
+    var h = new Date().getHours();
+    document.getElementById('greeting').textContent =
+      h < 5  ? 'Boa madrugada' :
+      h < 12 ? 'Bom dia'       :
+      h < 18 ? 'Boa tarde'     : 'Boa noite';
 
-  const now   = new Date();
-  const DIAS  = ['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'];
-  const MESES = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
-  document.getElementById('hero-date').textContent =
-    `${DIAS[now.getDay()]}, ${now.getDate()} de ${MESES[now.getMonth()]} de ${now.getFullYear()}`;
+    var now   = new Date();
+    var DIAS  = ['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'];
+    var MESES = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+    document.getElementById('hero-date').textContent =
+      DIAS[now.getDay()] + ', ' + now.getDate() + ' de ' + MESES[now.getMonth()] + ' de ' + now.getFullYear();
 
-  loadCards();
+    loadHub();
+  })();
 </script>
 </body>
 </html>

@@ -459,11 +459,11 @@
   var ORDER_OPS = ['orcamentos', 'financeiro', 'clientes', 'agendamentos'];
 
   var FALLBACK = [
-    { nome: 'Orçamentos',   descricao: 'Início do fluxo — feche tudo em um clique', icone: '💰', url: 'orcamentos/orcamentos.html',                       cor: 'purple' },
-    { nome: 'Financeiro',   descricao: 'Entradas, saídas e resumo do mês',          icone: '💵', url: 'https://financeiromakecarolnunes.netlify.app/',     cor: 'green'  },
-    { nome: 'Clientes',     descricao: 'Atendimentos realizados e previstos',       icone: '👥', url: 'https://listadeclientesmakecarolnunes.netlify.app/', cor: 'brown'  },
-    { nome: 'Agendamentos', descricao: 'Confirmação avulsa de agenda',              icone: '📅', url: 'https://agendamentosmakecarolnunes.netlify.app/',    cor: 'purple-light' },
-    { nome: 'Conteúdo',     descricao: 'Planejamento de posts e ideias',            icone: '📱', url: 'https://conteudomakecarolnunes.netlify.app/',        cor: 'amber'  },
+    { nome: 'Orçamentos',   descricao: 'Início do fluxo — feche tudo em um clique', icone: '💰', url: 'orcamentos/orcamentos_novo.html', cor: 'purple'       },
+    { nome: 'Financeiro',   descricao: 'Entradas, saídas e resumo do mês',          icone: '💵', url: 'financeiro/index.html',          cor: 'green'        },
+    { nome: 'Clientes',     descricao: 'Atendimentos realizados e previstos',       icone: '👥', url: 'clientes/index.html',            cor: 'brown'        },
+    { nome: 'Agendamentos', descricao: 'Confirmação avulsa de agenda',              icone: '📅', url: 'confirmacao/confirmacao.html',   cor: 'purple-light' },
+    { nome: 'Conteúdo',     descricao: 'Planejamento de posts e ideias',            icone: '📱', url: 'conteudo/index.html',            cor: 'amber'        },
   ];
 
   // ── UTILS ──
@@ -526,7 +526,7 @@
     });
 
     if (!byKey.orcamentos) byKey.orcamentos = normItem(FALLBACK[0]);
-    if (!byKey.orcamentos.url) byKey.orcamentos.url = 'orcamentos/orcamentos.html';
+    if (!byKey.orcamentos.url) byKey.orcamentos.url = 'orcamentos/orcamentos_novo.html';
 
     // ── Operação ──
     var opsHtml = '';
