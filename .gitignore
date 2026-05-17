@@ -1,0 +1,9 @@
+# Credenciais — nunca commitar
+config.js
+
+# Claude Code (settings locais podem ter dados sensíveis)
+.claude/settings.local.json
+
+# Sistema
+.DS_Store
+Thumbs.db

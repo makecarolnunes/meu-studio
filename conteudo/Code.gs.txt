@@ -1,0 +1,158 @@
+// =============================================
+// PLANEJAMENTO DE CONTEÚDO - Google Apps Script
+//
+// INSTRUÇÕES:
+// 1. Abra o Google Sheet que você criou
+// 2. Clique em Extensões → Apps Script
+// 3. Apague todo o código que aparecer
+// 4. Cole TODO este código abaixo
+// 5. Clique em Salvar (ícone de disquete)
+// 6. Clique em Implantar → Nova implantação
+// 7. Tipo: App da Web
+//    Executar como: Eu (seu email)
+//    Quem tem acesso: Qualquer pessoa
+// 8. Clique em Implantar → copie a URL gerada
+// 9. Cole essa URL no app (tela de configuração)
+//
+// IMPORTANTE: Se você já tinha uma versão anterior,
+// delete a aba "Ideas" do Google Sheet antes de usar
+// (ou deixe o script recriar automaticamente).
+// =============================================
+
+function doGet(e) {
+  var action = (e && e.parameter && e.parameter.action) || 'getData';
+  if (action === 'getData') return respond(getData());
+  return respond({ ok: false, error: 'Unknown action' });
+}
+
+function doPost(e) {
+  var data;
+  try { data = JSON.parse(e.postData.contents); }
+  catch (err) { return respond({ ok: false, error: 'JSON invalido' }); }
+  if (data.action === 'saveAll') return respond(saveAll(data));
+  return respond({ ok: false, error: 'Unknown action' });
+}
+
+function respond(obj) {
+  return ContentService
+    .createTextOutput(JSON.stringify(obj))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function getOrCreate(ss, name, headers) {
+  var s = ss.getSheetByName(name);
+  if (!s) {
+    s = ss.insertSheet(name);
+    s.appendRow(headers);
+    s.getRange(1, 1, 1, headers.length).setFontWeight('bold').setBackground('#f3ede8');
+  }
+  return s;
+}
+
+function getData() {
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    // New columns: categories and formatos are JSON arrays; scheduledDate is new
+    var ideasSheet  = getOrCreate(ss, 'Ideas',  ['id','title','categories','formatos','status','notes','platforms','createdAt','scheduledDate']);
+    var configSheet = getOrCreate(ss, 'Config', ['key','value']);
+
+    var ideas = [];
+    var iData = ideasSheet.getDataRange().getValues();
+    for (var i = 1; i < iData.length; i++) {
+      var r = iData[i];
+      if (!r[0]) continue;
+
+      var categories, formatos, platforms;
+
+      // categories: stored as JSON array string e.g. '["Noivas","Penteados"]'
+      try { categories = JSON.parse(String(r[2] || '[]')); } catch(e1) { categories = []; }
+      // fallback: if empty, treat as single-item array (migration from old 'category' string)
+      if (!categories || !categories.length) categories = [String(r[2] || '')].filter(Boolean);
+
+      // formatos: stored as JSON array string e.g. '["Reels","Stories"]'
+      try { formatos = JSON.parse(String(r[3] || '[]')); } catch(e2) { formatos = []; }
+      if (!formatos || !formatos.length) formatos = [String(r[3] || 'Reels')].filter(Boolean);
+      if (!formatos.length) formatos = ['Reels'];
+
+      // platforms: stored as JSON array string
+      try { platforms = JSON.parse(String(r[6] || '["Instagram"]')); } catch(e3) { platforms = ['Instagram']; }
+      if (!platforms || !platforms.length) platforms = ['Instagram'];
+
+      ideas.push({
+        id:            String(r[0]),
+        title:         String(r[1] || ''),
+        categories:    categories,
+        formatos:      formatos,
+        status:        String(r[4] || 'Nao Iniciado'),
+        notes:         String(r[5] || ''),
+        platforms:     platforms,
+        createdAt:     String(r[7] || ''),
+        scheduledDate: String(r[8] || '')
+      });
+    }
+
+    var config = {};
+    var cData = configSheet.getDataRange().getValues();
+    for (var j = 1; j < cData.length; j++) {
+      if (cData[j][0]) config[String(cData[j][0])] = String(cData[j][1] || '');
+    }
+
+    var customCats, customPlats;
+    try { customCats  = JSON.parse(config['customCats']  || '[]'); } catch(e4) { customCats = []; }
+    try { customPlats = JSON.parse(config['customPlats'] || '[]'); } catch(e5) { customPlats = []; }
+
+    return {
+      ok: true,
+      ideas: ideas,
+      customCats: customCats,
+      customPlats: customPlats,
+      curPlatform: config['curPlatform'] || 'todos'
+    };
+  } catch(e6) {
+    return { ok: false, error: e6.toString() };
+  }
+}
+
+function saveAll(data) {
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+
+    // Salvar ideias
+    var ideasSheet = getOrCreate(ss, 'Ideas', ['id','title','categories','formatos','status','notes','platforms','createdAt','scheduledDate']);
+    var lastRow = ideasSheet.getLastRow();
+    if (lastRow > 1) ideasSheet.deleteRows(2, lastRow - 1);
+
+    var ideas = data.ideas || [];
+    for (var i = 0; i < ideas.length; i++) {
+      var idea = ideas[i];
+
+      // Support both old (string) and new (array) formats on save
+      var cats = idea.categories || (idea.category ? [idea.category] : []);
+      var fmts = idea.formatos   || (idea.formato  ? [idea.formato]  : ['Reels']);
+
+      ideasSheet.appendRow([
+        idea.id            || '',
+        idea.title         || '',
+        JSON.stringify(cats),
+        JSON.stringify(fmts),
+        idea.status        || 'Nao Iniciado',
+        idea.notes         || '',
+        JSON.stringify(idea.platforms || ['Instagram']),
+        idea.createdAt     || '',
+        idea.scheduledDate || ''
+      ]);
+    }
+
+    // Salvar config
+    var configSheet = getOrCreate(ss, 'Config', ['key','value']);
+    var cLastRow = configSheet.getLastRow();
+    if (cLastRow > 1) configSheet.deleteRows(2, cLastRow - 1);
+    configSheet.appendRow(['customCats',  JSON.stringify(data.customCats  || [])]);
+    configSheet.appendRow(['customPlats', JSON.stringify(data.customPlats || [])]);
+    configSheet.appendRow(['curPlatform', data.curPlatform || 'todos']);
+
+    return { ok: true };
+  } catch(e7) {
+    return { ok: false, error: e7.toString() };
+  }
+}

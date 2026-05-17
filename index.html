@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <title>✨ Meu Studio</title>
+  <style>
+    :root {
+      --brown:   #6d4c41;
+      --brown-d: #3e2723;
+      --brown-l: #efebe9;
+      --purple:  #7d3c6e;
+      --purple-l:#f5edf3;
+      --ok:      #2d7d3a;
+      --ok-l:    #e8f5e9;
+      --blue:    #1565c0;
+      --blue-l:  #e3f2fd;
+      --amber:   #e8a000;
+      --amber-l: #fff8e1;
+      --pink:    #c2185b;
+      --pink-l:  #fce4ec;
+      --red:     #c62828;
+      --red-l:   #ffebee;
+      --muted:   #6b7280;
+      --border:  #e0d5dc;
+      --bg:      #f3ede8;
+      --card:    #ffffff;
+      --text:    #1a1a1a;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      max-width: 480px;
+      margin: 0 auto;
+      min-height: 100vh;
+    }
+
+    /* ── HERO HEADER ── */
+    .hero {
+      background: linear-gradient(150deg, var(--brown-d) 0%, var(--brown) 55%, #9c5a8a 100%);
+      color: white;
+      padding: 32px 22px 28px;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -40px; right: -40px;
+      width: 180px; height: 180px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 50%;
+    }
+    .hero::after {
+      content: '';
+      position: absolute;
+      bottom: -30px; left: -20px;
+      width: 120px; height: 120px;
+      background: rgba(255,255,255,0.04);
+      border-radius: 50%;
+    }
+    .greeting {
+      font-size: 0.8rem;
+      opacity: 0.75;
+      font-weight: 500;
+      margin-bottom: 4px;
+      letter-spacing: 0.03em;
+    }
+    .hero-title {
+      font-size: 1.7rem;
+      font-weight: 800;
+      line-height: 1.15;
+      margin-bottom: 6px;
+    }
+    .hero-date {
+      font-size: 0.76rem;
+      opacity: 0.7;
+      font-weight: 500;
+      text-transform: capitalize;
+    }
+
+    /* ── BODY ── */
+    .body { padding: 20px 14px 40px; }
+
+    /* ── SECTION LABEL ── */
+    .section-lbl {
+      font-size: 0.65rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--muted);
+      margin-bottom: 12px;
+      padding-left: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .reload-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 0.9rem;
+      opacity: 0.5;
+      padding: 2px 4px;
+      border-radius: 6px;
+      transition: opacity 0.2s;
+      line-height: 1;
+    }
+    .reload-btn:active { opacity: 1; }
+    .reload-btn.spinning { animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── SYSTEM GRID ── */
+    .sys-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+
+    /* ── SYSTEM CARD ── */
+    .sys-card {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 18px 15px 16px;
+      text-decoration: none;
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+      transition: transform 0.15s, box-shadow 0.15s;
+      position: relative;
+      overflow: hidden;
+      -webkit-user-select: none;
+    }
+    .sys-card:active { transform: scale(0.96); box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+
+    /* accent top bar */
+    .sys-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: var(--accent, #ccc);
+      border-radius: 16px 16px 0 0;
+    }
+
+    .sys-icon-wrap {
+      width: 46px; height: 46px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      margin-bottom: 12px;
+      background: var(--icon-bg, #f5f5f5);
+    }
+    .sys-name {
+      font-size: 0.88rem;
+      font-weight: 800;
+      color: var(--text);
+      margin-bottom: 3px;
+      line-height: 1.2;
+    }
+    .sys-desc {
+      font-size: 0.68rem;
+      color: var(--muted);
+      line-height: 1.4;
+      flex: 1;
+    }
+    .sys-arrow {
+      margin-top: 10px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--accent, #ccc);
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    /* ── SKELETON LOADING ── */
+    .skeleton {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 18px 15px 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+      overflow: hidden;
+      position: relative;
+    }
+    .skeleton::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.6) 50%, transparent 100%);
+      animation: shimmer 1.2s infinite;
+    }
+    @keyframes shimmer {
+      0%   { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+    .skel-line {
+      background: #e9e3e0;
+      border-radius: 6px;
+      margin-bottom: 8px;
+    }
+    .skel-icon  { width: 46px; height: 46px; border-radius: 12px; background: #e9e3e0; margin-bottom: 12px; }
+    .skel-title { height: 12px; width: 70%; }
+    .skel-desc1 { height: 9px;  width: 90%; }
+    .skel-desc2 { height: 9px;  width: 60%; }
+
+    /* ── ERROR STATE ── */
+    .error-card {
+      grid-column: 1 / -1;
+      background: #fff5f5;
+      border: 1px solid #fed7d7;
+      border-radius: 14px;
+      padding: 18px;
+      text-align: center;
+    }
+    .error-card .error-icon { font-size: 1.6rem; margin-bottom: 8px; }
+    .error-card p { font-size: 0.78rem; color: #c53030; line-height: 1.5; }
+    .error-card small { font-size: 0.68rem; color: var(--muted); display: block; margin-top: 6px; }
+
+    /* ── FOOTER ── */
+    .footer {
+      text-align: center;
+      font-size: 0.67rem;
+      color: var(--muted);
+      padding: 0 20px 10px;
+      line-height: 1.7;
+    }
+    .footer strong { color: var(--brown); }
+
+    /* ── DICA ── */
+    .tip-box {
+      background: white;
+      border-radius: 14px;
+      padding: 14px 16px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+      margin-bottom: 20px;
+    }
+    .tip-label {
+      font-size: 0.7rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      color: var(--muted);
+      letter-spacing: 0.06em;
+      margin-bottom: 8px;
+    }
+    .tip-text {
+      font-size: 0.78rem;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+    .tip-sub {
+      margin-top: 10px;
+      font-size: 0.73rem;
+      font-weight: 600;
+      color: var(--brown);
+    }
+  </style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="greeting" id="greeting">Bem-vinda de volta</div>
+  <div class="hero-title">Meu Studio ✨</div>
+  <div class="hero-date" id="hero-date"></div>
+</div>
+
+<!-- BODY -->
+<div class="body">
+
+  <div class="section-lbl">
+    <span>Seus sistemas</span>
+    <button class="reload-btn" id="reload-btn" title="Atualizar" onclick="loadCards(true)">↻</button>
+  </div>
+
+  <div class="sys-grid" id="sys-grid">
+    <!-- skeletons iniciais -->
+    <div class="skeleton"><div class="skel-icon"></div><div class="skel-line skel-title"></div><div class="skel-line skel-desc1"></div><div class="skel-line skel-desc2"></div></div>
+    <div class="skeleton"><div class="skel-icon"></div><div class="skel-line skel-title"></div><div class="skel-line skel-desc1"></div><div class="skel-line skel-desc2"></div></div>
+    <div class="skeleton"><div class="skel-icon"></div><div class="skel-line skel-title"></div><div class="skel-line skel-desc1"></div><div class="skel-line skel-desc2"></div></div>
+    <div class="skeleton"><div class="skel-icon"></div><div class="skel-line skel-title"></div><div class="skel-line skel-desc1"></div><div class="skel-line skel-desc2"></div></div>
+  </div>
+
+  <!-- Dica de acesso rápido -->
+  <div class="tip-box">
+    <div class="tip-label">💡 Acesso rápido</div>
+    <div class="tip-text">
+      Adicione esta página à tela inicial do seu celular para acessar todos os sistemas rapidamente, como um app.
+    </div>
+    <div class="tip-sub">
+      iOS: Compartilhar → Adicionar à Tela de Início<br>
+      Android: Menu do navegador → Adicionar à tela inicial
+    </div>
+  </div>
+
+</div>
+
+<!-- FOOTER -->
+<div class="footer" id="footer-status">
+  <strong>Meu Studio</strong>
+</div>
+
+<script>
+  // ── CONFIG ──────────────────────────────────────────────────────────────
+  // URL do Google Apps Script (planilha permanece privada)
+  const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxRoMVHD8s8yZZBJzbayw6n3lsCun6W4msJ56ZHYl2vkukRjykSw8uBd8AuUt7zJtgC/exec';
+
+  // Cards padrão usados como fallback se a planilha não carregar
+  const FALLBACK_CARDS = [
+    { nome:'Confirmação', descricao:'Gera mensagem e salva no Google Agenda', icone:'📅', url:'confirmacao/confirmacao.html', cor:'purple' },
+    { nome:'Clientes',    descricao:'Atendimentos realizados e previstos',    icone:'👥', url:'clientes/lista-clientes.html',  cor:'brown'  },
+    { nome:'Financeiro',  descricao:'Entradas, saídas e resumo do mês',       icone:'💰', url:'financeiro/index.html',           cor:'green'  },
+    { nome:'Conteúdo',    descricao:'Ideias e planejamento de posts',          icone:'📱', url:'conteudo/planejamento-conteudo.html', cor:'amber' },
+  ];
+  // ────────────────────────────────────────────────────────────────────────
+
+  const COLOR_MAP = {
+    purple:'#7d3c6e', roxo:'#7d3c6e',
+    brown:'#6d4c41',  marrom:'#6d4c41',
+    green:'#2d7d3a',  verde:'#2d7d3a',
+    amber:'#e8a000',  laranja:'#e8a000', orange:'#e8a000',
+    blue:'#1565c0',   azul:'#1565c0',
+    pink:'#c2185b',   rosa:'#c2185b',
+    red:'#c62828',    vermelho:'#c62828',
+    gray:'#6b7280',   cinza:'#6b7280',
+  };
+
+  function resolveColor(raw) {
+    if (!raw) return '#9c5a8a';
+    const k = raw.trim().toLowerCase();
+    return COLOR_MAP[k] || (raw.trim().startsWith('#') ? raw.trim() : '#9c5a8a');
+  }
+
+  function hexToRgba(hex, alpha) {
+    const r = parseInt(hex.slice(1,3),16);
+    const g = parseInt(hex.slice(3,5),16);
+    const b = parseInt(hex.slice(5,7),16);
+    return `rgba(${r},${g},${b},${alpha})`;
+  }
+
+  function buildCard(card) {
+    const color     = resolveColor(card.cor || card.color || '');
+    const iconBg    = hexToRgba(color, 0.12);
+    const nome      = card.nome || card.name || 'Sistema';
+    const descricao = card.descricao || card.description || '';
+    const icone     = card.icone || card.icon || '🔗';
+    const url       = card.url || card.link || '#';
+
+    const a = document.createElement('a');
+    a.className = 'sys-card';
+    a.href      = url;
+    a.style.cssText = `--accent:${color};--icon-bg:${iconBg}`;
+    a.innerHTML = `
+      <div class="sys-icon-wrap">${icone}</div>
+      <div class="sys-name">${escHtml(nome)}</div>
+      <div class="sys-desc">${escHtml(descricao)}</div>
+      <div class="sys-arrow">Abrir →</div>
+    `;
+    return a;
+  }
+
+  function escHtml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function renderCards(cards, fromCache) {
+    const grid = document.getElementById('sys-grid');
+    grid.innerHTML = '';
+    if (!cards.length) {
+      grid.innerHTML = `<div class="error-card"><div class="error-icon">📋</div><p>Nenhum sistema encontrado na planilha.<br>Verifique se há dados nas linhas abaixo do cabeçalho.</p></div>`;
+      return;
+    }
+    cards.forEach(c => grid.appendChild(buildCard(c)));
+    const footer = document.getElementById('footer-status');
+    const now    = new Date().toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+    footer.innerHTML = `<strong>Meu Studio</strong> · Atualizado às ${now}${fromCache ? ' (cache)' : ''}`;
+  }
+
+  function renderError(msg) {
+    const grid = document.getElementById('sys-grid');
+    grid.innerHTML = `
+      <div class="error-card">
+        <div class="error-icon">⚠️</div>
+        <p>${msg}</p>
+        <small>Carregando dados locais como fallback…</small>
+      </div>
+    `;
+    setTimeout(() => renderCards(FALLBACK_CARDS, false), 1200);
+  }
+
+  async function loadCards(manual = false) {
+    const btn = document.getElementById('reload-btn');
+    btn.classList.add('spinning');
+
+    if (!manual) {
+      const cached   = localStorage.getItem('hub_cards');
+      const cachedAt = parseInt(localStorage.getItem('hub_cards_ts') || '0');
+      const age      = Date.now() - cachedAt;
+      if (cached && age < 5 * 60 * 1000) {
+        try {
+          renderCards(JSON.parse(cached), true);
+          btn.classList.remove('spinning');
+          fetchAndRender();
+          return;
+        } catch(e) {}
+      }
+    }
+
+    await fetchAndRender();
+    btn.classList.remove('spinning');
+  }
+
+  async function fetchAndRender() {
+    try {
+      const res = await fetch(SCRIPT_URL + '?t=' + Date.now());
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const cards = await res.json();
+      if (!Array.isArray(cards) || !cards.length) throw new Error('Resposta vazia');
+      localStorage.setItem('hub_cards', JSON.stringify(cards));
+      localStorage.setItem('hub_cards_ts', Date.now());
+      renderCards(cards, false);
+    } catch(err) {
+      console.warn('Erro ao buscar planilha:', err);
+      const cached = localStorage.getItem('hub_cards');
+      if (cached) {
+        try { renderCards(JSON.parse(cached), true); return; }
+        catch(e) {}
+      }
+      renderError('Não foi possível carregar os sistemas.<br>Verifique sua conexão ou tente novamente.');
+    } finally {
+      document.getElementById('reload-btn').classList.remove('spinning');
+    }
+  }
+
+  // ── DATA / SAUDAÇÃO ──────────────────────────────────────────────────────
+  const h = new Date().getHours();
+  const greet = h < 12 ? 'Bom dia ☀️' : h < 18 ? 'Boa tarde 🌤️' : 'Boa noite 🌙';
+  document.getElementById('greeting').textContent = greet;
+
+  const now   = new Date();
+  const DIAS  = ['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'];
+  const MESES = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+  document.getElementById('hero-date').textContent =
+    `${DIAS[now.getDay()]}, ${now.getDate()} de ${MESES[now.getMonth()]} de ${now.getFullYear()}`;
+
+  loadCards();
+</script>
+</body>
+</html>

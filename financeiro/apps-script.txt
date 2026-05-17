@@ -1,0 +1,150 @@
+// ══════════════════════════════════════════════════════════
+//  COLE ESTE CÓDIGO NO GOOGLE APPS SCRIPT DO SEU SHEETS
+//  Extensions → Apps Script → apague tudo → cole isso → salve
+//  Depois: Deploy → Manage deployments → selecione o existente
+//    → clique no lápis (editar) → Version: New version → Deploy
+// ══════════════════════════════════════════════════════════
+
+const SS = SpreadsheetApp.getActiveSpreadsheet();
+
+const ENTRY_COLS = [
+  'id','dataPag','dataServ','cliente','tipo','valor','valorTotal',
+  'servico','local','forma','status','origem','obs','auto','createdAt','noivaId'
+];
+
+const SAIDA_COLS = [
+  'id','dataPag','valor','tipo','status','forma','obs','createdAt'
+];
+
+const NOIVA_COLS = [
+  'id','nome','dataCasamento','valorContrato','obs','createdAt'
+];
+
+// ── PONTO DE ENTRADA ──
+function doGet(e) {
+  try {
+    const action = e.parameter.action || 'load';
+
+    if (action === 'load') {
+      const entries = readSheet('Entradas', ENTRY_COLS);
+      const saidas  = readSheet('Saidas',   SAIDA_COLS);
+      const noivas  = readSheet('Noivas',   NOIVA_COLS);
+      return json({ ok: true, entries, saidas, noivas });
+    }
+
+    if (action === 'save') {
+      const table = e.parameter.table;
+      const data  = JSON.parse(decodeURIComponent(e.parameter.data));
+      const cols  = table === 'saidas' ? SAIDA_COLS : table === 'noivas' ? NOIVA_COLS : ENTRY_COLS;
+      const name  = table === 'saidas' ? 'Saidas'   : table === 'noivas' ? 'Noivas'   : 'Entradas';
+      const sheet = getOrCreate(name, cols);
+      sheet.appendRow(cols.map(c => data[c] !== undefined ? String(data[c]) : ''));
+      return json({ ok: true });
+    }
+
+    if (action === 'update') {
+      const table = e.parameter.table;
+      const id    = e.parameter.id;
+      const field = e.parameter.field;
+      const value = e.parameter.value;
+      const cols  = table === 'saidas' ? SAIDA_COLS : table === 'noivas' ? NOIVA_COLS : ENTRY_COLS;
+      const name  = table === 'saidas' ? 'Saidas'   : table === 'noivas' ? 'Noivas'   : 'Entradas';
+      const sheet = getOrCreate(name, cols);
+      const row   = findRow(sheet, id);
+      if (!row) return json({ ok: false, error: 'não encontrado' });
+      const col = cols.indexOf(field) + 1;
+      if (col < 1) return json({ ok: false, error: 'campo inválido' });
+      sheet.getRange(row, col).setValue(value);
+      return json({ ok: true });
+    }
+
+    if (action === 'delete') {
+      const table = e.parameter.table;
+      const id    = e.parameter.id;
+      const cols  = table === 'saidas' ? SAIDA_COLS : table === 'noivas' ? NOIVA_COLS : ENTRY_COLS;
+      const name  = table === 'saidas' ? 'Saidas'   : table === 'noivas' ? 'Noivas'   : 'Entradas';
+      const sheet = getOrCreate(name, cols);
+      const row   = findRow(sheet, id);
+      if (!row) return json({ ok: false, error: 'não encontrado' });
+      sheet.deleteRow(row);
+      return json({ ok: true });
+    }
+
+    if (action === 'getSenha') {
+      const id = e.parameter.id || '';
+      if (!id) return json({ ok: false, error: 'id obrigatório' });
+      const sheet = SS.getSheetByName('senhas');
+      if (!sheet) return json({ ok: false, error: 'aba "senhas" não encontrada' });
+      const values = sheet.getDataRange().getValues();
+      // Procura linha onde coluna A (id) bate com o id solicitado
+      for (let i = 1; i < values.length; i++) {
+        if (String(values[i][0]).trim().toLowerCase() === id.trim().toLowerCase()) {
+          return json({ ok: true, password: String(values[i][1]) });
+        }
+      }
+      return json({ ok: false, error: 'id não encontrado: ' + id });
+    }
+
+    return json({ ok: false, error: 'ação desconhecida: ' + action });
+
+  } catch (err) {
+    return json({ ok: false, error: err.toString() });
+  }
+}
+
+// ── HELPERS ──
+
+function readSheet(name, cols) {
+  const sheet = getOrCreate(name, cols);
+  const values = sheet.getDataRange().getValues();
+  if (values.length <= 1) return [];
+  return values.slice(1)
+    .filter(row => row[0] !== '' && row[0] !== null)
+    .map(row => {
+      const obj = {};
+      cols.forEach((c, i) => {
+        const val = row[i];
+        // Se for um objeto Date (Sheets converte datas automaticamente), formata como YYYY-MM-DD
+        if (val instanceof Date && !isNaN(val)) {
+          const y = val.getFullYear();
+          const m = String(val.getMonth() + 1).padStart(2, '0');
+          const d = String(val.getDate()).padStart(2, '0');
+          obj[c] = `${y}-${m}-${d}`;
+        } else {
+          obj[c] = val !== undefined && val !== null ? String(val) : '';
+        }
+      });
+      return obj;
+    });
+}
+
+function getOrCreate(name, headers) {
+  let sheet = SS.getSheetByName(name);
+  if (!sheet) {
+    sheet = SS.insertSheet(name);
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+    sheet.getRange(1, 1, 1, headers.length)
+      .setBackground('#6d4c41')
+      .setFontColor('#ffffff')
+      .setFontWeight('bold');
+    sheet.setFrozenRows(1);
+    sheet.setColumnWidth(1, 160); // id
+    if (name === 'Entradas') sheet.setColumnWidth(4, 180); // cliente
+    if (name === 'Noivas')   sheet.setColumnWidth(2, 200); // nome
+  }
+  return sheet;
+}
+
+function findRow(sheet, id) {
+  const vals = sheet.getRange('A:A').getValues();
+  for (let i = 1; i < vals.length; i++) {
+    if (String(vals[i][0]) === String(id)) return i + 1;
+  }
+  return null;
+}
+
+function json(data) {
+  return ContentService
+    .createTextOutput(JSON.stringify(data))
+    .setMimeType(ContentService.MimeType.JSON);
+}
