@@ -194,5 +194,5 @@ if ($c -notmatch '</html>') { Write-Warning 'ARQUIVO TRUNCADO' }
 
 ---
 
-<!-- AUTO: 2026-05-17 03:53 | main | fix: remove referencia a btn-copy-link inexistente em openSettings -->
+<!-- AUTO: 2026-05-17 04:05 | main | fix: mostra 'Fechar e Agendar' para fechados sem fluxo completo (SinalFech vazio) -->
 
