@@ -461,6 +461,7 @@ function checkAuth() {
 
 function showApp() {
     document.getElementById('loading-overlay').style.display = 'none';
+    document.getElementById('login-screen').style.display = 'none';
     document.getElementById('app').style.display = 'block';
     render();
     loadFromSupabase();
