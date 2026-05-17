@@ -1152,8 +1152,12 @@ function closeModal() {
     document.getElementById('modal-bg').style.display = 'none';
 }
 // ── Service prices helpers ──
+// Compõe o "nome" usado como chave única na tabela valores_servicos,
+// igualando ao padrão dos orçamentos: "Serviço no Studio" / "Serviço em domicílio"
 function priceKey(servico, local) {
-    return (servico || '').replace(/\s+/g,'_') + '__' + (local || '').replace(/\s+/g,'_');
+    if (!servico) return '';
+    const suffix = local === 'Studio' ? 'no Studio' : 'em domicílio';
+    return servico + ' ' + suffix;
 }
 function getServicePrices() {
     try { return JSON.parse(localStorage.getItem('mk_service_prices') || '{}'); } catch(e) { return {}; }
@@ -1163,7 +1167,10 @@ function _cacheServicePrices(prices) {
 }
 async function loadServicePricesFromSupabase() {
     try {
-        const prices = await DB.valoresServicos.load();
+        const map = await DB.valoresServicos.load();
+        // Achata para { nome: valor } — financeiro só precisa do valor
+        const prices = {};
+        Object.entries(map).forEach(([nome, v]) => { prices[nome] = v.valor; });
         _cacheServicePrices(prices);
         return prices;
     } catch(e) {
@@ -1202,8 +1209,9 @@ function renderConfigModal() {
             <td style="padding:7px 4px;font-weight:600;color:var(--text)">${s.l}</td>
             ${LOCS.map(loc => {
                 const k = priceKey(s.v, loc);
+                const inpId = 'sp_' + k.replace(/\s+/g,'_').replace(/[^A-Za-z0-9_]/g,'');
                 const v = prices[k] || '';
-                return `<td style="padding:7px 3px"><div style="position:relative"><span style="position:absolute;left:8px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:.8rem;font-weight:600;pointer-events:none">R$</span><input type="number" id="sp_${k}" value="${v}" placeholder="0" step="1" min="0" inputmode="decimal" style="width:100%;padding:7px 7px 7px 28px;border:1.5px solid var(--border);border-radius:10px;font-size:.88rem;font-weight:700;color:var(--text);background:white;-webkit-appearance:none;appearance:none;text-align:right;box-sizing:border-box"></div></td>`;
+                return `<td style="padding:7px 3px"><div style="position:relative"><span style="position:absolute;left:8px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:.8rem;font-weight:600;pointer-events:none">R$</span><input type="number" id="${inpId}" data-nome="${k}" value="${v}" placeholder="0" step="1" min="0" inputmode="decimal" style="width:100%;padding:7px 7px 7px 28px;border:1.5px solid var(--border);border-radius:10px;font-size:.88rem;font-weight:700;color:var(--text);background:white;-webkit-appearance:none;appearance:none;text-align:right;box-sizing:border-box"></div></td>`;
             }).join('')}
         </tr>`).join('')}
         </tbody>
@@ -1233,17 +1241,16 @@ function renderConfigModal() {
     `;
 }
 async function saveServicePricesFromForm() {
-    const SERVS = ['Maquiagem','Cabelo','Maquiagem e Cabelo','Curso de Automaquiagem'];
-    const LOCS = ['Studio','Em Domicílio'];
     const prices = {};
     const rows = [];
-    SERVS.forEach(s => LOCS.forEach(loc => {
-        const k = priceKey(s, loc);
-        const el = document.getElementById('sp_' + k);
-        const v = el ? parseFloat(el.value) : 0;
-        prices[k] = isNaN(v) ? 0 : v;
-        rows.push({ servico: s, local: loc, valor: isNaN(v) ? 0 : v });
-    }));
+    // Lê todos os inputs do form via data-nome
+    document.querySelectorAll('[id^="sp_"][data-nome]').forEach(el => {
+        const nome = el.dataset.nome;
+        const v = parseFloat(el.value);
+        const valor = isNaN(v) ? 0 : v;
+        prices[nome] = valor;
+        rows.push({ nome, valor });
+    });
     // Atualiza cache local imediatamente (UX responsiva)
     _cacheServicePrices(prices);
     closeModal();

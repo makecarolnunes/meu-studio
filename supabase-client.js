@@ -384,34 +384,62 @@ window.DB = {
   },
 
   valoresServicos: {
-    // Retorna objeto { 'Servico__Local': valor, ... } pronto para uso no financeiro
+    // Retorna mapa { nome: { valor, duracao } }
     async load() {
       _guard();
       const { data, error } = await _sb
         .from('valores_servicos')
-        .select('servico, local, valor')
-        .order('servico');
+        .select('nome, valor, duracao')
+        .order('nome');
       if (error) throw error;
       const map = {};
       data.forEach(r => {
-        const k = r.servico.replace(/\s+/g,'_') + '__' + r.local.replace(/\s+/g,'_');
-        map[k] = r.valor != null ? Number(r.valor) : 0;
+        map[r.nome] = {
+          valor:   r.valor   != null ? Number(r.valor) : 0,
+          duracao: r.duracao != null ? Number(r.duracao) : null,
+        };
       });
       return map;
     },
-    // Recebe array [{ servico, local, valor }] e faz upsert de todos
-    async saveAll(rows) {
+    // Remove uma linha pelo nome
+    async remove(nome) {
       _guard();
-      const data = rows.map(r => ({
-        servico:    r.servico,
-        local:      r.local,
-        valor:      parseFloat(r.valor) || 0,
-        updated_at: new Date().toISOString(),
-      }));
+      if (!nome) return;
       const { error } = await _sb
         .from('valores_servicos')
-        .upsert(data, { onConflict: 'servico,local' });
+        .delete()
+        .eq('nome', String(nome).trim());
       if (error) throw error;
+    },
+    // Recebe array [{ nome, valor, duracao }] e faz upsert por nome
+    async saveAll(rows) {
+      _guard();
+      const data = rows
+        .filter(r => r.nome && String(r.nome).trim())
+        .map(r => ({
+          nome:       String(r.nome).trim(),
+          valor:      parseFloat(r.valor) || 0,
+          duracao:    r.duracao != null && r.duracao !== '' ? parseInt(r.duracao) : null,
+          updated_at: new Date().toISOString(),
+        }));
+      if (!data.length) return;
+      const { error } = await _sb
+        .from('valores_servicos')
+        .upsert(data, { onConflict: 'nome' });
+      if (error) throw error;
+    },
+    // Substitui completamente: apaga linhas ausentes na nova lista, faz upsert do resto
+    async replaceAll(rows) {
+      _guard();
+      await this.saveAll(rows);
+      const keep = rows.map(r => String(r.nome).trim()).filter(Boolean);
+      if (!keep.length) return;
+      // Remove apenas as linhas que NÃO estão na lista
+      const { error } = await _sb
+        .from('valores_servicos')
+        .delete()
+        .not('nome', 'in', `(${keep.map(n => `"${n.replace(/"/g,'\\"')}"`).join(',')})`);
+      if (error) console.warn('[valoresServicos.replaceAll] erro ao limpar:', error.message);
     },
   },
 

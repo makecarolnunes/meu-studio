@@ -1383,10 +1383,17 @@ function unpackSlots(obs) {
 function entrySlots(e) { return unpackSlots(e.Obs).slots; }
 function entryCleanObs(e) { return unpackSlots(e.Obs).obs; }
 
+let _syncState = 'syncing';
 function dot(state) {
+  _syncState = state || 'offline';
   const sub = { syncing:'Sincronizando...', ok:'Carregado', offline:'Sem conexão', nourl:'Configure o Script' };
   const hsub = document.getElementById('hsub');
   if (hsub) hsub.textContent = sub[state] || '';
+  // Atualiza o status no painel de configurações (se aberto)
+  const note = document.getElementById('sb-status-note');
+  if (note) {
+    note.textContent = { ok:'🟢 Supabase conectado', syncing:'🟡 Sincronizando...', offline:'🔴 Sem conexão' }[state] || '⚪ Status desconhecido';
+  }
 }
 
 // ══════════════════════════════════════════════════════════
@@ -1598,9 +1605,27 @@ async function syncAll() {
   dot('syncing');
   try {
     const deletedIds = getDeletedIds();
-    const all = await DB.orcamentos.list();
+    const [all, svcMap] = await Promise.all([
+      DB.orcamentos.list(),
+      DB.valoresServicos.load().catch(() => null),
+    ]);
     entries = all.filter(e => !deletedIds.includes(String(e.ID)));
     cacheEntries();
+    if (svcMap) {
+      // Mescla com a lista local: prioriza ordem do localStorage para serviços que existem;
+      // adiciona serviços novos do Supabase no fim
+      const localNames = new Set(services.map(s => s.nome));
+      services = services.map(s => {
+        if (svcMap[s.nome]) {
+          return { nome: s.nome, valor: svcMap[s.nome].valor, duracao: svcMap[s.nome].duracao ?? s.duracao ?? 60 };
+        }
+        return s;
+      });
+      Object.entries(svcMap).forEach(([nome, v]) => {
+        if (!localNames.has(nome)) services.push({ nome, valor: v.valor, duracao: v.duracao ?? 60 });
+      });
+      cacheServices();
+    }
     dot('ok');
   } catch(e) {
     dot('offline');
@@ -2798,12 +2823,10 @@ function copiarMensagem() {
 // ══════════════════════════════════════════════════════════
 function openSettings() {
   document.getElementById('cfg-cal-id').value  = localStorage.getItem('orca_cal_id')  || DEFAULT_CAL_ID;
-  // Atualizar status do Supabase
+  // Atualizar status do Supabase a partir do estado real
   const note = document.getElementById('sb-status-note');
   if (note) {
-    const dotEl = document.getElementById('sync-dot');
-    const state = dotEl ? dotEl.className.replace('sync-dot','').trim() : 'offline';
-    note.textContent = { ok:'🟢 Supabase conectado', syncing:'🟡 Sincronizando...', offline:'🔴 Sem conexão' }[state] || '⚪ Status desconhecido';
+    note.textContent = { ok:'🟢 Supabase conectado', syncing:'🟡 Sincronizando...', offline:'🔴 Sem conexão' }[_syncState] || '⚪ Status desconhecido';
   }
   setSettingsTab('conex');
   renderServices();
@@ -2844,17 +2867,32 @@ function addService() {
   renderServices();
 }
 
-function removeService(idx) {
+async function removeService(idx) {
+  const removed = services[idx];
   services.splice(idx, 1);
   cacheServices();
   renderServices();
+  // Remove do Supabase se tinha nome
+  if (removed && removed.nome && removed.nome.trim()) {
+    try { await DB.valoresServicos.remove(removed.nome); }
+    catch(e) { console.warn('[serviços] erro ao remover:', e.message); }
+  }
 }
 
-function saveServices() {
+async function saveServices() {
   services = services.filter(s => s.nome && s.nome.trim());
   cacheServices();
   renderServices();
-  toast('✅ Serviços salvos');
+  dot('syncing');
+  try {
+    await DB.valoresServicos.saveAll(services);
+    dot('ok');
+    toast('✅ Serviços salvos');
+  } catch(e) {
+    console.warn('[serviços] erro ao salvar no Supabase:', e.message);
+    dot('offline');
+    toast('Salvo localmente (Supabase offline)');
+  }
 }
 
 // ══════════════════════════════════════════════════════════

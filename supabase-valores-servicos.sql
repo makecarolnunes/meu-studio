@@ -1,20 +1,24 @@
 -- ─────────────────────────────────────────────────────────────
 --  DDL: valores_servicos
 --  Rodar manualmente no SQL Editor do Supabase
---  Armazena a tabela de preços por serviço × local
+--
+--  Tabela unificada de preços usada por:
+--    • financeiro/  → lookup auto-fill por (servico, local) via "nome composto"
+--    • orcamentos/  → lista de serviços com duração
+--
+--  ATENÇÃO: se a tabela antiga já existia, este script a recria.
+--  Faça backup antes se tiver dados importantes lá.
 -- ─────────────────────────────────────────────────────────────
 
-CREATE TABLE IF NOT EXISTS valores_servicos (
-  id         UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
-  servico    TEXT         NOT NULL,
-  local      TEXT         NOT NULL,
-  valor      NUMERIC(10,2) NOT NULL DEFAULT 0,
-  updated_at TIMESTAMPTZ  NOT NULL DEFAULT now(),
-  CONSTRAINT valores_servicos_unico UNIQUE (servico, local)
-);
+DROP TABLE IF EXISTS valores_servicos CASCADE;
 
--- Índice para leitura rápida por serviço
-CREATE INDEX IF NOT EXISTS idx_valores_servicos_servico ON valores_servicos (servico);
+CREATE TABLE valores_servicos (
+  id         UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
+  nome       TEXT         NOT NULL UNIQUE,
+  valor      NUMERIC(10,2) NOT NULL DEFAULT 0,
+  duracao    INTEGER,                                  -- minutos (opcional, usado p/ orçamentos)
+  updated_at TIMESTAMPTZ  NOT NULL DEFAULT now()
+);
 
 -- RLS — o app usa anon key com auth própria (tabela usuarios + RPC autenticar)
 ALTER TABLE valores_servicos ENABLE ROW LEVEL SECURITY;
@@ -32,16 +36,17 @@ CREATE POLICY "anon_delete" ON valores_servicos
   FOR DELETE TO anon USING (true);
 
 -- ─────────────────────────────────────────────────────────────
---  Dados iniciais (preços zerados para todos os serviços)
---  Remova ou ajuste os valores conforme necessário
+--  Dados iniciais — mesmas linhas dos DEFAULT_SERVICES do orçamentos
+--  + variações usadas pelo financeiro
 -- ─────────────────────────────────────────────────────────────
-INSERT INTO valores_servicos (servico, local, valor) VALUES
-  ('Maquiagem',              'Studio',       0),
-  ('Maquiagem',              'Em Domicílio', 0),
-  ('Cabelo',                 'Studio',       0),
-  ('Cabelo',                 'Em Domicílio', 0),
-  ('Maquiagem e Cabelo',     'Studio',       0),
-  ('Maquiagem e Cabelo',     'Em Domicílio', 0),
-  ('Curso de Automaquiagem', 'Studio',       0),
-  ('Curso de Automaquiagem', 'Em Domicílio', 0)
-ON CONFLICT (servico, local) DO NOTHING;
+INSERT INTO valores_servicos (nome, valor, duracao) VALUES
+  ('Maquiagem no Studio',                0,   60),
+  ('Maquiagem em domicílio',             0,   60),
+  ('Cabelo no Studio',                   0,   60),
+  ('Cabelo em domicílio',                0,   60),
+  ('Maquiagem e Cabelo no Studio',       0,  120),
+  ('Maquiagem e Cabelo em domicílio',    0,  120),
+  ('Curso de Automaquiagem no Studio',   0,  120),
+  ('Curso de Automaquiagem em domicílio',0,  120),
+  ('Noiva',                              0,  180)
+ON CONFLICT (nome) DO NOTHING;
