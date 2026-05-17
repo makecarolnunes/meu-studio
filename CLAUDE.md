@@ -194,5 +194,5 @@ if ($c -notmatch '</html>') { Write-Warning 'ARQUIVO TRUNCADO' }
 
 ---
 
-<!-- AUTO: 2026-05-17 03:32 | main | ci: redeploy para aplicar Secrets do Supabase -->
+<!-- AUTO: 2026-05-17 03:37 | main | fix: workflow usa env vars para secrets (evita problema de environment scope) -->
 
