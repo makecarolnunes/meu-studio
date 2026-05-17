@@ -194,5 +194,5 @@ if ($c -notmatch '</html>') { Write-Warning 'ARQUIVO TRUNCADO' }
 
 ---
 
-<!-- AUTO: 2026-05-17 16:28 | main | feat: design system refactor ÔÇö tokens + SVG icons + smoother borders -->
+<!-- AUTO: 2026-05-17 16:42 | main | feat: UI polish ÔÇö centralizar t├¡tulos, bot├úo voltar e remover distra├º├Áes -->
 
