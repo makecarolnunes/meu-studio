@@ -194,5 +194,5 @@ if ($c -notmatch '</html>') { Write-Warning 'ARQUIVO TRUNCADO' }
 
 ---
 
-<!-- AUTO: 2026-05-17 13:42 | main | fix: conteudo desativa GAS, funciona em modo localStorage sem dialog de setup -->
+<!-- AUTO: 2026-05-17 13:56 | main | feat: modulo Conteudo integrado ao Supabase ÔÇö tabela conteudo_ideas + sync CRUD -->
 
