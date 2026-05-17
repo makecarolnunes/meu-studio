@@ -194,5 +194,5 @@ if ($c -notmatch '</html>') { Write-Warning 'ARQUIVO TRUNCADO' }
 
 ---
 
-<!-- AUTO: 2026-05-17 16:42 | main | feat: UI polish ÔÇö centralizar t├¡tulos, bot├úo voltar e remover distra├º├Áes -->
+<!-- AUTO: 2026-05-17 20:10 | main | feat: tabela de pre├ºos de servi├ºos no Supabase + ├¡cones SVG + bot├úo voltar flutuante -->
 
