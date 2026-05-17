@@ -387,6 +387,9 @@
 
 <div class="toast" id="toast"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="../config.js"></script>
+<script src="../supabase-client.js"></script>
 <script>
 /* ============================================================
    CONFIG
@@ -487,24 +490,17 @@ function validateCurPlat(){ if(curPlat!=='todos'&&allPlats().indexOf(curPlat)===
    LOAD DATA
    ============================================================ */
 function loadData(){
-  readLS(); migrate(); validateCurPlat();
-  var url=getScriptUrl();
-  if(!url){ updateSyncDot('offline'); render(); return; }
-  showLoading(true);
-  fetch(url+'?action=getData')
-    .then(function(r){return r.json();})
+  readLS(); migrate(); validateCurPlat(); render();
+  if(typeof DB === 'undefined' || window._SB_ERROR){ updateSyncDot('offline'); return; }
+  updateSyncDot('syncing');
+  DB.conteudo.list()
     .then(function(data){
-      showLoading(false);
-      if(!data.ok){ updateSyncDot('error'); render(); return; }
-      if((!data.ideas||!data.ideas.length)&&ideas.length>0){
-        showMigrateBanner(true); updateSyncDot('error');
-      } else {
-        ideas=data.ideas||[]; customCats=data.customCats||[]; customPlats=data.customPlats||[]; curPlat=data.curPlatform||'todos';
-        migrate(); validateCurPlat(); writeLS(); updateSyncDot('ok');
+      if(data.length > 0 || ideas.length === 0){
+        ideas = data; migrate(); validateCurPlat(); writeLS();
       }
-      render();
+      updateSyncDot('ok'); render();
     })
-    .catch(function(){ showLoading(false); updateSyncDot('error'); render(); });
+    .catch(function(){ updateSyncDot('offline'); });
 }
 function migrateData(){ showMigrateBanner(false); showToast('Migrando...'); pushToSheets(); }
 
@@ -869,13 +865,17 @@ function openDayPicker(){ dayPickerOpen=true; dayPickerQ=''; renderDayContent();
 function filterDayPicker(q){ dayPickerQ=q; renderDayContent(); }
 
 function scheduleToDay(id){
-  for(var i=0;i<ideas.length;i++) if(ideas[i].id===id){ ideas[i].scheduledDate=curDayDate; break; }
+  var idea;
+  for(var i=0;i<ideas.length;i++) if(ideas[i].id===id){ ideas[i].scheduledDate=curDayDate; idea=ideas[i]; break; }
   saveIdeas(); renderCalendar(); dayPickerOpen=false; dayPickerQ=''; renderDayContent();
   showToast('Ideia programada!');
+  if(idea && typeof DB !== 'undefined' && !window._SB_ERROR) DB.conteudo.upsert(idea).catch(function(){});
 }
 function removeFromCal(id){
-  for(var i=0;i<ideas.length;i++) if(ideas[i].id===id){ ideas[i].scheduledDate=''; break; }
+  var idea;
+  for(var i=0;i<ideas.length;i++) if(ideas[i].id===id){ ideas[i].scheduledDate=''; idea=ideas[i]; break; }
   saveIdeas(); renderCalendar(); renderDayContent(); showToast('Removido do calendário');
+  if(idea && typeof DB !== 'undefined' && !window._SB_ERROR) DB.conteudo.upsert(idea).catch(function(){});
 }
 function editFromDay(id){ closeDayModal(); setTimeout(function(){openModal(id);},200); }
 
@@ -962,12 +962,18 @@ function saveIdea(){
     ideas.unshift({id:uid(),title:title,categories:fCats.slice(),formatos:fFmts.slice(),status:fSt,notes:notes,platforms:fPlats.slice(),scheduledDate:sdate,createdAt:new Date().toISOString()});
     showToast('Ideia salva!');
   }
+  var syncIdea = editId ? ideas.find(function(i){return i.id===editId;}) : ideas[0];
   saveIdeas(); closeModal(); render();
+  if(syncIdea && typeof DB !== 'undefined' && !window._SB_ERROR)
+    DB.conteudo.upsert(syncIdea).catch(function(){});
 }
 function deleteIdea(){
   if(!editId) return; if(!confirm('Excluir essa ideia?')) return;
-  ideas=ideas.filter(function(i){return i.id!==editId;});
+  var delId = editId;
+  ideas=ideas.filter(function(i){return i.id!==delId;});
   saveIdeas(); closeModal(); render(); showToast('Ideia excluida');
+  if(typeof DB !== 'undefined' && !window._SB_ERROR)
+    DB.conteudo.delete(delId).catch(function(){});
 }
 function addCustomCat(){
   var inp=document.getElementById('new-cat-inp'),name=inp.value.trim(); if(!name){inp.focus();return;}

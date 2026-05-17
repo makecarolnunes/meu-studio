@@ -342,6 +342,47 @@ window.DB = {
     },
   },
 
+  conteudo: {
+    async list() {
+      _guard();
+      const { data, error } = await _sb
+        .from('conteudo_ideas').select('*').order('created_at', { ascending: false });
+      if (error) throw error;
+      return data.map(r => ({
+        id:            r.id,
+        title:         r.title         || '',
+        categories:    r.categories    || [],
+        formatos:      r.formatos      || [],
+        status:        r.status        || 'Nao',
+        notes:         r.notes         || '',
+        platforms:     r.platforms     || [],
+        scheduledDate: r.scheduled_date || '',
+        createdAt:     r.created_at    || '',
+      }));
+    },
+    async upsert(idea) {
+      _guard();
+      const row = {
+        id:             String(idea.id),
+        title:          idea.title         || '',
+        categories:     Array.isArray(idea.categories) ? idea.categories : [],
+        formatos:       Array.isArray(idea.formatos)   ? idea.formatos   : [],
+        status:         idea.status        || 'Nao',
+        notes:          idea.notes         || '',
+        platforms:      Array.isArray(idea.platforms)  ? idea.platforms  : [],
+        scheduled_date: idea.scheduledDate || null,
+        created_at:     idea.createdAt     || new Date().toISOString(),
+      };
+      const { error } = await _sb.from('conteudo_ideas').upsert(row, { onConflict: 'id' });
+      if (error) throw error;
+    },
+    async delete(id) {
+      _guard();
+      const { error } = await _sb.from('conteudo_ideas').delete().eq('id', String(id));
+      if (error) throw error;
+    },
+  },
+
   auth: {
     // Retorna { id, usuario, nivel } se válido, null se inválido, lança erro se offline
     async login(usuario, senha) {
