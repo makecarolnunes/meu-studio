@@ -723,6 +723,19 @@
     var btn = document.getElementById('login-btn');
     if (!user || !pass) { showErr('Preencha usuário e senha.'); return; }
     btn.disabled = true; btn.textContent = 'Verificando...';
+
+    // Diagnóstico: verifica pré-requisitos antes de chamar Supabase
+    if (typeof DB === 'undefined') {
+      showErr('Erro: supabase-client.js não carregou.');
+      btn.disabled = false; btn.textContent = 'Entrar';
+      return;
+    }
+    if (!window.ENV || !window.ENV.SUPABASE_URL) {
+      showErr('Erro: config.js ausente ou sem SUPABASE_URL.');
+      btn.disabled = false; btn.textContent = 'Entrar';
+      return;
+    }
+
     try {
       var resultado = await DB.auth.login(user, pass);
       if (resultado) {
@@ -735,7 +748,9 @@
         document.getElementById('login-pass').focus();
       }
     } catch(e) {
-      showErr('Erro de conexão. Verifique sua internet.');
+      console.error('[doLogin] erro:', e);
+      var msg = (e && e.message) ? e.message : String(e);
+      showErr('Erro: ' + msg);
     } finally {
       btn.disabled = false; btn.textContent = 'Entrar';
     }
