@@ -194,5 +194,5 @@ if ($c -notmatch '</html>') { Write-Warning 'ARQUIVO TRUNCADO' }
 
 ---
 
-<!-- AUTO: 2026-05-17 03:42 | main | fix: commita config.js (anon key ├® publica por design) ÔÇö elimina dependencia de Secrets -->
+<!-- AUTO: 2026-05-17 03:47 | main | fix: showApp() esconde login-screen no Financeiro -->
 
