@@ -60,6 +60,17 @@
         }
         .gear-btn:active { background: rgba(255,255,255,.25); }
 
+        /* ── BACK FLOAT ── */
+        .btn-back-float {
+            position: fixed; bottom: 74px; left: 14px; z-index: 150;
+            width: 42px; height: 42px; border-radius: 50%; border: none;
+            background: rgba(0,0,0,.09); color: var(--text);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: background .15s; padding: 0;
+            -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+        }
+        .btn-back-float:active { background: rgba(0,0,0,.18); }
+
         /* ── CONTENT ── */
         .content { padding: 13px 13px 86px; }
 
@@ -142,8 +153,13 @@
 
         /* ── EMPTY / LOADING ── */
         .empty { text-align: center; padding: 44px 16px; color: var(--muted); }
-        .empty .ico { font-size: 2.6rem; margin-bottom: 9px; }
+        .empty .ico { display: flex; justify-content: center; margin-bottom: 9px; opacity: .45; }
+        .empty .ico svg { width: 44px; height: 44px; }
         .empty p { font-size: .85rem; line-height: 1.5; }
+        /* eico SVG sizing */
+        .eico svg { width: 18px; height: 18px; display: block; }
+        /* editbtn/delbtn SVG */
+        .editbtn svg, .delbtn svg { width: 14px; height: 14px; display: block; }
 
         /* ── SINAL BOX ── */
         .sinal-box { background: var(--amber-l); border: 1.5px dashed var(--amber); border-radius: 11px; padding: 12px 13px; margin-top: 9px; font-size: .8rem; color: #7c4a00; line-height: 1.5; display: none; }
@@ -358,7 +374,7 @@
         <div class="login-field">
             <label class="fl">Senha</label>
             <input class="fi" type="password" id="login-pass" placeholder="••••••••••••" autocomplete="current-password" style="padding-right:44px">
-            <button class="eye-btn" onclick="toggleEye()" id="eye-btn">👁</button>
+            <button class="eye-btn" onclick="toggleEye()" id="eye-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
         </div>
         <label class="login-remember">
             <input type="checkbox" id="login-remember"> Lembrar por 30 dias
@@ -370,10 +386,12 @@
 <!-- ── APP (oculto até autenticar) ── -->
 <div id="app" style="display:none">
 
+<button class="btn-back-float" onclick="window.location.href='../'" aria-label="Voltar">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+</button>
+
 <div class="hdr">
-    <button class="hdr-back" onclick="window.location.href='../'" aria-label="Voltar">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-    </button>
+    <div></div>
     <div class="hdr-center">
         <h1>Financeiro</h1>
         <div class="hdr-sub" id="hsub">Novo lançamento</div>
@@ -416,14 +434,16 @@
 </div><!-- /app -->
 
 <!-- FAB Chat -->
-<button class="fab-chat" id="fab-chat" onclick="openChat()" title="Assistente IA">🤖</button>
+<button class="fab-chat" id="fab-chat" onclick="openChat()" title="Assistente IA">
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><circle cx="9" cy="10" r="1" fill="currentColor"/><circle cx="12" cy="10" r="1" fill="currentColor"/><circle cx="15" cy="10" r="1" fill="currentColor"/></svg>
+</button>
 
 <!-- Chat Modal -->
 <div class="chat-modal" id="chat-modal">
     <div class="chat-hdr">
         <button class="chat-back" onclick="closeChat()">←</button>
         <div style="flex:1">
-            <div style="font-weight:700;font-size:1rem">🤖 Assistente Financeira</div>
+            <div style="font-weight:700;font-size:1rem;display:flex;align-items:center;gap:7px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Assistente Financeira</div>
             <div style="font-size:.7rem;opacity:.75">Powered by Claude · acesso aos seus dados</div>
         </div>
         <button onclick="chatHistory=[];renderChatMessages()" style="background:none;border:none;color:rgba(255,255,255,.7);font-size:.78rem;cursor:pointer">Limpar</button>
@@ -457,6 +477,36 @@
 <script src="../config.js"></script>
 <script src="../supabase-client.js"></script>
 <script>
+// ══════════════════════════════════════════
+//  SVG ICONS
+// ══════════════════════════════════════════
+const _s = (p) => `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
+const SVG = {
+    lock:     _s(`<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>`),
+    money:    _s(`<line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>`),
+    calendar: _s(`<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>`),
+    heart:    _s(`<path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>`),
+    bank:     _s(`<line x1="3" y1="22" x2="21" y2="22"/><line x1="6" y1="18" x2="6" y2="11"/><line x1="10" y1="18" x2="10" y2="11"/><line x1="14" y1="18" x2="14" y2="11"/><line x1="18" y1="18" x2="18" y2="11"/><polygon points="12 2 2 7 22 7"/>`),
+    book:     _s(`<path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>`),
+    users:    _s(`<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>`),
+    phone:    _s(`<rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/>`),
+    bag:      _s(`<path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/>`),
+    box:      _s(`<path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/>`),
+    tag:      _s(`<path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/>`),
+    edit:     `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`,
+    trash:    `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>`,
+    download: _s(`<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>`),
+    refresh:  _s(`<path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>`),
+    logout:   _s(`<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>`),
+    list:     _s(`<line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>`),
+    upload:   _s(`<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>`),
+    chevUp:   `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>`,
+    chevDown: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>`,
+    save:     _s(`<path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>`),
+    key:      _s(`<path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>`),
+    pricetag: _s(`<path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>`),
+};
+
 // ══════════════════════════════════════════
 //  LOGIN
 // ══════════════════════════════════════════
@@ -567,17 +617,17 @@ function toast(msg, dur) {
 }
 
 function typeStyle(t) {
-    return { Sinal:{bg:'#fff3e0',col:'#bf360c',ico:'🔒'}, Pagamento:{bg:'#efebe9',col:'#4e342e',ico:'💸'}, Parcela:{bg:'#e3f2fd',col:'#0d47a1',ico:'📅'} }[t]
-        || { bg:'#f5f5f5', col:'#666', ico:'💰' };
+    return { Sinal:{bg:'#fff3e0',col:'#bf360c',ico:SVG.lock}, Pagamento:{bg:'#efebe9',col:'#4e342e',ico:SVG.money}, Parcela:{bg:'#e3f2fd',col:'#0d47a1',ico:SVG.calendar} }[t]
+        || { bg:'#f5f5f5', col:'#666', ico:SVG.money };
 }
 function saidaStyle(t) {
-    return { 'DAS':{bg:'#fce4ec',col:'#880e4f',ico:'🏛'}, 'Curso':{bg:'#e3f2fd',col:'#0d47a1',ico:'📚'},
-             'Assistente':{bg:'#f3e5f5',col:'#6a1b9a',ico:'👥'}, 'Seguro de Celular':{bg:'#e8eaf6',col:'#283593',ico:'📱'},
-             'Reposição de Material':{bg:'#fff8e1',col:'#f57f17',ico:'🛍'},
-             'Investimento Produto':{bg:'#e0f7fa',col:'#006064',ico:'💊'},
-             'Investimento Material':{bg:'#efebe9',col:'#4e342e',ico:'📦'},
-             'Outro':{bg:'#f5f5f5',col:'#424242',ico:'📌'} }[t]
-        || { bg:'#f5f5f5', col:'#666', ico:'💰' };
+    return { 'DAS':{bg:'#fce4ec',col:'#880e4f',ico:SVG.bank}, 'Curso':{bg:'#e3f2fd',col:'#0d47a1',ico:SVG.book},
+             'Assistente':{bg:'#f3e5f5',col:'#6a1b9a',ico:SVG.users}, 'Seguro de Celular':{bg:'#e8eaf6',col:'#283593',ico:SVG.phone},
+             'Reposição de Material':{bg:'#fff8e1',col:'#f57f17',ico:SVG.bag},
+             'Investimento Produto':{bg:'#e0f7fa',col:'#006064',ico:SVG.box},
+             'Investimento Material':{bg:'#efebe9',col:'#4e342e',ico:SVG.box},
+             'Outro':{bg:'#f5f5f5',col:'#424242',ico:SVG.tag} }[t]
+        || { bg:'#f5f5f5', col:'#666', ico:SVG.money };
 }
 
 function updateDot(state) { /* sync dot removido */ }
@@ -599,9 +649,11 @@ async function loadFromSupabase() {
         noivas  = novs.map(normalizeN);
         cacheEntries(); cacheSaidas(); cacheNoivas();
         updateDot('ok');
+        // Carrega preços em paralelo (não bloqueia o render principal)
+        loadServicePricesFromSupabase().catch(() => {});
     } catch(e) {
         updateDot('offline');
-        toast('📵 Supabase indisponível — usando dados locais');
+        toast('Supabase indisponível — usando dados locais');
     } finally {
         isSyncing = false;
         render();
@@ -639,7 +691,7 @@ function go(s) {
     document.querySelectorAll('.ni').forEach(el => el.classList.remove('active'));
     document.getElementById('nav-'+s).classList.add('active');
     document.getElementById('hsub').textContent =
-        { nova:'Novo lançamento', lista:'Entradas', saidas:'Saídas', resumo:'Resumo', noivas:'Noivas 💍' }[s];
+        { nova:'Novo lançamento', lista:'Entradas', saidas:'Saídas', resumo:'Resumo', noivas:'Noivas' }[s];
     render();
 }
 
@@ -651,6 +703,18 @@ function pick(field, value, form) {
     if (form === 's') Fs[field] = value;
     else F[field] = value;
     if (field === 'tipo') { render(); return; }
+    // Auto-fill price when service or local changes
+    if (!form && (field === 'servico' || field === 'local')) {
+        const prices = getServicePrices();
+        const k = priceKey(F.servico, F.local);
+        const p = prices[k];
+        if (p) {
+            const vInput = document.getElementById('i-v');
+            const vtInput = document.getElementById('i-vt');
+            if (vInput && !vInput.value) { vInput.value = p; F.valor = String(p); }
+            if (vtInput && !vtInput.value) { vtInput.value = p; F.valorTotal = String(p); }
+        }
+    }
     document.querySelectorAll(`[data-f="${field}"][data-form="${form||'e'}"]`).forEach(btn => {
         const on = btn.dataset.v === value;
         if (field === 'status') {
@@ -730,8 +794,8 @@ function renderNova() {
         <div class="fg">
             <label class="fl">Status</label>
             <div class="stog">
-                <button class="stbtn ${F.status==='Realizado'?'on-g':''}" data-f="status" data-v="Realizado" data-form="e" onclick="pick('status','Realizado')">✅ Realizado</button>
-                <button class="stbtn ${F.status==='Previsto'?'on-r':''}"  data-f="status" data-v="Previsto"  data-form="e" onclick="pick('status','Previsto')">🔮 Previsto</button>
+                <button class="stbtn ${F.status==='Realizado'?'on-g':''}" data-f="status" data-v="Realizado" data-form="e" onclick="pick('status','Realizado')">Realizado</button>
+                <button class="stbtn ${F.status==='Previsto'?'on-r':''}"  data-f="status" data-v="Previsto"  data-form="e" onclick="pick('status','Previsto')">Previsto</button>
             </div>
         </div>
         <div class="two">
@@ -755,7 +819,7 @@ function renderNova() {
         <div class="fg"><label class="fl">Origem</label>${bgroup('origem',['Produção Social','Noiva','Assistência',{l:'Curso Auto',v:'Curso de Automaquiagem'}])}</div>
         <div class="fg"><label class="fl">Observações</label><textarea class="fi ta" id="i-ob" placeholder="Opcional...">${F.obs}</textarea></div>
     </div>
-    <button class="bsub" onclick="saveEntry()">💾 Salvar Lançamento</button>`;
+    <button class="bsub" onclick="saveEntry()">Salvar Lançamento</button>`;
 }
 function updateSinalPreview() {
     const box = document.getElementById('sinal-box');
@@ -766,7 +830,7 @@ function updateSinalPreview() {
     const rest  = total - sinal;
     if (total>0 && sinal>0 && rest>0) {
         const d = ds ? ds.split('-').reverse().join('/') : '(data do serviço)';
-        box.innerHTML = `🔮 Será criado automaticamente um <strong>Previsto</strong> de<span class="rv">${brl(rest)}</span>para ${d}`;
+        box.innerHTML = `Será criado automaticamente um <strong>Previsto</strong> de<span class="rv">${brl(rest)}</span>para ${d}`;
         box.style.display = 'block';
     } else box.style.display = 'none';
 }
@@ -779,7 +843,7 @@ function renderLista() {
     if (listFilter!=='todos') list = list.filter(e=>e.status===listFilter||e.tipo===listFilter);
     list.sort((a,b)=>(b.dataPag||'').localeCompare(a.dataPag||''));
     const total = list.reduce((s,e)=>s+Number(e.valor||0),0);
-    const filters = [{k:'todos',l:'Todos'},{k:'Realizado',l:'✅ Realizado'},{k:'Previsto',l:'🔮 Previsto'},{k:'Sinal',l:'🔒 Sinal'},{k:'Pagamento',l:'💸 Pagamento'},{k:'Parcela',l:'📅 Parcela'}];
+    const filters = [{k:'todos',l:'Todos'},{k:'Realizado',l:'Realizado'},{k:'Previsto',l:'Previsto'},{k:'Sinal',l:'Sinal'},{k:'Pagamento',l:'Pagamento'},{k:'Parcela',l:'Parcela'}];
     return `
     <div class="msel">
         <button class="mnbtn" onclick="chm(-1)">‹</button>
@@ -787,7 +851,7 @@ function renderLista() {
         <button class="mnbtn" onclick="chm(1)">›</button>
     </div>
     <div class="ftabs">${filters.map(f=>`<button class="ftab ${listFilter===f.k?'on':''}" onclick="setF('${f.k}')">${f.l}</button>`).join('')}</div>
-    ${list.length===0?`<div class="empty"><div class="ico">📋</div><p>Nenhuma entrada em<br><strong>${MONTHS[selMonth]} ${selYear}</strong></p></div>`
+    ${list.length===0?`<div class="empty"><div class="ico">${SVG.list}</div><p>Nenhuma entrada em<br><strong>${MONTHS[selMonth]} ${selYear}</strong></p></div>`
     :list.map(e=>{
         const s=typeStyle(e.tipo);
         const extra=e.valorTotal?` · Total: ${brl(e.valorTotal)}`:'';
@@ -799,10 +863,10 @@ function renderLista() {
                 <div class="emta">${e.servico} · ${e.local}</div></div>
             <div class="erig">
                 <div class="eval" style="color:${e.status==='Realizado'?'var(--ok)':'var(--red)'}">${brl(e.valor)}</div>
-                <span class="sbadge ${e.status==='Realizado'?'sb-g':'sb-r'}" onclick="toggleStatus('${e.id}')">${e.status==='Realizado'?'✅ Realizado':'🔮 Previsto'}</span>
+                <span class="sbadge ${e.status==='Realizado'?'sb-g':'sb-r'}" onclick="toggleStatus('${e.id}')">${e.status==='Realizado'?'Realizado':'Previsto'}</span>
             </div>
-            <button class="editbtn" onclick="openEditEntry('${e.id}')">✏️</button>
-            <button class="delbtn" onclick="delEntry('${e.id}')">🗑</button>
+            <button class="editbtn" onclick="openEditEntry('${e.id}')">${SVG.edit}</button>
+            <button class="delbtn" onclick="delEntry('${e.id}')">${SVG.trash}</button>
         </div>`;
     }).join('')}`;
 }
@@ -830,14 +894,14 @@ function renderSaidas() {
         </div>
         <div class="fg"><label class="fl">Tipo de Despesa</label><select class="fi" id="si-tipo">${SAIDA_TIPOS.map(t=>`<option value="${t}" ${Fs.tipo===t?'selected':''}>${t}</option>`).join('')}</select></div>
         <div class="fg"><label class="fl">Status</label><div class="stog">
-            <button class="stbtn ${Fs.status==='Pago'?'on-g':''}"    data-f="status" data-v="Pago"    data-form="s" onclick="pick('status','Pago','s')">✅ Pago</button>
-            <button class="stbtn ${Fs.status==='Previsto'?'on-r':''}" data-f="status" data-v="Previsto" data-form="s" onclick="pick('status','Previsto','s')">🔮 Previsto</button>
+            <button class="stbtn ${Fs.status==='Pago'?'on-g':''}"    data-f="status" data-v="Pago"    data-form="s" onclick="pick('status','Pago','s')">Pago</button>
+            <button class="stbtn ${Fs.status==='Previsto'?'on-r':''}" data-f="status" data-v="Previsto" data-form="s" onclick="pick('status','Previsto','s')">Previsto</button>
         </div></div>
         <div class="fg"><label class="fl">Forma de Pagamento</label>${bgroup('forma',['PIX','Crédito','Dinheiro'],'s')}</div>
         <div class="fg"><label class="fl">Observações</label><textarea class="fi ta" id="si-ob" placeholder="Detalhe...">${Fs.obs}</textarea></div>
-        <button class="bsub red" onclick="saveSaida()">💾 Salvar Saída</button>
+        <button class="bsub red" onclick="saveSaida()">Salvar Saída</button>
     </div>`:''}
-    ${list.length===0?`<div class="empty"><div class="ico">📤</div><p>Nenhuma saída em<br><strong>${MONTHS[selMonth]} ${selYear}</strong></p></div>`
+    ${list.length===0?`<div class="empty"><div class="ico">${SVG.upload}</div><p>Nenhuma saída em<br><strong>${MONTHS[selMonth]} ${selYear}</strong></p></div>`
     :list.map(s=>{
         const st=saidaStyle(s.tipo);
         return `<div class="eitem">
@@ -848,13 +912,13 @@ function renderSaidas() {
             </div>
             <div class="erig">
                 <div class="eval" style="color:${s.status==='Pago'?'var(--red)':'var(--muted)'}">${brl(s.valor)}</div>
-                <span class="sbadge ${s.status==='Pago'?'sb-r':'sb-b'}" onclick="toggleSaidaStatus('${s.id}')">${s.status==='Pago'?'✅ Pago':'🔮 Previsto'}</span>
+                <span class="sbadge ${s.status==='Pago'?'sb-r':'sb-b'}" onclick="toggleSaidaStatus('${s.id}')">${s.status==='Pago'?'Pago':'Previsto'}</span>
             </div>
-            <button class="editbtn" onclick="openEditSaida('${s.id}')">✏️</button>
-            <button class="delbtn" onclick="delSaida('${s.id}')">🗑</button>
+            <button class="editbtn" onclick="openEditSaida('${s.id}')">${SVG.edit}</button>
+            <button class="delbtn" onclick="delSaida('${s.id}')">${SVG.trash}</button>
         </div>`;
     }).join('')}
-    ${list.length?`<button class="bexp" onclick="exportSaidasCSV()">📥 Exportar CSV</button>`:''}`;
+    ${list.length?`<button class="bexp" onclick="exportSaidasCSV()" style="display:flex;align-items:center;justify-content:center;gap:7px">${SVG.download} Exportar CSV</button>`:''}`;
 }
 
 // ══════════════════════════════════════════
@@ -1087,31 +1151,117 @@ function openConfig() {
 function closeModal() {
     document.getElementById('modal-bg').style.display = 'none';
 }
+// ── Service prices helpers ──
+function priceKey(servico, local) {
+    return (servico || '').replace(/\s+/g,'_') + '__' + (local || '').replace(/\s+/g,'_');
+}
+function getServicePrices() {
+    try { return JSON.parse(localStorage.getItem('mk_service_prices') || '{}'); } catch(e) { return {}; }
+}
+function _cacheServicePrices(prices) {
+    localStorage.setItem('mk_service_prices', JSON.stringify(prices));
+}
+async function loadServicePricesFromSupabase() {
+    try {
+        const prices = await DB.valoresServicos.load();
+        _cacheServicePrices(prices);
+        return prices;
+    } catch(e) {
+        console.warn('[preços] Supabase indisponível, usando cache local:', e.message);
+        return getServicePrices();
+    }
+}
+
+let _cfgTab = 'servicos';
+function openConfigTab(tab) {
+    _cfgTab = tab;
+    renderConfigModal();
+}
+
 function renderConfigModal() {
-    const statusLabel = '🟢 Supabase conectado';
     const hasKey = !!localStorage.getItem('mk_claude_key');
-    document.getElementById('modal-inner').innerHTML = `
-    <div class="modal-title">⚙️ Configurações</div>
-    <div style="background:var(--brown-l);border-radius:9px;padding:10px 14px;font-size:.88rem;color:var(--brown-d);font-weight:600;margin-bottom:14px">
-        ${statusLabel}
-    </div>
-    <button class="bsub" style="margin-bottom:10px" onclick="syncNow()">🔄 Sincronizar agora</button>
-    <div style="border-top:1px solid var(--border);padding-top:12px;margin-top:4px">
-        <label class="fl" style="margin-bottom:5px">🤖 Chave Claude IA (sk-ant-...)</label>
-        <input class="fi" type="password" id="cfg-claude-key" placeholder="${hasKey ? '••••••••••••' : 'Cole aqui sua sk-ant-key'}"
-            style="margin-bottom:8px;font-size:.82rem">
-        <button class="bsub" style="background:#555;box-shadow:none;margin-bottom:10px" onclick="saveCfgKey()">Salvar chave</button>
-    </div>
-    <button class="skip" onclick="closeModal()">Fechar</button>
-    <button class="logout-btn" onclick="doLogout()">🚪 Sair da conta</button>
+    const prices = getServicePrices();
+    const SERVS = [
+        {l:'Maquiagem', v:'Maquiagem'},
+        {l:'Cabelo', v:'Cabelo'},
+        {l:'Maq+Cabelo', v:'Maquiagem e Cabelo'},
+        {l:'Curso Auto', v:'Curso de Automaquiagem'}
+    ];
+    const LOCS = ['Studio','Em Domicílio'];
+
+    const tabServicos = _cfgTab === 'servicos' ? `
+    <div style="font-size:.78rem;color:var(--muted);margin-bottom:12px;line-height:1.5">Configure os valores padrão por serviço. Ao selecionar um serviço no formulário, o valor será preenchido automaticamente.</div>
+    <table style="width:100%;border-collapse:collapse;font-size:.82rem">
+        <thead><tr>
+            <th style="text-align:left;padding:5px 4px;color:var(--muted);font-size:.67rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;border-bottom:1.5px solid var(--border)">Serviço</th>
+            <th style="text-align:center;padding:5px 4px;color:var(--muted);font-size:.67rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;border-bottom:1.5px solid var(--border)">Studio</th>
+            <th style="text-align:center;padding:5px 4px;color:var(--muted);font-size:.67rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;border-bottom:1.5px solid var(--border)">Domicílio</th>
+        </tr></thead>
+        <tbody>
+        ${SERVS.map(s => `<tr>
+            <td style="padding:7px 4px;font-weight:600;color:var(--text)">${s.l}</td>
+            ${LOCS.map(loc => {
+                const k = priceKey(s.v, loc);
+                const v = prices[k] || '';
+                return `<td style="padding:7px 3px"><div style="position:relative"><span style="position:absolute;left:8px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:.8rem;font-weight:600;pointer-events:none">R$</span><input type="number" id="sp_${k}" value="${v}" placeholder="0" step="1" min="0" inputmode="decimal" style="width:100%;padding:7px 7px 7px 28px;border:1.5px solid var(--border);border-radius:10px;font-size:.88rem;font-weight:700;color:var(--text);background:white;-webkit-appearance:none;appearance:none;text-align:right;box-sizing:border-box"></div></td>`;
+            }).join('')}
+        </tr>`).join('')}
+        </tbody>
+    </table>
+    <button class="bsub" style="margin-top:14px" onclick="saveServicePricesFromForm()">Salvar tabela de preços</button>
+    ` : `
+    <div style="font-size:.78rem;color:var(--muted);margin-bottom:12px;line-height:1.5">Cole sua chave da API Claude (sk-ant-...) para habilitar o assistente de IA.</div>
+    <input class="fi" type="password" id="cfg-claude-key" placeholder="${hasKey ? '••••••••••••' : 'Cole aqui sua sk-ant-key'}"
+        style="margin-bottom:10px;font-size:.82rem">
+    <button class="bsub" style="background:#555;box-shadow:none;margin-bottom:0" onclick="saveCfgKey()">Salvar chave</button>
     `;
+
+    document.getElementById('modal-inner').innerHTML = `
+    <div class="modal-title" style="margin-bottom:12px">Configurações</div>
+    <div style="background:var(--brown-l);border-radius:9px;padding:8px 12px;font-size:.82rem;color:var(--brown-d);font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:7px">
+        <span style="width:8px;height:8px;border-radius:50%;background:var(--ok);flex-shrink:0;display:inline-block"></span>Supabase conectado
+    </div>
+    <button class="bsub" style="margin-bottom:14px;display:flex;align-items:center;justify-content:center;gap:8px" onclick="syncNow()">${SVG.refresh} Sincronizar agora</button>
+    <div class="modal-tabs" style="margin-bottom:14px">
+        <button class="modal-tab ${_cfgTab==='servicos'?'on':''}" onclick="openConfigTab('servicos')">Preços</button>
+        <button class="modal-tab ${_cfgTab==='ia'?'on':''}" onclick="openConfigTab('ia')">Claude IA</button>
+    </div>
+    ${tabServicos}
+    <div style="height:12px"></div>
+    <button class="skip" onclick="closeModal()">Fechar</button>
+    <button class="logout-btn" style="display:flex;align-items:center;justify-content:center;gap:8px" onclick="doLogout()">${SVG.logout} Sair da conta</button>
+    `;
+}
+async function saveServicePricesFromForm() {
+    const SERVS = ['Maquiagem','Cabelo','Maquiagem e Cabelo','Curso de Automaquiagem'];
+    const LOCS = ['Studio','Em Domicílio'];
+    const prices = {};
+    const rows = [];
+    SERVS.forEach(s => LOCS.forEach(loc => {
+        const k = priceKey(s, loc);
+        const el = document.getElementById('sp_' + k);
+        const v = el ? parseFloat(el.value) : 0;
+        prices[k] = isNaN(v) ? 0 : v;
+        rows.push({ servico: s, local: loc, valor: isNaN(v) ? 0 : v });
+    }));
+    // Atualiza cache local imediatamente (UX responsiva)
+    _cacheServicePrices(prices);
+    closeModal();
+    toast('Salvando preços...');
+    try {
+        await DB.valoresServicos.saveAll(rows);
+        toast('Tabela de preços salva!');
+    } catch(e) {
+        console.error('[preços] Erro ao salvar no Supabase:', e);
+        toast('Salvo localmente (Supabase offline)');
+    }
 }
 function saveCfgKey() {
     const k = document.getElementById('cfg-claude-key').value.trim();
-    if (!k) { toast('⚠️ Cole a sk-ant-key no campo!'); return; }
+    if (!k) { toast('Cole a sk-ant-key no campo!'); return; }
     localStorage.setItem('mk_claude_key', k);
     closeModal();
-    toast('✅ Chave Claude salva!');
+    toast('Chave Claude salva!');
 }
 
 async function syncNow() {
@@ -1155,8 +1305,8 @@ function exportSaidasCSV() {
 function renderNoivas() {
     const sorted = [...noivas].sort((a,b)=>(a.dataCasamento||'').localeCompare(b.dataCasamento||''));
     return `
-    <button class="add-btn" style="border-color:#e91e63;color:#e91e63;margin-bottom:11px" onclick="openAddNoiva()">💍 + Nova Noiva</button>
-    ${sorted.length===0 ? `<div class="empty"><div class="ico">💍</div><p>Nenhuma noiva cadastrada.<br>Adicione para acompanhar os pagamentos.</p></div>` :
+    <button class="add-btn" style="border-color:#e91e63;color:#e91e63;margin-bottom:11px;display:flex;align-items:center;justify-content:center;gap:7px" onclick="openAddNoiva()">${SVG.heart} + Nova Noiva</button>
+    ${sorted.length===0 ? `<div class="empty"><div class="ico">${SVG.heart}</div><p>Nenhuma noiva cadastrada.<br>Adicione para acompanhar os pagamentos.</p></div>` :
     sorted.map(n=>{
         // Vincula por noivaId OU por nome (cobre IDs errados gerados por tool-use paralelo)
         const pgtos = entries.filter(e=>e.noivaId===n.id||(e.origem==='Noiva'&&e.cliente.trim().toLowerCase()===n.nome.trim().toLowerCase()));
@@ -1169,11 +1319,11 @@ function renderNoivas() {
         const cor       = pct>=100?'var(--ok)':pct>=50?'#f59e0b':'var(--red)';
         const isOpen    = noivaDetail===n.id;
         const diasCasa  = n.dataCasamento ? Math.ceil((new Date(n.dataCasamento)-new Date())/86400000) : null;
-        const badge     = totalPago>=contrato&&contrato>0 ? `<span style="background:var(--ok-l);color:var(--ok);font-size:.62rem;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:6px">✅ Quitada</span>`
-                        : falta>0&&diasCasa!==null&&diasCasa<30&&diasCasa>0 ? `<span style="background:var(--red-l);color:var(--red);font-size:.62rem;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:6px">⚠️ ${diasCasa}d</span>` : '';
+        const badge     = totalPago>=contrato&&contrato>0 ? `<span style="background:var(--ok-l);color:var(--ok);font-size:.62rem;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:6px">Quitada</span>`
+                        : falta>0&&diasCasa!==null&&diasCasa<30&&diasCasa>0 ? `<span style="background:var(--red-l);color:var(--red);font-size:.62rem;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:6px">${diasCasa}d</span>` : '';
         return `<div class="card" style="margin-bottom:10px">
             <div style="display:flex;align-items:flex-start;gap:11px;cursor:pointer" onclick="toggleNoivaDetail('${n.id}')">
-                <div style="width:42px;height:42px;background:#fce4ec;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0">💍</div>
+                <div style="width:42px;height:42px;background:#fce4ec;border-radius:10px;display:flex;align-items:center;justify-content:center;color:#e91e63;flex-shrink:0">${SVG.heart}</div>
                 <div style="flex:1;min-width:0">
                     <div style="font-weight:700;font-size:.97rem">${n.nome}${badge}</div>
                     <div style="font-size:.71rem;color:var(--muted);margin-top:2px">
@@ -1186,12 +1336,12 @@ function renderNoivas() {
                         </div>
                     </div>
                     <div style="display:flex;gap:12px;font-size:.71rem;flex-wrap:wrap">
-                        <span style="color:var(--ok);font-weight:700">✅ Pago: ${brl(totalPago)}</span>
-                        ${totalPrev>0?`<span style="color:#f59e0b;font-weight:700">🔮 Previsto: ${brl(totalPrev)}</span>`:''}
+                        <span style="color:var(--ok);font-weight:700">Pago: ${brl(totalPago)}</span>
+                        ${totalPrev>0?`<span style="color:#f59e0b;font-weight:700">Previsto: ${brl(totalPrev)}</span>`:''}
                         ${falta>0?`<span style="color:var(--red);font-weight:700">Falta: ${brl(falta)}</span>`:''}
                     </div>
                 </div>
-                <div style="color:var(--muted);font-size:.9rem;margin-top:4px">${isOpen?'▲':'▼'}</div>
+                <div style="color:var(--muted);margin-top:4px">${isOpen?SVG.chevUp:SVG.chevDown}</div>
             </div>
             ${isOpen?`
             <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">
@@ -1204,16 +1354,16 @@ function renderNoivas() {
                     </div>
                     <div style="text-align:right;flex-shrink:0">
                         <div style="font-weight:700;font-size:.9rem;color:${p.status==='Realizado'?'var(--ok)':'var(--muted)'}">${brl(p.valor)}</div>
-                        <span class="sbadge ${p.status==='Realizado'?'sb-g':'sb-r'}" onclick="toggleStatus('${p.id}')">${p.status==='Realizado'?'✅ Pago':'🔮 Previsto'}</span>
+                        <span class="sbadge ${p.status==='Realizado'?'sb-g':'sb-r'}" onclick="toggleStatus('${p.id}')">${p.status==='Realizado'?'Pago':'Previsto'}</span>
                     </div>
-                    <button class="editbtn" onclick="openEditEntry('${p.id}')" style="width:28px;height:28px;font-size:.75rem">✏️</button>
-                    <button class="delbtn"  onclick="delEntry('${p.id}')"      style="width:28px;height:28px;font-size:.75rem">🗑</button>
+                    <button class="editbtn" onclick="openEditEntry('${p.id}')" style="width:28px;height:28px">${SVG.edit}</button>
+                    <button class="delbtn"  onclick="delEntry('${p.id}')"      style="width:28px;height:28px">${SVG.trash}</button>
                 </div>`).join('')}
                 <div style="display:flex;gap:8px;margin-top:12px">
                     <button class="bsub" style="flex:1;padding:11px;font-size:.87rem" onclick="openNoivaPgto('${n.id}','${n.nome.replace(/'/g,"\\'").replace(/"/g,'&quot;')}')">+ Registrar Pagamento</button>
-                    <button class="delbtn" style="width:42px;height:42px" onclick="deleteNoiva('${n.id}')">🗑</button>
+                    <button class="delbtn" style="width:42px;height:42px" onclick="deleteNoiva('${n.id}')">${SVG.trash}</button>
                 </div>
-                ${n.obs?`<div style="font-size:.74rem;color:var(--muted);margin-top:10px;font-style:italic;line-height:1.4">📝 ${n.obs}</div>`:''}
+                ${n.obs?`<div style="font-size:.74rem;color:var(--muted);margin-top:10px;font-style:italic;line-height:1.4">${n.obs}</div>`:''}
             </div>`:''}
         </div>`;
     }).join('')}`;
@@ -1283,7 +1433,7 @@ function recalcRestaNoiva(noivaIdOrNome) {
 function openAddNoiva() {
     document.getElementById('modal-bg').style.display='flex';
     document.getElementById('modal-inner').innerHTML=`
-    <div class="modal-title">💍 Cadastrar Noiva</div>
+    <div class="modal-title">Cadastrar Noiva</div>
     <div class="fg"><label class="fl">Nome da Noiva</label><input class="fi" type="text" id="nv-nome" placeholder="Ex: Maria Santos" autocomplete="off"></div>
     <div class="fg"><label class="fl">Data do Casamento</label><input class="fi" type="date" id="nv-data"></div>
     <div class="fg"><label class="fl">Valor Total do Contrato</label><div class="vwrap"><span class="vpfx">R$</span><input class="fi" type="number" id="nv-valor" placeholder="0,00" step="0.01" min="0" inputmode="decimal"></div></div>
@@ -1387,8 +1537,8 @@ function deleteNoiva(id) {
 function openNoivaPgto(noivaId, nomeCli) {
     document.getElementById('modal-bg').style.display='flex';
     document.getElementById('modal-inner').innerHTML=`
-    <div class="modal-title">💰 Registrar Pagamento</div>
-    <div style="background:var(--brown-l);border-radius:9px;padding:9px 12px;font-size:.85rem;color:var(--brown-d);font-weight:700;margin-bottom:16px">💍 ${nomeCli}</div>
+    <div class="modal-title">Registrar Pagamento</div>
+    <div style="background:var(--brown-l);border-radius:9px;padding:9px 12px;font-size:.85rem;color:var(--brown-d);font-weight:700;margin-bottom:16px">${nomeCli}</div>
     <div class="fg"><label class="fl">Status</label>
         <div class="stog">
             <button class="stbtn on-g" onclick="edPickStatus('Realizado',this)">✅ Realizado</button>
@@ -1466,7 +1616,7 @@ function openEditEntry(id) {
     _pick = {};
     document.getElementById('modal-bg').style.display='flex';
     document.getElementById('modal-inner').innerHTML=`
-    <div class="modal-title">✏️ Editar Entrada</div>
+    <div class="modal-title">Editar Entrada</div>
     <div class="two">
         <div class="fg"><label class="fl">Data Pgto</label><input class="fi" type="date" id="ee-dataPag" value="${e.dataPag||''}"></div>
         <div class="fg"><label class="fl">Data Serviço</label><input class="fi" type="date" id="ee-dataServ" value="${e.dataServ||''}"></div>
@@ -1529,7 +1679,7 @@ function openEditSaida(id) {
     _pick = {};
     document.getElementById('modal-bg').style.display='flex';
     document.getElementById('modal-inner').innerHTML=`
-    <div class="modal-title">✏️ Editar Saída</div>
+    <div class="modal-title">Editar Saída</div>
     <div class="fg"><label class="fl">Data</label><input class="fi" type="date" id="es-data" value="${s.dataPag||''}"></div>
     <div class="fg"><label class="fl">Tipo de Despesa</label><div class="bg" style="flex-wrap:wrap">
         ${SAIDA_TIPOS.map(t=>`<button class="bt ${s.tipo===t?'on':''}" onclick="edPick('stipo','${t}',this)" style="font-size:.78rem">${t}</button>`).join('')}

@@ -383,6 +383,38 @@ window.DB = {
     },
   },
 
+  valoresServicos: {
+    // Retorna objeto { 'Servico__Local': valor, ... } pronto para uso no financeiro
+    async load() {
+      _guard();
+      const { data, error } = await _sb
+        .from('valores_servicos')
+        .select('servico, local, valor')
+        .order('servico');
+      if (error) throw error;
+      const map = {};
+      data.forEach(r => {
+        const k = r.servico.replace(/\s+/g,'_') + '__' + r.local.replace(/\s+/g,'_');
+        map[k] = r.valor != null ? Number(r.valor) : 0;
+      });
+      return map;
+    },
+    // Recebe array [{ servico, local, valor }] e faz upsert de todos
+    async saveAll(rows) {
+      _guard();
+      const data = rows.map(r => ({
+        servico:    r.servico,
+        local:      r.local,
+        valor:      parseFloat(r.valor) || 0,
+        updated_at: new Date().toISOString(),
+      }));
+      const { error } = await _sb
+        .from('valores_servicos')
+        .upsert(data, { onConflict: 'servico,local' });
+      if (error) throw error;
+    },
+  },
+
   auth: {
     // Retorna { id, usuario, nivel } se válido, null se inválido, lança erro se offline
     async login(usuario, senha) {
