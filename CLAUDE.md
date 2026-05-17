@@ -194,5 +194,5 @@ if ($c -notmatch '</html>') { Write-Warning 'ARQUIVO TRUNCADO' }
 
 ---
 
-<!-- AUTO: 2026-05-17 13:56 | main | feat: modulo Conteudo integrado ao Supabase ÔÇö tabela conteudo_ideas + sync CRUD -->
+<!-- AUTO: 2026-05-17 14:57 | main | feat: barra lateral de navega├º├úo global (sidebar.js) -->
 
