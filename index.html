@@ -454,16 +454,14 @@
   //  HUB — busca links dos sistemas no Apps Script da planilha
   // ══════════════════════════════════════════════════════════
 
-  var HUB_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxRoMVHD8s8yZZBJzbayw6n3lsCun6W4msJ56ZHYl2vkukRjykSw8uBd8AuUt7zJtgC/exec';
-
   var ORDER_OPS = ['orcamentos', 'financeiro', 'clientes', 'agendamentos'];
 
   var FALLBACK = [
-    { nome: 'Orçamentos',   descricao: 'Início do fluxo — feche tudo em um clique', icone: '💰', url: 'orcamentos/orcamentos_novo.html', cor: 'purple'       },
-    { nome: 'Financeiro',   descricao: 'Entradas, saídas e resumo do mês',          icone: '💵', url: 'financeiro/index.html',          cor: 'green'        },
-    { nome: 'Clientes',     descricao: 'Atendimentos realizados e previstos',       icone: '👥', url: 'clientes/index.html',            cor: 'brown'        },
-    { nome: 'Agendamentos', descricao: 'Confirmação avulsa de agenda',              icone: '📅', url: 'confirmacao/confirmacao.html',   cor: 'purple-light' },
-    { nome: 'Conteúdo',     descricao: 'Planejamento de posts e ideias',            icone: '📱', url: 'conteudo/index.html',            cor: 'amber'        },
+    { nome: 'Orçamentos',   descricao: 'Início do fluxo — feche tudo em um clique', icone: '💰', url: 'orcamentos/',   cor: 'purple'       },
+    { nome: 'Financeiro',   descricao: 'Entradas, saídas e resumo do mês',          icone: '💵', url: 'financeiro/',   cor: 'green'        },
+    { nome: 'Clientes',     descricao: 'Atendimentos realizados e previstos',       icone: '👥', url: 'clientes/',     cor: 'brown'        },
+    { nome: 'Agendamentos', descricao: 'Confirmação avulsa de agenda',              icone: '📅', url: 'confirmacao/',  cor: 'purple-light' },
+    { nome: 'Conteúdo',     descricao: 'Planejamento de posts e ideias',            icone: '📱', url: 'conteudo/',     cor: 'amber'        },
   ];
 
   // ── UTILS ──
@@ -526,7 +524,7 @@
     });
 
     if (!byKey.orcamentos) byKey.orcamentos = normItem(FALLBACK[0]);
-    if (!byKey.orcamentos.url) byKey.orcamentos.url = 'orcamentos/orcamentos_novo.html';
+    if (!byKey.orcamentos.url) byKey.orcamentos.url = 'orcamentos/';
 
     // ── Operação ──
     var opsHtml = '';
@@ -604,34 +602,11 @@
       .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 
-  // ── Carrega a planilha (com cache localStorage) ──
-  async function loadHub() {
-    var cached = safeJSON(localStorage.getItem('hub_systems'), null);
-    buildCards(cached || FALLBACK);
-    setSync('syncing', 'Sincronizando');
-
-    try {
-      var url = HUB_SCRIPT_URL + (HUB_SCRIPT_URL.indexOf('?') >= 0 ? '&' : '?') + '_=' + Date.now();
-      var r = await fetch(url);
-      if (!r.ok) throw new Error('HTTP ' + r.status);
-      var data = await r.json();
-      var items =
-        Array.isArray(data)         ? data         :
-        Array.isArray(data.items)   ? data.items   :
-        Array.isArray(data.rows)    ? data.rows    :
-        Array.isArray(data.systems) ? data.systems :
-        Array.isArray(data.data)    ? data.data    : null;
-
-      if (items && items.length) {
-        localStorage.setItem('hub_systems', JSON.stringify(items));
-        buildCards(items);
-        setSync('', 'Atualizado');
-      } else {
-        setSync('offline', cached ? 'Cache' : 'Sem dados');
-      }
-    } catch(err) {
-      setSync('offline', cached ? 'Cache' : 'Offline');
-    }
+  // ── Carrega os cards (somente FALLBACK — sem GAS) ──
+  function loadHub() {
+    localStorage.removeItem('hub_systems'); // limpa cache antigo com URLs do Netlify
+    buildCards(FALLBACK);
+    setSync('', 'Atualizado');
   }
 
   // ── Greeting + data ──
