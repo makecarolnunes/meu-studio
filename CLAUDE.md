@@ -23,10 +23,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 | Módulo | Path | Backend |
 |--------|------|---------|
-| **Hub** | `index.html` / `hub.html` | Estático |
+| **Hub** | `index.html` (= cópia de `hub.html`) | Estático — entry point do GitHub Pages |
 | **Financeiro** | `financeiro/index.html` | Supabase `entries`, `noivas`, `saidas` |
 | **Orçamentos** | `orcamentos/orcamentos_novo.html` | Supabase `orcamentos` + Storage `comprovantes` |
 | **Clientes / Conteúdo** | `clientes/`, `conteudo/` | HTML estático (mínimo) |
+
+> `hub.html` é o arquivo **editável**. `index.html` é sempre uma cópia dele (`cp hub.html index.html`) — necessário porque GitHub Pages serve `index.html` como raiz.
 
 ### Data Flow (pós-migração)
 
@@ -54,6 +56,8 @@ window.ENV = {
 };
 ```
 Template em `config.example.js`. **Nunca commitar `config.js`.**
+
+Em produção (GitHub Pages), o `config.js` é **gerado pelo GitHub Action** a partir dos Secrets `SUPABASE_URL` e `SUPABASE_ANON` — sem expor credenciais no repositório.
 
 ---
 
@@ -131,9 +135,12 @@ if ($c -notmatch '</html>') { Write-Warning 'ARQUIVO TRUNCADO' }
 
 | Arquivo | Função |
 |---------|--------|
+| `hub.html` | Hub — arquivo **editável** |
+| `index.html` | Hub — cópia de `hub.html` (entry point GitHub Pages) |
 | `supabase-client.js` | Cliente Supabase compartilhado + mapeadores |
 | `config.js` | Credenciais locais (gitignored) |
 | `config.example.js` | Template de credenciais |
+| `.github/workflows/deploy.yml` | GitHub Action: injeta `config.js` via Secrets + publica Pages |
 | `supabase-migration.sql` | DDL das 4 tabelas + RLS |
 | `supabase-bucket-setup.sql` | Criação do bucket `comprovantes` + políticas |
 | `migracao/migrar-dados.html` | Ferramenta one-time de migração de dados |
@@ -144,6 +151,15 @@ if ($c -notmatch '</html>') { Write-Warning 'ARQUIVO TRUNCADO' }
 
 ---
 
+## Deploy
+
+- **Repositório**: `https://github.com/makecarolnunes/meu-studio` (private)
+- **Produção**: `https://makecarolnunes.github.io/meu-studio/`
+- **CI/CD**: push em `main` → GitHub Action → cria `config.js` dos Secrets → publica Pages
+- **Secrets necessários**: `SUPABASE_URL`, `SUPABASE_ANON` (em Settings → Secrets → Actions)
+
+---
+
 ## Roadmap
 
 | Status | Item |
@@ -151,6 +167,7 @@ if ($c -notmatch '</html>') { Write-Warning 'ARQUIVO TRUNCADO' }
 | ✅ Concluído | Migração Google Sheets → Supabase |
 | ✅ Concluído | Comprovantes Google Drive → Supabase Storage |
 | ✅ Concluído | Login/auth desacoplado do GAS |
-| 🔄 Próximo | GitHub + deploy Netlify (testes sem servidor local) |
-| 🔄 Próximo | GitHub Actions + GitHub Pages (produção) |
+| ✅ Concluído | GitHub + GitHub Pages + GitHub Actions (CI/CD) |
+| ✅ Concluído | Hub com links relativos (sem Netlify) |
+| 🔄 Próximo | Testar app completo em produção (Pages + Supabase) |
 | 🔄 Futuro | Modularização JS / build step |
