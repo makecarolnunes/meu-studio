@@ -194,5 +194,5 @@ if ($c -notmatch '</html>') { Write-Warning 'ARQUIVO TRUNCADO' }
 
 ---
 
-<!-- AUTO: 2026-05-17 03:27 | main | feat: hook pre-push atualiza CLAUDE.md automaticamente -->
+<!-- AUTO: 2026-05-17 03:30 | main | fix: supabase-client resiliente + diagnostico preciso de erros de inicializacao -->
 
