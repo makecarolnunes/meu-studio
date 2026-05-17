@@ -49,38 +49,6 @@
       padding: 32px 20px 28px;
       border-radius: 0 0 22px 22px;
     }
-    .hero-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 16px;
-    }
-    .greeting {
-      font-size: 13px;
-      color: rgba(255,255,255,0.58);
-      font-weight: 400;
-      letter-spacing: 0.01em;
-    }
-    .sync-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      background: rgba(255,255,255,0.1);
-      border: 0.5px solid rgba(255,255,255,0.2);
-      border-radius: 20px;
-      padding: 5px 11px;
-      font-size: 10px;
-      color: rgba(255,255,255,0.65);
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
-    }
-    .sync-pill .dot {
-      width: 5px; height: 5px;
-      border-radius: 50%;
-      background: #9FE1CB;
-    }
-    .sync-pill.syncing .dot { background: #FAC775; animation: blink 1s infinite; }
-    .sync-pill.offline  .dot { background: #F09595; }
     @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.35} }
 
     .hero-title {
@@ -189,25 +157,6 @@
       flex-shrink: 0;
     }
 
-    /* mini-stats */
-    .orca-stats {
-      display: flex;
-      gap: 6px;
-      margin-top: 10px;
-    }
-    .orca-stat {
-      flex: 1;
-      background: var(--bg);
-      border: 0.5px solid var(--border);
-      border-radius: 9px;
-      padding: 6px 6px;
-      text-align: center;
-    }
-    .orca-stat-val { font-size: 15px; font-weight: 500; color: var(--text); line-height: 1.1; }
-    .orca-stat-lbl { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 2px; }
-    .orca-stat.alert { background: var(--amber-l); border-color: var(--amber-m); }
-    .orca-stat.alert .orca-stat-val { color: var(--amber-d); }
-    .orca-stat.alert .orca-stat-lbl { color: var(--amber); }
 
     /* ─── SECONDARY CARDS — mobile: horizontal list ─ */
     .sys-card {
@@ -510,10 +459,6 @@
 
   <!-- HEADER -->
   <div class="hero">
-    <div class="hero-row">
-      <div class="greeting" id="greeting">Bem-vinda de volta</div>
-      <span class="sync-pill" id="sync-pill"><span class="dot"></span><span id="sync-text">Carregando</span></span>
-    </div>
     <div class="hero-title">@makecarolnunes <span>Studio</span></div>
     <div class="hero-date" id="hero-date"></div>
   </div>
@@ -595,18 +540,6 @@
     };
   }
 
-  // ── Estatísticas de orçamentos ──
-  function getOrcaStats() {
-    var entries = safeJSON(localStorage.getItem('orca_entries'), []);
-    var today   = todayStr();
-    var ativos   = entries.filter(function(e){ return !['Fechado','Perdido'].includes(e.Status); }).length;
-    var followup = entries.filter(function(e){
-      return !['Fechado','Perdido'].includes(e.Status) && e.ProxFollowup && e.ProxFollowup <= today;
-    }).length;
-    var fechados = entries.filter(function(e){ return e.Status === 'Fechado'; }).length;
-    return { ativos: ativos, followup: followup, fechados: fechados };
-  }
-
   // ── SVG icons (Feather-style, 1.5 stroke) ──
   var ICONS = {
     orcamentos:
@@ -668,8 +601,6 @@
       }
 
       if (k === 'orcamentos') {
-        var st = getOrcaStats();
-        var fuClass = st.followup > 0 ? 'alert' : '';
         opsHtml +=
           '<a href="' + esc(item.url) + '" class="card-orca">' +
             '<div class="sys-icon-wrap">' + iconSvg('orcamentos') + '</div>' +
@@ -677,11 +608,6 @@
               '<div class="orca-badge">Principal</div>' +
               '<div class="sys-name">' + esc(item.nome || 'Orçamentos') + '</div>' +
               '<div class="sys-desc">' + esc(item.descricao || 'Início do fluxo — feche tudo em um clique') + '</div>' +
-              '<div class="orca-stats">' +
-                '<div class="orca-stat"><div class="orca-stat-val">' + st.ativos + '</div><div class="orca-stat-lbl">Ativos</div></div>' +
-                '<div class="orca-stat"><div class="orca-stat-val">' + st.fechados + '</div><div class="orca-stat-lbl">Fechados</div></div>' +
-                '<div class="orca-stat ' + fuClass + '"><div class="orca-stat-val">' + st.followup + '</div><div class="orca-stat-lbl">Follow-up</div></div>' +
-              '</div>' +
             '</div>' +
             '<div class="sys-arrow">' + iconSvg('arrow') + '</div>' +
           '</a>';
@@ -735,19 +661,12 @@
 
   // ── Carrega os cards (somente FALLBACK — sem GAS) ──
   function loadHub() {
-    localStorage.removeItem('hub_systems'); // limpa cache antigo com URLs do Netlify
+    localStorage.removeItem('hub_systems');
     buildCards(FALLBACK);
-    setSync('', 'Atualizado');
   }
 
-  // ── Greeting + data ──
+  // ── Data ──
   (function init() {
-    var h = new Date().getHours();
-    document.getElementById('greeting').textContent =
-      h < 5  ? 'Boa madrugada' :
-      h < 12 ? 'Bom dia'       :
-      h < 18 ? 'Boa tarde'     : 'Boa noite';
-
     var now   = new Date();
     var DIAS  = ['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'];
     var MESES = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];

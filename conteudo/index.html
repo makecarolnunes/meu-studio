@@ -22,26 +22,20 @@
     body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; background:var(--bg); color:var(--text); max-width:480px; margin:0 auto; min-height:100%; overflow-x:hidden; -webkit-overflow-scrolling:touch; overscroll-behavior-y:contain; }
 
     /* HEADER */
-    .hdr { background:linear-gradient(135deg,var(--brown-d),var(--brown)); color:#fff; padding:13px 18px 11px; position:sticky; top:0; z-index:100; display:flex; align-items:center; justify-content:space-between; }
+    .hdr { background:linear-gradient(135deg,var(--brown-d),var(--brown)); color:#fff; padding:10px 14px; position:sticky; top:0; z-index:100; display:grid; grid-template-columns:44px 1fr auto; align-items:center; gap:8px; }
+    .hdr-center { text-align:center; }
     .hdr h1 { font-size:1rem; font-weight:700; }
-    .hdr-sub { font-size:.7rem; opacity:.75; margin-top:1px; }
-    .hdr-right { display:flex; align-items:center; gap:8px; }
-    .hub-btn { background:rgba(255,255,255,.15); border:1px solid rgba(255,255,255,.25); color:#fff; border-radius:8px; padding:5px 9px; font-size:.72rem; font-weight:600; text-decoration:none; display:flex; align-items:center; gap:3px; }
+    .hdr-sub { font-size:.68rem; opacity:.7; margin-top:1px; }
+    .hdr-right { display:flex; align-items:center; justify-content:flex-end; }
+    .hdr-back { width:34px; height:34px; border-radius:50%; border:none; background:rgba(255,255,255,.13); color:rgba(255,255,255,.88); display:flex; align-items:center; justify-content:center; cursor:pointer; transition:background .15s; padding:0; }
+    .hdr-back:active { background:rgba(255,255,255,.25); }
     .view-toggle { display:flex; background:rgba(255,255,255,.15); border-radius:8px; padding:2px; gap:2px; }
     .vbtn { background:none; border:none; color:rgba(255,255,255,.65); border-radius:6px; padding:5px 8px; font-size:.7rem; font-weight:700; cursor:pointer; white-space:nowrap; }
     .vbtn.on { background:rgba(255,255,255,.28); color:#fff; }
-
-    /* SYNC DOT */
-    .sync-dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; cursor:pointer; }
-    .sync-dot.ok      { background:#66bb6a; }
-    .sync-dot.syncing { background:#ffa726; animation:sdpulse .9s ease-in-out infinite; }
-    .sync-dot.pending { background:#ffa726; opacity:.7; }
-    .sync-dot.error   { background:#ef5350; }
-    .sync-dot.offline { background:rgba(255,255,255,.35); }
     @keyframes sdpulse { 0%,100%{opacity:1}50%{opacity:.25} }
 
     /* PLATFORM TABS */
-    .ptabs { display:flex; gap:6px; padding:10px 14px; background:linear-gradient(180deg,var(--purple-l),var(--card)); border-bottom:1px solid var(--border); overflow-x:auto; scrollbar-width:none; -webkit-overflow-scrolling:touch; touch-action:pan-x; position:sticky; top:53px; z-index:90; }
+    .ptabs { display:flex; gap:6px; padding:10px 14px; background:linear-gradient(180deg,var(--purple-l),var(--card)); border-bottom:1px solid var(--border); overflow-x:auto; scrollbar-width:none; -webkit-overflow-scrolling:touch; touch-action:pan-x; position:sticky; top:50px; z-index:90; }
     .ptabs::-webkit-scrollbar { display:none; }
     .ptab { padding:7px 14px; border-radius:20px; border:1.5px solid var(--purple); background:var(--card); font-size:.74rem; font-weight:700; cursor:pointer; white-space:nowrap; color:var(--purple); flex-shrink:0; display:flex; align-items:center; gap:5px; }
     .ptab.on { background:var(--purple-d); border-color:var(--purple-d); color:#fff; box-shadow:0 2px 6px rgba(125,60,110,.25); }
@@ -258,13 +252,14 @@
 
 <!-- HEADER -->
 <div class="hdr">
-  <div>
-    <h1>Planejamento de Conteudo</h1>
-    <div class="hdr-sub" id="hdr-count">carregando...</div>
+  <button class="hdr-back" onclick="window.location.href='../'" aria-label="Voltar">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+  </button>
+  <div class="hdr-center">
+    <h1>Conteúdo</h1>
+    <div class="hdr-sub" id="hdr-count"></div>
   </div>
   <div class="hdr-right">
-    <span class="sync-dot offline" id="sync-dot" title="Sem Google Sheets" onclick="openSetup()"></span>
-    <a href="../" class="hub-btn">Hub</a>
     <div class="view-toggle">
       <button class="vbtn on" id="btn-list"  onclick="setView('list')">Lista</button>
       <button class="vbtn"    id="btn-board" onclick="setView('board')">Board</button>
@@ -430,11 +425,7 @@ var curDayDate=null, dayPickerOpen=false, dayPickerQ='';
 var syncTimer=null;
 function getScriptUrl(){ return HARDCODED_SCRIPT_URL||localStorage.getItem('mk_script_url')||''; }
 function setScriptUrl(u){ localStorage.setItem('mk_script_url',u); }
-function updateSyncDot(s){
-  var d=document.getElementById('sync-dot'); d.className='sync-dot '+s;
-  var L={ok:'Sincronizado',syncing:'Sincronizando...',pending:'Aguardando',error:'Erro — dados salvos localmente',offline:'Sem Google Sheets — clique para configurar'};
-  d.title=L[s]||'';
-}
+function updateSyncDot(s){ /* sync dot removido */ }
 function scheduleSync(){
   if(!getScriptUrl()) return;
   updateSyncDot('pending');

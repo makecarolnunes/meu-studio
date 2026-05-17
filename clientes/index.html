@@ -39,37 +39,22 @@
     /* ── HEADER ── */
     .hdr {
       background: linear-gradient(135deg, var(--brown-d), var(--brown));
-      color: white;
-      padding: 13px 18px 11px;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+      color: white; padding: 10px 14px;
+      position: sticky; top: 0; z-index: 100;
+      display: grid; grid-template-columns: 44px 1fr 44px; align-items: center;
     }
-    .hdr h1 { font-size: 1.1rem; font-weight: 700; }
-    .hdr-sub { font-size: 0.72rem; opacity: 0.75; margin-top: 1px; }
-    .hdr-right { display: flex; align-items: center; gap: 8px; }
-    .sync-dot {
-      width: 8px; height: 8px; border-radius: 50%;
-      background: #81c784; transition: background 0.3s;
-    }
-    .sync-dot.syncing { background: #ffd54f; animation: pulse 1s infinite; }
-    .sync-dot.offline { background: #ef9a9a; }
+    .hdr-center { text-align: center; }
+    .hdr h1 { font-size: 1.05rem; font-weight: 700; }
+    .hdr-sub { font-size: 0.68rem; opacity: 0.7; margin-top: 1px; }
+    .hdr-right { display: flex; align-items: center; justify-content: flex-end; }
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
-    .sync-btn {
-      background: rgba(255,255,255,0.15);
-      border: 1px solid rgba(255,255,255,0.25);
-      color: white;
-      border-radius: 8px;
-      padding: 5px 10px;
-      font-size: 0.76rem;
-      cursor: pointer;
-      font-weight: 600;
-      transition: background 0.15s;
+    .hdr-back {
+      width: 34px; height: 34px; border-radius: 50%; border: none;
+      background: rgba(255,255,255,.13); color: rgba(255,255,255,.88);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: background .15s; padding: 0;
     }
-    .sync-btn:active { background: rgba(255,255,255,0.28); }
+    .hdr-back:active { background: rgba(255,255,255,.25); }
 
     /* ── MONTH SELECTOR ── */
     .msel {
@@ -224,14 +209,14 @@
 <body>
 
 <div class="hdr">
-  <div>
-    <h1>Lista de Clientes</h1>
+  <button class="hdr-back" onclick="window.location.href='../'" aria-label="Voltar">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+  </button>
+  <div class="hdr-center">
+    <h1>Clientes</h1>
     <div class="hdr-sub" id="hsub">Carregando...</div>
   </div>
-  <div class="hdr-right">
-    <div class="sync-dot" id="sync-dot" title="Status da sincronização"></div>
-    <button class="sync-btn" onclick="syncAll()">↻ Atualizar</button>
-  </div>
+  <div class="hdr-right"></div>
 </div>
 
 <div class="msel">
@@ -301,14 +286,10 @@ function statusDoAtendimento(entry) {
   return entry.status || 'Previsto';
 }
 
-// ══════════════════════════════════════════════════════════
-//  SYNC DOT
-// ══════════════════════════════════════════════════════════
 function dot(state) {
-  const el = document.getElementById('sync-dot');
-  el.className = 'sync-dot ' + state;
-  const labels = { syncing:'Sincronizando...', ok:'Sincronizado ✅', offline:'Sem conexão ⚠️' };
-  document.getElementById('hsub').textContent = labels[state] || '';
+  const labels = { syncing:'Carregando...', ok:'', offline:'Sem conexão' };
+  const el = document.getElementById('hsub');
+  if (el) el.textContent = labels[state] || '';
 }
 
 // ══════════════════════════════════════════════════════════
