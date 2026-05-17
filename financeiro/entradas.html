@@ -5,27 +5,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="Financeiro 💄">
-    <title>💄 Financeiro</title>
+    <meta name="apple-mobile-web-app-title" content="Financeiro">
+    <title>Financeiro · Meu Studio</title>
+    <link rel="stylesheet" href="../design-tokens.css">
     <style>
         :root {
-            --brown:   #6d4c41;
-            --brown-d: #3e2723;
-            --brown-l: #efebe9;
-            --ok:      #2d7d3a;
+            /* Aliases para o tema unificado em design-tokens.css */
+            --brown:   var(--brand);
+            --brown-d: var(--brand-dark);
+            --brown-l: var(--brand-soft);
+            --ok:      var(--success);
             --ok-d:    #1b5e20;
-            --ok-l:    #e8f5e9;
-            --red:     #c62828;
-            --red-l:   #ffebee;
-            --amber:   #f59e0b;
-            --amber-l: #fff8e1;
-            --blue:    #0d47a1;
-            --blue-l:  #e3f2fd;
-            --bg:      #f3ede8;
-            --card:    #ffffff;
-            --text:    #1a1a1a;
-            --muted:   #6b7280;
-            --border:  #e0e0e0;
+            --ok-l:    var(--success-soft);
+            --red:     var(--danger);
+            --red-l:   var(--danger-soft);
+            --amber:   var(--warning);
+            --amber-l: var(--warning-soft);
+            --blue:    var(--info);
+            --blue-l:  var(--info-soft);
+            --card:    var(--surface);
+            --muted:   var(--text-muted);
+            /* --bg, --text, --border já vêm dos tokens globais */
         }
         * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
         body {
@@ -75,26 +75,26 @@
         .ni svg { width: 20px; height: 20px; }
 
         /* ── CARD ── */
-        .card { background: var(--card); border-radius: 13px; padding: 15px; margin-bottom: 11px; box-shadow: 0 1px 4px rgba(0,0,0,.07); }
+        .card { background: var(--card); border-radius: 16px; padding: 15px; margin-bottom: 11px; box-shadow: 0 1px 4px rgba(0,0,0,.07); }
         .card-title { font-size: .69rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .6px; margin-bottom: 11px; }
 
         /* ── FORM ── */
         .fg { margin-bottom: 14px; }
         .fg:last-child { margin-bottom: 0; }
         .fl { display: block; font-size: .69rem; font-weight: 700; color: var(--muted); margin-bottom: 5px; text-transform: uppercase; letter-spacing: .4px; }
-        .fi { width: 100%; padding: 11px 12px; border: 1.5px solid var(--border); border-radius: 10px; font-size: .93rem; color: var(--text); background: white; -webkit-appearance: none; appearance: none; transition: border-color .15s; }
+        .fi { width: 100%; padding: 11px 12px; border: 1.5px solid var(--border); border-radius: 12px; font-size: .93rem; color: var(--text); background: white; -webkit-appearance: none; appearance: none; transition: border-color .15s; }
         .fi:focus { outline: none; border-color: var(--brown); }
         .fi.ta { resize: none; height: 56px; line-height: 1.4; font-size: .88rem; }
         .two { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
 
         /* ── TOGGLE BUTTONS ── */
         .bg { display: flex; gap: 5px; flex-wrap: wrap; }
-        .bt { flex: 1; min-width: 0; padding: 9px 6px; border: 1.5px solid var(--border); border-radius: 10px; background: white; font-size: .8rem; font-weight: 500; color: var(--text); cursor: pointer; text-align: center; transition: all .15s; white-space: nowrap; }
+        .bt { flex: 1; min-width: 0; padding: 9px 6px; border: 1.5px solid var(--border); border-radius: 12px; background: white; font-size: .8rem; font-weight: 500; color: var(--text); cursor: pointer; text-align: center; transition: all .15s; white-space: nowrap; }
         .bt.on { border-color: var(--brown); background: var(--brown); color: white; font-weight: 600; }
 
         /* ── STATUS TOGGLE ── */
-        .stog { display: flex; background: #f3f4f6; border-radius: 11px; padding: 3px; }
-        .stbtn { flex: 1; padding: 9px; border: none; border-radius: 9px; font-size: .86rem; font-weight: 600; cursor: pointer; transition: all .2s; background: transparent; color: var(--muted); }
+        .stog { display: flex; background: #f3f4f6; border-radius: 16px; padding: 3px; }
+        .stbtn { flex: 1; padding: 9px; border: none; border-radius: 12px; font-size: .86rem; font-weight: 600; cursor: pointer; transition: all .2s; background: transparent; color: var(--muted); }
         .stbtn.on-g { background: var(--ok);   color: white; box-shadow: 0 1px 4px rgba(0,0,0,.15); }
         .stbtn.on-r { background: var(--red);  color: white; box-shadow: 0 1px 4px rgba(0,0,0,.15); }
 
@@ -104,12 +104,12 @@
         .vwrap .fi { padding-left: 36px; font-size: 1.2rem; font-weight: 700; }
 
         /* ── SUBMIT ── */
-        .bsub { width: 100%; padding: 14px; background: var(--brown); color: white; border: none; border-radius: 13px; font-size: .97rem; font-weight: 700; cursor: pointer; box-shadow: 0 3px 10px rgba(109,76,65,.3); }
+        .bsub { width: 100%; padding: 14px; background: var(--brown); color: white; border: none; border-radius: 16px; font-size: .97rem; font-weight: 700; cursor: pointer; box-shadow: 0 3px 10px rgba(109,76,65,.3); }
         .bsub:active { background: var(--brown-d); }
         .bsub.red { background: var(--red); box-shadow: 0 3px 10px rgba(198,40,40,.3); }
 
         /* ── MONTH SELECTOR ── */
-        .msel { display: flex; align-items: center; justify-content: space-between; background: white; border-radius: 13px; padding: 11px 15px; margin-bottom: 11px; box-shadow: 0 1px 4px rgba(0,0,0,.07); }
+        .msel { display: flex; align-items: center; justify-content: space-between; background: white; border-radius: 16px; padding: 11px 15px; margin-bottom: 11px; box-shadow: 0 1px 4px rgba(0,0,0,.07); }
         .mnbtn { background: none; border: none; font-size: 1.3rem; cursor: pointer; color: var(--brown); padding: 3px 7px; }
         .mlab { font-weight: 700; font-size: .97rem; text-align: center; }
         .msub { font-size: .69rem; color: var(--muted); margin-top: 1px; }
@@ -121,8 +121,8 @@
         .ftab.on { background: var(--brown); border-color: var(--brown); color: white; font-weight: 600; }
 
         /* ── ENTRY ITEM ── */
-        .eitem { background: white; border-radius: 12px; padding: 12px 13px; margin-bottom: 7px; box-shadow: 0 1px 3px rgba(0,0,0,.06); display: flex; align-items: center; gap: 10px; }
-        .eico { width: 38px; height: 38px; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0; }
+        .eitem { background: white; border-radius: 14px; padding: 12px 13px; margin-bottom: 7px; box-shadow: 0 1px 3px rgba(0,0,0,.06); display: flex; align-items: center; gap: 10px; }
+        .eico { width: 38px; height: 38px; border-radius: 11px; display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0; }
         .einf { flex: 1; min-width: 0; }
         .ecli { font-weight: 600; font-size: .89rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .emta { font-size: .7rem; color: var(--muted); margin-top: 2px; }
@@ -152,7 +152,7 @@
         .rrow .rval { font-weight: 700; }
         .rrow.total .rlbl { font-weight: 700; color: var(--text); }
         .rsum-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-bottom: 11px; }
-        .rsum-card { background: white; border-radius: 12px; padding: 13px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+        .rsum-card { background: white; border-radius: 14px; padding: 13px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
         .rsum-lbl { font-size: .67rem; color: var(--muted); font-weight: 700; text-transform: uppercase; }
         .rsum-val { font-size: 1.1rem; font-weight: 800; margin-top: 3px; }
         .rsum-cnt { font-size: .68rem; color: var(--muted); margin-top: 1px; }
@@ -176,9 +176,9 @@
         .year-table .neg { color: var(--red); }
 
         /* ── SAÍDAS ADD BTN ── */
-        .add-btn { width: 100%; padding: 12px; background: white; color: var(--red); border: 2px dashed #f48fb1; border-radius: 13px; font-size: .9rem; font-weight: 700; cursor: pointer; margin-bottom: 11px; }
+        .add-btn { width: 100%; padding: 12px; background: white; color: var(--red); border: 2px dashed #f48fb1; border-radius: 16px; font-size: .9rem; font-weight: 700; cursor: pointer; margin-bottom: 11px; }
         .add-btn.open { border-style: solid; background: var(--red-l); }
-        .bexp { width: 100%; padding: 13px; background: white; color: var(--brown); border: 2px solid var(--brown); border-radius: 13px; font-size: .88rem; font-weight: 700; cursor: pointer; margin-top: 4px; }
+        .bexp { width: 100%; padding: 13px; background: white; color: var(--brown); border: 2px solid var(--brown); border-radius: 16px; font-size: .88rem; font-weight: 700; cursor: pointer; margin-top: 4px; }
 
         /* ── TOAST ── */
         .toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(20px); background: #222; color: white; padding: 9px 18px; border-radius: 22px; font-size: .8rem; z-index: 999; opacity: 0; transition: opacity .25s, transform .25s; white-space: nowrap; pointer-events: none; }
@@ -186,18 +186,18 @@
 
         /* ── CONFIG MODAL ── */
         .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 500; display: flex; align-items: center; justify-content: center; padding: 20px; }
-        .modal { background: white; border-radius: 18px; padding: 24px; width: 100%; max-width: 420px; box-shadow: 0 8px 32px rgba(0,0,0,.2); max-height: 88vh; overflow-y: auto; }
+        .modal { background: white; border-radius: 24px; padding: 24px; width: 100%; max-width: 420px; box-shadow: 0 8px 32px rgba(0,0,0,.2); max-height: 88vh; overflow-y: auto; }
         .modal h2 { font-size: 1.1rem; font-weight: 700; margin-bottom: 8px; }
         .modal p  { font-size: .85rem; color: var(--muted); margin-bottom: 14px; line-height: 1.5; }
         .modal .fi { margin-bottom: 10px; font-size: .85rem; }
         .modal .bsub { margin-bottom: 8px; font-size: .9rem; padding: 12px; }
-        .modal .skip { width: 100%; padding: 11px; background: none; border: 1.5px solid var(--border); border-radius: 13px; font-size: .88rem; font-weight: 600; color: var(--muted); cursor: pointer; }
+        .modal .skip { width: 100%; padding: 11px; background: none; border: 1.5px solid var(--border); border-radius: 16px; font-size: .88rem; font-weight: 600; color: var(--muted); cursor: pointer; }
         .modal .step { display: flex; gap: 10px; margin-bottom: 8px; align-items: flex-start; }
         .modal .step-n { background: var(--brown); color: white; border-radius: 50%; width: 22px; height: 22px; min-width: 22px; display: flex; align-items: center; justify-content: center; font-size: .72rem; font-weight: 700; margin-top: 1px; }
         .modal .step p { margin-bottom: 0; font-size: .82rem; }
         .modal-title { font-size: 1rem; font-weight: 700; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
         .modal-tabs { display: flex; gap: 6px; margin-bottom: 16px; }
-        .modal-tab { flex: 1; padding: 8px; border-radius: 8px; border: 1.5px solid var(--border); background: white; font-size: .8rem; font-weight: 600; cursor: pointer; color: var(--muted); }
+        .modal-tab { flex: 1; padding: 8px; border-radius: 10px; border: 1.5px solid var(--border); background: white; font-size: .8rem; font-weight: 600; cursor: pointer; color: var(--muted); }
         .modal-tab.on { background: var(--brown); border-color: var(--brown); color: white; }
 
         /* ── LOADING OVERLAY ── */
@@ -335,7 +335,12 @@
 <!-- ── LOGIN SCREEN ── -->
 <div class="login-screen" id="login-screen">
     <div class="login-logo">
-        <span class="icon">💄</span>
+        <span class="icon" style="color:var(--brown);display:flex;justify-content:center">
+          <svg width="40" height="40" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M20 5l2.8 9.4L32 17l-9.2 2.6L20 29l-2.8-9.4L8 17l9.2-2.6z"/>
+            <path d="M30 28l1 3 3 1-3 1-1 3-1-3-3-1 3-1z"/>
+          </svg>
+        </span>
         <h2>Financeiro</h2>
         <p>Controle financeiro pessoal</p>
     </div>
@@ -363,12 +368,17 @@
 
 <div class="hdr">
     <div>
-        <h1>💄 Financeiro</h1>
+        <h1>Financeiro</h1>
         <div class="hdr-sub" id="hsub">Novo lançamento</div>
     </div>
     <div class="hdr-right">
         <div class="sync-dot no-url" id="sync-dot" title="Status da sincronização"></div>
-        <button class="gear-btn" onclick="openConfig()" title="Configurações">⚙️</button>
+        <button class="gear-btn" onclick="openConfig()" title="Configurações" aria-label="Configurações">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 0 1-4 0v-.1a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 0 1 0-4h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3h0a1.7 1.7 0 0 0 1-1.5V3a2 2 0 0 1 4 0v.1a1.7 1.7 0 0 0 1 1.5h0a1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8v0a1.7 1.7 0 0 0 1.5 1H21a2 2 0 0 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>
+          </svg>
+        </button>
     </div>
 </div>
 
@@ -895,7 +905,7 @@ function renderResumo() {
         <button class="mnbtn" onclick="chm(1)">›</button>
     </div>
     <div class="card">
-        <div class="card-title">💰 Faturamento</div>
+        <div class="card-title">Faturamento</div>
         <div class="rsum-grid" style="margin-bottom:11px">
             <div class="rsum-card" style="border-left:3px solid var(--ok)"><div class="rsum-lbl">Realizado</div><div class="rsum-val" style="color:var(--ok)">${brl(fatReal)}</div></div>
             <div class="rsum-card" style="border-left:3px solid var(--red)"><div class="rsum-lbl">Previsto</div><div class="rsum-val" style="color:var(--red)">${brl(fatPrev)}</div></div>
@@ -904,7 +914,7 @@ function renderResumo() {
         <div class="rrow total" style="margin-top:8px;padding-top:10px;border-top:2px solid #f0f0f0"><span class="rlbl">TOTAL</span><span class="rval" style="font-size:1.05rem;color:var(--ok)">${brl(fatTotal)}</span></div>
     </div>
     <div class="card">
-        <div class="card-title">🏛 Limite MEI ${selYear}</div>
+        <div class="card-title">Limite MEI ${selYear}</div>
         <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:2px">
             <span style="font-size:.83rem;color:var(--muted)">Faturado: <strong style="color:${meiCor}">${brl(meiAno)}</strong></span>
             <span style="font-size:.83rem;font-weight:700;color:${meiCor}">${meiPct}%</span>
@@ -917,7 +927,7 @@ function renderResumo() {
         ${meiPct>=85?`<div style="background:var(--red-l);color:var(--red);border-radius:9px;padding:9px 11px;font-size:.79rem;font-weight:600;margin-top:8px">⚠️ Atenção: ${meiPct}% do limite MEI atingido!</div>`:''}
     </div>
     <div class="card">
-        <div class="card-title">📤 Saídas</div>
+        <div class="card-title">Saídas</div>
         <div class="rsum-grid" style="margin-bottom:11px">
             <div class="rsum-card" style="border-left:3px solid var(--red)"><div class="rsum-lbl">Pago</div><div class="rsum-val" style="color:var(--red)">${brl(despPago)}</div></div>
             <div class="rsum-card" style="border-left:3px solid var(--muted)"><div class="rsum-lbl">Previsto</div><div class="rsum-val" style="color:var(--muted)">${brl(despPrev)}</div></div>
@@ -926,7 +936,7 @@ function renderResumo() {
         <div class="rrow total" style="margin-top:8px;padding-top:10px;border-top:2px solid #f0f0f0"><span class="rlbl">TOTAL</span><span class="rval" style="font-size:1.05rem;color:var(--red)">${brl(despTotal)}</span></div>
     </div>
     <div class="card" style="background:linear-gradient(135deg,${lucroReal>=0?'#f1faf1,#e8f5e9':'#fff0f0,#ffebee'})">
-        <div class="card-title">📊 Resultado do Mês</div>
+        <div class="card-title">Resultado do Mês</div>
         <div class="rrow"><span class="rlbl">Faturamento total</span><span class="rval">${brl(fatTotal)}</span></div>
         <div class="rrow"><span class="rlbl">Saídas totais</span><span class="rval" style="color:var(--red)">- ${brl(despTotal)}</span></div>
         <div class="rrow total" style="margin-top:6px;padding-top:10px;border-top:2px solid rgba(0,0,0,.08)"><span class="rlbl">LUCRO PREVISTO</span><span class="rval" style="font-size:1.1rem;color:${lucroTotal>=0?'var(--ok)':'var(--red)'}">${brl(lucroTotal)}</span></div>
@@ -934,7 +944,7 @@ function renderResumo() {
         <div style="text-align:center;margin-top:8px;font-size:1.5rem;font-weight:800;color:${lucroTotal>=0?'var(--ok)':'var(--red)'}">${margem}% margem</div>
     </div>
     <div class="card">
-        <div class="card-title">📅 Visão Anual ${selYear}</div>
+        <div class="card-title">Visão Anual ${selYear}</div>
         <div style="overflow-x:auto">
         <table class="year-table">
             <tr><th>Mês</th><th>Faturamento</th><th>Saídas</th><th>Lucro</th></tr>
@@ -951,7 +961,7 @@ function renderResumo() {
         const items=Object.entries(byOri).sort((a,b)=>b[1]-a[1]);
         if(!items.length) return '';
         return `<div class="card">
-            <div class="card-title">📊 Faturamento por Origem — ${selYear}</div>
+            <div class="card-title">Faturamento por Origem — ${selYear}</div>
             ${items.map(([o,v])=>{
                 const pct=Math.round(v/total*100);
                 const cor=cores[o]||'var(--brown)';

@@ -5,26 +5,26 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <title>📅 Lista de Clientes</title>
+  <title>Clientes · Meu Studio</title>
+  <link rel="stylesheet" href="../design-tokens.css">
   <style>
     :root {
-      --brown:   #6d4c41;
-      --brown-d: #3e2723;
-      --brown-l: #efebe9;
-      --purple:  #7d3c6e;
-      --purple-l:#f5edf3;
-      --ok:      #2d7d3a;
-      --ok-l:    #e8f5e9;
-      --amber:   #e8a000;
-      --amber-l: #fff8e1;
-      --muted:   #6b7280;
-      --border:  #e0d5dc;
-      --bg:      #f3ede8;
-      --card:    #ffffff;
-      --text:    #1a1a1a;
-      --noiva:   #c2185b;
-      --noiva-l: #fce4ec;
-      --noiva-d: #880e4f;
+      /* Aliases para o tema unificado em design-tokens.css */
+      --brown:   var(--brand);
+      --brown-d: var(--brand-dark);
+      --brown-l: var(--brand-soft);
+      --purple:  var(--rose-dark);
+      --purple-l:var(--mauve-soft);
+      --ok:      var(--success);
+      --ok-l:    var(--success-soft);
+      --amber:   var(--warning);
+      --amber-l: var(--warning-soft);
+      --muted:   var(--text-muted);
+      --card:    var(--surface);
+      --noiva:   var(--rose);
+      --noiva-l: var(--rose-soft);
+      --noiva-d: var(--rose-dark);
+      /* --bg, --text, --border já vêm dos tokens globais */
     }
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
     body {
@@ -225,7 +225,7 @@
 
 <div class="hdr">
   <div>
-    <h1>📅 Lista de Clientes</h1>
+    <h1>Lista de Clientes</h1>
     <div class="hdr-sub" id="hsub">Carregando...</div>
   </div>
   <div class="hdr-right">

@@ -5,14 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <title>Planejamento de Conteudo</title>
+  <link rel="stylesheet" href="../design-tokens.css">
   <style>
     :root {
-      --brown:   #6d4c41; --brown-d: #3e2723; --brown-l: #efebe9;
-      --purple:  #7d3c6e; --purple-d:#5c2a51; --purple-l:#f5edf3;
-      --ok:      #2d7d3a; --ok-l:   #e8f5e9;
-      --red:     #e53935; --red-l:  #ffebee;
-      --muted:   #6b7280; --border: #e0d5dc;
-      --bg:      #f3ede8; --card:   #fff; --text: #1a1a1a;
+      /* Aliases para o tema unificado em design-tokens.css */
+      --brown:   var(--brand);     --brown-d: var(--brand-dark); --brown-l: var(--brand-soft);
+      --purple:  var(--rose-dark); --purple-d:#5c2a51;           --purple-l:var(--mauve-soft);
+      --ok:      var(--success);   --ok-l:    var(--success-soft);
+      --red:     var(--danger);    --red-l:   var(--danger-soft);
+      --muted:   var(--text-muted);
+      --card:    var(--surface);
+      /* --bg, --text, --border já vêm dos tokens globais */
     }
     * { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
     html { height:100%; overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch; }

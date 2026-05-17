@@ -247,7 +247,7 @@
       + '<aside id="mk-sidebar" role="navigation" aria-label="Navegação">'
       +   '<div class="mk-sb-hd">'
       +     '<div class="mk-sb-logo">'
-      +       '<span class="mk-sb-logo-em">🎂</span>'
+      +       '<span class="mk-sb-logo-em"><svg width="20" height="20" viewBox="0 0 40 40" fill="none" stroke="rgba(255,255,255,.88)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" style="display:block"><path d="M20 5l2.8 9.4L32 17l-9.2 2.6L20 29l-2.8-9.4L8 17l9.2-2.6z"/><path d="M30 28l1 3 3 1-3 1-1 3-1-3-3-1 3-1z"/></svg></span>'
       +       '<div><div class="mk-sb-logo-tx">Studio</div><div class="mk-sb-logo-sub">@makecarolnunes</div></div>'
       +     '</div>'
       +     '<button class="mk-sb-btn" onclick="mkSidebarClose()" aria-label="Fechar menu">' + IC.back + '</button>'

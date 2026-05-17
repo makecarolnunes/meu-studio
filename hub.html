@@ -7,26 +7,23 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Meu Studio">
   <title>@makecarolnunes Studio</title>
+  <link rel="stylesheet" href="design-tokens.css">
   <style>
     :root {
-      --bg:       #FAF8F6;
-      --card:     #ffffff;
-      --text:     #2C2420;
-      --muted:    #888780;
-      --subtle:   #B4B2A9;
-      --border:   #EDE4DF;
-      --rose:     #D4537E;
-      --rose-l:   #FBEAF0;
-      --rose-d:   #993556;
-      --amber:    #BA7517;
-      --amber-l:  #FAEEDA;
-      --amber-m:  #FAC775;
-      --amber-d:  #633806;
-      --green:    #3B6D11;
-      --green-l:  #EAF3DE;
-      --brown:    #8B6B61;
-      --brown-l:  #FAF3EE;
-      --mauve-l:  #F5EDF3;
+      /* Aliases para nomes legados do Hub → tokens em design-tokens.css
+         (--bg, --text, --border, --rose, --amber, --green, --brown já vêm
+         dos tokens globais com os mesmos nomes) */
+      --card:     var(--surface);
+      --muted:    var(--text-muted);
+      --subtle:   var(--text-subtle);
+      --rose-l:   var(--rose-soft);
+      --rose-d:   var(--rose-dark);
+      --amber-l:  var(--amber-soft);
+      --amber-m:  #FAC775;            /* hub-only: estado syncing do pill */
+      --amber-d:  var(--amber-dark);
+      --green-l:  var(--green-soft);
+      --brown-l:  var(--brown-soft);
+      --mauve-l:  var(--mauve-soft);
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -270,6 +267,35 @@
     .card-client { --accent: var(--brown);  --icon-bg: var(--brown-l);  }
     .card-conf   { --accent: var(--rose-d); --icon-bg: var(--mauve-l);  }
 
+    /* ─── SVG icons (substituem emojis) ──────────── */
+    .sys-icon-wrap { color: var(--accent, var(--rose)); }
+    .sys-icon-wrap svg { width: 20px; height: 20px; display: block; }
+    .card-orca .sys-icon-wrap { color: var(--rose); }
+    .card-orca .sys-icon-wrap svg { width: 24px; height: 24px; }
+
+    /* ─── Hover lift (iOS-like) ──────────────────── */
+    .card-orca, .sys-card, .creative-card {
+      transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+    }
+    .card-orca:hover  { box-shadow: var(--shadow-sm); }
+    .sys-card:hover   { box-shadow: var(--shadow-sm); }
+    .creative-card:hover { box-shadow: var(--shadow-sm); }
+
+    /* ─── Setas circulares (substituem &#8594; texto) ─── */
+    .sys-arrow svg { width: 14px; height: 14px; display: block; }
+    .card-orca .sys-arrow svg { width: 15px; height: 15px; }
+    .creative-arrow svg { width: 16px; height: 16px; display: block; }
+
+    /* sys-card mobile: deixa a seta circular como o card-orca */
+    .sys-card .sys-arrow {
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      background: var(--bg);
+      border: 0.5px solid var(--border);
+      color: var(--accent, var(--subtle));
+      justify-content: center;
+    }
+
     /* ─── CONTEÚDO ───────────────────────────────── */
     .creative-section {
       background: #FFFCF8;
@@ -297,10 +323,12 @@
       width: 40px; height: 40px;
       border-radius: 10px;
       background: var(--amber-l);
+      color: var(--amber);
       display: flex; align-items: center; justify-content: center;
       font-size: 18px;
       flex-shrink: 0;
     }
+    .creative-icon svg { width: 20px; height: 20px; display: block; }
     .creative-text { flex: 1; min-width: 0; }
     .creative-name { font-size: 14px; font-weight: 500; }
     .creative-desc { font-size: 12px; color: var(--muted); margin-top: 2px; line-height: 1.4; }
@@ -421,7 +449,8 @@
     }
     .login-box { max-width: 360px; width: 100%; }
     .login-logo { text-align: center; margin-bottom: 32px; }
-    .login-logo-icon { font-size: 2.4rem; }
+    .login-logo-icon { color: var(--rose); display: flex; justify-content: center; }
+    .login-logo-icon svg { width: 40px; height: 40px; display: block; }
     .login-logo-title { font-size: 1.3rem; font-weight: 700; color: var(--text); margin-top: 10px; }
     .login-logo-sub { font-size: .85rem; color: var(--muted); margin-top: 4px; }
     .login-field {
@@ -455,7 +484,12 @@
 <div id="login-overlay">
   <div class="login-box">
     <div class="login-logo">
-      <div class="login-logo-icon">🎂</div>
+      <div class="login-logo-icon">
+        <svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M20 5l2.8 9.4L32 17l-9.2 2.6L20 29l-2.8-9.4L8 17l9.2-2.6z"/>
+          <path d="M30 28l1 3 3 1-3 1-1 3-1-3-3-1 3-1z"/>
+        </svg>
+      </div>
       <div class="login-logo-title">@makecarolnunes Studio</div>
       <div class="login-logo-sub">Entre para continuar</div>
     </div>
@@ -493,13 +527,6 @@
     <!-- CONTEÚDO -->
     <div class="section-lbl section-lbl-creative">Conteúdo</div>
     <div class="creative-section" id="creative-section"></div>
-
-    <!-- HINT -->
-    <div class="hint-card">
-      <div class="hint-text">
-        Adicione esta página à tela inicial do celular para usar como app — <strong>iOS:</strong> Compartilhar → Adicionar à Tela de Início · <strong>Android:</strong> Menu → Adicionar à tela inicial
-      </div>
-    </div>
 
   </div>
 
@@ -580,6 +607,44 @@
     return { ativos: ativos, followup: followup, fechados: fechados };
   }
 
+  // ── SVG icons (Feather-style, 1.5 stroke) ──
+  var ICONS = {
+    orcamentos:
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+        '<rect x="8" y="3" width="8" height="3" rx="1"/>' +
+        '<path d="M9 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-3"/>' +
+        '<path d="M8 12h8M8 16h5"/>' +
+      '</svg>',
+    financeiro:
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+        '<path d="M20 12V8a2 2 0 0 0-2-2H5a1 1 0 0 1 0-2h13"/>' +
+        '<path d="M3 5v14a2 2 0 0 0 2 2h15a2 2 0 0 0 2-2v-4"/>' +
+        '<circle cx="17" cy="14" r="1.5"/>' +
+      '</svg>',
+    clientes:
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+        '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>' +
+        '<circle cx="9" cy="7" r="4"/>' +
+        '<path d="M22 21v-2a4 4 0 0 0-3-3.87"/>' +
+        '<path d="M16 3.13a4 4 0 0 1 0 7.75"/>' +
+      '</svg>',
+    agendamentos:
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+        '<rect x="3" y="5" width="18" height="16" rx="2"/>' +
+        '<path d="M16 3v4M8 3v4M3 10h18"/>' +
+      '</svg>',
+    conteudo:
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+        '<path d="M12 3l1.6 5L19 9.5 13.6 11 12 16l-1.6-5L5 9.5 10.4 8z"/>' +
+        '<path d="M19 15l.7 2.3 2.3.7-2.3.7L19 21l-.7-2.3-2.3-.7 2.3-.7z"/>' +
+      '</svg>',
+    arrow:
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+        '<path d="M5 12h14M13 6l6 6-6 6"/>' +
+      '</svg>'
+  };
+  function iconSvg(key) { return ICONS[key] || ICONS.arrow; }
+
   // ── Renderiza os cards ──
   function buildCards(systems) {
     var byKey = {};
@@ -607,7 +672,7 @@
         var fuClass = st.followup > 0 ? 'alert' : '';
         opsHtml +=
           '<a href="' + esc(item.url) + '" class="card-orca">' +
-            '<div class="sys-icon-wrap">' + esc(item.icone || '💰') + '</div>' +
+            '<div class="sys-icon-wrap">' + iconSvg('orcamentos') + '</div>' +
             '<div class="orca-text">' +
               '<div class="orca-badge">Principal</div>' +
               '<div class="sys-name">' + esc(item.nome || 'Orçamentos') + '</div>' +
@@ -618,7 +683,7 @@
                 '<div class="orca-stat ' + fuClass + '"><div class="orca-stat-val">' + st.followup + '</div><div class="orca-stat-lbl">Follow-up</div></div>' +
               '</div>' +
             '</div>' +
-            '<div class="sys-arrow">&#8594;</div>' +
+            '<div class="sys-arrow">' + iconSvg('arrow') + '</div>' +
           '</a>';
       } else {
         var cls =
@@ -631,10 +696,10 @@
           k === 'agendamentos' ? 'Confirmação avulsa de agenda' : '';
         opsHtml +=
           '<a href="' + esc(item.url) + '" class="sys-card ' + cls + '">' +
-            '<div class="sys-icon-wrap">' + esc(item.icone || '🔗') + '</div>' +
+            '<div class="sys-icon-wrap">' + iconSvg(k) + '</div>' +
             '<div class="sys-name">' + esc(item.nome) + '</div>' +
             '<div class="sys-desc">' + esc(item.descricao || defaultDesc) + '</div>' +
-            '<div class="sys-arrow"><span class="lbl">Abrir </span>&#8594;</div>' +
+            '<div class="sys-arrow">' + iconSvg('arrow') + '</div>' +
           '</a>';
       }
     });
@@ -649,12 +714,12 @@
     if (cont) {
       document.getElementById('creative-section').innerHTML =
         '<a href="' + esc(cont.url) + '" class="creative-card">' +
-          '<div class="creative-icon">' + esc(cont.icone || '📱') + '</div>' +
+          '<div class="creative-icon">' + iconSvg('conteudo') + '</div>' +
           '<div class="creative-text">' +
             '<div class="creative-name">' + esc(cont.nome || 'Conteúdo') + '</div>' +
             '<div class="creative-desc">' + esc(cont.descricao || 'Planejamento de posts e ideias') + '</div>' +
           '</div>' +
-          '<span class="creative-arrow">&#8594;</span>' +
+          '<span class="creative-arrow">' + iconSvg('arrow') + '</span>' +
         '</a>';
     } else {
       document.getElementById('creative-section').innerHTML =
