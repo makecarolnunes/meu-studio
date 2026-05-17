@@ -194,5 +194,5 @@ if ($c -notmatch '</html>') { Write-Warning 'ARQUIVO TRUNCADO' }
 
 ---
 
-<!-- AUTO: 2026-05-17 13:08 | main | fix: remove links netlify do modulo Conteudo ÔÇö usa caminho relativo para hub -->
+<!-- AUTO: 2026-05-17 13:42 | main | fix: conteudo desativa GAS, funciona em modo localStorage sem dialog de setup -->
 
