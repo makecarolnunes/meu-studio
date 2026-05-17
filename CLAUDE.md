@@ -191,3 +191,8 @@ if ($c -notmatch '</html>') { Write-Warning 'ARQUIVO TRUNCADO' }
 | ✅ | Auth centralizada no Hub — Supabase `usuarios` + SHA-256 |
 | 🔄 | Testar app completo em produção |
 | 🔄 | Modularização JS / build step |
+
+---
+
+<!-- AUTO: — -->
+
