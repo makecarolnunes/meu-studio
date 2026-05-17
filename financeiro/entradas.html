@@ -449,67 +449,26 @@
 function checkAuth() {
     const session = localStorage.getItem('mk_session');
     if (session) {
-        const { expires } = JSON.parse(session);
-        if (Date.now() < expires) { showApp(); return; }
+        try {
+            const { expires } = JSON.parse(session);
+            if (Date.now() < expires) { showApp(); return; }
+        } catch(_) {}
         localStorage.removeItem('mk_session');
     }
-    document.getElementById('loading-overlay').style.display = 'none';
-    document.getElementById('login-screen').style.display = 'flex';
-    document.getElementById('app').style.display = 'none';
-    setTimeout(() => document.getElementById('login-user')?.focus(), 100);
-}
-
-async function doLogin() {
-    const user = (document.getElementById('login-user').value || '').trim().toLowerCase();
-    const pass = document.getElementById('login-pass').value || '';
-    const remember = document.getElementById('login-remember').checked;
-    const btn = document.querySelector('.login-btn');
-    const err = document.getElementById('login-error');
-
-    if (!user || !pass) {
-        err.textContent = 'Preencha usuário e senha.';
-        err.style.display = 'block';
-        setTimeout(() => { err.style.display = 'none'; }, 3000);
-        return;
-    }
-
-    btn.disabled = true;
-    btn.textContent = 'Verificando...';
-
-    try {
-        const resultado = await DB.auth.login(user, pass);
-        if (resultado) {
-            const expires = Date.now() + (remember ? 30 * 24 * 60 * 60 * 1000 : 8 * 60 * 60 * 1000);
-            localStorage.setItem('mk_session', JSON.stringify({ expires, usuario: resultado.usuario, nivel: resultado.nivel }));
-            showApp();
-        } else {
-            err.textContent = 'Usuário ou senha incorretos.';
-            err.style.display = 'block';
-            setTimeout(() => { err.style.display = 'none'; }, 3000);
-            document.getElementById('login-pass').value = '';
-            document.getElementById('login-pass').focus();
-        }
-    } catch(e) {
-        err.textContent = 'Erro de conexão. Verifique sua internet.';
-        err.style.display = 'block';
-        setTimeout(() => { err.style.display = 'none'; }, 4000);
-    } finally {
-        btn.disabled = false;
-        btn.textContent = 'Entrar';
-    }
+    // Sem sessão válida — redireciona ao hub para login
+    window.location.href = '../';
 }
 
 function showApp() {
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('app').style.display = 'block';
     document.getElementById('loading-overlay').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
     render();
     loadFromSupabase();
 }
 
 function doLogout() {
     localStorage.removeItem('mk_session');
-    location.reload();
+    window.location.href = '../';
 }
 
 function toggleEye() {
