@@ -16,22 +16,19 @@ concurrency:
 
 jobs:
   deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Criar config.js a partir dos Secrets
+      - name: Gerar config.js a partir dos Secrets
+        env:
+          SB_URL:  ${{ secrets.SUPABASE_URL }}
+          SB_ANON: ${{ secrets.SUPABASE_ANON }}
         run: |
-          cat > config.js << 'EOF'
-          window.ENV = {
-            SUPABASE_URL:  '${{ secrets.SUPABASE_URL }}',
-            SUPABASE_ANON: '${{ secrets.SUPABASE_ANON }}',
-          };
-          EOF
+          printf 'window.ENV = { SUPABASE_URL: "%s", SUPABASE_ANON: "%s" };\n' \
+            "$SB_URL" "$SB_ANON" > config.js
+          echo "config.js gerado (${#SB_URL} chars URL, ${#SB_ANON} chars ANON)"
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
@@ -44,3 +41,6 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+        environment:
+          name: github-pages
+          url: ${{ steps.deployment.outputs.page_url }}
