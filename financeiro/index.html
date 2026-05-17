@@ -476,23 +476,27 @@ async function doLogin() {
     btn.disabled = true;
     btn.textContent = 'Verificando...';
 
-    const userEsperado = (localStorage.getItem('mk_user') || 'carol').toLowerCase();
-    const passEsperado =  localStorage.getItem('mk_pass') || 'makeup2025';
-
-    if (user === userEsperado && pass === passEsperado) {
-        const expires = Date.now() + (remember ? 30 * 24 * 60 * 60 * 1000 : 8 * 60 * 60 * 1000);
-        localStorage.setItem('mk_session', JSON.stringify({ expires }));
-        showApp();
-    } else {
-        err.textContent = 'Usuário ou senha incorretos.';
+    try {
+        const resultado = await DB.auth.login(user, pass);
+        if (resultado) {
+            const expires = Date.now() + (remember ? 30 * 24 * 60 * 60 * 1000 : 8 * 60 * 60 * 1000);
+            localStorage.setItem('mk_session', JSON.stringify({ expires, usuario: resultado.usuario, nivel: resultado.nivel }));
+            showApp();
+        } else {
+            err.textContent = 'Usuário ou senha incorretos.';
+            err.style.display = 'block';
+            setTimeout(() => { err.style.display = 'none'; }, 3000);
+            document.getElementById('login-pass').value = '';
+            document.getElementById('login-pass').focus();
+        }
+    } catch(e) {
+        err.textContent = 'Erro de conexão. Verifique sua internet.';
         err.style.display = 'block';
-        setTimeout(() => { err.style.display = 'none'; }, 3000);
-        document.getElementById('login-pass').value = '';
-        document.getElementById('login-pass').focus();
+        setTimeout(() => { err.style.display = 'none'; }, 4000);
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Entrar';
     }
-
-    btn.disabled = false;
-    btn.textContent = 'Entrar';
 }
 
 function showApp() {

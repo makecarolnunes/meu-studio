@@ -1,11 +1,19 @@
 // ============================================================
 // supabase-client.js — Cliente Supabase compartilhado
 // Expõe window.DB com CRUD para entries, noivas, saidas, orcamentos
+// e DB.auth.login() para autenticação via tabela usuarios
 //
 // COMO USAR NAS PÁGINAS:
 //   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+//   <script src="../config.js"></script>
 //   <script src="../supabase-client.js"></script>   ← ajuste o caminho
 // ============================================================
+
+// Computa SHA-256 usando Web Crypto API nativa (sem dependências)
+async function _sha256(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
 
 // Lê de config.js (window.ENV) — nunca hardcode aqui
 const SUPABASE_URL  = (window.ENV || {}).SUPABASE_URL  || '';
@@ -309,6 +317,19 @@ window.DB = {
       if (!fileId || !fileId.includes('/')) return; // Drive IDs não têm barra
       const { error } = await _sb.storage.from('comprovantes').remove([fileId]);
       if (error) throw error;
+    },
+  },
+
+  auth: {
+    // Retorna { id, usuario, nivel } se válido, null se inválido, lança erro se offline
+    async login(usuario, senha) {
+      const hash = await _sha256(senha);
+      const { data, error } = await _sb.rpc('autenticar', {
+        p_usuario:    usuario.toLowerCase().trim(),
+        p_senha_hash: hash,
+      });
+      if (error) throw error;
+      return (data && data.length > 0) ? data[0] : null;
     },
   },
 };
