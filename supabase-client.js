@@ -19,7 +19,29 @@ async function _sha256(str) {
 const SUPABASE_URL  = (window.ENV || {}).SUPABASE_URL  || '';
 const SUPABASE_ANON = (window.ENV || {}).SUPABASE_ANON || '';
 
-const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+// Inicialização protegida — erros aqui não devem derrubar o arquivo inteiro
+let _sb = null;
+window._SB_ERROR = null;
+
+(function _init() {
+  if (!SUPABASE_URL || !SUPABASE_ANON) {
+    window._SB_ERROR = 'Credenciais ausentes — verifique config.js e os Secrets do GitHub (SUPABASE_URL / SUPABASE_ANON).';
+    console.error('[supabase-client]', window._SB_ERROR);
+    return;
+  }
+  try {
+    _sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+    console.info('[supabase-client] OK — projeto:', SUPABASE_URL);
+  } catch(err) {
+    window._SB_ERROR = err.message || String(err);
+    console.error('[supabase-client] createClient falhou:', window._SB_ERROR);
+  }
+})();
+
+function _guard() {
+  if (window._SB_ERROR) throw new Error(window._SB_ERROR);
+  if (!_sb)             throw new Error('Supabase não inicializado.');
+}
 
 // ── Mapeadores de campos JS (camelCase) → DB (snake_case) ──────────────────
 
@@ -323,6 +345,7 @@ window.DB = {
   auth: {
     // Retorna { id, usuario, nivel } se válido, null se inválido, lança erro se offline
     async login(usuario, senha) {
+      _guard();
       const hash = await _sha256(senha);
       const { data, error } = await _sb.rpc('autenticar', {
         p_usuario:    usuario.toLowerCase().trim(),

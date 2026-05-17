@@ -726,12 +726,15 @@
 
     // Diagnóstico: verifica pré-requisitos antes de chamar Supabase
     if (typeof DB === 'undefined') {
-      showErr('Erro: supabase-client.js não carregou.');
+      var diagMsg = 'Erro interno: DB não definido.';
+      if (typeof supabase === 'undefined') diagMsg = 'Erro: CDN supabase-js não carregou (sem internet?).';
+      else if (!window.ENV || !window.ENV.SUPABASE_URL) diagMsg = 'Erro: config.js sem SUPABASE_URL — configure os Secrets no GitHub.';
+      showErr(diagMsg);
       btn.disabled = false; btn.textContent = 'Entrar';
       return;
     }
-    if (!window.ENV || !window.ENV.SUPABASE_URL) {
-      showErr('Erro: config.js ausente ou sem SUPABASE_URL.');
+    if (window._SB_ERROR) {
+      showErr('Erro Supabase: ' + window._SB_ERROR);
       btn.disabled = false; btn.textContent = 'Entrar';
       return;
     }
