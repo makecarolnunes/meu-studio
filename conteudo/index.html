@@ -391,7 +391,7 @@
 /* ============================================================
    CONFIG
    ============================================================ */
-var HARDCODED_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzpQoj7JLS-iyTgebiFQxNcUKH2Vshf6bZY6tku36zzxoZuQuITfCUQYEF5nH56ZQs-2Q/exec';
+var HARDCODED_SCRIPT_URL = ''; // GAS desativado — módulo usa localStorage
 
 /* ============================================================
    CONSTANTES
@@ -489,7 +489,7 @@ function validateCurPlat(){ if(curPlat!=='todos'&&allPlats().indexOf(curPlat)===
 function loadData(){
   readLS(); migrate(); validateCurPlat();
   var url=getScriptUrl();
-  if(!url){ updateSyncDot('offline'); showSetup(); render(); return; }
+  if(!url){ updateSyncDot('offline'); render(); return; }
   showLoading(true);
   fetch(url+'?action=getData')
     .then(function(r){return r.json();})
