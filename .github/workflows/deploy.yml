@@ -21,15 +21,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Gerar config.js a partir dos Secrets
-        env:
-          SB_URL:  ${{ secrets.SUPABASE_URL }}
-          SB_ANON: ${{ secrets.SUPABASE_ANON }}
-        run: |
-          printf 'window.ENV = { SUPABASE_URL: "%s", SUPABASE_ANON: "%s" };\n' \
-            "$SB_URL" "$SB_ANON" > config.js
-          echo "config.js gerado (${#SB_URL} chars URL, ${#SB_ANON} chars ANON)"
-
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
