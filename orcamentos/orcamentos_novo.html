@@ -2800,8 +2800,6 @@ function openSettings() {
     const state = dotEl ? dotEl.className.replace('sync-dot','').trim() : 'offline';
     note.textContent = { ok:'🟢 Supabase conectado', syncing:'🟡 Sincronizando...', offline:'🔴 Sem conexão' }[state] || '⚪ Status desconhecido';
   }
-  const hasUrl = !!(localStorage.getItem('orca_url'));
-  document.getElementById('btn-copy-link').style.display = hasUrl ? 'block' : 'none';
   setSettingsTab('conex');
   renderServices();
   openPanel('panel-settings');
