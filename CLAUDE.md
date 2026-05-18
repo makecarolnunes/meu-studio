@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-18 15:15 | main | feat: m├│dulo Anota├º├Áes com cadernos, notas, tags e imagens -->
+<!-- AUTO: 2026-05-18 15:25 | main | feat: reorganiza├º├úo do Hub em 4 se├º├Áes -->
 
