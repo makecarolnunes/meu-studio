@@ -264,4 +264,3 @@
     e.textContent = msg; e.style.display = 'block';
     setTimeout(function() { e.style.display = 'none'; }, 3000);
   }
-</script>
