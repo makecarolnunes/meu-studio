@@ -481,8 +481,9 @@ window.DB = {
         id: String(item.id || Date.now()), nome: item.nome || '',
         categoria: item.categoria || '', status: item.status || 'ok', obs: item.obs || '',
         valor: item.valor != null && item.valor !== '' ? parseFloat(item.valor) || 0 : 0,
-        comprado: !!item.comprado,
       };
+      // comprado só é incluído quando explicitamente definido (requer migration)
+      if (item.comprado !== undefined) row.comprado = !!item.comprado;
       const { error } = await _sb.from('estoque').upsert(row, { onConflict: 'id' });
       if (error) throw error;
       return row.id;

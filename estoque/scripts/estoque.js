@@ -57,10 +57,6 @@ async function saveItem() {
   if (!nome) { showToast('Nome obrigatório', true); return; }
   var btn = document.getElementById('btn-save');
   btn.disabled = true;
-  // Preserva estado comprado ao editar
-  var existingComprado = editId
-    ? ((items.find(function(i) { return i.id === editId; }) || {}).comprado || false)
-    : false;
   try {
     await DB.estoque.upsert({
       id:        editId || String(Date.now()),
@@ -69,7 +65,7 @@ async function saveItem() {
       status:    document.getElementById('f-status').value,
       valor:     parseFloat(document.getElementById('f-valor').value) || 0,
       obs:       (document.getElementById('f-obs').value || '').trim(),
-      comprado:  existingComprado,
+      // comprado não é tocado pelo formulário — preservado no DB
     });
     closePanel();
     showToast(editId ? 'Atualizado' : 'Item adicionado');
