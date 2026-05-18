@@ -1,12 +1,12 @@
 // ============================================================
-// supabase-client.js — Cliente Supabase compartilhado
-// Expõe window.DB com CRUD para entries, noivas, saidas, orcamentos
-// e DB.auth.login() para autenticação via tabela usuarios
+// shared/js/db.js — Cliente Supabase compartilhado
+// Expõe window.DB com CRUD para entries, noivas, saidas, orcamentos,
+// conteudo, valoresServicos + DB.auth.login()
 //
 // COMO USAR NAS PÁGINAS:
 //   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 //   <script src="../config.js"></script>
-//   <script src="../supabase-client.js"></script>   ← ajuste o caminho
+//   <script src="../shared/js/db.js"></script>   ← ajuste o caminho
 // ============================================================
 
 // Computa SHA-256 usando Web Crypto API nativa (sem dependências)

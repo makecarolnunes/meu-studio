@@ -46,7 +46,7 @@ Write → localStorage imediato (UI responsiva)
       → sbCall() / postEntry() → Supabase async
 ```
 
-### Camada Supabase (`supabase-client.js`)
+### Camada Supabase (`shared/js/db.js`)
 
 Expõe `window.DB`:
 - `DB.entries`, `DB.noivas`, `DB.saidas`, `DB.orcamentos` — CRUD com mapeadores camelCase ↔ snake_case
@@ -93,7 +93,7 @@ Níveis disponíveis: `'admin'` (acesso total) · `'view'` (reservado para uso f
 ### Fluxo completo
 1. **Hub** (`/`) é o único ponto de login
 2. `doLogin()` chama `DB.auth.login(usuario, senha)`
-3. `supabase-client.js` computa SHA-256 da senha via Web Crypto API e chama RPC `autenticar()`
+3. `shared/js/db.js` computa SHA-256 da senha via Web Crypto API e chama RPC `autenticar()`
 4. Sucesso → `mk_session: {expires, usuario, nivel}` salvo no localStorage
 5. Todos os módulos chamam `checkAuth()` no boot:
    - Sessão válida → carrega normalmente
@@ -151,22 +151,59 @@ if ($c -notmatch '</html>') { Write-Warning 'ARQUIVO TRUNCADO' }
 
 ---
 
-## Key Files
+## Estrutura de pastas
+
+Padrão **Feature-Sliced**: cada módulo é uma fatia vertical (HTML +
+`styles/` + `scripts/`). Infra reutilizável fica em `shared/`. Scripts
+globais ordenados (sem build step, sem ES modules).
+
+```
+.
+├── index.html / hub.html         ← Hub (entry point)
+├── config.js / config.example.js ← credenciais (gitignored)
+├── hub-assets/{styles,scripts}/  ← assets do Hub
+├── shared/
+│   ├── css/{tokens,base}.css     ← design tokens + reset global
+│   └── js/
+│       ├── db.js                 ← cliente Supabase (window.DB)
+│       ├── icons.js              ← SVG icons (window.SVG)
+│       └── sidebar.js            ← sidebar global
+├── financeiro/
+│   ├── index.html / entradas.html
+│   ├── styles/financeiro.css
+│   └── scripts/                  ← state, utils, auth, api, handlers,
+│       └── … (10 arquivos)         noivas, modals, views, chat, main
+├── orcamentos/
+│   ├── orcamentos_novo.html
+│   ├── styles/orcamentos.css
+│   └── scripts/orcamentos.js
+├── clientes/      ↳ styles/clientes.css      scripts/clientes.js
+├── confirmacao/   ↳ styles/confirmacao.css   scripts/confirmacao.js
+└── conteudo/      ↳ styles/conteudo.css      scripts/conteudo.js
+```
+
+**Regra de ordem dos `<script>`** em cada módulo:
+1. `supabase-js` (CDN) — define `window.supabase`
+2. `config.js` — define `window.ENV`
+3. `shared/js/db.js` — usa `window.ENV` e expõe `window.DB`
+4. `shared/js/icons.js` — define `window.SVG`
+5. Scripts do módulo (state → utils → api → handlers → views → main)
+6. `shared/js/sidebar.js` (último, depende do DOM pronto)
 
 | Arquivo | Função |
 |---------|--------|
-| `hub.html` | Hub — arquivo **editável** (login + navegação) |
-| `index.html` | Hub — cópia de `hub.html` (entry point GitHub Pages) |
-| `supabase-client.js` | Cliente Supabase: CRUD, Storage, Auth |
+| `hub.html` / `index.html` | Hub — sempre sincronizar (`cp hub.html index.html`) |
+| `shared/js/db.js` | Cliente Supabase: CRUD, Storage, Auth |
+| `shared/js/icons.js` | SVG icons reutilizáveis (window.SVG) |
 | `config.js` | Credenciais locais — **gitignored, nunca commitar** |
 | `config.example.js` | Template de credenciais |
 | `.github/workflows/deploy.yml` | CI/CD: injeta `config.js` via Secrets → publica Pages |
 | `supabase-migration.sql` | DDL: 4 tabelas de dados + RLS |
 | `supabase-auth.sql` | DDL: tabela `usuarios` + função `autenticar()` |
 | `supabase-bucket-setup.sql` | Storage: bucket `comprovantes` + políticas |
+| `supabase-valores-servicos.sql` | DDL: tabela `valores_servicos` (preços) |
 | `migracao/migrar-dados.html` | Ferramenta one-time de migração |
-| `financeiro/index.html` | Financeiro — arquivo primário |
-| `financeiro/entradas.html` | Financeiro — cópia (sempre sincronizar) |
+| `financeiro/index.html` | Financeiro — primário (entradas.html = cópia) |
 | `orcamentos/orcamentos_novo.html` | Orçamentos — arquivo ativo |
 
 ---
