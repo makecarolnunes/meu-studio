@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-18 15:32 | main | feat: marcar itens do estoque como comprados -->
+<!-- AUTO: 2026-05-18 15:32 | main | docs: sync CLAUDE.md [auto] -->
 
