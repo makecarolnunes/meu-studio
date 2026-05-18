@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-18 15:32 | main | docs: sync CLAUDE.md [auto] -->
+<!-- AUTO: 2026-05-18 15:36 | main | fix: estoque salva sem erro mesmo antes da migration da coluna comprado -->
 
