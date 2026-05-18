@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-18 01:13 | main | feat: m├│dulos Estoque e Tarefas + widget To-Do no Hub -->
+<!-- AUTO: 2026-05-18 01:30 | main | feat: redesign Tarefas + destaque Hub + valor no Estoque -->
 
