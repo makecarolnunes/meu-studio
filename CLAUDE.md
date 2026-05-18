@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-17 21:23 | main | refactor: Feature-Sliced ÔÇö hub + orcamentos + clientes + confirmacao + conteudo -->
+<!-- AUTO: 2026-05-17 21:25 | main | chore: remove arquivos legados n├úo referenciados -->
 
