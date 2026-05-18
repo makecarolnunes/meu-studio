@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-18 00:40 | main | fix: remove </script> inv├ílido do hub.js que quebrava o login -->
+<!-- AUTO: 2026-05-18 00:57 | main | revert: restaura emojis originais em clientes e or├ºamentos -->
 
