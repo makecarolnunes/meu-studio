@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-17 20:22 | main | fix(orcamentos): tabela valores_servicos unificada + status de conex├úo -->
+<!-- AUTO: 2026-05-17 21:23 | main | refactor: Feature-Sliced ÔÇö hub + orcamentos + clientes + confirmacao + conteudo -->
 
