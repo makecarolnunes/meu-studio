@@ -1,6 +1,6 @@
-var tasks    = [];
+var tasks     = [];
 var curFilter = 'pendentes';
-var editId   = null;
+var editId    = null;
 
 // ── AUTH ──────────────────────────────────────────────────────
 function checkAuth() {
@@ -16,18 +16,36 @@ function checkAuth() {
   return false;
 }
 
-// ── UTILS ─────────────────────────────────────────────────────
+// ── DATE UTILS ────────────────────────────────────────────────
 function todayStr() {
   var t = new Date();
   return t.getFullYear() + '-' + String(t.getMonth()+1).padStart(2,'0') + '-' + String(t.getDate()).padStart(2,'0');
 }
-function weekRange() {
-  var now = new Date(), day = now.getDay();
-  var mon = new Date(now); mon.setDate(now.getDate() - (day === 0 ? 6 : day - 1));
-  var sun = new Date(mon); sun.setDate(mon.getDate() + 6);
-  function fmt(d) { return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
-  return { start: fmt(mon), end: fmt(sun) };
+function addDays(dateStr, n) {
+  var d = new Date(dateStr + 'T00:00:00');
+  d.setDate(d.getDate() + n);
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
 }
+function weekEnd() {
+  var now = new Date(), day = now.getDay();
+  var sun = new Date(now);
+  sun.setDate(now.getDate() + (day === 0 ? 0 : 7 - day));
+  return sun.getFullYear() + '-' + String(sun.getMonth()+1).padStart(2,'0') + '-' + String(sun.getDate()).padStart(2,'0');
+}
+function prazoLabel(prazo, hoje) {
+  if (!prazo) return null;
+  var parts = prazo.split('-');
+  var d     = new Date(parseInt(parts[0]), parseInt(parts[1])-1, parseInt(parts[2]));
+  var DIAS  = ['dom','seg','ter','qua','qui','sex','sáb'];
+  var MESES = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+  var dia   = String(parseInt(parts[2])).padStart(2,'0');
+  if (prazo === hoje)              return { txt: 'Hoje',    cls: 'hoje' };
+  if (prazo === addDays(hoje, 1))  return { txt: 'Amanhã',  cls: 'amanha' };
+  var label = DIAS[d.getDay()] + ' ' + dia + '/' + MESES[parseInt(parts[1])-1];
+  if (prazo < hoje)  return { txt: label, cls: 'atrasada' };
+  return { txt: label, cls: 'ok' };
+}
+
 function esc(s) {
   return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
@@ -56,13 +74,31 @@ async function toggleDone(id) {
   var t = tasks.find(function(t) { return t.id === id; });
   if (!t) return;
   t.feita = !t.feita;
-  render(); // otimista
+  render();
   try {
     await DB.tarefas.upsert(t);
   } catch(e) {
-    t.feita = !t.feita; // rollback
+    t.feita = !t.feita;
     render();
     showToast('Erro ao atualizar', true);
+  }
+}
+
+async function quickAdd() {
+  var input = document.getElementById('quick-input');
+  var titulo = (input.value || '').trim();
+  if (!titulo) return;
+  input.value = '';
+  var tmp = { id: 'tmp-' + Date.now(), titulo: titulo, prazo: '', prioridade: 'normal', feita: false };
+  tasks.unshift(tmp);
+  render();
+  try {
+    var realId = await DB.tarefas.upsert({ id: tmp.id, titulo: titulo, prazo: null, prioridade: 'normal', feita: false });
+    await load();
+  } catch(e) {
+    tasks = tasks.filter(function(t) { return t.id !== tmp.id; });
+    render();
+    showToast('Erro ao criar tarefa', true);
   }
 }
 
@@ -103,60 +139,150 @@ async function deleteTask() {
   }
 }
 
+// ── GROUPING ─────────────────────────────────────────────────
+function buildGroups(list) {
+  var hoje   = todayStr();
+  var amanha = addDays(hoje, 1);
+  var we     = weekEnd();
+
+  var g = {
+    atrasadas: { label: 'Atrasadas', cls: 'atrasadas', tasks: [] },
+    hoje:      { label: 'Hoje',      cls: 'hoje',      tasks: [] },
+    amanha:    { label: 'Amanhã',    cls: 'amanha',    tasks: [] },
+    semana:    { label: 'Esta semana',cls:'semana',     tasks: [] },
+    depois:    { label: 'Depois',    cls: 'depois',     tasks: [] },
+  };
+
+  list.forEach(function(t) {
+    if (!t.prazo)              { g.depois.tasks.push(t);    return; }
+    if (t.prazo < hoje)        { g.atrasadas.tasks.push(t); return; }
+    if (t.prazo === hoje)      { g.hoje.tasks.push(t);      return; }
+    if (t.prazo === amanha)    { g.amanha.tasks.push(t);    return; }
+    if (t.prazo <= we)         { g.semana.tasks.push(t);    return; }
+    g.depois.tasks.push(t);
+  });
+
+  return ['atrasadas','hoje','amanha','semana','depois']
+    .map(function(k) { return g[k]; })
+    .filter(function(g) { return g.tasks.length > 0; });
+}
+
 // ── RENDER ────────────────────────────────────────────────────
 function render() {
-  var hoje = todayStr();
-  var wr   = weekRange();
+  var hoje   = todayStr();
+  var amanha = addDays(hoje, 1);
+  var we     = weekEnd();
+
   var pend = tasks.filter(function(t) { return !t.feita; });
   var hj   = tasks.filter(function(t) { return !t.feita && t.prazo === hoje; });
-  var sem  = tasks.filter(function(t) { return !t.feita && t.prazo && t.prazo >= wr.start && t.prazo <= wr.end; });
+  var sem  = tasks.filter(function(t) {
+    return !t.feita && t.prazo && t.prazo >= hoje && t.prazo <= we;
+  });
   var done = tasks.filter(function(t) { return t.feita; });
+  var atrs = tasks.filter(function(t) { return !t.feita && t.prazo && t.prazo < hoje; });
 
+  // Progress
+  var total = tasks.length;
+  var feitas = done.length;
+  var pct = total > 0 ? Math.round((feitas / total) * 100) : 0;
+  document.getElementById('prog-fill').style.width = pct + '%';
+  document.getElementById('prog-lbl').textContent =
+    total === 0 ? 'Nenhuma tarefa cadastrada' :
+    feitas === total ? 'Tudo concluído!' :
+    feitas + ' de ' + total + ' concluída' + (feitas !== 1 ? 's' : '');
+  document.getElementById('prog-pct').textContent = total > 0 ? pct + '%' : '';
+
+  // Chips
   document.getElementById('c-pend').textContent   = pend.length;
   document.getElementById('c-hoje').textContent   = hj.length;
   document.getElementById('c-semana').textContent = sem.length;
   document.getElementById('c-feitas').textContent = done.length;
 
-  var list =
-    curFilter === 'hoje'    ? hj   :
-    curFilter === 'semana'  ? sem  :
-    curFilter === 'feitas'  ? done : pend;
+  // Alert chip color
+  var cp = document.getElementById('c-pend');
+  cp.style.color = atrs.length > 0 ? '#C62828' : '';
 
   var content = document.getElementById('content');
-  if (!list.length) {
+
+  // Feitas: flat list
+  if (curFilter === 'feitas') {
+    if (!done.length) {
+      content.innerHTML = emptyHtml('Nenhuma tarefa concluída ainda.');
+      return;
+    }
     content.innerHTML =
-      '<div class="empty">' +
-        '<div class="empty-ico"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div>' +
-        '<p>Nenhuma tarefa aqui.<br>Toque <strong>+</strong> para adicionar.</p>' +
-      '</div>';
+      '<div class="grupo-hdr" style="margin-top:8px">' +
+        '<span class="grupo-pill feitas">Concluídas</span>' +
+        '<span class="grupo-count">' + done.length + '</span>' +
+        '<span class="grupo-line"></span>' +
+      '</div>' +
+      done.map(function(t) { return renderCard(t, hoje); }).join('');
     return;
   }
 
-  var DIAS_PT = ['dom','seg','ter','qua','qui','sex','sáb'];
+  // Filtrar lista
+  var list =
+    curFilter === 'hoje'   ? hj   :
+    curFilter === 'semana' ? pend.filter(function(t){ return !t.prazo || t.prazo <= we || t.prazo < hoje; }) :
+    pend;
 
-  content.innerHTML = list.map(function(t) {
-    var isAlta    = t.prioridade === 'alta';
-    var prazoHtml = '';
-    if (t.prazo) {
-      var parts = t.prazo.split('-');
-      var d     = new Date(parseInt(parts[0]), parseInt(parts[1])-1, parseInt(parts[2]));
-      var label = String(parseInt(parts[2])).padStart(2,'0') + '/' + parts[1] + ' ' + DIAS_PT[d.getDay()];
-      var cls   = t.prazo < hoje && !t.feita ? ' prazo-atrasada' : t.prazo === hoje && !t.feita ? ' prazo-hoje' : '';
-      prazoHtml = '<div class="task-prazo' + cls + '">' + label + '</div>';
-    }
-    return '<div class="task-item' + (t.feita ? ' done' : '') + '">' +
-      '<button class="task-check" onclick="toggleDone(\'' + esc(t.id) + '\')" aria-label="' + (t.feita ? 'Desmarcar' : 'Concluir') + '">' +
-        '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">' +
-          (t.feita ? '<polyline points="20 6 9 17 4 12"/>' : '') +
-        '</svg>' +
-      '</button>' +
-      (isAlta && !t.feita ? '<div class="task-prio"></div>' : '') +
-      '<div class="task-info" onclick="openEdit(\'' + esc(t.id) + '\')">' +
-        '<div class="task-titulo' + (t.feita ? ' done-txt' : '') + '">' + esc(t.titulo) + '</div>' +
-        prazoHtml +
+  if (!list.length) {
+    content.innerHTML = emptyHtml(
+      curFilter === 'hoje'   ? 'Nenhuma tarefa para hoje.' :
+      curFilter === 'semana' ? 'Nenhuma tarefa esta semana.' :
+      'Nenhuma tarefa pendente.<br>Use o campo acima para criar!'
+    );
+    return;
+  }
+
+  var groups = buildGroups(list);
+  content.innerHTML = groups.map(function(g) {
+    return '<div class="grupo">' +
+      '<div class="grupo-hdr">' +
+        '<span class="grupo-pill ' + g.cls + '">' + g.label + '</span>' +
+        '<span class="grupo-count">' + g.tasks.length + '</span>' +
+        '<span class="grupo-line"></span>' +
       '</div>' +
+      g.tasks.map(function(t) { return renderCard(t, hoje); }).join('') +
     '</div>';
   }).join('');
+}
+
+function renderCard(t, hoje) {
+  var isAlta  = t.prioridade === 'alta';
+  var pl      = prazoLabel(t.prazo, hoje);
+  var cardCls = 'task-card' + (isAlta ? ' alta' : ' normal') +
+                (t.prazo && t.prazo < hoje && !t.feita ? ' atrasada' : '') +
+                (t.prazo === hoje && !t.feita ? ' hoje-card' : '') +
+                (t.feita ? ' feita' : '');
+
+  var prazoBadge = pl
+    ? '<span class="prazo-badge ' + pl.cls + '">' + pl.txt + '</span>'
+    : '';
+  var prioTag = isAlta && !t.feita
+    ? '<span class="prio-tag">Alta</span>'
+    : '';
+
+  return '<div class="' + cardCls + '">' +
+    '<button class="task-check" onclick="toggleDone(\'' + esc(t.id) + '\')" aria-label="' + (t.feita ? 'Desmarcar' : 'Concluir') + '">' +
+      '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">' +
+        (t.feita ? '<polyline points="20 6 9 17 4 12"/>' : '') +
+      '</svg>' +
+    '</button>' +
+    '<div class="task-body" onclick="openEdit(\'' + esc(t.id) + '\')">' +
+      '<div class="task-titulo' + (t.feita ? ' riscado' : '') + '">' + esc(t.titulo) + '</div>' +
+      (prazoBadge || prioTag
+        ? '<div class="task-meta">' + prazoBadge + prioTag + '</div>'
+        : '') +
+    '</div>' +
+  '</div>';
+}
+
+function emptyHtml(msg) {
+  return '<div class="empty">' +
+    '<div class="empty-ico"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div>' +
+    '<p>' + msg + '</p>' +
+  '</div>';
 }
 
 // ── FILTERS ───────────────────────────────────────────────────
@@ -187,14 +313,16 @@ function openEdit(id) {
   document.getElementById('f-titulo').value = t.titulo;
   document.getElementById('f-prazo').value  = t.prazo || '';
   setPrio(
-    t.prioridade === 'alta' ? document.getElementById('f-prio-alta') : document.getElementById('f-prio-normal'),
+    t.prioridade === 'alta'
+      ? document.getElementById('f-prio-alta')
+      : document.getElementById('f-prio-normal'),
     t.prioridade || 'normal'
   );
   document.getElementById('btn-del').style.display = 'block';
   showPanel();
 }
 
-function setPrio(btn, val) {
+function setPrio(btn) {
   document.querySelectorAll('.prio-btn').forEach(function(b) { b.classList.remove('on'); });
   btn.classList.add('on');
 }

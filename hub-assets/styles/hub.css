@@ -373,27 +373,57 @@
     .card-estoque { --accent: #7B1FA2; --icon-bg: #F3E5F5; }
     .card-tarefas { --accent: var(--amber-d); --icon-bg: var(--amber-l); }
 
-    /* ─── TO-DO WIDGET ───────────────────────────────── */
-    .todo-hub-widget {
+    /* ─── TO-DO CARD ─────────────────────────────────── */
+    .todo-hub-card {
       background: var(--card);
       border: 0.5px solid var(--border);
-      border-radius: 14px;
+      border-radius: 16px;
       overflow: hidden;
+    }
+    .todo-hub-hdr {
+      display: flex; align-items: center; gap: 8px;
+      padding: 13px 16px 11px;
+      border-bottom: 0.5px solid var(--border);
+    }
+    .todo-hub-hdr-title {
+      flex: 1; font-size: 13px; font-weight: 700; color: var(--text);
+    }
+    .todo-hub-badge {
+      font-size: 10px; font-weight: 700;
+      padding: 2px 8px; border-radius: 20px;
+    }
+    .badge-total { background: var(--surface-2, #f5efea); color: var(--text-muted, #6f6660); }
+    .badge-atrs  { background: #FCE7E7; color: #C62828; }
+    .todo-hub-link {
+      width: 28px; height: 28px; border-radius: 50%;
+      border: 0.5px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--muted); text-decoration: none; flex-shrink: 0;
+      transition: border-color 0.15s;
+    }
+    .todo-hub-link:hover { border-color: var(--text); color: var(--text); }
+    .todo-hub-alert {
+      background: #fff5f5; color: #C62828;
+      font-size: 11px; font-weight: 600;
+      padding: 7px 16px;
+      border-bottom: 0.5px solid #fdd;
+      display: flex; align-items: center; gap: 6px;
     }
     .todo-hub-item {
       display: flex; align-items: center; gap: 10px;
-      padding: 11px 14px;
+      padding: 11px 16px;
       border-bottom: 0.5px solid var(--border);
     }
     .todo-hub-item:last-of-type { border-bottom: none; }
     .todo-hub-check {
-      width: 20px; height: 20px; border-radius: 50%;
-      border: 1.5px solid var(--border-strong, #D9CDC4);
+      width: 22px; height: 22px; border-radius: 50%;
+      border: 1.5px solid #D9CDC4;
       background: none; cursor: pointer; flex-shrink: 0;
       display: flex; align-items: center; justify-content: center;
       color: transparent; transition: all 0.15s; padding: 0;
     }
-    .todo-hub-check:active { transform: scale(0.88); }
+    .todo-hub-check.check-atrs { border-color: #C62828; }
+    .todo-hub-check:active { transform: scale(0.85); }
     .todo-hub-prio {
       width: 6px; height: 6px; border-radius: 50%;
       background: #C62828; flex-shrink: 0;
@@ -404,17 +434,16 @@
     }
     .todo-hub-dia {
       font-size: 10px; color: var(--muted);
-      flex-shrink: 0; font-weight: 600; text-transform: capitalize;
+      flex-shrink: 0; font-weight: 600; font-variant-numeric: tabular-nums;
     }
-    .todo-hub-dia.dia-hoje { color: #C62828; }
-    .todo-hub-ver {
-      display: flex; align-items: center; justify-content: flex-end; gap: 5px;
-      padding: 9px 14px;
-      font-size: 11px; color: var(--muted);
-      text-decoration: none; border-top: 0.5px solid var(--border);
-      transition: color 0.15s;
+    .todo-hub-dia.dia-hoje { color: #BA7517; font-weight: 800; }
+    .todo-hub-dia.dia-atrs { color: #C62828; font-weight: 800; }
+    .todo-hub-mais {
+      display: block; padding: 10px 16px;
+      font-size: 11px; color: var(--muted); text-decoration: none;
+      border-top: 0.5px solid var(--border); text-align: center;
     }
-    .todo-hub-ver:hover { color: var(--text); }
+    .todo-hub-mais:hover { color: var(--text); }
 
     /* ─── TELAS MUITO PEQUENAS < 360px ─────────────── */
     @media (max-width: 359px) {

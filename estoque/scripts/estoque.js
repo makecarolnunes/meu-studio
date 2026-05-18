@@ -60,6 +60,7 @@ async function saveItem() {
       nome:      nome,
       categoria: document.getElementById('f-cat').value,
       status:    document.getElementById('f-status').value,
+      valor:     parseFloat(document.getElementById('f-valor').value) || 0,
       obs:       (document.getElementById('f-obs').value || '').trim(),
     });
     closePanel();
@@ -120,8 +121,11 @@ function render() {
       '<div class="item-dot" style="background:' + s.color + '"></div>' +
       '<div class="item-info">' +
         '<div class="item-nome">' + esc(i.nome) + '</div>' +
-        (i.categoria ? '<div class="item-cat">' + esc(i.categoria) + '</div>' : '') +
-        (i.obs       ? '<div class="item-obs">' + esc(i.obs) + '</div>'       : '') +
+        '<div class="item-cat">' +
+          (i.categoria ? esc(i.categoria) : '') +
+          (i.valor > 0 ? '<span class="item-valor">R$ ' + i.valor.toLocaleString('pt-BR', {minimumFractionDigits:2,maximumFractionDigits:2}) + '</span>' : '') +
+        '</div>' +
+        (i.obs ? '<div class="item-obs">' + esc(i.obs) + '</div>' : '') +
       '</div>' +
       '<span class="sbadge" style="color:' + s.color + ';background:' + s.bg + '">' + s.label + '</span>' +
     '</div>';
@@ -142,6 +146,7 @@ function openAdd() {
   editId = null;
   document.getElementById('p-title').textContent = 'Novo Item';
   document.getElementById('f-nome').value   = '';
+  document.getElementById('f-valor').value  = '';
   document.getElementById('f-cat').value    = 'Maquiagem';
   document.getElementById('f-status').value = 'ok';
   document.getElementById('f-obs').value    = '';
@@ -155,6 +160,7 @@ function openEdit(id) {
   editId = id;
   document.getElementById('p-title').textContent = 'Editar Item';
   document.getElementById('f-nome').value   = item.nome;
+  document.getElementById('f-valor').value  = item.valor > 0 ? item.valor : '';
   document.getElementById('f-cat').value    = item.categoria || 'Maquiagem';
   document.getElementById('f-status').value = item.status    || 'ok';
   document.getElementById('f-obs').value    = item.obs       || '';

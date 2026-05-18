@@ -82,7 +82,8 @@ body {
 }
 .item-info { flex: 1; min-width: 0; }
 .item-nome { font-size: 0.9rem; font-weight: 600; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.item-cat  { font-size: 0.69rem; color: var(--muted); margin-top: 2px; }
+.item-cat  { font-size: 0.69rem; color: var(--muted); margin-top: 2px; display: flex; align-items: center; gap: 6px; }
+.item-valor { font-size: 0.69rem; font-weight: 700; color: var(--brand); }
 .item-obs  { font-size: 0.72rem; color: var(--muted); margin-top: 3px; font-style: italic; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sbadge {
   font-size: 0.67rem; font-weight: 700;

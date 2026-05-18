@@ -24,6 +24,17 @@
   <div class="hdr-right"></div>
 </div>
 
+<!-- Barra de progresso -->
+<div class="progress-section">
+  <div class="progress-info">
+    <span class="progress-lbl" id="prog-lbl">Carregando...</span>
+    <span class="progress-pct" id="prog-pct"></span>
+  </div>
+  <div class="progress-track">
+    <div class="progress-fill" id="prog-fill" style="width:0%"></div>
+  </div>
+</div>
+
 <div class="chips">
   <div class="chip"><div class="chip-lbl">Pendentes</div><div class="chip-val" id="c-pend">—</div></div>
   <div class="chip"><div class="chip-lbl" style="color:#C62828">Hoje</div><div class="chip-val" id="c-hoje" style="color:#C62828">—</div></div>
@@ -38,11 +49,21 @@
   <button class="ftab"    data-f="feitas"    onclick="setF('feitas')"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Feitas</button>
 </div>
 
+<!-- Quick add -->
+<div class="quick-add">
+  <span class="quick-add-icon">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+  </span>
+  <input id="quick-input" type="text" placeholder="Adicionar tarefa rápida..." autocomplete="off"
+         onkeydown="if(event.key==='Enter') quickAdd()">
+  <button class="quick-add-btn" onclick="quickAdd()">↑</button>
+</div>
+
 <div class="content" id="content">
   <div class="loader"><div class="spinner"></div><br>Carregando tarefas...</div>
 </div>
 
-<button class="fab" onclick="openAdd()" title="Nova tarefa">＋</button>
+<button class="fab" onclick="openAdd()" title="Nova tarefa com detalhes">＋</button>
 
 <div class="overlay" id="overlay" onclick="closePanel()"></div>
 
@@ -52,7 +73,8 @@
   <div class="panel-body">
     <div class="form-group">
       <label class="form-label">Tarefa *</label>
-      <input class="form-input" id="f-titulo" type="text" placeholder="Ex: Responder orçamentos, Comprar material..."
+      <input class="form-input" id="f-titulo" type="text"
+             placeholder="Ex: Responder orçamentos, Comprar material..."
              autocomplete="off" onkeydown="if(event.key==='Enter') saveTask()">
     </div>
     <div class="form-row">
@@ -63,12 +85,15 @@
       <div class="form-group">
         <label class="form-label">Prioridade</label>
         <div class="toggle-row">
-          <button class="prio-btn" id="f-prio-alta"   data-prio="alta"   onclick="setPrio(this,'alta')">Alta</button>
-          <button class="prio-btn on" id="f-prio-normal" data-prio="normal" onclick="setPrio(this,'normal')">Normal</button>
+          <button class="prio-btn" id="f-prio-alta"   data-prio="alta"   onclick="setPrio(this)">Alta</button>
+          <button class="prio-btn on" id="f-prio-normal" data-prio="normal" onclick="setPrio(this)">Normal</button>
         </div>
       </div>
     </div>
-    <button class="btn-primary" id="btn-save" onclick="saveTask()">Salvar tarefa</button>
+    <button class="btn-primary" id="btn-save" onclick="saveTask()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+      Salvar tarefa
+    </button>
     <button class="btn-outline" onclick="closePanel()">Cancelar</button>
     <button class="btn-danger"  id="btn-del"  onclick="deleteTask()">Excluir tarefa</button>
   </div>

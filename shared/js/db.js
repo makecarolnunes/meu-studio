@@ -450,7 +450,8 @@ window.DB = {
       if (error) throw error;
       return data.map(r => ({
         id: String(r.id), nome: r.nome || '', categoria: r.categoria || '',
-        status: r.status || 'ok', obs: r.obs || '', createdAt: r.created_at || '',
+        status: r.status || 'ok', obs: r.obs || '',
+        valor: r.valor != null ? Number(r.valor) : 0, createdAt: r.created_at || '',
       }));
     },
     async upsert(item) {
@@ -458,6 +459,7 @@ window.DB = {
       const row = {
         id: String(item.id || Date.now()), nome: item.nome || '',
         categoria: item.categoria || '', status: item.status || 'ok', obs: item.obs || '',
+        valor: item.valor != null && item.valor !== '' ? parseFloat(item.valor) || 0 : 0,
       };
       const { error } = await _sb.from('estoque').upsert(row, { onConflict: 'id' });
       if (error) throw error;

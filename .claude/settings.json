@@ -4,8 +4,15 @@
       "Bash",
       "Read",
       "Edit",
-      "Write"
+      "Write",
+      "Read(//c/Users/carol/OneDrive/�rea de Trabalho/claude/Nova pasta/confirmacao/**)",
+      "PowerShell($c = Get-Content 'c:/Users/carol/OneDrive/Área de Trabalho/claude/Nova pasta/financeiro/index.html' -Raw; if \\($c -notmatch '</html>'\\) { Write-Warning 'ARQUIVO TRUNCADO' } else { Write-Host \"OK — $\\($c.Split\\(\"`n\"\\).Count\\) linhas\" })",
+      "PowerShell(Copy-Item 'c:/Users/carol/OneDrive/�rea de Trabalho/claude/Nova pasta/financeiro/index.html' 'c:/Users/carol/OneDrive/�rea de Trabalho/claude/Nova pasta/financeiro/entradas.html')"
     ],
-    "defaultMode": "bypassPermissions"
+    "defaultMode": "bypassPermissions",
+    "additionalDirectories": [
+      "c:\\Users\\carol\\OneDrive\\�rea de Trabalho\\claude\\Nova pasta\\financeiro",
+      "c:\\Users\\carol\\OneDrive\\�rea de Trabalho\\claude\\Nova pasta"
+    ]
   }
 }

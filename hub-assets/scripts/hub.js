@@ -204,35 +204,69 @@
   async function loadTodoWidget() {
     if (typeof DB === 'undefined' || window._SB_ERROR) return;
     try {
-      var now  = new Date(), day = now.getDay();
-      var mon  = new Date(now); mon.setDate(now.getDate() - (day === 0 ? 6 : day - 1));
-      var sun  = new Date(mon); sun.setDate(mon.getDate() + 6);
       function fmt(d) { return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()); }
-      var ws = fmt(mon), we = fmt(sun), hoje = fmt(now);
-      var all = await DB.tarefas.list();
-      var sem = all.filter(function(t) {
-        return !t.feita && t.prazo && t.prazo >= ws && t.prazo <= we;
-      });
+      var now = new Date(), hoje = fmt(now);
+      // fim da semana (domingo)
+      var sun = new Date(now); sun.setDate(now.getDate() + (now.getDay() === 0 ? 0 : 7 - now.getDay()));
+      var we  = fmt(sun);
+
+      var all   = await DB.tarefas.list();
+      var pend  = all.filter(function(t) { return !t.feita; });
+      var atrs  = pend.filter(function(t) { return t.prazo && t.prazo < hoje; });
+      var hj    = pend.filter(function(t) { return t.prazo === hoje; });
+      // itens para exibir: atrasadas + hoje + próximas da semana, máx 5
+      var visib = pend.filter(function(t) { return !t.prazo || t.prazo <= we; }).slice(0, 5);
+
       var section = document.getElementById('todo-section');
-      if (!sem.length) { section.style.display = 'none'; return; }
+      if (!pend.length) { section.style.display = 'none'; return; }
+
       var DPTS = ['dom','seg','ter','qua','qui','sex','sáb'];
-      var html = sem.slice(0, 5).map(function(t) {
-        var parts = t.prazo.split('-');
-        var d = new Date(parseInt(parts[0]), parseInt(parts[1])-1, parseInt(parts[2]));
-        var dia = t.prazo === hoje ? 'hoje' : DPTS[d.getDay()];
-        var isHoje = t.prazo === hoje;
+      function diaLabel(prazo) {
+        if (!prazo) return 'sem prazo';
+        if (prazo === hoje) return 'hoje';
+        var pts = prazo.split('-');
+        var d   = new Date(parseInt(pts[0]), parseInt(pts[1])-1, parseInt(pts[2]));
+        return String(parseInt(pts[2])).padStart(2,'0') + '/' + pts[1] + ' ' + DPTS[d.getDay()];
+      }
+
+      // Header
+      var html = '<div class="todo-hub-hdr">' +
+        '<span class="todo-hub-hdr-title">Tarefas pendentes</span>' +
+        (atrs.length ? '<span class="todo-hub-badge badge-atrs">' + atrs.length + ' atrasada' + (atrs.length > 1 ? 's' : '') + '</span>' : '') +
+        '<span class="todo-hub-badge badge-total">' + pend.length + ' pendente' + (pend.length > 1 ? 's' : '') + '</span>' +
+        '<a href="tarefas/" class="todo-hub-link">' +
+          '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>' +
+        '</a>' +
+      '</div>';
+
+      // Alerta atrasadas
+      if (atrs.length) {
+        html += '<div class="todo-hub-alert">' +
+          '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>' +
+          atrs.length + ' tarefa' + (atrs.length > 1 ? 's atrasadas' : ' atrasada') +
+        '</div>';
+      }
+
+      // Items
+      var displayList = visib.length ? visib : pend.slice(0, 5);
+      html += displayList.map(function(t) {
+        var isAtrs  = t.prazo && t.prazo < hoje;
+        var isHoje  = t.prazo === hoje;
+        var diaLbl  = diaLabel(t.prazo);
         return '<div class="todo-hub-item">' +
-          '<button class="todo-hub-check" onclick="hubToggle(\'' + esc(t.id) + '\',this)" aria-label="Concluir">' +
+          '<button class="todo-hub-check' + (isAtrs ? ' check-atrs' : '') + '" onclick="hubToggle(\'' + esc(t.id) + '\',this)" aria-label="Concluir">' +
             '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' +
           '</button>' +
           (t.prioridade === 'alta' ? '<div class="todo-hub-prio"></div>' : '') +
           '<div class="todo-hub-titulo">' + esc(t.titulo) + '</div>' +
-          '<div class="todo-hub-dia' + (isHoje ? ' dia-hoje' : '') + '">' + dia + '</div>' +
+          '<div class="todo-hub-dia' + (isAtrs ? ' dia-atrs' : isHoje ? ' dia-hoje' : '') + '">' + diaLbl + '</div>' +
         '</div>';
       }).join('');
-      html += '<a href="tarefas/" class="todo-hub-ver">Ver todas as tarefas' +
-        '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>' +
-      '</a>';
+
+      if (pend.length > 5) {
+        html += '<a href="tarefas/" class="todo-hub-mais">+ ' + (pend.length - 5) + ' mais — ver todas →</a>';
+      }
+
       document.getElementById('todo-widget').innerHTML = html;
       section.style.display = 'block';
     } catch(e) { /* silencioso — tabela pode não existir ainda */ }
