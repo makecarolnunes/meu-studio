@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-18 14:41 | main | style: Hub mais visual ÔÇö t├¡tulos maiores, borda colorida por m├│dulo -->
+<!-- AUTO: 2026-05-18 15:15 | main | feat: m├│dulo Anota├º├Áes com cadernos, notas, tags e imagens -->
 
