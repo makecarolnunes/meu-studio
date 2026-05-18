@@ -1,0 +1,177 @@
+var STATUS_CFG = {
+  ok:       { label: 'OK',       color: '#3B6D11', bg: '#EAF3DE' },
+  acabando: { label: 'Acabando', color: '#BA7517', bg: '#FAEEDA' },
+  zerado:   { label: 'Zerado',   color: '#C62828', bg: '#FCE7E7' },
+  investir: { label: 'Investir', color: '#6A1B9A', bg: '#F3E5F5' },
+  wishlist: { label: 'Wishlist', color: '#1565C0', bg: '#E3F2FD' },
+};
+
+var items    = [];
+var curFilter = 'todos';
+var editId   = null;
+
+// ── AUTH ──────────────────────────────────────────────────────
+function checkAuth() {
+  var s = localStorage.getItem('mk_session');
+  if (s) {
+    try {
+      var sess = JSON.parse(s);
+      if (Date.now() < sess.expires) return true;
+    } catch(e) {}
+  }
+  localStorage.removeItem('mk_session');
+  window.location.href = '../';
+  return false;
+}
+
+// ── UTILS ─────────────────────────────────────────────────────
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function showToast(msg, err) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (err ? ' toast-err' : '');
+  clearTimeout(t._tmr);
+  t._tmr = setTimeout(function() { t.className = 'toast'; }, 2600);
+}
+
+// ── DATA ──────────────────────────────────────────────────────
+async function load() {
+  document.getElementById('hsub').textContent = 'Sincronizando...';
+  try {
+    items = await DB.estoque.list();
+    render();
+    document.getElementById('hsub').textContent = '';
+  } catch(e) {
+    document.getElementById('hsub').textContent = 'Sem conexão';
+    console.error('[estoque]', e);
+  }
+}
+
+async function saveItem() {
+  var nome = (document.getElementById('f-nome').value || '').trim();
+  if (!nome) { showToast('Nome obrigatório', true); return; }
+  var btn = document.getElementById('btn-save');
+  btn.disabled = true;
+  try {
+    await DB.estoque.upsert({
+      id:        editId || String(Date.now()),
+      nome:      nome,
+      categoria: document.getElementById('f-cat').value,
+      status:    document.getElementById('f-status').value,
+      obs:       (document.getElementById('f-obs').value || '').trim(),
+    });
+    closePanel();
+    showToast(editId ? 'Atualizado' : 'Item adicionado');
+    await load();
+  } catch(e) {
+    showToast('Erro ao salvar', true);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function deleteItem() {
+  if (!editId) return;
+  if (!confirm('Excluir este item do estoque?')) return;
+  try {
+    await DB.estoque.delete(editId);
+    closePanel();
+    showToast('Removido');
+    await load();
+  } catch(e) {
+    showToast('Erro ao excluir', true);
+  }
+}
+
+// ── RENDER ────────────────────────────────────────────────────
+function render() {
+  var counts = { repor: 0, acabando: 0, wishlist: 0 };
+  items.forEach(function(i) {
+    if (i.status === 'zerado')   counts.repor++;
+    if (i.status === 'acabando') counts.acabando++;
+    if (i.status === 'wishlist') counts.wishlist++;
+  });
+  document.getElementById('c-total').textContent    = items.length;
+  document.getElementById('c-repor').textContent    = counts.repor;
+  document.getElementById('c-acabando').textContent = counts.acabando;
+  document.getElementById('c-wishlist').textContent = counts.wishlist;
+
+  var list = items;
+  if (curFilter === 'repor')    list = items.filter(function(i){ return i.status === 'zerado' || i.status === 'acabando'; });
+  else if (curFilter === 'acabando') list = items.filter(function(i){ return i.status === 'acabando'; });
+  else if (curFilter === 'investir') list = items.filter(function(i){ return i.status === 'investir'; });
+  else if (curFilter === 'wishlist') list = items.filter(function(i){ return i.status === 'wishlist'; });
+
+  var content = document.getElementById('content');
+  if (!list.length) {
+    content.innerHTML =
+      '<div class="empty">' +
+        '<div class="empty-ico"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></div>' +
+        '<p>Nenhum item' + (curFilter !== 'todos' ? ' neste filtro' : '') + '.<br>Toque <strong>+</strong> para adicionar.</p>' +
+      '</div>';
+    return;
+  }
+
+  content.innerHTML = list.map(function(i) {
+    var s = STATUS_CFG[i.status] || STATUS_CFG.ok;
+    return '<div class="item-card" onclick="openEdit(\'' + esc(i.id) + '\')">' +
+      '<div class="item-dot" style="background:' + s.color + '"></div>' +
+      '<div class="item-info">' +
+        '<div class="item-nome">' + esc(i.nome) + '</div>' +
+        (i.categoria ? '<div class="item-cat">' + esc(i.categoria) + '</div>' : '') +
+        (i.obs       ? '<div class="item-obs">' + esc(i.obs) + '</div>'       : '') +
+      '</div>' +
+      '<span class="sbadge" style="color:' + s.color + ';background:' + s.bg + '">' + s.label + '</span>' +
+    '</div>';
+  }).join('');
+}
+
+// ── FILTERS ───────────────────────────────────────────────────
+function setF(f) {
+  curFilter = f;
+  document.querySelectorAll('.ftab').forEach(function(b) {
+    b.classList.toggle('on', b.dataset.f === f);
+  });
+  render();
+}
+
+// ── PANEL ─────────────────────────────────────────────────────
+function openAdd() {
+  editId = null;
+  document.getElementById('p-title').textContent = 'Novo Item';
+  document.getElementById('f-nome').value   = '';
+  document.getElementById('f-cat').value    = 'Maquiagem';
+  document.getElementById('f-status').value = 'ok';
+  document.getElementById('f-obs').value    = '';
+  document.getElementById('btn-del').style.display = 'none';
+  showPanel();
+}
+
+function openEdit(id) {
+  var item = items.find(function(i) { return i.id === id; });
+  if (!item) return;
+  editId = id;
+  document.getElementById('p-title').textContent = 'Editar Item';
+  document.getElementById('f-nome').value   = item.nome;
+  document.getElementById('f-cat').value    = item.categoria || 'Maquiagem';
+  document.getElementById('f-status').value = item.status    || 'ok';
+  document.getElementById('f-obs').value    = item.obs       || '';
+  document.getElementById('btn-del').style.display = 'block';
+  showPanel();
+}
+
+function showPanel() {
+  document.getElementById('overlay').style.display = 'block';
+  document.getElementById('panel').classList.add('open');
+  setTimeout(function() { document.getElementById('f-nome').focus(); }, 300);
+}
+
+function closePanel() {
+  document.getElementById('overlay').style.display = 'none';
+  document.getElementById('panel').classList.remove('open');
+}
+
+// ── INIT ──────────────────────────────────────────────────────
+if (checkAuth()) { load(); }

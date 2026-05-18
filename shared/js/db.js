@@ -443,6 +443,60 @@ window.DB = {
     },
   },
 
+  estoque: {
+    async list() {
+      _guard();
+      const { data, error } = await _sb.from('estoque').select('*').order('created_at', { ascending: false });
+      if (error) throw error;
+      return data.map(r => ({
+        id: String(r.id), nome: r.nome || '', categoria: r.categoria || '',
+        status: r.status || 'ok', obs: r.obs || '', createdAt: r.created_at || '',
+      }));
+    },
+    async upsert(item) {
+      _guard();
+      const row = {
+        id: String(item.id || Date.now()), nome: item.nome || '',
+        categoria: item.categoria || '', status: item.status || 'ok', obs: item.obs || '',
+      };
+      const { error } = await _sb.from('estoque').upsert(row, { onConflict: 'id' });
+      if (error) throw error;
+      return row.id;
+    },
+    async delete(id) {
+      _guard();
+      const { error } = await _sb.from('estoque').delete().eq('id', String(id));
+      if (error) throw error;
+    },
+  },
+
+  tarefas: {
+    async list() {
+      _guard();
+      const { data, error } = await _sb.from('tarefas').select('*').order('prazo', { ascending: true, nullsFirst: false });
+      if (error) throw error;
+      return data.map(r => ({
+        id: String(r.id), titulo: r.titulo || '', prazo: r.prazo || '',
+        prioridade: r.prioridade || 'normal', feita: !!r.feita, createdAt: r.created_at || '',
+      }));
+    },
+    async upsert(t) {
+      _guard();
+      const row = {
+        id: String(t.id || Date.now()), titulo: t.titulo || '',
+        prazo: t.prazo || null, prioridade: t.prioridade || 'normal', feita: !!t.feita,
+      };
+      const { error } = await _sb.from('tarefas').upsert(row, { onConflict: 'id' });
+      if (error) throw error;
+      return row.id;
+    },
+    async delete(id) {
+      _guard();
+      const { error } = await _sb.from('tarefas').delete().eq('id', String(id));
+      if (error) throw error;
+    },
+  },
+
   auth: {
     // Retorna { id, usuario, nivel } se válido, null se inválido, lança erro se offline
     async login(usuario, senha) {

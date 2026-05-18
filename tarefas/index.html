@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Tarefas">
+  <title>Tarefas · Meu Studio</title>
+  <link rel="stylesheet" href="../shared/css/tokens.css">
+  <link rel="stylesheet" href="../shared/css/base.css">
+  <link rel="stylesheet" href="./styles/tarefas.css">
+</head>
+<body>
+
+<div class="hdr">
+  <button class="hdr-back" onclick="window.location.href='../'" aria-label="Voltar">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+  </button>
+  <div class="hdr-center">
+    <h1>Tarefas</h1>
+    <div class="hdr-sub" id="hsub"></div>
+  </div>
+  <div class="hdr-right"></div>
+</div>
+
+<div class="chips">
+  <div class="chip"><div class="chip-lbl">Pendentes</div><div class="chip-val" id="c-pend">—</div></div>
+  <div class="chip"><div class="chip-lbl" style="color:#C62828">Hoje</div><div class="chip-val" id="c-hoje" style="color:#C62828">—</div></div>
+  <div class="chip"><div class="chip-lbl" style="color:var(--amber)">Semana</div><div class="chip-val" id="c-semana" style="color:var(--amber)">—</div></div>
+  <div class="chip"><div class="chip-lbl" style="color:var(--ok)">Feitas</div><div class="chip-val" id="c-feitas" style="color:var(--ok)">—</div></div>
+</div>
+
+<div class="ftabs">
+  <button class="ftab on" data-f="pendentes" onclick="setF('pendentes')">Pendentes</button>
+  <button class="ftab"    data-f="hoje"      onclick="setF('hoje')">Hoje</button>
+  <button class="ftab"    data-f="semana"    onclick="setF('semana')">Esta semana</button>
+  <button class="ftab"    data-f="feitas"    onclick="setF('feitas')"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Feitas</button>
+</div>
+
+<div class="content" id="content">
+  <div class="loader"><div class="spinner"></div><br>Carregando tarefas...</div>
+</div>
+
+<button class="fab" onclick="openAdd()" title="Nova tarefa">＋</button>
+
+<div class="overlay" id="overlay" onclick="closePanel()"></div>
+
+<div class="panel" id="panel">
+  <div class="panel-handle"></div>
+  <div class="panel-title" id="p-title">Nova Tarefa</div>
+  <div class="panel-body">
+    <div class="form-group">
+      <label class="form-label">Tarefa *</label>
+      <input class="form-input" id="f-titulo" type="text" placeholder="Ex: Responder orçamentos, Comprar material..."
+             autocomplete="off" onkeydown="if(event.key==='Enter') saveTask()">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Prazo</label>
+        <input class="form-input" id="f-prazo" type="date">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Prioridade</label>
+        <div class="toggle-row">
+          <button class="prio-btn" id="f-prio-alta"   data-prio="alta"   onclick="setPrio(this,'alta')">Alta</button>
+          <button class="prio-btn on" id="f-prio-normal" data-prio="normal" onclick="setPrio(this,'normal')">Normal</button>
+        </div>
+      </div>
+    </div>
+    <button class="btn-primary" id="btn-save" onclick="saveTask()">Salvar tarefa</button>
+    <button class="btn-outline" onclick="closePanel()">Cancelar</button>
+    <button class="btn-danger"  id="btn-del"  onclick="deleteTask()">Excluir tarefa</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="../config.js"></script>
+<script src="../shared/js/db.js"></script>
+<script src="./scripts/tarefas.js"></script>
+<script src="../shared/js/sidebar.js"></script>
+</body>
+</html>

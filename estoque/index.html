@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Estoque">
+  <title>Estoque · Meu Studio</title>
+  <link rel="stylesheet" href="../shared/css/tokens.css">
+  <link rel="stylesheet" href="../shared/css/base.css">
+  <link rel="stylesheet" href="./styles/estoque.css">
+</head>
+<body>
+
+<div class="hdr">
+  <button class="hdr-back" onclick="window.location.href='../'" aria-label="Voltar">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+  </button>
+  <div class="hdr-center">
+    <h1>Estoque</h1>
+    <div class="hdr-sub" id="hsub"></div>
+  </div>
+  <div class="hdr-right"></div>
+</div>
+
+<div class="chips">
+  <div class="chip"><div class="chip-lbl">Total</div><div class="chip-val" id="c-total">—</div></div>
+  <div class="chip"><div class="chip-lbl" style="color:#C62828">Repor</div><div class="chip-val" id="c-repor" style="color:#C62828">—</div></div>
+  <div class="chip"><div class="chip-lbl" style="color:var(--amber)">Acabando</div><div class="chip-val" id="c-acabando" style="color:var(--amber)">—</div></div>
+  <div class="chip"><div class="chip-lbl" style="color:#1565C0">Wishlist</div><div class="chip-val" id="c-wishlist" style="color:#1565C0">—</div></div>
+</div>
+
+<div class="ftabs">
+  <button class="ftab on" data-f="todos"    onclick="setF('todos')">Todos</button>
+  <button class="ftab"    data-f="repor"    onclick="setF('repor')"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Repor</button>
+  <button class="ftab"    data-f="acabando" onclick="setF('acabando')">Acabando</button>
+  <button class="ftab"    data-f="investir" onclick="setF('investir')">Investir</button>
+  <button class="ftab"    data-f="wishlist" onclick="setF('wishlist')">Wishlist</button>
+</div>
+
+<div class="content" id="content">
+  <div class="loader"><div class="spinner"></div><br>Carregando estoque...</div>
+</div>
+
+<button class="fab" onclick="openAdd()" title="Novo item">＋</button>
+
+<div class="overlay" id="overlay" onclick="closePanel()"></div>
+
+<div class="panel" id="panel">
+  <div class="panel-handle"></div>
+  <div class="panel-title" id="p-title">Novo Item</div>
+  <div class="panel-body">
+    <div class="form-group">
+      <label class="form-label">Nome *</label>
+      <input class="form-input" id="f-nome" type="text" placeholder="Ex: Primer Mac, Pincel kabuki..." autocomplete="off"
+             onkeydown="if(event.key==='Enter') saveItem()">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Categoria</label>
+        <select class="form-input" id="f-cat">
+          <option>Maquiagem</option>
+          <option>Cabelo</option>
+          <option>Skin</option>
+          <option>Equipamentos</option>
+          <option>Consumíveis</option>
+          <option>Outros</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Status</label>
+        <select class="form-input" id="f-status">
+          <option value="ok">OK — tenho</option>
+          <option value="acabando">Acabando</option>
+          <option value="zerado">Zerado — repor</option>
+          <option value="investir">Investir — preciso</option>
+          <option value="wishlist">Wishlist — desejo</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Observação</label>
+      <textarea class="form-input" id="f-obs" rows="2" placeholder="Marca preferida, onde comprar, preço médio..."></textarea>
+    </div>
+    <button class="btn-primary" id="btn-save" onclick="saveItem()">Salvar</button>
+    <button class="btn-outline" onclick="closePanel()">Cancelar</button>
+    <button class="btn-danger"  id="btn-del"  onclick="deleteItem()">Excluir item</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="../config.js"></script>
+<script src="../shared/js/db.js"></script>
+<script src="./scripts/estoque.js"></script>
+<script src="../shared/js/sidebar.js"></script>
+</body>
+</html>

@@ -81,6 +81,21 @@
         '<path d="M12 3l1.6 5L19 9.5 13.6 11 12 16l-1.6-5L5 9.5 10.4 8z"/>' +
         '<path d="M19 15l.7 2.3 2.3.7-2.3.7L19 21l-.7-2.3-2.3-.7 2.3-.7z"/>' +
       '</svg>',
+    estoque:
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+        '<path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>' +
+        '<polyline points="3.27 6.96 12 12.01 20.73 6.96"/>' +
+        '<line x1="12" y1="22.08" x2="12" y2="12"/>' +
+      '</svg>',
+    tarefas:
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+        '<line x1="8" y1="6" x2="21" y2="6"/>' +
+        '<line x1="8" y1="12" x2="21" y2="12"/>' +
+        '<line x1="8" y1="18" x2="21" y2="18"/>' +
+        '<line x1="3" y1="6" x2="3.01" y2="6"/>' +
+        '<line x1="3" y1="12" x2="3.01" y2="12"/>' +
+        '<line x1="3" y1="18" x2="3.01" y2="18"/>' +
+      '</svg>',
     arrow:
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
         '<path d="M5 12h14M13 6l6 6-6 6"/>' +
@@ -169,10 +184,77 @@
       .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 
+  // ── Gestão ──
+  function buildGestao() {
+    var GESTAO = [
+      { key: 'estoque', nome: 'Estoque',  desc: 'Produtos, equipamentos e wishlist', url: 'estoque/', cls: 'card-estoque' },
+      { key: 'tarefas', nome: 'Tarefas',  desc: 'To-do list da empresa',             url: 'tarefas/', cls: 'card-tarefas' },
+    ];
+    document.getElementById('gestao-grid').innerHTML = GESTAO.map(function(c) {
+      return '<a href="' + esc(c.url) + '" class="sys-card ' + c.cls + '">' +
+        '<div class="sys-icon-wrap">' + iconSvg(c.key) + '</div>' +
+        '<div class="sys-name">' + esc(c.nome) + '</div>' +
+        '<div class="sys-desc">' + esc(c.desc) + '</div>' +
+        '<div class="sys-arrow">' + iconSvg('arrow') + '</div>' +
+      '</a>';
+    }).join('');
+  }
+
+  // ── Widget To-Do ──
+  async function loadTodoWidget() {
+    if (typeof DB === 'undefined' || window._SB_ERROR) return;
+    try {
+      var now  = new Date(), day = now.getDay();
+      var mon  = new Date(now); mon.setDate(now.getDate() - (day === 0 ? 6 : day - 1));
+      var sun  = new Date(mon); sun.setDate(mon.getDate() + 6);
+      function fmt(d) { return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()); }
+      var ws = fmt(mon), we = fmt(sun), hoje = fmt(now);
+      var all = await DB.tarefas.list();
+      var sem = all.filter(function(t) {
+        return !t.feita && t.prazo && t.prazo >= ws && t.prazo <= we;
+      });
+      var section = document.getElementById('todo-section');
+      if (!sem.length) { section.style.display = 'none'; return; }
+      var DPTS = ['dom','seg','ter','qua','qui','sex','sáb'];
+      var html = sem.slice(0, 5).map(function(t) {
+        var parts = t.prazo.split('-');
+        var d = new Date(parseInt(parts[0]), parseInt(parts[1])-1, parseInt(parts[2]));
+        var dia = t.prazo === hoje ? 'hoje' : DPTS[d.getDay()];
+        var isHoje = t.prazo === hoje;
+        return '<div class="todo-hub-item">' +
+          '<button class="todo-hub-check" onclick="hubToggle(\'' + esc(t.id) + '\',this)" aria-label="Concluir">' +
+            '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' +
+          '</button>' +
+          (t.prioridade === 'alta' ? '<div class="todo-hub-prio"></div>' : '') +
+          '<div class="todo-hub-titulo">' + esc(t.titulo) + '</div>' +
+          '<div class="todo-hub-dia' + (isHoje ? ' dia-hoje' : '') + '">' + dia + '</div>' +
+        '</div>';
+      }).join('');
+      html += '<a href="tarefas/" class="todo-hub-ver">Ver todas as tarefas' +
+        '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>' +
+      '</a>';
+      document.getElementById('todo-widget').innerHTML = html;
+      section.style.display = 'block';
+    } catch(e) { /* silencioso — tabela pode não existir ainda */ }
+  }
+
+  async function hubToggle(id, btn) {
+    btn.disabled = true;
+    try {
+      var all = await DB.tarefas.list();
+      var t   = all.find(function(x) { return x.id === id; });
+      if (!t) return;
+      t.feita = true;
+      await DB.tarefas.upsert(t);
+      loadTodoWidget();
+    } catch(e) { btn.disabled = false; }
+  }
+
   // ── Carrega os cards (somente FALLBACK — sem GAS) ──
   function loadHub() {
     localStorage.removeItem('hub_systems');
     buildCards(FALLBACK);
+    buildGestao();
   }
 
   // ── Data ──
@@ -209,6 +291,7 @@
     document.getElementById('login-overlay').style.display = 'none';
     document.getElementById('hub-app').style.display = 'block';
     loadHub();
+    loadTodoWidget();
   }
 
   async function doLogin() {
