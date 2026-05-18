@@ -2,7 +2,7 @@
   //  HUB — busca links dos sistemas no Apps Script da planilha
   // ══════════════════════════════════════════════════════════
 
-  var ORDER_OPS = ['orcamentos', 'financeiro', 'clientes', 'agendamentos'];
+  var ORDER_OPS = ['orcamentos', 'financeiro', 'clientes'];
 
   var FALLBACK = [
     { nome: 'Orçamentos',   descricao: 'Início do fluxo — feche tudo em um clique', icone: '💰', url: 'orcamentos/',   cor: 'purple'       },
@@ -167,20 +167,16 @@
       var fbCont = FALLBACK.find(function(f){ return keyFor(f) === 'conteudo'; });
       if (fbCont) cont = normItem(fbCont);
     }
-    if (cont) {
-      document.getElementById('creative-section').innerHTML =
-        '<a href="' + esc(cont.url) + '" class="creative-card">' +
-          '<div class="creative-icon">' + iconSvg('conteudo') + '</div>' +
-          '<div class="creative-text">' +
-            '<div class="creative-name">' + esc(cont.nome || 'Conteúdo') + '</div>' +
-            '<div class="creative-desc">' + esc(cont.descricao || 'Planejamento de posts e ideias') + '</div>' +
-          '</div>' +
-          '<span class="creative-arrow">' + iconSvg('arrow') + '</span>' +
-        '</a>';
-    } else {
-      document.getElementById('creative-section').innerHTML =
-        '<div style="text-align:center;padding:14px;color:var(--muted);font-size:12px;">Sem itens de conteúdo cadastrados na planilha.</div>';
-    }
+    var contUrl  = (cont && cont.url)  ? cont.url  : 'conteudo/';
+    var contNome = (cont && cont.nome) ? cont.nome : 'Conteúdo';
+    var contDesc = (cont && cont.descricao) ? cont.descricao : 'Planejamento de posts e ideias';
+    document.getElementById('creative-section').innerHTML =
+      '<a href="' + esc(contUrl) + '" class="sys-card card-cont">' +
+        '<div class="sys-icon-wrap">' + iconSvg('conteudo') + '</div>' +
+        '<div class="sys-name">' + esc(contNome) + '</div>' +
+        '<div class="sys-desc">' + esc(contDesc) + '</div>' +
+        '<div class="sys-arrow">' + iconSvg('arrow') + '</div>' +
+      '</a>';
   }
 
   function esc(s) {
@@ -189,12 +185,27 @@
       .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 
+  // ── Organização ──
+  function buildOrganizacao() {
+    var ORG = [
+      { key: 'tarefas',   nome: 'Tarefas',   desc: 'To-do list e acompanhamento',       url: 'tarefas/',   cls: 'card-tarefas'   },
+      { key: 'anotacoes', nome: 'Anotações', desc: 'Cadernos de cursos e aprendizados',  url: 'anotacoes/', cls: 'card-anotacoes' },
+    ];
+    document.getElementById('org-grid').innerHTML = ORG.map(function(c) {
+      return '<a href="' + esc(c.url) + '" class="sys-card ' + c.cls + '">' +
+        '<div class="sys-icon-wrap">' + iconSvg(c.key) + '</div>' +
+        '<div class="sys-name">' + esc(c.nome) + '</div>' +
+        '<div class="sys-desc">' + esc(c.desc) + '</div>' +
+        '<div class="sys-arrow">' + iconSvg('arrow') + '</div>' +
+      '</a>';
+    }).join('');
+  }
+
   // ── Gestão ──
   function buildGestao() {
     var GESTAO = [
-      { key: 'estoque',    nome: 'Estoque',    desc: 'Produtos, equipamentos e wishlist', url: 'estoque/',    cls: 'card-estoque'    },
-      { key: 'tarefas',    nome: 'Tarefas',    desc: 'To-do list da empresa',             url: 'tarefas/',    cls: 'card-tarefas'    },
-      { key: 'anotacoes',  nome: 'Anotações',  desc: 'Cadernos de cursos e aprendizados', url: 'anotacoes/',  cls: 'card-anotacoes'  },
+      { key: 'estoque',      nome: 'Estoque',      desc: 'Produtos, equipamentos e wishlist', url: 'estoque/',     cls: 'card-estoque' },
+      { key: 'agendamentos', nome: 'Agendamentos', desc: 'Confirmação avulsa de agenda',      url: 'confirmacao/', cls: 'card-conf'    },
     ];
     document.getElementById('gestao-grid').innerHTML = GESTAO.map(function(c) {
       return '<a href="' + esc(c.url) + '" class="sys-card ' + c.cls + '">' +
@@ -294,6 +305,7 @@
   function loadHub() {
     localStorage.removeItem('hub_systems');
     buildCards(FALLBACK);
+    buildOrganizacao();
     buildGestao();
   }
 

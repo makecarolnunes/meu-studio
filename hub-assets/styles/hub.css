@@ -374,6 +374,10 @@
     .card-estoque    { --accent: #7B1FA2;          --icon-bg: #E8D4F2; }
     .card-tarefas    { --accent: var(--amber-d);   --icon-bg: #F5DFA0; }
     .card-anotacoes  { --accent: #a36844;           --icon-bg: #EDD9C8; }
+    .card-cont       { --accent: var(--amber);      --icon-bg: var(--amber-l); }
+
+    /* Widget de tarefas logo abaixo da seção Organização */
+    #todo-section { margin-top: 10px; }
 
     /* ─── TO-DO CARD ─────────────────────────────────── */
     .todo-hub-card {
