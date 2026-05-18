@@ -371,8 +371,9 @@
     }
 
     /* ─── GESTÃO cards ──────────────────────────────── */
-    .card-estoque { --accent: #7B1FA2; --icon-bg: #E8D4F2; }
-    .card-tarefas { --accent: var(--amber-d); --icon-bg: #F5DFA0; }
+    .card-estoque    { --accent: #7B1FA2;          --icon-bg: #E8D4F2; }
+    .card-tarefas    { --accent: var(--amber-d);   --icon-bg: #F5DFA0; }
+    .card-anotacoes  { --accent: #a36844;           --icon-bg: #EDD9C8; }
 
     /* ─── TO-DO CARD ─────────────────────────────────── */
     .todo-hub-card {

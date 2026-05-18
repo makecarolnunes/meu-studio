@@ -340,6 +340,25 @@ window.DB = {
       const { error } = await _sb.storage.from('comprovantes').remove([fileId]);
       if (error) throw error;
     },
+
+    async uploadAnotacao(notaId, file, base64Data, mimeType) {
+      const ts  = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+      const ext = file.name.split('.').pop() || 'bin';
+      const path = `${notaId}/${ts}.${ext}`;
+
+      const byteChars = atob(base64Data);
+      const bytes = new Uint8Array(byteChars.length);
+      for (let i = 0; i < byteChars.length; i++) bytes[i] = byteChars.charCodeAt(i);
+      const blob = new Blob([bytes], { type: mimeType || file.type });
+
+      const { error } = await _sb.storage.from('anotacoes').upload(path, blob, {
+        cacheControl: '3600', upsert: false,
+      });
+      if (error) throw error;
+
+      const { data } = _sb.storage.from('anotacoes').getPublicUrl(path);
+      return { ok: true, fileId: path, link: data.publicUrl, nome: file.name };
+    },
   },
 
   conteudo: {
@@ -468,6 +487,72 @@ window.DB = {
     async delete(id) {
       _guard();
       const { error } = await _sb.from('estoque').delete().eq('id', String(id));
+      if (error) throw error;
+    },
+  },
+
+  cadernos: {
+    async list() {
+      _guard();
+      const { data, error } = await _sb
+        .from('cadernos').select('*').order('created_at', { ascending: false });
+      if (error) throw error;
+      return data.map(r => ({
+        id: String(r.id), nome: r.nome || '',
+        emoji: r.emoji || '📓', cor: r.cor || '#a36844',
+        createdAt: r.created_at || '',
+      }));
+    },
+    async upsert(c) {
+      _guard();
+      const row = {
+        id: String(c.id || Date.now()), nome: c.nome || '',
+        emoji: c.emoji || '📓', cor: c.cor || '#a36844',
+      };
+      const { error } = await _sb.from('cadernos').upsert(row, { onConflict: 'id' });
+      if (error) throw error;
+      return row.id;
+    },
+    async delete(id) {
+      _guard();
+      const { error } = await _sb.from('cadernos').delete().eq('id', String(id));
+      if (error) throw error;
+    },
+  },
+
+  anotacoes: {
+    async listByCaderno(cadernoId) {
+      _guard();
+      const { data, error } = await _sb
+        .from('anotacoes').select('*')
+        .eq('caderno_id', String(cadernoId))
+        .order('updated_at', { ascending: false });
+      if (error) throw error;
+      return data.map(r => ({
+        id: String(r.id), cadernoId: String(r.caderno_id),
+        titulo: r.titulo || '', conteudo: r.conteudo || '',
+        tags: r.tags || [], imagens: r.imagens || [],
+        createdAt: r.created_at || '', updatedAt: r.updated_at || '',
+      }));
+    },
+    async upsert(nota) {
+      _guard();
+      const row = {
+        id: String(nota.id || Date.now()),
+        caderno_id: String(nota.cadernoId),
+        titulo: nota.titulo || '', conteudo: nota.conteudo || '',
+        tags: Array.isArray(nota.tags) ? nota.tags : [],
+        imagens: Array.isArray(nota.imagens) ? nota.imagens : [],
+        updated_at: new Date().toISOString(),
+        created_at: nota.createdAt || new Date().toISOString(),
+      };
+      const { error } = await _sb.from('anotacoes').upsert(row, { onConflict: 'id' });
+      if (error) throw error;
+      return row.id;
+    },
+    async delete(id) {
+      _guard();
+      const { error } = await _sb.from('anotacoes').delete().eq('id', String(id));
       if (error) throw error;
     },
   },

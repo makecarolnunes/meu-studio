@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Anotações">
+  <title>Anotações · Meu Studio</title>
+  <link rel="stylesheet" href="../shared/css/tokens.css">
+  <link rel="stylesheet" href="../shared/css/base.css">
+  <link rel="stylesheet" href="./styles/anotacoes.css">
+</head>
+<body>
+
+<!-- Header (título e botão voltar atualizados pelo JS conforme a view) -->
+<div class="hdr">
+  <button class="hdr-back" id="hdr-back" onclick="window.location.href='../'" aria-label="Voltar">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+  </button>
+  <div class="hdr-center">
+    <h1 id="hdr-title">Anotações</h1>
+  </div>
+  <div class="hdr-right">
+    <button class="hdr-save" id="hdr-save" onclick="saveNota()" style="display:none" aria-label="Salvar nota">Salvar</button>
+  </div>
+</div>
+
+<!-- ── View: Cadernos ────────────────────────────────────────── -->
+<div id="view-cadernos">
+  <div class="content" id="cadernos-list">
+    <div class="loader"><div class="spinner"></div><br>Carregando...</div>
+  </div>
+</div>
+
+<!-- ── View: Notas (dentro de um caderno) ───────────────────── -->
+<div id="view-notas" style="display:none">
+  <div class="content" id="notas-list"></div>
+</div>
+
+<!-- ── View: Editor de nota ─────────────────────────────────── -->
+<div id="view-editor" style="display:none">
+  <div class="editor">
+    <input class="editor-titulo" id="f-titulo" type="text"
+           placeholder="Título da nota" autocomplete="off">
+
+    <textarea class="editor-conteudo" id="f-conteudo"
+              placeholder="Escreva suas anotações aqui…" rows="9"></textarea>
+
+    <!-- Tags -->
+    <div class="editor-section">
+      <div class="esec-label">Tags</div>
+      <div id="edit-tags" class="edit-tags-list"></div>
+      <div class="tag-add-row">
+        <input id="tag-inp" type="text" class="tag-inp"
+               placeholder="Adicionar tag e pressionar Enter…"
+               onkeydown="tagKeydown(event)" autocomplete="off">
+        <button class="tag-add-btn" onclick="addTag()" aria-label="Adicionar tag">+</button>
+      </div>
+    </div>
+
+    <!-- Imagens -->
+    <div class="editor-section">
+      <div class="esec-label">Imagens</div>
+      <div id="edit-imgs"></div>
+      <button class="btn-img-add" id="btn-upload" onclick="pickImage()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        + Imagem
+      </button>
+    </div>
+
+    <!-- Excluir (só para notas existentes) -->
+    <button class="btn-del-nota" id="btn-del-nota" onclick="deleteNota()" style="display:none">
+      Excluir esta nota
+    </button>
+  </div>
+</div>
+
+<!-- FAB -->
+<button class="fab" id="fab" onclick="fabAction()" title="Novo">＋</button>
+
+<!-- ── Panel: Formulário de caderno ─────────────────────────── -->
+<div class="overlay" id="form-overlay" onclick="closePanel('form')"></div>
+<div class="panel" id="form-panel">
+  <div class="panel-handle"></div>
+  <div class="panel-title" id="cf-title">Novo caderno</div>
+  <div class="panel-body">
+    <div class="form-group">
+      <label class="form-label">Nome *</label>
+      <input class="form-input" id="cf-nome" type="text"
+             placeholder="Ex: Fotografia, Maquiagem com Carol…"
+             autocomplete="off" onkeydown="if(event.key==='Enter') saveCaderno()">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Ícone</label>
+      <div id="emoji-picker" class="emoji-picker"></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Cor</label>
+      <div id="cor-picker" class="cor-picker"></div>
+    </div>
+    <button class="btn-primary" id="btn-save-cad" onclick="saveCaderno()">Salvar caderno</button>
+    <button class="btn-outline" onclick="closePanel('form')">Cancelar</button>
+    <button class="btn-danger" id="btn-del-cad" onclick="deleteCadernoFromForm()" style="display:none">Excluir caderno</button>
+  </div>
+</div>
+
+<!-- ── Panel: Menu de opções do caderno ─────────────────────── -->
+<div class="overlay" id="menu-overlay" onclick="closePanel('menu')"></div>
+<div class="panel" id="menu-panel">
+  <div class="panel-handle"></div>
+  <div class="panel-body panel-body-menu">
+    <button class="menu-action" onclick="editCadernoFromMenu()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      Editar caderno
+    </button>
+    <button class="menu-action menu-danger" onclick="deleteCadernoFromMenu()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
+      Excluir caderno
+    </button>
+    <button class="menu-action menu-cancel" onclick="closePanel('menu')">Cancelar</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="../config.js"></script>
+<script src="../shared/js/db.js"></script>
+<script src="./scripts/anotacoes.js"></script>
+<script src="../shared/js/sidebar.js"></script>
+</body>
+</html>

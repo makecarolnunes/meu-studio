@@ -96,6 +96,11 @@
         '<line x1="3" y1="12" x2="3.01" y2="12"/>' +
         '<line x1="3" y1="18" x2="3.01" y2="18"/>' +
       '</svg>',
+    anotacoes:
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+        '<path d="M4 19.5A2.5 2.5 0 016.5 17H20"/>' +
+        '<path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/>' +
+      '</svg>',
     arrow:
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
         '<path d="M5 12h14M13 6l6 6-6 6"/>' +
@@ -187,8 +192,9 @@
   // ── Gestão ──
   function buildGestao() {
     var GESTAO = [
-      { key: 'estoque', nome: 'Estoque',  desc: 'Produtos, equipamentos e wishlist', url: 'estoque/', cls: 'card-estoque' },
-      { key: 'tarefas', nome: 'Tarefas',  desc: 'To-do list da empresa',             url: 'tarefas/', cls: 'card-tarefas' },
+      { key: 'estoque',    nome: 'Estoque',    desc: 'Produtos, equipamentos e wishlist', url: 'estoque/',    cls: 'card-estoque'    },
+      { key: 'tarefas',    nome: 'Tarefas',    desc: 'To-do list da empresa',             url: 'tarefas/',    cls: 'card-tarefas'    },
+      { key: 'anotacoes',  nome: 'Anotações',  desc: 'Cadernos de cursos e aprendizados', url: 'anotacoes/',  cls: 'card-anotacoes'  },
     ];
     document.getElementById('gestao-grid').innerHTML = GESTAO.map(function(c) {
       return '<a href="' + esc(c.url) + '" class="sys-card ' + c.cls + '">' +
