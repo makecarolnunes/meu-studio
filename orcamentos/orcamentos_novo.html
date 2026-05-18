@@ -57,12 +57,12 @@
 <!-- ── FILTER TABS ────────────────────────────────────────── -->
 <div class="ftabs">
   <button class="ftab on" data-f="todos"    onclick="setF('todos')">Todos</button>
-  <button class="ftab"    data-f="followup" onclick="setF('followup')">⚠️ Follow-up</button>
-  <button class="ftab"    data-f="novos"    onclick="setF('novos')">🆕 Novos</button>
-  <button class="ftab"    data-f="negoc"    onclick="setF('negoc')">🤝 Negociando</button>
-  <button class="ftab"    data-f="fechados"    onclick="setF('fechados')">✅ Fechados</button>
-  <button class="ftab"    data-f="agenda-pend" onclick="setF('agenda-pend')">📅 Agenda ⚠️</button>
-  <button class="ftab"    data-f="agenda-ok"   onclick="setF('agenda-ok')">📅 Agenda ✅</button>
+  <button class="ftab"    data-f="followup" onclick="setF('followup')"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Follow-up</button>
+  <button class="ftab"    data-f="novos"    onclick="setF('novos')">Novos</button>
+  <button class="ftab"    data-f="negoc"    onclick="setF('negoc')">Negociando</button>
+  <button class="ftab"    data-f="fechados"    onclick="setF('fechados')"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Fechados</button>
+  <button class="ftab"    data-f="agenda-pend" onclick="setF('agenda-pend')"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Agenda</button>
+  <button class="ftab"    data-f="agenda-ok"   onclick="setF('agenda-ok')"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Agenda ok</button>
 </div>
 
 <!-- ── CONTENT ────────────────────────────────────────────── -->
@@ -97,7 +97,7 @@
 
     <!-- Slots (serviço + valor + data + hora) -->
     <div style="font-size:0.68rem; font-weight:700; color:var(--purple); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:8px;">
-      🛠️ Serviços e datas
+      Serviços e datas
     </div>
     <div id="add-slots-list"></div>
     <button class="btn-add-slot" onclick="addAddSlot()">+ Adicionar outro serviço / data</button>
@@ -126,7 +126,7 @@
       <label class="form-label">Observações</label>
       <textarea class="form-input" id="add-obs" rows="2" placeholder="Ex: cliente quer desconto, casamento dia 20/06..."></textarea>
     </div>
-    <button class="btn-primary" onclick="saveNew()">💾 Salvar Orçamento</button>
+    <button class="btn-primary" onclick="saveNew()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Salvar Orçamento</button>
     <button class="btn-outline" onclick="closeAll()">Cancelar</button>
   </div>
 </div>
@@ -149,7 +149,7 @@
   <!-- WA Button -->
   <div style="padding: 0 18px 10px;">
     <button class="btn-wa" id="act-wa-btn" onclick="openWhatsApp()">
-      <span>💬</span> Abrir WhatsApp com mensagem pronta
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> Abrir WhatsApp com mensagem pronta
     </button>
     <div style="font-size:0.69rem; color:var(--muted); margin-top:5px; text-align:center" id="act-wa-hint"></div>
   </div>
@@ -157,7 +157,7 @@
   <!-- ★ FECHAR E AGENDAR TUDO ★ -->
   <div id="act-fech-btn-area" style="padding: 0 18px 12px;">
     <button class="btn-fechar" onclick="abrirFechamento()">
-      🚀 Fechar e Agendar Tudo
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Fechar e Agendar Tudo
     </button>
     <div style="font-size:0.66rem; color:var(--muted); text-align:center; margin-top:5px; line-height:1.45;">
       Financeiro + Google Agenda + WhatsApp em um só passo
@@ -167,7 +167,7 @@
   <!-- ★ GOOGLE AGENDA (para fechados) ★ -->
   <div id="act-gcal-section" style="display:none; padding: 0 18px 10px;">
     <button class="btn-gcal" id="act-gcal-btn" onclick="adicionarAgendaDeAction()" style="margin-top:0;">
-      📅 Adicionar ao Google Agenda
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Adicionar ao Google Agenda
     </button>
     <div id="act-gcal-result" class="gcal-status"></div>
   </div>
@@ -178,12 +178,12 @@
   <div style="padding: 12px 18px 0;">
     <div style="font-size:0.68rem; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:8px;">Atualizar status</div>
     <div class="status-grid" id="status-grid">
-      <button class="st-btn st-btn-novo"    data-s="Novo Pedido"        onclick="setStatus(this)">🆕 Novo Pedido</button>
-      <button class="st-btn st-btn-enviado" data-s="Orçamento Enviado"  onclick="setStatus(this)">📤 Orç. Enviado</button>
-      <button class="st-btn st-btn-negoc"   data-s="Em Negociação"      onclick="setStatus(this)">🤝 Em Negociação</button>
-      <button class="st-btn st-btn-fechado" data-s="Fechado"            onclick="setStatus(this)">✅ Fechado</button>
-      <button class="st-btn st-btn-semresp" data-s="Sem Resposta"       onclick="setStatus(this)">😶 Sem Resposta</button>
-      <button class="st-btn st-btn-perdido" data-s="Perdido"            onclick="setStatus(this)">❌ Perdido</button>
+      <button class="st-btn st-btn-novo"    data-s="Novo Pedido"        onclick="setStatus(this)">Novo Pedido</button>
+      <button class="st-btn st-btn-enviado" data-s="Orçamento Enviado"  onclick="setStatus(this)">Orç. Enviado</button>
+      <button class="st-btn st-btn-negoc"   data-s="Em Negociação"      onclick="setStatus(this)">Em Negociação</button>
+      <button class="st-btn st-btn-fechado" data-s="Fechado"            onclick="setStatus(this)">Fechado</button>
+      <button class="st-btn st-btn-semresp" data-s="Sem Resposta"       onclick="setStatus(this)">Sem Resposta</button>
+      <button class="st-btn st-btn-perdido" data-s="Perdido"            onclick="setStatus(this)">Perdido</button>
     </div>
   </div>
 
@@ -197,7 +197,7 @@
 
   <!-- Follow-up row -->
   <div class="fu-row">
-    <label>📅 Follow-up:</label>
+    <label>Follow-up:</label>
     <input type="date" id="act-followup" onchange="updateFollowup()">
   </div>
 
@@ -214,7 +214,7 @@
   <!-- ★ COMPROVANTE ★ -->
   <div style="padding: 0 18px 0;">
     <div class="form-group">
-      <label class="form-label">🧾 Comprovante de pagamento</label>
+      <label class="form-label">Comprovante de pagamento</label>
       <div id="act-comp-content"></div>
       <input type="file" id="act-comp-input" style="display:none" accept="image/*,application/pdf">
     </div>
@@ -222,47 +222,47 @@
 
   <div class="fu-picker" id="fu-picker">
     <div class="fu-picker-hdr">
-      <span class="fu-picker-title">📤 Follow-up rápido</span>
-      <button class="fu-picker-cfg" onclick="closeAll(); openSettings(); setTimeout(()=>setSettingsTab('followups'),50)" title="Editar templates">⚙️</button>
+      <span class="fu-picker-title">Follow-up rápido</span>
+      <button class="fu-picker-cfg" onclick="closeAll(); openSettings(); setTimeout(()=>setSettingsTab('followups'),50)" title="Editar templates"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 0 1-4 0v-.1a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 0 1 0-4h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3h0a1.7 1.7 0 0 0 1-1.5V3a2 2 0 0 1 4 0v.1a1.7 1.7 0 0 0 1 1.5h0a1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8v0a1.7 1.7 0 0 0 1.5 1H21a2 2 0 0 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
     </div>
     <div class="fu-chips-scroll" id="fu-chips-scroll"></div>
     <div class="fu-preview" id="fu-preview">
       <div class="fu-preview-label">Pré-visualização — editável antes de enviar</div>
       <div class="fu-preview-msg" id="fu-preview-msg" contenteditable="true" spellcheck="true"></div>
       <div class="fu-preview-actions">
-        <button class="fu-wa-btn"   onclick="sendFuWA()">💬 WhatsApp</button>
-        <button class="fu-copy-btn" onclick="copyFuMsg()">📋 Copiar</button>
+        <button class="fu-wa-btn"   onclick="sendFuWA()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> WhatsApp</button>
+        <button class="fu-copy-btn" onclick="copyFuMsg()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copiar</button>
       </div>
     </div>
   </div>
 
   <div style="padding: 8px 18px 32px;">
-    <button class="btn-primary" onclick="saveAction()">💾 Salvar alterações</button>
+    <button class="btn-primary" onclick="saveAction()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Salvar alterações</button>
     <button class="btn-outline" onclick="closeAll()">Fechar</button>
-    <button class="btn-danger" onclick="excluirOrcamento()">🗑 Excluir orçamento</button>
+    <button class="btn-danger" onclick="excluirOrcamento()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg> Excluir orçamento</button>
   </div>
 </div>
 
 <!-- ── PANEL: FECHAR E AGENDAR TUDO ────────────────────── -->
 <div class="panel" id="panel-fechar">
   <div class="panel-handle"></div>
-  <div class="panel-title">🚀 Fechar e Agendar Tudo</div>
+  <div class="panel-title">Fechar e Agendar Tudo</div>
   <div class="panel-sub" id="fech-nome" style="padding:2px 18px 0; font-size:0.82rem; color:var(--brown); font-weight:700;"></div>
   <div class="panel-body">
 
     <!-- Preview do que vai ser criado -->
     <div class="sync-preview">
-      <div class="sync-item"><span class="si-icon">💰</span><span class="si-txt">Sinal + restante no <strong>Sistema Financeiro</strong></span></div>
-      <div class="sync-item"><span class="si-icon">📅</span><span class="si-txt">Evento(s) no <strong>Google Agenda</strong></span></div>
-      <div class="sync-item"><span class="si-icon">💬</span><span class="si-txt">Mensagem de confirmação para o <strong>WhatsApp</strong></span></div>
+      <div class="sync-item"><span class="si-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span><span class="si-txt">Sinal + restante no <strong>Sistema Financeiro</strong></span></div>
+      <div class="sync-item"><span class="si-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span><span class="si-txt">Evento(s) no <strong>Google Agenda</strong></span></div>
+      <div class="sync-item"><span class="si-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span><span class="si-txt">Mensagem de confirmação para o <strong>WhatsApp</strong></span></div>
     </div>
 
     <!-- Local -->
     <div class="form-group">
       <label class="form-label">Local</label>
       <div class="toggle-row">
-        <button class="toggle-btn on" data-local="studio"    onclick="setFechLocal(this)">🏠 Studio</button>
-        <button class="toggle-btn"    data-local="domicilio" onclick="setFechLocal(this)">🚗 Domicílio</button>
+        <button class="toggle-btn on" data-local="studio"    onclick="setFechLocal(this)"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> Studio</button>
+        <button class="toggle-btn"    data-local="domicilio" onclick="setFechLocal(this)"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg> Domicílio</button>
       </div>
     </div>
 
@@ -274,7 +274,7 @@
 
     <!-- Datas e Serviços (slots) -->
     <div style="font-size:0.68rem; font-weight:700; color:var(--purple); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:8px;">
-      📅 Datas, horários e serviços
+      Datas, horários e serviços
     </div>
     <div id="fech-slots-list"></div>
     <button class="btn-add-slot" onclick="addFechSlot()">+ Adicionar outra data / serviço</button>
@@ -300,8 +300,8 @@
     <div class="form-group">
       <label class="form-label">Sinal já recebido?</label>
       <div class="toggle-row">
-        <button class="toggle-btn on-ok" data-ss="recebido" onclick="setFechSinalStatus(this)">✅ Já recebi</button>
-        <button class="toggle-btn"       data-ss="pendente" onclick="setFechSinalStatus(this)">⏳ Vou receber</button>
+        <button class="toggle-btn on-ok" data-ss="recebido" onclick="setFechSinalStatus(this)"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Já recebi</button>
+        <button class="toggle-btn"       data-ss="pendente" onclick="setFechSinalStatus(this)"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Vou receber</button>
       </div>
     </div>
 
@@ -335,7 +335,7 @@
     </div>
 
     <button class="btn-fechar" id="fech-confirm-btn" onclick="confirmarFechamento()">
-      ✅ Confirmar e Sincronizar Tudo
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Confirmar e Sincronizar Tudo
     </button>
     <button class="btn-outline" style="margin-top:8px;" onclick="voltarFechamento()">← Voltar</button>
   </div>
@@ -344,49 +344,49 @@
 <!-- ── PANEL: CONFIRMAÇÃO / SUCESSO ─────────────────────── -->
 <div class="panel" id="panel-confirmacao">
   <div class="panel-handle"></div>
-  <div class="panel-title">🎉 Confirmado!</div>
+  <div class="panel-title">Confirmado!</div>
   <div class="panel-sub" id="conf-client" style="padding:2px 18px 0; font-size:0.82rem; color:var(--ok); font-weight:700;"></div>
   <div class="panel-body">
 
     <div class="success-list" id="conf-list"></div>
 
     <div style="font-size:0.68rem; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:8px;">
-      💬 Mensagem de confirmação para o cliente
+      Mensagem de confirmação para o cliente
     </div>
     <div class="wa-bubble" id="conf-wa-text"></div>
 
     <button class="btn-wa" onclick="sendConfirmationWA()">
-      <span>💬</span> Enviar pelo WhatsApp
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> Enviar pelo WhatsApp
     </button>
 
     <button class="btn-gcal" id="conf-gcal-btn" onclick="abrirGcalConfirmacao()">
-      📅 Adicionar ao Google Agenda
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Adicionar ao Google Agenda
     </button>
     <div id="conf-gcal-status" class="gcal-status"></div>
 
-    <button class="btn-copy" onclick="copiarMensagem()">📋 Copiar mensagem</button>
-    <button class="btn-outline" style="margin-top:10px;" onclick="closeAll()">✔️ Concluído</button>
+    <button class="btn-copy" onclick="copiarMensagem()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copiar mensagem</button>
+    <button class="btn-outline" style="margin-top:10px;" onclick="closeAll()">Concluído</button>
   </div>
 </div>
 
 <!-- ── PANEL: SETTINGS ────────────────────────────────────── -->
 <div class="panel" id="panel-settings">
   <div class="panel-handle"></div>
-  <div class="panel-title">⚙️ Configurações</div>
+  <div class="panel-title">Configurações</div>
   <div class="panel-body">
     <div class="settings-tabs">
-      <button class="settings-tab on" data-tab="conex"     onclick="setSettingsTab('conex')">🔗 Conexões</button>
-      <button class="settings-tab"    data-tab="servicos"  onclick="setSettingsTab('servicos')">🛠️ Serviços</button>
-      <button class="settings-tab"    data-tab="followups" onclick="setSettingsTab('followups')">📋 Follow-ups</button>
+      <button class="settings-tab on" data-tab="conex"     onclick="setSettingsTab('conex')">Conexões</button>
+      <button class="settings-tab"    data-tab="servicos"  onclick="setSettingsTab('servicos')">Serviços</button>
+      <button class="settings-tab"    data-tab="followups" onclick="setSettingsTab('followups')">Follow-ups</button>
     </div>
 
     <!-- Tab: Conexões -->
     <div id="settings-tab-conex" style="margin-top:14px;">
       <div class="settings-note" id="sb-status-note">
-        🟡 Verificando conexão com Supabase...
+        Verificando conexão com Supabase...
       </div>
       <div class="settings-note">
-        📅 <strong>Google Agenda:</strong> ID da agenda usada para os eventos.
+        <strong>Google Agenda:</strong> ID da agenda usada para os eventos.
       </div>
       <div class="settings-field">
         <label>Calendar ID (Google Agenda)</label>
@@ -413,7 +413,7 @@
       </div>
       <div id="fu-tpl-list"></div>
       <button class="btn-add-slot" onclick="addFollowupTemplate()" style="margin-top:4px;">+ Novo template</button>
-      <button class="btn-primary"  onclick="saveFollowupSettings()">💾 Salvar templates</button>
+      <button class="btn-primary"  onclick="saveFollowupSettings()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Salvar templates</button>
     </div>
 
     <button class="btn-outline" onclick="closeAll()">Fechar</button>
@@ -424,7 +424,7 @@
 <div class="loading-screen" id="loading-screen">
   <div class="loading-card">
     <div class="loading-wrap">
-      <div class="loading-logo">🚀</div>
+      <div class="loading-logo"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
       <div class="loading-ring"></div>
     </div>
     <div class="loading-msg" id="loading-msg">Processando...</div>

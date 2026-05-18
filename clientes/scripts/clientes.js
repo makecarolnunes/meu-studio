@@ -4,11 +4,16 @@
 const MONTHS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
                 'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS   = ['domingo','segunda','terça','quarta','quinta','sexta','sábado'];
+const _I = {
+  star:     '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.6 5L19 9.5 13.6 11 12 16l-1.6-5L5 9.5 10.4 8z"/></svg>',
+  scissors: '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg>',
+  book:     '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>',
+};
 const SRV_ICON = {
-  'Maquiagem':'💄', 'Cabelo':'💇‍♀️', 'Maquiagem e Cabelo':'✨',
-  'Maquiagem no Studio':'💄', 'Maquiagem e Cabelo no Studio':'✨', 'Cabelo no Studio':'💇‍♀️',
-  'Maquiagem em domicílio':'💄', 'Maquiagem e Cabelo em domicílio':'✨', 'Cabelo em domicílio':'💇‍♀️',
-  'Curso de Automaquiagem':'📚'
+  'Maquiagem': _I.star, 'Cabelo': _I.scissors, 'Maquiagem e Cabelo': _I.star,
+  'Maquiagem no Studio': _I.star, 'Maquiagem e Cabelo no Studio': _I.star, 'Cabelo no Studio': _I.scissors,
+  'Maquiagem em domicílio': _I.star, 'Maquiagem e Cabelo em domicílio': _I.star, 'Cabelo em domicílio': _I.scissors,
+  'Curso de Automaquiagem': _I.book,
 };
 
 const DEFAULT_URL = 'https://script.google.com/macros/s/AKfycbw8ShiDfpUvpRe8TwLuLn6jre02F0lFCvSq0mqk7brhHtBSVJ1rj3vh5UWAnCl89M9UEw/exec';
@@ -219,7 +224,7 @@ function render() {
   if (total === 0) {
     content.innerHTML = `
       <div class="empty">
-        <span class="ico">📋</span>
+        <span class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="14" y2="16"/></svg></span>
         <p>Nenhum atendimento em<br><strong>${MONTHS[selMonth]} ${selYear}</strong></p>
       </div>`;
     return;
@@ -262,7 +267,7 @@ function render() {
 
       return `
         <div class="entry ${isReal ? 'real' : 'prev'} ${isNoiva ? 'noiva' : ''}">
-          ${isNoiva ? `<div class="noiva-emoji">👰</div>` : ''}
+          ${isNoiva ? `<div class="noiva-emoji"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div>` : ''}
           <div class="e-time">${horario
             ? `<div class="e-time-val">${horario}</div>`
             : `<div class="e-time-em">—</div>`}</div>
@@ -274,7 +279,7 @@ function render() {
             </div>
           </div>
           <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0">
-            ${isNoiva ? `<span class="noiva-tag">💍 Noiva</span>` : ''}
+            ${isNoiva ? `<span class="noiva-tag">Noiva</span>` : ''}
             <span class="badge ${isReal ? 'badge-real' : 'badge-prev'}">${isReal ? 'Realizado' : 'Previsto'}</span>
           </div>
         </div>`;
