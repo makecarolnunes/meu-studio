@@ -1,0 +1,253 @@
+// ════════════════════════════════════════════════════════════
+// financeiro/scripts/modals.js
+// Modal de configurações (preços + Claude IA) + modais de edição
+// ════════════════════════════════════════════════════════════
+
+function openConfig() {
+    document.getElementById('modal-bg').style.display = 'flex';
+    renderConfigModal();
+}
+function closeModal() {
+    document.getElementById('modal-bg').style.display = 'none';
+}
+
+// ── Service prices helpers ──
+// Compõe o "nome" usado como chave única na tabela valores_servicos
+// (mesmo padrão dos orçamentos: "Serviço no Studio" / "Serviço em domicílio")
+function priceKey(servico, local) {
+    if (!servico) return '';
+    const suffix = local === 'Studio' ? 'no Studio' : 'em domicílio';
+    return servico + ' ' + suffix;
+}
+function getServicePrices() {
+    try { return JSON.parse(localStorage.getItem('mk_service_prices') || '{}'); } catch(e) { return {}; }
+}
+function _cacheServicePrices(prices) {
+    localStorage.setItem('mk_service_prices', JSON.stringify(prices));
+}
+async function loadServicePricesFromSupabase() {
+    try {
+        const map = await DB.valoresServicos.load();
+        const prices = {};
+        Object.entries(map).forEach(([nome, v]) => { prices[nome] = v.valor; });
+        _cacheServicePrices(prices);
+        return prices;
+    } catch(e) {
+        console.warn('[preços] Supabase indisponível, usando cache local:', e.message);
+        return getServicePrices();
+    }
+}
+
+let _cfgTab = 'servicos';
+function openConfigTab(tab) {
+    _cfgTab = tab;
+    renderConfigModal();
+}
+
+function renderConfigModal() {
+    const hasKey = !!localStorage.getItem('mk_claude_key');
+    const prices = getServicePrices();
+    const SERVS = [
+        {l:'Maquiagem', v:'Maquiagem'},
+        {l:'Cabelo', v:'Cabelo'},
+        {l:'Maq+Cabelo', v:'Maquiagem e Cabelo'},
+        {l:'Curso Auto', v:'Curso de Automaquiagem'}
+    ];
+    const LOCS = ['Studio','Em Domicílio'];
+
+    const tabServicos = _cfgTab === 'servicos' ? `
+    <div style="font-size:.78rem;color:var(--muted);margin-bottom:12px;line-height:1.5">Configure os valores padrão por serviço. Ao selecionar um serviço no formulário, o valor será preenchido automaticamente.</div>
+    <table style="width:100%;border-collapse:collapse;font-size:.82rem">
+        <thead><tr>
+            <th style="text-align:left;padding:5px 4px;color:var(--muted);font-size:.67rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;border-bottom:1.5px solid var(--border)">Serviço</th>
+            <th style="text-align:center;padding:5px 4px;color:var(--muted);font-size:.67rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;border-bottom:1.5px solid var(--border)">Studio</th>
+            <th style="text-align:center;padding:5px 4px;color:var(--muted);font-size:.67rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;border-bottom:1.5px solid var(--border)">Domicílio</th>
+        </tr></thead>
+        <tbody>
+        ${SERVS.map(s => `<tr>
+            <td style="padding:7px 4px;font-weight:600;color:var(--text)">${s.l}</td>
+            ${LOCS.map(loc => {
+                const k = priceKey(s.v, loc);
+                const inpId = 'sp_' + k.replace(/\s+/g,'_').replace(/[^A-Za-z0-9_]/g,'');
+                const v = prices[k] || '';
+                return `<td style="padding:7px 3px"><div style="position:relative"><span style="position:absolute;left:8px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:.8rem;font-weight:600;pointer-events:none">R$</span><input type="number" id="${inpId}" data-nome="${k}" value="${v}" placeholder="0" step="1" min="0" inputmode="decimal" style="width:100%;padding:7px 7px 7px 28px;border:1.5px solid var(--border);border-radius:10px;font-size:.88rem;font-weight:700;color:var(--text);background:white;-webkit-appearance:none;appearance:none;text-align:right;box-sizing:border-box"></div></td>`;
+            }).join('')}
+        </tr>`).join('')}
+        </tbody>
+    </table>
+    <button class="bsub" style="margin-top:14px" onclick="saveServicePricesFromForm()">Salvar tabela de preços</button>
+    ` : `
+    <div style="font-size:.78rem;color:var(--muted);margin-bottom:12px;line-height:1.5">Cole sua chave da API Claude (sk-ant-...) para habilitar o assistente de IA.</div>
+    <input class="fi" type="password" id="cfg-claude-key" placeholder="${hasKey ? '••••••••••••' : 'Cole aqui sua sk-ant-key'}"
+        style="margin-bottom:10px;font-size:.82rem">
+    <button class="bsub" style="background:#555;box-shadow:none;margin-bottom:0" onclick="saveCfgKey()">Salvar chave</button>
+    `;
+
+    document.getElementById('modal-inner').innerHTML = `
+    <div class="modal-title" style="margin-bottom:12px">Configurações</div>
+    <div style="background:var(--brown-l);border-radius:9px;padding:8px 12px;font-size:.82rem;color:var(--brown-d);font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:7px">
+        <span style="width:8px;height:8px;border-radius:50%;background:var(--ok);flex-shrink:0;display:inline-block"></span>Supabase conectado
+    </div>
+    <button class="bsub" style="margin-bottom:14px;display:flex;align-items:center;justify-content:center;gap:8px" onclick="syncNow()">${SVG.refresh} Sincronizar agora</button>
+    <div class="modal-tabs" style="margin-bottom:14px">
+        <button class="modal-tab ${_cfgTab==='servicos'?'on':''}" onclick="openConfigTab('servicos')">Preços</button>
+        <button class="modal-tab ${_cfgTab==='ia'?'on':''}" onclick="openConfigTab('ia')">Claude IA</button>
+    </div>
+    ${tabServicos}
+    <div style="height:12px"></div>
+    <button class="skip" onclick="closeModal()">Fechar</button>
+    <button class="logout-btn" style="display:flex;align-items:center;justify-content:center;gap:8px" onclick="doLogout()">${SVG.logout} Sair da conta</button>
+    `;
+}
+async function saveServicePricesFromForm() {
+    const prices = {};
+    const rows = [];
+    document.querySelectorAll('[id^="sp_"][data-nome]').forEach(el => {
+        const nome = el.dataset.nome;
+        const v = parseFloat(el.value);
+        const valor = isNaN(v) ? 0 : v;
+        prices[nome] = valor;
+        rows.push({ nome, valor });
+    });
+    _cacheServicePrices(prices);
+    closeModal();
+    toast('Salvando preços...');
+    try {
+        await DB.valoresServicos.saveAll(rows);
+        toast('Tabela de preços salva!');
+    } catch(e) {
+        console.error('[preços] Erro ao salvar no Supabase:', e);
+        toast('Salvo localmente (Supabase offline)');
+    }
+}
+function saveCfgKey() {
+    const k = document.getElementById('cfg-claude-key').value.trim();
+    if (!k) { toast('Cole a sk-ant-key no campo!'); return; }
+    localStorage.setItem('mk_claude_key', k);
+    closeModal();
+    toast('Chave Claude salva!');
+}
+
+// ── Seletor de botão em grupo (modais de edição/pagamento) ──
+let _pick = {};
+function edPick(varName, val, btn) {
+    _pick[varName] = val;
+    btn.closest('.bg').querySelectorAll('.bt').forEach(b=>b.classList.remove('on'));
+    btn.classList.add('on');
+}
+function edPickStatus(val, btn) {
+    document.getElementById('ed-status').value = val;
+    btn.closest('.stog').querySelectorAll('.stbtn').forEach(b=>{ b.className='stbtn'; });
+    btn.className = 'stbtn ' + (val==='Realizado' ? 'on-g' : 'on-r');
+}
+
+// ── Editar Entrada ──
+function openEditEntry(id) {
+    const e = entries.find(x=>String(x.id)===String(id));
+    if (!e) return;
+    _pick = {};
+    document.getElementById('modal-bg').style.display='flex';
+    document.getElementById('modal-inner').innerHTML=`
+    <div class="modal-title">Editar Entrada</div>
+    <div class="two">
+        <div class="fg"><label class="fl">Data Pgto</label><input class="fi" type="date" id="ee-dataPag" value="${e.dataPag||''}"></div>
+        <div class="fg"><label class="fl">Data Serviço</label><input class="fi" type="date" id="ee-dataServ" value="${e.dataServ||''}"></div>
+    </div>
+    <div class="fg"><label class="fl">Cliente</label><input class="fi" type="text" id="ee-cliente" value="${e.cliente||''}" autocomplete="off"></div>
+    <div class="fg"><label class="fl">Tipo</label><div class="bg" id="ee-tipo-grp">
+        ${['Sinal','Parcela','Pagamento'].map(t=>`<button class="bt ${e.tipo===t?'on':''}" onclick="edPick('tipo','${t}',this)">${t}</button>`).join('')}
+    </div></div>
+    <div class="fg"><label class="fl">Valor (R$)</label><div class="vwrap"><span class="vpfx">R$</span><input class="fi" type="number" id="ee-valor" value="${e.valor||''}" step="0.01" min="0" inputmode="decimal"></div></div>
+    <div class="fg"><label class="fl">Origem</label><div class="bg">
+        ${['Produção Social','Noiva','Assistência',{l:'Curso Auto',v:'Curso de Automaquiagem'}].map(o=>{const v=typeof o==='string'?o:o.v,l=typeof o==='string'?o:o.l;return `<button class="bt ${e.origem===v?'on':''}" onclick="edPick('origem','${v}',this)">${l}</button>`;}).join('')}
+    </div></div>
+    <div class="fg"><label class="fl">Forma</label><div class="bg">
+        ${['PIX','Crédito','Dinheiro'].map(f=>`<button class="bt ${e.forma===f?'on':''}" onclick="edPick('forma','${f}',this)">${f}</button>`).join('')}
+    </div></div>
+    <div class="fg"><label class="fl">Status</label>
+        <div class="stog">
+            <button class="stbtn ${e.status==='Realizado'?'on-g':''}" onclick="edPickStatus('Realizado',this)">Realizado</button>
+            <button class="stbtn ${e.status==='Previsto'?'on-r':''}" onclick="edPickStatus('Previsto',this)">Previsto</button>
+        </div>
+        <input type="hidden" id="ed-status" value="${e.status||'Realizado'}">
+    </div>
+    <div class="fg"><label class="fl">Observações</label><textarea class="fi ta" id="ee-obs">${e.obs||''}</textarea></div>
+    <button class="bsub" style="margin-bottom:8px" onclick="saveEditEntry('${id}')">Salvar</button>
+    <button class="skip" onclick="closeModal()">Cancelar</button>`;
+    _pick['tipo']   = e.tipo   || 'Pagamento';
+    _pick['origem'] = e.origem || 'Produção Social';
+    _pick['forma']  = e.forma  || 'PIX';
+}
+function saveEditEntry(id) {
+    const e = entries.find(x=>String(x.id)===String(id));
+    if (!e) return;
+    const valor = document.getElementById('ee-valor').value;
+    if (!valor||Number(valor)<=0) { toast('⚠️ Informe o valor!'); return; }
+    const updated = { ...e,
+        dataPag:  document.getElementById('ee-dataPag').value  || e.dataPag,
+        dataServ: document.getElementById('ee-dataServ').value || e.dataServ,
+        cliente:  document.getElementById('ee-cliente').value.trim() || e.cliente,
+        tipo:   _pick['tipo']   || e.tipo,
+        origem: _pick['origem'] || e.origem,
+        forma:  _pick['forma']  || e.forma,
+        status: document.getElementById('ed-status').value,
+        valor:  String(valor),
+        obs:    document.getElementById('ee-obs').value
+    };
+    const idx = entries.findIndex(x=>String(x.id)===String(id));
+    entries[idx] = updated; cacheEntries();
+    sbCall({action:'delete', table:'entries', id});
+    sbCall({action:'save', table:'entries', data:encodeURIComponent(JSON.stringify(updated))});
+    if (updated.noivaId) recalcRestaNoiva(updated.noivaId);
+    else if (updated.origem==='Noiva') recalcRestaNoiva(updated.cliente);
+    closeModal(); render(); toast('Entrada atualizada!');
+}
+
+// ── Editar Saída ──
+function openEditSaida(id) {
+    const s = saidas.find(x=>String(x.id)===String(id));
+    if (!s) return;
+    _pick = {};
+    document.getElementById('modal-bg').style.display='flex';
+    document.getElementById('modal-inner').innerHTML=`
+    <div class="modal-title">Editar Saída</div>
+    <div class="fg"><label class="fl">Data</label><input class="fi" type="date" id="es-data" value="${s.dataPag||''}"></div>
+    <div class="fg"><label class="fl">Tipo de Despesa</label><div class="bg" style="flex-wrap:wrap">
+        ${SAIDA_TIPOS.map(t=>`<button class="bt ${s.tipo===t?'on':''}" onclick="edPick('stipo','${t}',this)" style="font-size:.78rem">${t}</button>`).join('')}
+    </div></div>
+    <div class="fg"><label class="fl">Valor (R$)</label><div class="vwrap"><span class="vpfx">R$</span><input class="fi" type="number" id="es-valor" value="${s.valor||''}" step="0.01" min="0" inputmode="decimal"></div></div>
+    <div class="fg"><label class="fl">Forma</label><div class="bg">
+        ${['PIX','Crédito','Dinheiro'].map(f=>`<button class="bt ${s.forma===f?'on':''}" onclick="edPick('sforma','${f}',this)">${f}</button>`).join('')}
+    </div></div>
+    <div class="fg"><label class="fl">Status</label>
+        <div class="stog">
+            <button class="stbtn ${s.status==='Pago'?'on-g':''}" onclick="edPickStatus('Pago',this)">Pago</button>
+            <button class="stbtn ${s.status==='Pendente'?'on-r':''}" onclick="edPickStatus('Pendente',this)">Pendente</button>
+        </div>
+        <input type="hidden" id="ed-status" value="${s.status||'Pago'}">
+    </div>
+    <div class="fg"><label class="fl">Observações</label><textarea class="fi ta" id="es-obs">${s.obs||''}</textarea></div>
+    <button class="bsub" style="margin-bottom:8px" onclick="saveEditSaida('${id}')">Salvar</button>
+    <button class="skip" onclick="closeModal()">Cancelar</button>`;
+    _pick['stipo']  = s.tipo  || '';
+    _pick['sforma'] = s.forma || 'PIX';
+}
+function saveEditSaida(id) {
+    const s = saidas.find(x=>String(x.id)===String(id));
+    if (!s) return;
+    const valor = document.getElementById('es-valor').value;
+    if (!valor||Number(valor)<=0) { toast('⚠️ Informe o valor!'); return; }
+    const updated = { ...s,
+        dataPag: document.getElementById('es-data').value || s.dataPag,
+        tipo:   _pick['stipo']  || s.tipo,
+        forma:  _pick['sforma'] || s.forma,
+        status: document.getElementById('ed-status').value,
+        valor:  String(valor),
+        obs:    document.getElementById('es-obs').value
+    };
+    const idx = saidas.findIndex(x=>String(x.id)===String(id));
+    saidas[idx] = updated; cacheSaidas();
+    sbCall({action:'delete', table:'saidas', id});
+    sbCall({action:'save', table:'saidas', data:encodeURIComponent(JSON.stringify(updated))});
+    closeModal(); render(); toast('Saída atualizada!');
+}

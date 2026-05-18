@@ -1,0 +1,36 @@
+/* ─────────────────────────────────────────────────────────────
+   shared/css/base.css — Reset comum + tipografia global
+   Carregar APÓS tokens.css em todos os módulos
+   ───────────────────────────────────────────────────────────── */
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+body {
+  font-family: var(--font-sans);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Spinner padrão */
+.spinner {
+  width: 36px; height: 36px;
+  border: 3px solid var(--brand-soft);
+  border-top-color: var(--brand);
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Toast padrão (cada módulo pode sobrescrever cor) */
+.toast {
+  position: fixed; bottom: 80px; left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: #222; color: white;
+  padding: 9px 18px; border-radius: 22px;
+  font-size: .8rem; z-index: 999;
+  opacity: 0; transition: opacity .25s, transform .25s;
+  white-space: nowrap; pointer-events: none;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }

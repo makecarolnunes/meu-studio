@@ -1,0 +1,59 @@
+// ════════════════════════════════════════════════════════════
+// financeiro/scripts/utils.js
+// Helpers puros: formatação, ID, estilos de tipo, toast
+// ════════════════════════════════════════════════════════════
+
+function today() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function brl(v) {
+    return 'R$ ' + Number(v||0).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+function fmtDate(s) {
+    if (!s) return '—';
+    const [y,m,d] = s.split('-'); return `${d}/${m}`;
+}
+function getMonthYear(ds) {
+    if (!ds) return null;
+    const [y,m] = ds.split('-');
+    return { y: parseInt(y), m: parseInt(m)-1 };
+}
+function genId() {
+    if (window.crypto && typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+    return Date.now().toString(36) + '-' + Math.random().toString(36).slice(2,10);
+}
+
+// Guards anti-duplo-clique
+let _savingEntry = false;
+let _savingSaida = false;
+
+function toast(msg, dur) {
+    const t = document.getElementById('toast');
+    if (!t) return;
+    t.textContent = msg; t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), dur || 2400);
+}
+
+function typeStyle(t) {
+    return { Sinal:{bg:'#fff3e0',col:'#bf360c',ico:SVG.lock}, Pagamento:{bg:'#efebe9',col:'#4e342e',ico:SVG.money}, Parcela:{bg:'#e3f2fd',col:'#0d47a1',ico:SVG.calendar} }[t]
+        || { bg:'#f5f5f5', col:'#666', ico:SVG.money };
+}
+function saidaStyle(t) {
+    return { 'DAS':{bg:'#fce4ec',col:'#880e4f',ico:SVG.bank}, 'Curso':{bg:'#e3f2fd',col:'#0d47a1',ico:SVG.book},
+             'Assistente':{bg:'#f3e5f5',col:'#6a1b9a',ico:SVG.users}, 'Seguro de Celular':{bg:'#e8eaf6',col:'#283593',ico:SVG.phone},
+             'Reposição de Material':{bg:'#fff8e1',col:'#f57f17',ico:SVG.bag},
+             'Investimento Produto':{bg:'#e0f7fa',col:'#006064',ico:SVG.box},
+             'Investimento Material':{bg:'#efebe9',col:'#4e342e',ico:SVG.box},
+             'Outro':{bg:'#f5f5f5',col:'#424242',ico:SVG.tag} }[t]
+        || { bg:'#f5f5f5', col:'#666', ico:SVG.money };
+}
+
+function updateDot(_state) { /* indicador de sync removido — placeholder p/ compat */ }
+
+function dl(csv, name) {
+    const blob = new Blob(['﻿'+csv], {type:'text/csv;charset=utf-8;'});
+    const url = URL.createObjectURL(blob);
+    const a = Object.assign(document.createElement('a'), {href:url, download:name});
+    document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+}
