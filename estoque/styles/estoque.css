@@ -70,16 +70,51 @@ body {
 /* ── ITEM CARD ── */
 .item-card {
   background: var(--card); border-radius: 12px;
-  padding: 13px 14px; margin-bottom: 8px;
-  display: flex; align-items: center; gap: 12px;
+  padding: 11px 14px; margin-bottom: 8px;
+  display: flex; align-items: center; gap: 11px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.06);
   border: 1px solid var(--border);
-  cursor: pointer; transition: border-color 0.15s;
+  cursor: pointer; transition: border-color 0.15s, opacity 0.2s;
 }
 .item-card:active { opacity: 0.8; }
-.item-dot {
-  width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+.item-card.is-comprado { opacity: 0.48; }
+
+/* ── CHECK BUTTON ── */
+.item-check {
+  width: 26px; height: 26px; border-radius: 50%;
+  border: 2px solid var(--border-strong, #D9CDC4);
+  background: none; cursor: pointer; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.18s; padding: 0; color: transparent;
 }
+.item-check:hover   { border-color: var(--ok); }
+.item-check:active  { transform: scale(0.85); }
+.item-check.checked {
+  background: var(--ok); border-color: var(--ok); color: white;
+}
+
+/* ── COMPRADOS SECTION ── */
+.comp-sec-hdr {
+  display: flex; align-items: center; gap: 8px;
+  margin: 16px 0 8px;
+}
+.comp-sec-line { flex: 1; height: 1px; background: var(--border); }
+.comp-sec-lbl {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 0.69rem; font-weight: 700; color: var(--ok);
+  white-space: nowrap; padding: 0 2px;
+}
+.comp-sec-count {
+  background: var(--ok-l); color: var(--ok);
+  font-size: 0.65rem; font-weight: 800;
+  padding: 1px 7px; border-radius: 20px;
+}
+
+/* ── EMPTY FILTER ── */
+.empty-filter {
+  text-align: center; padding: 32px 20px; color: var(--muted);
+}
+.empty-filter p { font-size: 0.84rem; }
 .item-info { flex: 1; min-width: 0; }
 .item-nome { font-size: 0.9rem; font-weight: 600; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .item-cat  { font-size: 0.69rem; color: var(--muted); margin-top: 2px; display: flex; align-items: center; gap: 6px; }
