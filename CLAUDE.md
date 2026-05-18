@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-18 15:25 | main | feat: reorganiza├º├úo do Hub em 4 se├º├Áes -->
+<!-- AUTO: 2026-05-18 15:32 | main | feat: marcar itens do estoque como comprados -->
 
