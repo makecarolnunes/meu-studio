@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-18 01:42 | main | docs: CLAUDE.md por m├│dulo com specs t├®cnicas avan├ºadas -->
+<!-- AUTO: 2026-05-18 14:41 | main | style: Hub mais visual ÔÇö t├¡tulos maiores, borda colorida por m├│dulo -->
 
