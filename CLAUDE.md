@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-18 22:35 | main | feat: sa├¡das fixas e recorrentes com escopo de edi├º├úo/exclus├úo em grupo -->
+<!-- AUTO: 2026-05-18 22:56 | main | feat: simplifica lista de entradas, cores por origem e campo equipe -->
 
