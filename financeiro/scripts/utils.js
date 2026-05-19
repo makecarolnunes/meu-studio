@@ -70,6 +70,15 @@ function saidaStyle(t) {
 
 function updateDot(_state) { /* indicador de sync removido — placeholder p/ compat */ }
 
+function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = e => resolve(e.target.result.split(',')[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+}
+
 function dl(csv, name) {
     const blob = new Blob(['﻿'+csv], {type:'text/csv;charset=utf-8;'});
     const url = URL.createObjectURL(blob);

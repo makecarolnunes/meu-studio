@@ -3,9 +3,9 @@
 // Sync com Supabase: load, sbCall (save/update/delete), normalizers
 // ════════════════════════════════════════════════════════════
 
-function normalizeE(e) { return { ...e, id: String(e.id||''), auto: e.auto==='true'||e.auto===true, noivaId: e.noivaId||'' }; }
+function normalizeE(e) { return { ...e, id: String(e.id||''), auto: e.auto==='true'||e.auto===true, noivaId: e.noivaId||'', comprovanteUrl: e.comprovanteUrl||'' }; }
 function normalizeS(s) { return { ...s, id: String(s.id||'') }; }
-function normalizeN(n) { return { ...n, id: String(n.id||'') }; }
+function normalizeN(n) { return { ...n, id: String(n.id||''), contratos: Array.isArray(n.contratos)?n.contratos:[] }; }
 
 async function loadFromSupabase() {
     try {

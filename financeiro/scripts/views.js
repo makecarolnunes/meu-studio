@@ -428,7 +428,8 @@ function renderResumo() {
 
 // ── SCREEN: NOIVAS ──
 function renderNoivas() {
-    // Separa em Próximas (casamento >= hoje, ou sem data) e Realizadas (casamento < hoje)
+    const MONTHS_PT = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+    const MONTHS_ABR = ['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];
     const hoje = new Date(); hoje.setHours(0,0,0,0);
     const proximas = [], realizadas = [];
     noivas.forEach(n => {
@@ -450,15 +451,66 @@ function renderNoivas() {
         const pctReal   = contrato>0 ? Math.min(100,Math.round(totalPago/contrato*100)) : 0;
         const isOpen    = noivaDetail===n.id;
         const diasCasa  = n.dataCasamento ? Math.ceil((new Date(n.dataCasamento)-new Date())/86400000) : null;
-        const badge     = totalPago>=contrato&&contrato>0 ? `<span style="background:var(--ok-l);color:var(--ok);font-size:.62rem;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:6px">Quitada</span>`
+        const quitada   = totalPago>=contrato&&contrato>0;
+        const badge     = quitada ? `<span style="background:var(--ok-l);color:var(--ok);font-size:.62rem;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:6px">Quitada</span>`
                         : falta>0&&diasCasa!==null&&diasCasa<30&&diasCasa>0 ? `<span style="background:var(--red-l);color:var(--red);font-size:.62rem;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:6px">${diasCasa}d</span>` : '';
+
+        // Date badge for proximas; gem icon for realizadas
+        let leftIcon;
+        if (!concluida && n.dataCasamento) {
+            const [,mm,dd] = n.dataCasamento.split('-');
+            const mIdx = parseInt(mm)-1;
+            leftIcon = `<div class="noiva-date-badge"><span class="noiva-date-day">${dd}</span><span class="noiva-date-month">${MONTHS_ABR[mIdx]}</span></div>`;
+        } else {
+            leftIcon = `<div style="width:42px;height:42px;background:${concluida?'var(--surface-2)':'#fce4ec'};border-radius:10px;display:flex;align-items:center;justify-content:center;color:${concluida?'var(--muted)':'#e91e63'};flex-shrink:0">${SVG.gem}</div>`;
+        }
+
+        const docsHtml = (() => {
+            const docs = n.contratos || [];
+            const tipoLabel = { CONTRATO: 'Contrato', ADITIVO: 'Aditivo' };
+            return `
+            <div style="margin-top:14px;padding-top:12px;border-top:1px dashed var(--border)">
+                <div style="font-size:.7rem;font-weight:700;color:var(--brown);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Documentos</div>
+                ${docs.length===0?`<p style="font-size:.75rem;color:var(--muted);margin:0 0 8px">Nenhum documento anexado</p>`:
+                docs.map(d=>`
+                <div class="noiva-doc-item">
+                    <span class="noiva-doc-tipo">${tipoLabel[d.tipo]||d.tipo}</span>
+                    <a href="${d.link}" target="_blank" rel="noopener" class="noiva-doc-link">${d.nome}</a>
+                    <button class="delbtn" style="width:24px;height:24px;flex-shrink:0" onclick="deleteNoivaDoc('${n.id}','${d.fileId}')">${SVG.trash}</button>
+                </div>`).join('')}
+                <div style="display:flex;gap:7px;margin-top:6px">
+                    <button class="noiva-doc-add-btn" onclick="uploadNoivaDoc('${n.id}','CONTRATO')">+ Contrato</button>
+                    <button class="noiva-doc-add-btn" onclick="uploadNoivaDoc('${n.id}','ADITIVO')">+ Aditivo</button>
+                </div>
+            </div>`;
+        })();
+
+        const pgtosList = pgtos.sort((a,b)=>(a.dataPag||'').localeCompare(b.dataPag||'')).map(p=>`
+            <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #f5f5f5">
+                <div style="flex:1;min-width:0">
+                    <div style="font-size:.83rem;font-weight:600">${p.tipo} · ${fmtDate(p.dataPag)} · ${p.forma}</div>
+                    ${p.obs?`<div style="font-size:.7rem;color:var(--muted)">${p.obs}</div>`:''}
+                    ${p.comprovanteUrl?`<a href="${p.comprovanteUrl}" target="_blank" rel="noopener" style="font-size:.68rem;color:#1976d2;display:inline-flex;align-items:center;gap:3px;margin-top:2px">📎 Ver comprovante</a>`:''}
+                </div>
+                <div style="text-align:right;flex-shrink:0">
+                    <div style="font-weight:700;font-size:.9rem;color:${p.status==='Realizado'?'var(--ok)':'var(--muted)'}">${brl(p.valor)}</div>
+                    <span class="sbadge ${p.status==='Realizado'?'sb-g':'sb-r'}" onclick="toggleStatus('${p.id}')">${p.status==='Realizado'?'Pago':'Previsto'}</span>
+                </div>
+                <button class="editbtn" title="Anexar comprovante" onclick="uploadPgtoProof('${p.id}')" style="width:28px;height:28px">${SVG.attach}</button>
+                <button class="editbtn" onclick="openEditEntry('${p.id}')" style="width:28px;height:28px">${SVG.edit}</button>
+                <button class="delbtn"  onclick="delEntry('${p.id}')"      style="width:28px;height:28px">${SVG.trash}</button>
+            </div>`).join('');
+
         return `<div class="card noiva-card${concluida?' noiva-realizada':''}" style="margin-bottom:10px">
             <div style="display:flex;align-items:flex-start;gap:11px;cursor:pointer" onclick="toggleNoivaDetail('${n.id}')">
-                <div style="width:42px;height:42px;background:${concluida?'var(--surface-2)':'#fce4ec'};border-radius:10px;display:flex;align-items:center;justify-content:center;color:${concluida?'var(--muted)':'#e91e63'};flex-shrink:0">${SVG.gem}</div>
+                ${leftIcon}
                 <div style="flex:1;min-width:0">
                     <div style="font-weight:700;font-size:.97rem">${n.nome}${badge}</div>
-                    <div style="font-size:.71rem;color:var(--muted);margin-top:2px">
-                        ${n.dataCasamento?`Casamento: <strong>${n.dataCasamento.split('-').reverse().join('/')}</strong>${diasCasa!==null?(diasCasa>0?` · em ${diasCasa} dias`:' · já passou'):''}`:''} · Contrato: <strong>${brl(contrato)}</strong>
+                    <div style="font-size:.71rem;color:var(--muted);margin-top:2px;display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+                        ${diasCasa!==null?(diasCasa>0?`em ${diasCasa} dias`:`já passou`):''}
+                        <span>·</span>
+                        <span>Contrato: <strong>${brl(contrato)}</strong></span>
+                        <button onclick="event.stopPropagation();openEditNoivaContrato('${n.id}')" style="background:none;border:none;padding:0;cursor:pointer;color:#e91e63;display:inline-flex;align-items:center" title="Editar valor do contrato">${SVG.edit}</button>
                     </div>
                     <div style="margin:8px 0 3px">
                         <div style="background:#e8ddd8;border-radius:6px;height:9px;overflow:hidden;position:relative">
@@ -476,25 +528,13 @@ function renderNoivas() {
             </div>
             ${isOpen?`
             <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">
-                ${pgtos.length===0?`<p style="text-align:center;color:var(--muted);font-size:.82rem;padding:8px 0">Nenhum pagamento registrado</p>`:
-                pgtos.sort((a,b)=>(a.dataPag||'').localeCompare(b.dataPag||'')).map((p,i)=>`
-                <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #f5f5f5">
-                    <div style="flex:1;min-width:0">
-                        <div style="font-size:.83rem;font-weight:600">${p.tipo} · ${fmtDate(p.dataPag)} · ${p.forma}</div>
-                        ${p.obs?`<div style="font-size:.7rem;color:var(--muted)">${p.obs}</div>`:''}
-                    </div>
-                    <div style="text-align:right;flex-shrink:0">
-                        <div style="font-weight:700;font-size:.9rem;color:${p.status==='Realizado'?'var(--ok)':'var(--muted)'}">${brl(p.valor)}</div>
-                        <span class="sbadge ${p.status==='Realizado'?'sb-g':'sb-r'}" onclick="toggleStatus('${p.id}')">${p.status==='Realizado'?'Pago':'Previsto'}</span>
-                    </div>
-                    <button class="editbtn" onclick="openEditEntry('${p.id}')" style="width:28px;height:28px">${SVG.edit}</button>
-                    <button class="delbtn"  onclick="delEntry('${p.id}')"      style="width:28px;height:28px">${SVG.trash}</button>
-                </div>`).join('')}
+                ${pgtos.length===0?`<p style="text-align:center;color:var(--muted);font-size:.82rem;padding:8px 0">Nenhum pagamento registrado</p>`:pgtosList}
                 <div style="display:flex;gap:8px;margin-top:12px">
                     <button class="bsub" style="flex:1;padding:11px;font-size:.87rem" onclick="openNoivaPgto('${n.id}','${n.nome.replace(/'/g,"\\'").replace(/"/g,'&quot;')}')">+ Registrar Pagamento</button>
                     <button class="delbtn" style="width:42px;height:42px" onclick="deleteNoiva('${n.id}')">${SVG.trash}</button>
                 </div>
                 ${n.obs?`<div style="font-size:.74rem;color:var(--muted);margin-top:10px;font-style:italic;line-height:1.4">${n.obs}</div>`:''}
+                ${docsHtml}
             </div>`:''}
         </div>`;
     };
@@ -505,15 +545,30 @@ function renderNoivas() {
         <div class="empty"><div class="ico">${SVG.gem}</div><p>Nenhuma noiva cadastrada.<br>Adicione para acompanhar os pagamentos.</p></div>`;
     }
 
+    // Group proximas by year-month
+    const byMonth = {};
+    proximas.forEach(n => {
+        const key = n.dataCasamento ? n.dataCasamento.slice(0,7) : 'sem-data';
+        if (!byMonth[key]) byMonth[key] = [];
+        byMonth[key].push(n);
+    });
+    const monthKeys = Object.keys(byMonth).sort();
+
+    const renderMonthSection = (key) => {
+        let header;
+        if (key === 'sem-data') {
+            header = `<div class="noiva-month-hdr"><span class="dot" style="background:#e91e63"></span>Sem data definida</div>`;
+        } else {
+            const [year, month] = key.split('-');
+            const mName = MONTHS_PT[parseInt(month)-1].toUpperCase();
+            header = `<div class="noiva-month-hdr"><span class="dot" style="background:#e91e63"></span>${mName} <span class="noiva-month-year">${year}</span></div>`;
+        }
+        return header + byMonth[key].map(n=>renderNoivaCard(n,{concluida:false})).join('');
+    };
+
     return `
     <button class="add-btn" style="border-color:#e91e63;color:#e91e63;margin-bottom:11px;display:flex;align-items:center;justify-content:center;gap:7px" onclick="openAddNoiva()">${SVG.gem} + Nova Noiva</button>
-    ${proximas.length ? `
-        <div class="noiva-section-title">
-            <span class="dot" style="background:#e91e63"></span>
-            Próximas <span class="count">${proximas.length}</span>
-        </div>
-        ${proximas.map(n=>renderNoivaCard(n,{concluida:false})).join('')}
-    ` : ''}
+    ${monthKeys.map(renderMonthSection).join('')}
     ${realizadas.length ? `
         <div class="noiva-section-title realizadas-title">
             ${SVG.check}

@@ -51,11 +51,13 @@ const _ENTRY_KEYS = {
   servico: 'servico', local: 'local', forma: 'forma',
   status: 'status', origem: 'origem', obs: 'obs', equipe: 'equipe',
   auto: 'auto', noivaId: 'noiva_id', createdAt: 'created_at',
+  comprovanteUrl: 'comprovante_url',
 };
 
 const _NOIVA_KEYS = {
   nome: 'nome', dataCasamento: 'data_casamento',
   valorContrato: 'valor_contrato', obs: 'obs', createdAt: 'created_at',
+  contratos: 'contratos',
 };
 
 const _SAIDA_KEYS = {
@@ -113,9 +115,10 @@ function _entryFromDb(r) {
     origem:     r.origem       || '',
     obs:        r.obs          || '',
     equipe:     r.equipe       || '',
-    auto:       !!r.auto,
-    noivaId:    r.noiva_id     || '',
-    createdAt:  r.created_at   || '',
+    auto:           !!r.auto,
+    noivaId:        r.noiva_id       || '',
+    createdAt:      r.created_at     || '',
+    comprovanteUrl: r.comprovante_url || '',
   };
 }
 
@@ -129,6 +132,7 @@ function _noivaFromDb(r) {
     valorContrato: r.valor_contrato    != null ? String(r.valor_contrato) : '',
     obs:           r.obs               || '',
     createdAt:     r.created_at        || '',
+    contratos:     Array.isArray(r.contratos) ? r.contratos : [],
   };
 }
 

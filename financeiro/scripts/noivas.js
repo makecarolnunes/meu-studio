@@ -189,6 +189,102 @@ function openNoivaPgto(noivaId, nomeCli) {
     setTimeout(()=>document.getElementById('np-valor')?.focus(),80);
 }
 
+function openEditNoivaContrato(noivaId) {
+    const noiva = noivas.find(n => n.id === noivaId);
+    if (!noiva) return;
+    document.getElementById('modal-bg').style.display='flex';
+    document.getElementById('modal-inner').innerHTML=`
+    <div class="modal-title">Editar Contrato</div>
+    <div style="background:var(--brown-l);border-radius:9px;padding:9px 12px;font-size:.85rem;color:var(--brown-d);font-weight:700;margin-bottom:16px">${noiva.nome}</div>
+    <div class="fg"><label class="fl">Valor do Contrato</label>
+        <div class="vwrap"><span class="vpfx">R$</span><input class="fi" type="number" id="ec-valor" value="${noiva.valorContrato}" step="0.01" min="0" inputmode="decimal"></div>
+    </div>
+    <div class="fg"><label class="fl">Observações</label>
+        <textarea class="fi ta" id="ec-obs" placeholder="Ex: Aditivo: make da mãe incluída...">${noiva.obs||''}</textarea>
+    </div>
+    <button class="bsub" style="margin-bottom:8px" onclick="saveEditNoivaContrato('${noivaId}')">Salvar Alteração</button>
+    <button class="skip" onclick="closeModal()">Cancelar</button>`;
+    setTimeout(()=>document.getElementById('ec-valor')?.focus(),80);
+}
+
+function saveEditNoivaContrato(noivaId) {
+    const valor = document.getElementById('ec-valor').value;
+    const obs   = document.getElementById('ec-obs').value;
+    if (!valor || Number(valor) <= 0) { toast('⚠️ Informe o valor!'); return; }
+    const idx = noivas.findIndex(n => n.id === noivaId);
+    if (idx < 0) return;
+    noivas[idx] = { ...noivas[idx], valorContrato: valor, obs };
+    cacheNoivas();
+    sbCall({action:'save', table:'noivas', data: encodeURIComponent(JSON.stringify(noivas[idx]))});
+    recalcRestaNoiva(noivaId);
+    closeModal(); render();
+    toast('Contrato atualizado!');
+}
+
+async function uploadNoivaDoc(noivaId, tipo) {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'application/pdf,image/*';
+    input.onchange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        toast('Enviando arquivo...');
+        try {
+            const b64 = await fileToBase64(file);
+            const result = await DB.storage.uploadComprovante(noivaId, file, tipo, b64, file.type);
+            const idx = noivas.findIndex(n => n.id === noivaId);
+            if (idx < 0) return;
+            const doc = { fileId: result.fileId, link: result.link, nome: file.name, tipo, ts: Date.now() };
+            const contratos = [...(noivas[idx].contratos || []), doc];
+            noivas[idx] = { ...noivas[idx], contratos };
+            cacheNoivas();
+            sbCall({action:'save', table:'noivas', data: encodeURIComponent(JSON.stringify(noivas[idx]))});
+            render();
+            toast('Arquivo enviado!');
+        } catch(err) {
+            toast('Erro ao enviar: ' + err.message);
+        }
+    };
+    input.click();
+}
+
+async function deleteNoivaDoc(noivaId, fileId) {
+    if (!confirm('Remover este documento?')) return;
+    const idx = noivas.findIndex(n => n.id === noivaId);
+    if (idx < 0) return;
+    try { await DB.storage.deleteComprovante(fileId); } catch(_) {}
+    noivas[idx] = { ...noivas[idx], contratos: (noivas[idx].contratos||[]).filter(d=>d.fileId!==fileId) };
+    cacheNoivas();
+    sbCall({action:'save', table:'noivas', data: encodeURIComponent(JSON.stringify(noivas[idx]))});
+    render();
+    toast('Documento removido');
+}
+
+async function uploadPgtoProof(entryId) {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*,application/pdf';
+    input.onchange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        toast('Enviando comprovante...');
+        try {
+            const b64 = await fileToBase64(file);
+            const result = await DB.storage.uploadComprovante(entryId, file, 'PGTO', b64, file.type);
+            const idx = entries.findIndex(en => en.id === entryId);
+            if (idx < 0) return;
+            entries[idx] = { ...entries[idx], comprovanteUrl: result.link };
+            cacheEntries();
+            sbCall({action:'save', table:'entries', data: encodeURIComponent(JSON.stringify(entries[idx]))});
+            render();
+            toast('Comprovante salvo!');
+        } catch(err) {
+            toast('Erro ao enviar: ' + err.message);
+        }
+    };
+    input.click();
+}
+
 function saveNoivaPgto(noivaId, nomeCli) {
     const valor  = document.getElementById('np-valor').value;
     const dataPag= document.getElementById('np-data').value;
