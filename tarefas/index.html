@@ -13,6 +13,86 @@
 </head>
 <body>
 
+<div id="tar-app">
+
+<!-- ── SIDEBAR DESKTOP ── -->
+<aside class="tar-d-sidebar">
+
+  <div class="tar-d-brand">
+    <div class="tar-d-brand-icon">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+    </div>
+    <h2>Tarefas</h2>
+  </div>
+
+  <!-- Progress ring -->
+  <div class="tar-d-prog">
+    <svg width="40" height="40" viewBox="0 0 40 40">
+      <circle class="tar-d-ring-bg" cx="20" cy="20" r="16"/>
+      <circle class="tar-d-ring-fg" id="d-ring" cx="20" cy="20" r="16"/>
+      <text x="20" y="20" class="tar-d-ring-txt" id="d-ring-pct">0%</text>
+    </svg>
+    <div>
+      <div class="tar-d-prog-lbl" id="d-prog-lbl">Carregando...</div>
+      <div class="tar-d-prog-val" id="d-prog-val"></div>
+    </div>
+  </div>
+
+  <!-- Stats 2x2 -->
+  <div class="tar-d-stats">
+    <div class="tar-d-stat">
+      <div class="tar-d-stat-lbl">Pendentes</div>
+      <span class="tar-d-stat-val" id="d-s-pend">—</span>
+    </div>
+    <div class="tar-d-stat">
+      <div class="tar-d-stat-lbl">Hoje</div>
+      <span class="tar-d-stat-val c-hoje" id="d-s-hoje">—</span>
+    </div>
+    <div class="tar-d-stat">
+      <div class="tar-d-stat-lbl">Atrasadas</div>
+      <span class="tar-d-stat-val c-atrs" id="d-s-atrs">—</span>
+    </div>
+    <div class="tar-d-stat">
+      <div class="tar-d-stat-lbl">Feitas</div>
+      <span class="tar-d-stat-val c-ok" id="d-s-feitas">—</span>
+    </div>
+  </div>
+
+  <!-- Quick-add -->
+  <div class="tar-d-quick">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.55)" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+    <input id="d-quick-inp" type="text" placeholder="Tarefa rápida..."
+           onkeydown="if(event.key==='Enter') quickAddD()" autocomplete="off">
+    <button class="tar-d-quick-btn" onclick="quickAddD()">↑</button>
+  </div>
+
+  <!-- Filtros -->
+  <div class="tar-d-fil-lbl">Filtrar por</div>
+
+  <button class="tar-d-fil active" data-f="pendentes" onclick="setF('pendentes')">
+    <div class="tar-d-dot" style="background:#E57373"></div>
+    <span class="tar-d-fil-name">Pendentes</span>
+    <span class="tar-d-cnt" id="d-fc-pend">0</span>
+  </button>
+  <button class="tar-d-fil" data-f="hoje" onclick="setF('hoje')">
+    <div class="tar-d-dot" style="background:#F9C784"></div>
+    <span class="tar-d-fil-name">Hoje</span>
+    <span class="tar-d-cnt" id="d-fc-hoje">0</span>
+  </button>
+  <button class="tar-d-fil" data-f="semana" onclick="setF('semana')">
+    <div class="tar-d-dot" style="background:#90CAF9"></div>
+    <span class="tar-d-fil-name">Esta semana</span>
+    <span class="tar-d-cnt" id="d-fc-sem">0</span>
+  </button>
+  <button class="tar-d-fil" data-f="feitas" onclick="setF('feitas')">
+    <div class="tar-d-dot" style="background:#A5D6A7"></div>
+    <span class="tar-d-fil-name">✓ Feitas</span>
+    <span class="tar-d-cnt" id="d-fc-feitas">0</span>
+  </button>
+
+</aside>
+
+<!-- ── HEADER ── -->
 <div class="hdr">
   <button class="hdr-back" onclick="window.location.href='../'" aria-label="Voltar">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
@@ -24,7 +104,7 @@
   <div class="hdr-right"></div>
 </div>
 
-<!-- Barra de progresso -->
+<!-- Barra de progresso (mobile) -->
 <div class="progress-section">
   <div class="progress-info">
     <span class="progress-lbl" id="prog-lbl">Carregando...</span>
@@ -35,6 +115,7 @@
   </div>
 </div>
 
+<!-- Chips (mobile) -->
 <div class="chips">
   <div class="chip"><div class="chip-lbl">Pendentes</div><div class="chip-val" id="c-pend">—</div></div>
   <div class="chip"><div class="chip-lbl" style="color:#C62828">Hoje</div><div class="chip-val" id="c-hoje" style="color:#C62828">—</div></div>
@@ -42,6 +123,7 @@
   <div class="chip"><div class="chip-lbl" style="color:var(--ok)">Feitas</div><div class="chip-val" id="c-feitas" style="color:var(--ok)">—</div></div>
 </div>
 
+<!-- Filtros (mobile) -->
 <div class="ftabs">
   <button class="ftab on" data-f="pendentes" onclick="setF('pendentes')">Pendentes</button>
   <button class="ftab"    data-f="hoje"      onclick="setF('hoje')">Hoje</button>
@@ -49,7 +131,7 @@
   <button class="ftab"    data-f="feitas"    onclick="setF('feitas')"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Feitas</button>
 </div>
 
-<!-- Quick add -->
+<!-- Quick add (mobile) -->
 <div class="quick-add">
   <span class="quick-add-icon">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
@@ -57,6 +139,18 @@
   <input id="quick-input" type="text" placeholder="Adicionar tarefa rápida..." autocomplete="off"
          onkeydown="if(event.key==='Enter') quickAdd()">
   <button class="quick-add-btn" onclick="quickAdd()">↑</button>
+</div>
+
+<!-- Desktop toolbar -->
+<div class="tar-d-toolbar">
+  <div>
+    <div class="tar-d-toolbar-title" id="d-toolbar-title">Pendentes</div>
+    <div class="tar-d-toolbar-sub" id="d-toolbar-sub"></div>
+  </div>
+  <button class="tar-d-nova-btn" onclick="openAdd()">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    Nova tarefa
+  </button>
 </div>
 
 <div class="content" id="content">
@@ -100,6 +194,8 @@
 </div>
 
 <div class="toast" id="toast"></div>
+
+</div><!-- /tar-app -->
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="../config.js"></script>

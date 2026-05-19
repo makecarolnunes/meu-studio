@@ -13,7 +13,9 @@
 </head>
 <body>
 
-<!-- Header (título e botão voltar atualizados pelo JS conforme a view) -->
+<div id="ano-app">
+
+<!-- ── Header (mobile only) ── -->
 <div class="hdr">
   <button class="hdr-back" id="hdr-back" onclick="window.location.href='../'" aria-label="Voltar">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
@@ -26,60 +28,120 @@
   </div>
 </div>
 
-<!-- ── View: Cadernos ────────────────────────────────────────── -->
-<div id="view-cadernos">
-  <div class="content" id="cadernos-list">
-    <div class="loader"><div class="spinner"></div><br>Carregando...</div>
-  </div>
-</div>
+<!-- ══ LAYOUT DESKTOP: 3 colunas ══ -->
+<div class="ano-cols">
 
-<!-- ── View: Notas (dentro de um caderno) ───────────────────── -->
-<div id="view-notas" style="display:none">
-  <div class="content" id="notas-list"></div>
-</div>
+  <!-- ── Col 1: Cadernos ── -->
+  <div id="view-cadernos" class="ano-col-cad">
 
-<!-- ── View: Editor de nota ─────────────────────────────────── -->
-<div id="view-editor" style="display:none">
-  <div class="editor">
-    <input class="editor-titulo" id="f-titulo" type="text"
-           placeholder="Título da nota" autocomplete="off">
-
-    <textarea class="editor-conteudo" id="f-conteudo"
-              placeholder="Escreva suas anotações aqui…" rows="9"></textarea>
-
-    <!-- Tags -->
-    <div class="editor-section">
-      <div class="esec-label">Tags</div>
-      <div id="edit-tags" class="edit-tags-list"></div>
-      <div class="tag-add-row">
-        <input id="tag-inp" type="text" class="tag-inp"
-               placeholder="Adicionar tag e pressionar Enter…"
-               onkeydown="tagKeydown(event)" autocomplete="off">
-        <button class="tag-add-btn" onclick="addTag()" aria-label="Adicionar tag">+</button>
+    <!-- Desktop header da coluna cadernos -->
+    <div class="d-cad-hdr">
+      <div class="d-cad-brand">
+        <div class="d-cad-brand-icon">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        </div>
+        <span>Anotações</span>
       </div>
-    </div>
-
-    <!-- Imagens -->
-    <div class="editor-section">
-      <div class="esec-label">Imagens</div>
-      <div id="edit-imgs"></div>
-      <button class="btn-img-add" id="btn-upload" onclick="pickImage()">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-        + Imagem
+      <button class="d-cad-novo-btn" onclick="openCadForm(null)">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Novo caderno
       </button>
     </div>
 
-    <!-- Excluir (só para notas existentes) -->
-    <button class="btn-del-nota" id="btn-del-nota" onclick="deleteNota()" style="display:none">
-      Excluir esta nota
-    </button>
+    <!-- Tag filter (desktop) -->
+    <div id="d-tag-filter-area" class="d-tag-filter-area" style="display:none"></div>
+
+    <!-- Lista de cadernos (mobile + desktop) -->
+    <div class="content" id="cadernos-list">
+      <div class="loader"><div class="spinner"></div><br>Carregando...</div>
+    </div>
   </div>
-</div>
+
+  <!-- ── Col 2: Notas ── -->
+  <div id="view-notas" style="display:none" class="ano-col-notas">
+
+    <!-- Desktop toolbar notas -->
+    <div class="d-notas-hdr">
+      <div class="d-notas-title-row">
+        <span class="d-notas-title" id="d-notas-title">Notas</span>
+        <span class="d-notas-cnt" id="d-notas-cnt"></span>
+      </div>
+      <button class="d-nova-nota-btn" onclick="openEditor(null)">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Nova nota
+      </button>
+    </div>
+    <div class="d-notas-search">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input id="d-nota-search" type="text" placeholder="Buscar nota..." oninput="filterNotasSearch(this.value)" autocomplete="off">
+    </div>
+
+    <!-- Lista de notas -->
+    <div class="content" id="notas-list"></div>
+  </div>
+
+  <!-- ── Col 3: Editor ── -->
+  <div id="view-editor" style="display:none" class="ano-col-editor">
+
+    <!-- Desktop editor header -->
+    <div class="d-editor-hdr">
+      <span class="d-editor-date" id="d-editor-date"></span>
+      <div class="d-editor-actions">
+        <button class="d-editor-btn d-editor-del" id="d-btn-del-nota" onclick="deleteNota()" style="display:none">Excluir</button>
+        <button class="d-editor-btn d-editor-save" onclick="saveNota()">Salvar</button>
+      </div>
+    </div>
+
+    <!-- Empty state (desktop, quando nenhuma nota selecionada) -->
+    <div class="d-editor-empty" id="d-editor-empty">
+      <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" opacity=".3"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      <p>Selecione uma nota para editar<br>ou crie uma nova</p>
+    </div>
+
+    <!-- Conteúdo do editor (oculto até selecionar/criar nota) -->
+    <div id="d-editor-content" style="display:none">
+      <input class="editor-titulo" id="f-titulo" type="text"
+             placeholder="Título da nota" autocomplete="off">
+
+      <textarea class="editor-conteudo" id="f-conteudo"
+                placeholder="Escreva suas anotações aqui…"></textarea>
+
+      <!-- Tags -->
+      <div class="editor-section">
+        <div class="esec-label">Tags</div>
+        <div id="edit-tags" class="edit-tags-list"></div>
+        <div class="tag-add-row">
+          <input id="tag-inp" type="text" class="tag-inp"
+                 placeholder="Adicionar tag e pressionar Enter…"
+                 onkeydown="tagKeydown(event)" autocomplete="off">
+          <button class="tag-add-btn" onclick="addTag()" aria-label="Adicionar tag">+</button>
+        </div>
+      </div>
+
+      <!-- Imagens -->
+      <div class="editor-section">
+        <div class="esec-label">Imagens</div>
+        <div id="edit-imgs"></div>
+        <button class="btn-img-add" id="btn-upload" onclick="pickImage()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          + Imagem
+        </button>
+      </div>
+
+      <!-- Excluir (mobile) -->
+      <button class="btn-del-nota" id="btn-del-nota" onclick="deleteNota()" style="display:none">
+        Excluir esta nota
+      </button>
+    </div>
+
+  </div><!-- /view-editor -->
+
+</div><!-- /ano-cols -->
 
 <!-- FAB -->
 <button class="fab" id="fab" onclick="fabAction()" title="Novo">＋</button>
 
-<!-- ── Panel: Formulário de caderno ─────────────────────────── -->
+<!-- ── Panel: Formulário de caderno ── -->
 <div class="overlay" id="form-overlay" onclick="closePanel('form')"></div>
 <div class="panel" id="form-panel">
   <div class="panel-handle"></div>
@@ -105,7 +167,7 @@
   </div>
 </div>
 
-<!-- ── Panel: Menu de opções do caderno ─────────────────────── -->
+<!-- ── Panel: Menu de opções do caderno ── -->
 <div class="overlay" id="menu-overlay" onclick="closePanel('menu')"></div>
 <div class="panel" id="menu-panel">
   <div class="panel-handle"></div>
@@ -123,6 +185,8 @@
 </div>
 
 <div class="toast" id="toast"></div>
+
+</div><!-- /ano-app -->
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="../config.js"></script>

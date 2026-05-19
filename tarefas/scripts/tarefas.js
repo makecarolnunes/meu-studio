@@ -185,11 +185,12 @@ function render() {
   var total = tasks.length;
   var feitas = done.length;
   var pct = total > 0 ? Math.round((feitas / total) * 100) : 0;
-  document.getElementById('prog-fill').style.width = pct + '%';
-  document.getElementById('prog-lbl').textContent =
+  var progMsg =
     total === 0 ? 'Nenhuma tarefa cadastrada' :
     feitas === total ? 'Tudo concluído!' :
     feitas + ' de ' + total + ' concluída' + (feitas !== 1 ? 's' : '');
+  document.getElementById('prog-fill').style.width = pct + '%';
+  document.getElementById('prog-lbl').textContent = progMsg;
   document.getElementById('prog-pct').textContent = total > 0 ? pct + '%' : '';
 
   // Chips
@@ -201,6 +202,37 @@ function render() {
   // Alert chip color
   var cp = document.getElementById('c-pend');
   cp.style.color = atrs.length > 0 ? '#C62828' : '';
+
+  // ── Desktop sidebar ──
+  var ring = document.getElementById('d-ring');
+  if (ring) {
+    var circ = 100.5;
+    ring.style.strokeDashoffset = circ * (1 - pct / 100);
+    document.getElementById('d-ring-pct').textContent  = pct + '%';
+    document.getElementById('d-prog-lbl').textContent  = progMsg;
+    document.getElementById('d-prog-val').textContent  = total > 0 ? feitas + ' de ' + total : '';
+    document.getElementById('d-s-pend').textContent    = pend.length;
+    document.getElementById('d-s-hoje').textContent    = hj.length;
+    document.getElementById('d-s-atrs').textContent    = atrs.length;
+    document.getElementById('d-s-feitas').textContent  = done.length;
+    document.getElementById('d-fc-pend').textContent   = pend.length;
+    document.getElementById('d-fc-hoje').textContent   = hj.length;
+    document.getElementById('d-fc-sem').textContent    = sem.length;
+    document.getElementById('d-fc-feitas').textContent = done.length;
+    var filterLabels = { pendentes:'Pendentes', hoje:'Hoje', semana:'Esta semana', feitas:'Feitas' };
+    var d_title = document.getElementById('d-toolbar-title');
+    var d_sub   = document.getElementById('d-toolbar-sub');
+    if (d_title) d_title.textContent = filterLabels[curFilter] || 'Tarefas';
+    if (d_sub) {
+      var filtList =
+        curFilter === 'hoje'   ? hj :
+        curFilter === 'feitas' ? done :
+        curFilter === 'semana' ? pend.filter(function(t){ return !t.prazo || t.prazo <= we || t.prazo < hoje; }) :
+        pend;
+      d_sub.textContent = filtList.length + ' tarefa' + (filtList.length !== 1 ? 's' : '') +
+        (atrs.length > 0 && curFilter === 'pendentes' ? ' · ' + atrs.length + ' atrasada' + (atrs.length !== 1 ? 's' : '') : '');
+    }
+  }
 
   var content = document.getElementById('content');
 
@@ -291,7 +323,27 @@ function setF(f) {
   document.querySelectorAll('.ftab').forEach(function(b) {
     b.classList.toggle('on', b.dataset.f === f);
   });
+  document.querySelectorAll('.tar-d-fil').forEach(function(b) {
+    b.classList.toggle('active', b.dataset.f === f);
+  });
   render();
+}
+
+function quickAddD() {
+  var input = document.getElementById('d-quick-inp');
+  var titulo = (input.value || '').trim();
+  if (!titulo) return;
+  input.value = '';
+  var tmp = { id: 'tmp-' + Date.now(), titulo: titulo, prazo: '', prioridade: 'normal', feita: false };
+  tasks.unshift(tmp);
+  render();
+  DB.tarefas.upsert({ id: tmp.id, titulo: titulo, prazo: null, prioridade: 'normal', feita: false })
+    .then(function() { load(); })
+    .catch(function() {
+      tasks = tasks.filter(function(t) { return t.id !== tmp.id; });
+      render();
+      showToast('Erro ao criar tarefa', true);
+    });
 }
 
 // ── PANEL ─────────────────────────────────────────────────────

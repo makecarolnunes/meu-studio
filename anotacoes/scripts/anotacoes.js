@@ -57,9 +57,21 @@ function relTime(iso) {
          String(d.getMonth()+1).padStart(2,'0');
 }
 
+function isDesktop() { return window.innerWidth >= 1024; }
+
 // ── Views ─────────────────────────────────────────────────────────────
 function showView(v) {
   curView = v;
+
+  if (isDesktop()) {
+    // Desktop: todas as colunas visíveis via CSS
+    // Apenas gerencia o conteúdo do editor (empty vs preenchido)
+    var fab = document.getElementById('fab');
+    if (fab) fab.style.display = 'none';
+    return;
+  }
+
+  // Mobile: alterna visibilidade das views
   ['cadernos','notas','editor'].forEach(function(name) {
     var el = document.getElementById('view-' + name);
     if (el) el.style.display = (name === v) ? '' : 'none';
@@ -131,7 +143,8 @@ function renderCadernos() {
     return;
   }
   el.innerHTML = cadernos.map(function(c) {
-    return '<div class="cad-card" onclick="openCaderno(\'' + c.id + '\')">' +
+    var isSelected = curCad && curCad.id === c.id;
+    return '<div class="cad-card' + (isSelected ? ' selected' : '') + '" data-cad-id="' + esc(c.id) + '" onclick="openCaderno(\'' + c.id + '\')">' +
       '<div class="cad-emoji-wrap" style="background:' + esc(c.cor) + '22">' +
         '<span class="cad-emoji">' + esc(c.emoji) + '</span>' +
       '</div>' +
@@ -151,6 +164,18 @@ function openCaderno(id) {
   curCad    = cadernos.find(function(c) { return c.id === id; });
   tagFilter = null;
   if (!curCad) return;
+
+  // Desktop: marca caderno ativo e reseta editor
+  if (isDesktop()) {
+    document.querySelectorAll('#view-cadernos .cad-card').forEach(function(el) {
+      el.classList.toggle('selected', el.dataset.cadId === id);
+    });
+    var dTitle = document.getElementById('d-notas-title');
+    if (dTitle) dTitle.textContent = curCad.nome;
+    // Fecha editor (volta ao empty state)
+    showEditorDesktop(false);
+  }
+
   showView('notas');
   loadNotas();
 }
@@ -183,6 +208,17 @@ function renderNotas() {
     ? notas.filter(function(n) { return n.tags && n.tags.indexOf(tagFilter) >= 0; })
     : notas;
 
+  if (_notaSearch) {
+    list = list.filter(function(n) {
+      return (n.titulo || '').toLowerCase().includes(_notaSearch) ||
+             (n.conteudo || '').toLowerCase().includes(_notaSearch);
+    });
+  }
+
+  // Atualiza contador desktop
+  var dCnt = document.getElementById('d-notas-cnt');
+  if (dCnt) dCnt.textContent = list.length;
+
   if (!list.length) {
     var msg = tagFilter
       ? '<div class="empty-state"><div class="empty-ico">🔍</div>' +
@@ -207,7 +243,8 @@ function renderNotas() {
         '</span>'
       : '';
     var preview = n.conteudo ? n.conteudo.slice(0,90) + (n.conteudo.length > 90 ? '…' : '') : '';
-    return '<div class="nota-card" onclick="openNotaEditor(\'' + n.id + '\')">' +
+    var isSelNota = curNota && curNota.id === n.id;
+    return '<div class="nota-card' + (isSelNota ? ' selected' : '') + '" onclick="openNotaEditor(\'' + n.id + '\')">' +
       tagsHtml +
       '<div class="nota-titulo">' + esc(n.titulo || 'Sem título') + '</div>' +
       (preview ? '<div class="nota-preview">' + esc(preview) + '</div>' : '') +
@@ -222,6 +259,31 @@ function renderNotas() {
 function setTagFilter(tag) {
   tagFilter = tag;
   renderNotas();
+}
+
+var _notaSearch = '';
+function filterNotasSearch(val) {
+  _notaSearch = (val || '').trim().toLowerCase();
+  renderNotas();
+}
+
+// Abre/fecha o editor desktop
+function showEditorDesktop(open) {
+  var empty   = document.getElementById('d-editor-empty');
+  var content = document.getElementById('d-editor-content');
+  var delBtn  = document.getElementById('d-btn-del-nota');
+  if (!empty || !content) return;
+  empty.style.display   = open ? 'none' : '';
+  content.style.display = open ? '' : 'none';
+  if (delBtn) delBtn.style.display = (open && curNota) ? '' : 'none';
+  // Atualiza data
+  var dateEl = document.getElementById('d-editor-date');
+  if (dateEl && open && curNota) {
+    var d = new Date(curNota.updatedAt || curNota.createdAt || Date.now());
+    dateEl.textContent = 'Última edição: ' + d.toLocaleDateString('pt-BR') + ' às ' + d.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+  } else if (dateEl) {
+    dateEl.textContent = '';
+  }
 }
 
 // ── Editor ────────────────────────────────────────────────────────────
@@ -244,11 +306,20 @@ function openEditor(nota) {
 
   document.getElementById('btn-del-nota').style.display = nota ? '' : 'none';
 
+  if (isDesktop()) {
+    showEditorDesktop(true);
+    renderNotas(); // atualiza selected state na lista
+    setTimeout(function() {
+      var t = document.getElementById('f-titulo');
+      if (t) { t.focus(); if (t.value) { var len = t.value.length; t.setSelectionRange(len, len); } }
+    }, 60);
+    return;
+  }
+
   showView('editor');
   setTimeout(function() {
     var t = document.getElementById('f-titulo');
     t.focus();
-    // Coloca cursor no fim
     if (t.value) { var len = t.value.length; t.setSelectionRange(len, len); }
   }, 80);
 }
@@ -350,8 +421,10 @@ async function saveNota() {
     toast('Informe um título para a nota', 'err');
     return;
   }
-  var btn = document.getElementById('hdr-save');
-  btn.disabled = true;
+  var btn = isDesktop()
+    ? document.querySelector('.d-editor-save')
+    : document.getElementById('hdr-save');
+  if (btn) btn.disabled = true;
 
   var now  = new Date().toISOString();
   var nota = {
@@ -377,13 +450,18 @@ async function saveNota() {
     await DB.anotacoes.upsert(nota);
     curNota = nota;
     toast(isNew ? 'Nota criada' : 'Nota salva');
-    showView('notas');
-    renderNotas();
+    if (isDesktop()) {
+      showEditorDesktop(true);
+      renderNotas();
+    } else {
+      showView('notas');
+      renderNotas();
+    }
   } catch(e) {
     if (isNew) notas.shift();
     toast('Erro ao salvar: ' + e.message, 'err');
   } finally {
-    btn.disabled = false;
+    if (btn) btn.disabled = false;
   }
 }
 
@@ -396,8 +474,13 @@ async function deleteNota() {
     notas = notas.filter(function(n) { return n.id !== curNota.id; });
     curNota = null;
     toast('Nota excluída');
-    showView('notas');
-    renderNotas();
+    if (isDesktop()) {
+      showEditorDesktop(false);
+      renderNotas();
+    } else {
+      showView('notas');
+      renderNotas();
+    }
   } catch(e) {
     toast('Erro ao excluir', 'err');
   }

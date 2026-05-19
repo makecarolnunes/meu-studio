@@ -228,6 +228,202 @@ body {
 .fab:active { transform: scale(0.93); }
 @media (max-width: 480px) { .fab { right: 20px; } }
 
+/* ══════════════════════════════════════════════════════
+   DESKTOP (≥ 1024px)
+══════════════════════════════════════════════════════ */
+@media (min-width: 1024px) {
+  :root {
+    --tar-sidebar: 240px;
+    --tar-shell:   1100px;
+  }
+
+  body {
+    max-width: none;
+    background: linear-gradient(135deg, #f0ebe8 0%, #e8e0db 100%);
+    min-height: 100vh;
+  }
+
+  #tar-app {
+    max-width: var(--tar-shell);
+    margin: 0 auto;
+    position: relative;
+    padding-left: var(--tar-sidebar);
+    background: var(--bg);
+    box-shadow: 0 8px 48px rgba(56,25,11,.13);
+    border-radius: 0 0 20px 20px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── Sidebar ── */
+  .tar-d-sidebar {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    top: 0; left: 0; bottom: 0;
+    width: var(--tar-sidebar);
+    background: linear-gradient(160deg, #3d1e12 0%, #5a2e1e 60%, #8B6B61 100%);
+    padding: 24px 16px 28px;
+    overflow-y: auto;
+    border-radius: 0 0 0 20px;
+  }
+
+  .tar-d-brand {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 22px; padding: 0 4px;
+  }
+  .tar-d-brand-icon {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: rgba(255,255,255,.15);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .tar-d-brand h2 {
+    font-size: 1rem; font-weight: 800; color: white; letter-spacing: -.01em;
+  }
+
+  /* Progress ring */
+  .tar-d-prog {
+    display: flex; align-items: center; gap: 14px;
+    background: rgba(255,255,255,.1);
+    border-radius: 13px;
+    padding: 12px 14px;
+    margin-bottom: 14px;
+  }
+  .tar-d-ring-bg {
+    fill: none; stroke: rgba(255,255,255,.18); stroke-width: 5;
+  }
+  .tar-d-ring-fg {
+    fill: none; stroke: #F9C784; stroke-width: 5;
+    stroke-linecap: round;
+    stroke-dasharray: 100.5;
+    stroke-dashoffset: 100.5;
+    transform: rotate(-90deg);
+    transform-origin: 20px 20px;
+    transition: stroke-dashoffset .5s ease;
+  }
+  .tar-d-ring-txt {
+    font-size: .58rem; font-weight: 900;
+    fill: white; text-anchor: middle; dominant-baseline: middle;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  .tar-d-prog-lbl { font-size: .72rem; color: rgba(255,255,255,.7); font-weight: 600; }
+  .tar-d-prog-val { font-size: 1.05rem; font-weight: 900; color: white; margin-top: 2px; }
+
+  /* Stats 2x2 */
+  .tar-d-stats {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 7px; margin-bottom: 16px;
+  }
+  .tar-d-stat {
+    background: rgba(255,255,255,.1);
+    border-radius: 11px; padding: 9px 10px; text-align: center;
+  }
+  .tar-d-stat-lbl {
+    font-size: .59rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .05em; color: rgba(255,255,255,.6);
+  }
+  .tar-d-stat-val {
+    font-size: 1.2rem; font-weight: 900; color: white;
+    display: block; margin-top: 2px;
+  }
+  .tar-d-stat-val.c-hoje  { color: #F9C784; }
+  .tar-d-stat-val.c-atrs  { color: #F48080; }
+  .tar-d-stat-val.c-ok    { color: #A3D977; }
+
+  /* Quick-add */
+  .tar-d-quick {
+    display: flex; align-items: center; gap: 8px;
+    background: rgba(255,255,255,.12);
+    border: 1px solid rgba(255,255,255,.2);
+    border-radius: 10px; padding: 9px 12px; margin-bottom: 18px;
+  }
+  .tar-d-quick input {
+    flex: 1; border: none; outline: none; background: transparent;
+    color: white; font-size: .83rem; font-family: inherit;
+  }
+  .tar-d-quick input::placeholder { color: rgba(255,255,255,.45); }
+  .tar-d-quick-btn {
+    width: 24px; height: 24px; border-radius: 50%;
+    background: rgba(255,255,255,.22); border: none;
+    color: white; font-size: .95rem; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .tar-d-quick-btn:hover { background: rgba(255,255,255,.35); }
+
+  /* Filtros */
+  .tar-d-fil-lbl {
+    font-size: .63rem; font-weight: 800; text-transform: uppercase;
+    letter-spacing: .07em; color: rgba(255,255,255,.45);
+    padding: 0 4px; margin-bottom: 7px;
+  }
+  .tar-d-fil {
+    display: flex; align-items: center; gap: 10px;
+    width: 100%; padding: 9px 12px; border-radius: 10px;
+    border: none; background: transparent;
+    cursor: pointer; text-align: left; margin-bottom: 3px;
+    transition: background .15s; font-family: inherit;
+  }
+  .tar-d-fil:hover { background: rgba(255,255,255,.08); }
+  .tar-d-fil.active { background: rgba(255,255,255,.18); }
+  .tar-d-dot {
+    width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+  }
+  .tar-d-fil-name { font-size: .85rem; font-weight: 600; color: rgba(255,255,255,.88); flex: 1; }
+  .tar-d-cnt {
+    font-size: .72rem; font-weight: 800;
+    background: rgba(255,255,255,.18); color: white;
+    padding: 2px 7px; border-radius: 10px;
+  }
+  .tar-d-fil.active .tar-d-cnt { background: rgba(255,255,255,.3); }
+
+  /* ── Header ── */
+  .hdr > div:first-child { display: none; }
+
+  /* ── Ocultar elementos mobile ── */
+  .progress-section,
+  .chips,
+  .ftabs,
+  .quick-add { display: none; }
+
+  .fab { display: none; }
+
+  /* ── Desktop toolbar ── */
+  .tar-d-toolbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 28px 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--card);
+  }
+  .tar-d-toolbar-title { font-size: 1.05rem; font-weight: 800; color: var(--brand-d); }
+  .tar-d-toolbar-sub   { font-size: .72rem; color: var(--muted); margin-top: 2px; }
+  .tar-d-nova-btn {
+    display: flex; align-items: center; gap: 7px;
+    padding: 9px 16px; border-radius: 10px;
+    background: var(--brand-d); color: white;
+    border: none; font-size: .83rem; font-weight: 700;
+    cursor: pointer; font-family: inherit;
+  }
+  .tar-d-nova-btn:hover { opacity: .9; }
+
+  /* ── Content ── */
+  .content { padding: 16px 28px 48px; flex: 1; }
+
+  /* ── Panel centrado ── */
+  .panel {
+    max-width: 480px;
+    border-radius: 16px;
+    bottom: 40px;
+  }
+  .panel.open { transform: translateX(-50%) translateY(0); }
+}
+
+/* Ocultar sidebar no mobile */
+.tar-d-sidebar   { display: none; }
+.tar-d-toolbar   { display: none; }
+
+
 /* ── OVERLAY + PANEL ── */
 .overlay {
   display: none; position: fixed; inset: 0;
