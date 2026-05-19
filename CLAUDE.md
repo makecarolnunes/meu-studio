@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-19 12:43 | main | fix: sidebar Conte├║do em flex row + lista plana com ordena├º├úo -->
+<!-- AUTO: 2026-05-19 12:56 | main | feat: layout desktop responsivo para Estoque -->
 
