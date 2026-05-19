@@ -20,6 +20,7 @@ let saidasFormOpen = false;
 let noivaDetail    = null;
 let isSyncing      = false;
 let F = {}, Fs = {};
+let _pendingDelSaidaId = null;
 
 function cacheEntries() { localStorage.setItem('mk_entries', JSON.stringify(entries)); }
 function cacheSaidas()  { localStorage.setItem('mk_saidas',  JSON.stringify(saidas)); }
@@ -32,5 +33,5 @@ function initF()  {
 }
 function initFs() {
     Fs = { dataPag: today(), valor: '', tipo: 'Reposição de Material',
-           status: 'Pago', forma: 'PIX', obs: '' };
+           status: 'Pago', forma: 'PIX', obs: '', recorrencia: 'unica', meses: 2 };
 }

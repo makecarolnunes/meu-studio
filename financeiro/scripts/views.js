@@ -161,6 +161,12 @@ function renderSaidas() {
         </div></div>
         <div class="fg"><label class="fl">Forma de Pagamento</label>${bgroup('forma',['PIX','Crédito','Dinheiro'],'s')}</div>
         <div class="fg"><label class="fl">Observações</label><textarea class="fi ta" id="si-ob" placeholder="Detalhe...">${Fs.obs}</textarea></div>
+        <div class="fg"><label class="fl">Recorrência</label><div class="bg" style="flex-wrap:wrap">
+            <button class="bt ${Fs.recorrencia==='unica'?'on':''}" data-f="recorrencia" data-v="unica" data-form="s" onclick="pick('recorrencia','unica','s')">Única</button>
+            <button class="bt ${Fs.recorrencia==='fixa'?'on':''}" data-f="recorrencia" data-v="fixa" data-form="s" onclick="pick('recorrencia','fixa','s')">Fixa · 12 meses</button>
+            <button class="bt ${Fs.recorrencia==='recorrente'?'on':''}" data-f="recorrencia" data-v="recorrente" data-form="s" onclick="pick('recorrencia','recorrente','s')">Recorrente</button>
+        </div></div>
+        ${Fs.recorrencia==='recorrente'?`<div class="fg"><label class="fl">Quantos meses?</label><div class="vwrap"><span class="vpfx">#</span><input class="fi" type="number" id="si-meses" min="2" max="60" value="${Fs.meses||2}" inputmode="numeric"></div></div>`:''}
         <button class="bsub red" onclick="saveSaida()">Salvar Saída</button>
     </div>`:''}
     ${list.length===0?`<div class="empty"><div class="ico">${SVG.upload}</div><p>Nenhuma saída em<br><strong>${MONTHS[selMonth]} ${selYear}</strong></p></div>`
@@ -169,7 +175,8 @@ function renderSaidas() {
         return `<div class="eitem">
             <div class="eico" style="background:${st.bg};color:${st.col}">${st.ico}</div>
             <div class="einf"><div class="ecli">${s.tipo}</div>
-                <div class="emta">${fmtDate(s.dataPag)} · ${s.forma}</div>
+                <div class="emta">${fmtDate(s.dataPag)} · ${s.forma}${s.grupoId?` · ${s.recorrencia==='fixa'?'↺ Fixa':'↺ Recorrente'}`:''}
+                </div>
                 ${s.obs?`<div class="emta">${s.obs}</div>`:''}
             </div>
             <div class="erig">

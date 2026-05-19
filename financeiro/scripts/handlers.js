@@ -8,7 +8,7 @@ function pick(field, value, form) {
     syncF();
     if (form === 's') Fs[field] = value;
     else F[field] = value;
-    if (field === 'tipo') { render(); return; }
+    if (field === 'tipo' || field === 'recorrencia') { render(); return; }
     // Auto-fill price when service or local changes
     if (!form && (field === 'servico' || field === 'local')) {
         const prices = getServicePrices();
@@ -35,7 +35,7 @@ function syncF() {
     const r = (id, obj, f) => { const el=document.getElementById(id); if(el) obj[f]=el.value; };
     r('i-dp',F,'dataPag'); r('i-ds',F,'dataServ'); r('i-cl',F,'cliente');
     r('i-v',F,'valor');    r('i-vt',F,'valorTotal'); r('i-ob',F,'obs');
-    r('si-dp',Fs,'dataPag'); r('si-v',Fs,'valor'); r('si-ob',Fs,'obs');
+    r('si-dp',Fs,'dataPag'); r('si-v',Fs,'valor'); r('si-ob',Fs,'obs'); r('si-meses',Fs,'meses');
     const st = document.getElementById('si-tipo'); if(st) Fs.tipo = st.value;
 }
 
@@ -118,19 +118,71 @@ async function saveSaida() {
     syncF();
     if (!Fs.valor||Number(Fs.valor)<=0) { toast('⚠️ Informe o valor!'); return; }
     if (!Fs.dataPag) { toast('⚠️ Informe a data!'); return; }
-    const saida={ id:genId(), ...JSON.parse(JSON.stringify(Fs)), createdAt:new Date().toISOString() };
-    saidas.unshift(saida); cacheSaidas();
-    toast('Saída salva!');
-    const k={tipo:Fs.tipo, forma:Fs.forma}; initFs(); Object.assign(Fs,k);
-    saidasFormOpen=false; render();
-    sbCall({action:'save', table:'saidas', data: encodeURIComponent(JSON.stringify(saida))});
+    const rec = Fs.recorrencia || 'unica';
+    const k = {tipo:Fs.tipo, forma:Fs.forma};
+    if (rec === 'unica') {
+        const saida = { id:genId(), dataPag:Fs.dataPag, tipo:Fs.tipo, valor:Fs.valor,
+            forma:Fs.forma, status:Fs.status, obs:Fs.obs,
+            recorrencia:'unica', grupoId:null, createdAt:new Date().toISOString() };
+        saidas.unshift(saida); cacheSaidas();
+        toast('Saída salva!');
+        initFs(); Object.assign(Fs,k);
+        saidasFormOpen=false; render();
+        sbCall({action:'save', table:'saidas', data: encodeURIComponent(JSON.stringify(saida))});
+    } else {
+        const totalMeses = rec === 'fixa' ? 12 : Math.max(2, Number(Fs.meses)||2);
+        const grupoId = genId();
+        const novasSaidas = [];
+        for (let i = 0; i < totalMeses; i++) {
+            novasSaidas.push({ id:genId(), dataPag:addMonths(Fs.dataPag, i),
+                tipo:Fs.tipo, valor:Fs.valor, forma:Fs.forma, status:Fs.status, obs:Fs.obs,
+                recorrencia:rec, grupoId, createdAt:new Date().toISOString() });
+        }
+        [...novasSaidas].reverse().forEach(s=>saidas.unshift(s)); cacheSaidas();
+        toast(rec==='fixa' ? `Saída fixa criada (12 meses)!` : `${totalMeses} parcelas criadas!`);
+        initFs(); Object.assign(Fs,k);
+        saidasFormOpen=false; render();
+        novasSaidas.forEach(s=>sbCall({action:'save', table:'saidas', data: encodeURIComponent(JSON.stringify(s))}));
+    }
 }
 
 async function delSaida(id) {
+    const s = saidas.find(x=>String(x.id)===String(id));
+    if (!s) return;
+    if (s.grupoId) {
+        _pendingDelSaidaId = id;
+        document.getElementById('modal-bg').style.display='flex';
+        document.getElementById('modal-inner').innerHTML=`
+        <div class="modal-title">Excluir saída recorrente</div>
+        <p style="color:var(--muted);font-size:.85rem;margin:0 0 16px">Esta saída faz parte de um grupo. O que deseja excluir?</p>
+        <button class="bsub" style="margin-bottom:8px" onclick="execDelSaida('so-esta')">Só esta</button>
+        <button class="bsub" style="background:var(--muted);margin-bottom:8px" onclick="execDelSaida('futuras')">Esta e as futuras</button>
+        <button class="bsub red" style="margin-bottom:8px" onclick="execDelSaida('todas')">Todas do grupo</button>
+        <button class="skip" onclick="closeModal()">Cancelar</button>`;
+        return;
+    }
     if (!confirm('Excluir?')) return;
-    saidas=saidas.filter(s=>String(s.id)!==String(id));
+    saidas=saidas.filter(x=>String(x.id)!==String(id));
     cacheSaidas(); render(); toast('Excluído');
     sbCall({action:'delete', table:'saidas', id});
+}
+
+function execDelSaida(scope) {
+    const id = _pendingDelSaidaId;
+    const s = saidas.find(x=>String(x.id)===String(id));
+    if (!s) { closeModal(); return; }
+    let ids;
+    if (scope === 'so-esta') {
+        ids = [String(id)];
+    } else if (scope === 'futuras') {
+        ids = saidas.filter(x=>x.grupoId===s.grupoId&&(x.dataPag||'')>=(s.dataPag||'')).map(x=>String(x.id));
+    } else {
+        ids = saidas.filter(x=>x.grupoId===s.grupoId).map(x=>String(x.id));
+    }
+    const idSet = new Set(ids);
+    saidas = saidas.filter(x=>!idSet.has(String(x.id)));
+    cacheSaidas(); closeModal(); render(); toast(`${idSet.size} saída(s) excluída(s)`);
+    idSet.forEach(delId=>sbCall({action:'delete', table:'saidas', id:delId}));
 }
 
 async function toggleSaidaStatus(id) {

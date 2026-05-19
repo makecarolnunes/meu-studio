@@ -60,7 +60,9 @@ const _NOIVA_KEYS = {
 
 const _SAIDA_KEYS = {
   dataPag: 'data_pag', tipo: 'tipo', valor: 'valor',
-  forma: 'forma', status: 'status', obs: 'obs', createdAt: 'created_at',
+  forma: 'forma', status: 'status', obs: 'obs',
+  recorrencia: 'recorrencia', grupoId: 'grupo_id',
+  createdAt: 'created_at',
 };
 
 const _ORC_KEYS = {
@@ -133,14 +135,16 @@ function _noivaFromDb(r) {
 function _saidaToDb(s)   { return _toDb(s, _SAIDA_KEYS, ['valor']); }
 function _saidaFromDb(r) {
   return {
-    id:        String(r.id),
-    dataPag:   r.data_pag  || '',
-    tipo:      r.tipo      || '',
-    valor:     r.valor     != null ? String(r.valor) : '',
-    forma:     r.forma     || '',
-    status:    r.status    || '',
-    obs:       r.obs       || '',
-    createdAt: r.created_at || '',
+    id:          String(r.id),
+    dataPag:     r.data_pag  || '',
+    tipo:        r.tipo      || '',
+    valor:       r.valor     != null ? String(r.valor) : '',
+    forma:       r.forma     || '',
+    status:      r.status    || '',
+    obs:         r.obs       || '',
+    recorrencia: r.recorrencia || 'unica',
+    grupoId:     r.grupo_id  || null,
+    createdAt:   r.created_at || '',
   };
 }
 

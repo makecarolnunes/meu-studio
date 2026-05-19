@@ -227,27 +227,46 @@ function openEditSaida(id) {
         <input type="hidden" id="ed-status" value="${s.status||'Pago'}">
     </div>
     <div class="fg"><label class="fl">Observações</label><textarea class="fi ta" id="es-obs">${s.obs||''}</textarea></div>
+    ${s.grupoId?`<div class="fg"><label class="fl">Editar</label><div class="bg">
+        <button class="bt on" onclick="edPick('escopo','so-esta',this)">Só esta</button>
+        <button class="bt" onclick="edPick('escopo','futuras',this)">Esta e futuras</button>
+        <button class="bt" onclick="edPick('escopo','todas',this)">Todas</button>
+    </div></div>`:''}
     <button class="bsub" style="margin-bottom:8px" onclick="saveEditSaida('${id}')">Salvar</button>
     <button class="skip" onclick="closeModal()">Cancelar</button>`;
     _pick['stipo']  = s.tipo  || '';
     _pick['sforma'] = s.forma || 'PIX';
+    if (s.grupoId) _pick['escopo'] = 'so-esta';
 }
 function saveEditSaida(id) {
     const s = saidas.find(x=>String(x.id)===String(id));
     if (!s) return;
     const valor = document.getElementById('es-valor').value;
     if (!valor||Number(valor)<=0) { toast('⚠️ Informe o valor!'); return; }
-    const updated = { ...s,
-        dataPag: document.getElementById('es-data').value || s.dataPag,
+    const changes = {
         tipo:   _pick['stipo']  || s.tipo,
         forma:  _pick['sforma'] || s.forma,
         status: document.getElementById('ed-status').value,
         valor:  String(valor),
         obs:    document.getElementById('es-obs').value
     };
-    const idx = saidas.findIndex(x=>String(x.id)===String(id));
-    saidas[idx] = updated; cacheSaidas();
-    sbCall({action:'delete', table:'saidas', id});
-    sbCall({action:'save', table:'saidas', data:encodeURIComponent(JSON.stringify(updated))});
-    closeModal(); render(); toast('Saída atualizada!');
+    const scope = s.grupoId ? (_pick['escopo'] || 'so-esta') : 'so-esta';
+    let toEdit;
+    if (scope === 'so-esta') {
+        toEdit = [s];
+    } else if (scope === 'futuras') {
+        toEdit = saidas.filter(x=>x.grupoId===s.grupoId&&(x.dataPag||'')>=(s.dataPag||''));
+    } else {
+        toEdit = saidas.filter(x=>x.grupoId===s.grupoId);
+    }
+    toEdit.forEach(item => {
+        const idx = saidas.findIndex(x=>String(x.id)===String(item.id));
+        const updated = { ...item, ...changes };
+        if (scope === 'so-esta') updated.dataPag = document.getElementById('es-data').value || item.dataPag;
+        saidas[idx] = updated;
+        sbCall({action:'delete', table:'saidas', id:item.id});
+        sbCall({action:'save', table:'saidas', data:encodeURIComponent(JSON.stringify(updated))});
+    });
+    cacheSaidas(); closeModal(); render();
+    toast(toEdit.length>1 ? `${toEdit.length} saídas atualizadas!` : 'Saída atualizada!');
 }

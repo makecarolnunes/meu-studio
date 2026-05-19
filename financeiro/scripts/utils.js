@@ -23,6 +23,11 @@ function genId() {
     if (window.crypto && typeof crypto.randomUUID === 'function') return crypto.randomUUID();
     return Date.now().toString(36) + '-' + Math.random().toString(36).slice(2,10);
 }
+function addMonths(dateStr, n) {
+    const [y,m,d] = dateStr.split('-').map(Number);
+    const dt = new Date(y, m - 1 + n, d);
+    return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+}
 
 // Guards anti-duplo-clique
 let _savingEntry = false;
