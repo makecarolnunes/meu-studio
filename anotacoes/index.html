@@ -24,7 +24,7 @@
     <h1 id="hdr-title">Anotações</h1>
   </div>
   <div class="hdr-right">
-    <button class="hdr-save" id="hdr-save" onclick="saveNota()" style="display:none" aria-label="Salvar nota">Salvar</button>
+    <span id="hdr-save-status" class="hdr-save-status" style="display:none"></span>
   </div>
 </div>
 
@@ -101,10 +101,16 @@
     <!-- Conteúdo do editor (oculto até selecionar/criar nota) -->
     <div id="d-editor-content" style="display:none">
       <input class="editor-titulo" id="f-titulo" type="text"
-             placeholder="Título da nota" autocomplete="off">
+             placeholder="Título da nota" autocomplete="off"
+             oninput="scheduleAutoSave()">
+
+      <div class="save-status-bar">
+        <span id="save-status" class="save-status"></span>
+      </div>
 
       <textarea class="editor-conteudo" id="f-conteudo"
-                placeholder="Escreva suas anotações aqui…"></textarea>
+                placeholder="Escreva suas anotações aqui…"
+                oninput="scheduleAutoSave()"></textarea>
 
       <!-- Tags -->
       <div class="editor-section">

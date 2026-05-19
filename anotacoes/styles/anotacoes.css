@@ -162,6 +162,27 @@ body {
 }
 .nota-date { font-size: .7rem; color: var(--muted); }
 
+/* ── SAVE STATUS ─────────────────────────────────────────────── */
+.save-status-bar {
+  padding: 4px 14px 0;
+  min-height: 20px;
+  background: var(--card);
+}
+.save-status {
+  font-size: .7rem; color: var(--muted);
+  transition: opacity .3s;
+}
+.save-status.saving { color: var(--muted); }
+.save-status.saved  { color: var(--ok); }
+.save-status.error  { color: var(--danger, #C62828); }
+
+/* Mobile header status (substitui botão Salvar) */
+.hdr-save-status {
+  font-size: .72rem; font-weight: 600;
+  color: rgba(255,255,255,.75);
+  padding-right: 4px;
+}
+
 /* ── EDITOR ──────────────────────────────────────────────────── */
 .editor { padding: 0 0 90px; }
 
@@ -633,6 +654,9 @@ body {
   #d-editor-content {
     display: flex; flex-direction: column; flex: 1; overflow-y: auto;
   }
+
+  /* Save status bar no desktop */
+  .save-status-bar { padding: 4px 22px 0; }
 
   /* Editor fields no desktop */
   .editor-titulo {

@@ -12,6 +12,10 @@ var editImgs  = [];      // imagens na edição atual [{url, path, nome}]
 var editCadId = null;    // id do caderno em edição no form (null = novo)
 var cadMenuId = null;    // id do caderno cujo menu está aberto
 
+// ── Auto-save ─────────────────────────────────────────────────────────
+var _autoSaveTimer = null;
+var _isDirty       = false;
+
 // ── Auth ──────────────────────────────────────────────────────────────
 (function checkAuth() {
   var s = localStorage.getItem('mk_session');
@@ -33,6 +37,79 @@ function toast(msg, type) {
   el.className = 'toast show' + (type === 'err' ? ' toast-err' : '');
   clearTimeout(_toastTimer);
   _toastTimer = setTimeout(function() { el.className = 'toast'; }, 2800);
+}
+
+// ── Auto-save ─────────────────────────────────────────────────────────
+function setSaveStatus(st, msg) {
+  var el  = document.getElementById('save-status');
+  var hdr = document.getElementById('hdr-save-status');
+  if (el)  { el.textContent = msg; el.className = 'save-status ' + st; }
+  if (hdr) { hdr.textContent = msg; }
+}
+
+function scheduleAutoSave() {
+  _isDirty = true;
+  setSaveStatus('', '');
+  clearTimeout(_autoSaveTimer);
+  _autoSaveTimer = setTimeout(autoSave, 1500);
+}
+
+async function autoSave() {
+  _autoSaveTimer = null;
+  if (!_isDirty || !curCad) return;
+  var titulo = (document.getElementById('f-titulo').value || '').trim();
+  if (!titulo) { setSaveStatus('', 'Digite um título para salvar'); return; }
+
+  _isDirty = false;
+  setSaveStatus('saving', 'Salvando...');
+
+  var now  = new Date().toISOString();
+  var nota = {
+    id:        curNota ? curNota.id : String(Date.now()),
+    cadernoId: curCad.id,
+    titulo:    titulo,
+    conteudo:  (document.getElementById('f-conteudo').value || '').trim(),
+    tags:      editTags.slice(),
+    imagens:   editImgs.slice(),
+    createdAt: curNota ? curNota.createdAt : now,
+    updatedAt: now,
+  };
+
+  var isNew = !curNota;
+  if (isNew) {
+    notas.unshift(nota);
+  } else {
+    var idx = notas.findIndex(function(n) { return n.id === nota.id; });
+    if (idx >= 0) notas[idx] = nota;
+  }
+  curNota = nota;
+
+  try {
+    await DB.anotacoes.upsert(nota);
+    setSaveStatus('saved', 'Salvo ✓');
+    setTimeout(function() { setSaveStatus('', ''); }, 2500);
+    if (isNew) {
+      showEditorDesktop(true);
+      renderNotas();
+    } else {
+      renderNotas();
+    }
+    // Atualiza data no desktop
+    var dateEl = document.getElementById('d-editor-date');
+    if (dateEl) {
+      var d = new Date(nota.updatedAt);
+      dateEl.textContent = 'Salvo às ' + d.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+    }
+  } catch(e) {
+    _isDirty = true;
+    setSaveStatus('error', 'Erro ao salvar');
+  }
+}
+
+async function flushAutoSave() {
+  if (!_isDirty) return;
+  clearTimeout(_autoSaveTimer);
+  await autoSave();
 }
 
 // ── Utils ─────────────────────────────────────────────────────────────
@@ -77,13 +154,13 @@ function showView(v) {
     if (el) el.style.display = (name === v) ? '' : 'none';
   });
 
-  var fab     = document.getElementById('fab');
-  var hdrSave = document.getElementById('hdr-save');
-  var hdrBack = document.getElementById('hdr-back');
-  var hdrTitle= document.getElementById('hdr-title');
+  var fab       = document.getElementById('fab');
+  var hdrStatus = document.getElementById('hdr-save-status');
+  var hdrBack   = document.getElementById('hdr-back');
+  var hdrTitle  = document.getElementById('hdr-title');
 
-  fab.style.display     = (v === 'editor') ? 'none' : '';
-  hdrSave.style.display = (v === 'editor') ? ''     : 'none';
+  fab.style.display = (v === 'editor') ? 'none' : '';
+  if (hdrStatus) hdrStatus.style.display = (v === 'editor') ? '' : 'none';
 
   if (v === 'cadernos') {
     hdrTitle.textContent = 'Anotações';
@@ -160,7 +237,8 @@ function renderCadernos() {
 }
 
 // ── Open caderno ──────────────────────────────────────────────────────
-function openCaderno(id) {
+async function openCaderno(id) {
+  await flushAutoSave();
   curCad    = cadernos.find(function(c) { return c.id === id; });
   tagFilter = null;
   if (!curCad) return;
@@ -287,13 +365,20 @@ function showEditorDesktop(open) {
 }
 
 // ── Editor ────────────────────────────────────────────────────────────
-function openNotaEditor(id) {
+async function openNotaEditor(id) {
+  await flushAutoSave();
   curNota = notas.find(function(n) { return n.id === id; });
   if (!curNota) return;
   openEditor(curNota);
 }
 
 function openEditor(nota) {
+  // Reseta estado de auto-save para a nota nova
+  clearTimeout(_autoSaveTimer);
+  _autoSaveTimer = null;
+  _isDirty       = false;
+  setSaveStatus('', '');
+
   curNota  = nota;
   editTags = nota ? (nota.tags    || []).slice() : [];
   editImgs = nota ? (nota.imagens || []).slice() : [];
@@ -412,8 +497,13 @@ function fileToBase64(f) {
   });
 }
 
-// ── Salvar nota ───────────────────────────────────────────────────────
+// ── Salvar nota (manual) ─────────────────────────────────────────────
 async function saveNota() {
+  // Cancela auto-save pendente — este já faz o trabalho
+  clearTimeout(_autoSaveTimer);
+  _autoSaveTimer = null;
+  _isDirty = false;
+
   var titulo   = (document.getElementById('f-titulo').value   || '').trim();
   var conteudo = (document.getElementById('f-conteudo').value || '').trim();
   if (!titulo) {
@@ -421,9 +511,7 @@ async function saveNota() {
     toast('Informe um título para a nota', 'err');
     return;
   }
-  var btn = isDesktop()
-    ? document.querySelector('.d-editor-save')
-    : document.getElementById('hdr-save');
+  var btn = isDesktop() ? document.querySelector('.d-editor-save') : null;
   if (btn) btn.disabled = true;
 
   var now  = new Date().toISOString();
@@ -460,6 +548,8 @@ async function saveNota() {
   } catch(e) {
     if (isNew) notas.shift();
     toast('Erro ao salvar: ' + e.message, 'err');
+    setSaveStatus('saved', 'Salvo ✓');
+    setTimeout(function() { setSaveStatus('', ''); }, 2500);
   } finally {
     if (btn) btn.disabled = false;
   }
