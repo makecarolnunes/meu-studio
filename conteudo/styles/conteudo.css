@@ -222,43 +222,46 @@
 
 /* Desktop elements: ocultos no mobile */
 .d-sidebar, .d-toolbar, .d-board-wrap { display: none; }
+.cont-main-wrap { display: contents; }
 
 @media (min-width: 1024px) {
-  :root {
-    --cont-sidebar: 252px;
-    --cont-shell:   1180px;
-  }
-
   body {
     max-width: none;
     background: linear-gradient(135deg, #f0ebe8 0%, #e8e0db 100%);
     min-height: 100vh;
+    overflow-x: hidden;
   }
 
   #cont-app {
-    max-width: var(--cont-shell);
+    max-width: 1180px;
     margin: 0 auto;
     background: var(--bg);
     box-shadow: 0 8px 48px rgba(56,25,11,.13);
     border-radius: 0 0 20px 20px;
     min-height: 100vh;
-    position: relative;
-    padding-left: var(--cont-sidebar);
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
+    align-items: stretch;
   }
 
-  /* ── Sidebar ── */
+  /* ── Sidebar (flex item, não absolute) ── */
   .d-sidebar {
     display: flex;
     flex-direction: column;
-    position: absolute;
-    top: 0; left: 0; bottom: 0;
-    width: var(--cont-sidebar);
+    width: 252px;
+    flex-shrink: 0;
     background: linear-gradient(160deg, #3d1e12 0%, #5a2e1e 55%, #8B6B61 100%);
     padding: 22px 15px 28px;
     overflow-y: auto;
     border-radius: 0 0 0 20px;
+  }
+
+  /* ── Main wrap (flex item, coluna) ── */
+  .cont-main-wrap {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
   }
 
   .d-sb-brand {
@@ -354,23 +357,38 @@
   /* ── Desktop toolbar ── */
   .d-toolbar {
     display: flex; align-items: center; justify-content: space-between;
-    padding: 14px 24px 12px;
+    padding: 12px 22px 10px;
     border-bottom: 1px solid var(--border);
     background: var(--card);
-    flex-shrink: 0;
+    flex-shrink: 0; gap: 12px; flex-wrap: wrap;
   }
-  .d-toolbar-left { display: flex; align-items: center; gap: 12px; }
-  .d-toolbar-title { font-size: 1.05rem; font-weight: 800; color: var(--brown-d); }
+  .d-toolbar-left  { display: flex; align-items: center; gap: 10px; }
+  .d-toolbar-right { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .d-toolbar-title { font-size: 1rem; font-weight: 800; color: var(--brown-d); }
   .d-toolbar-cnt {
     font-size: .72rem; color: var(--muted);
     background: var(--border); padding: 2px 8px;
     border-radius: 10px; font-weight: 700;
   }
+  /* Sort buttons */
+  .d-sort-wrap { display: flex; align-items: center; gap: 4px; }
+  .d-sort-lbl { font-size: .68rem; font-weight: 700; color: var(--muted); margin-right: 2px; }
+  .d-sort-btn {
+    padding: 4px 10px; border-radius: 7px;
+    border: 1.5px solid var(--border); background: none;
+    font-size: .71rem; font-weight: 600; color: var(--muted);
+    cursor: pointer; font-family: inherit;
+  }
+  .d-sort-btn:hover { border-color: var(--brown); color: var(--brown-d); }
+  .d-sort-btn.active { background: var(--brown-l); border-color: var(--brown); color: var(--brown-d); }
+  /* Sort controls hidden on board/cal */
+  .d-toolbar.hide-sort .d-sort-wrap { display: none; }
+  /* View toggle */
   .d-view-toggle { display: flex; background: var(--border); border-radius: 9px; padding: 2px; gap: 2px; }
   .d-vbtn {
     background: none; border: none; color: var(--muted);
-    border-radius: 7px; padding: 5px 12px;
-    font-size: .74rem; font-weight: 700; cursor: pointer; font-family: inherit;
+    border-radius: 7px; padding: 5px 10px;
+    font-size: .72rem; font-weight: 700; cursor: pointer; font-family: inherit;
   }
   .d-vbtn.on { background: var(--card); color: var(--brown-d); box-shadow: 0 1px 3px rgba(0,0,0,.1); }
 

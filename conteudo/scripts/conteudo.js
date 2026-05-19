@@ -23,6 +23,7 @@ var DOW = ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
    ============================================================ */
 var ideas=[], customCats=[], customPlats=[];
 var curView='list', curSF='todos', curCF=[], curPlat='todos';
+var curSort='date'; // 'date' | 'category' | 'status' | 'scheduled'
 var colIdx=0, editId=null;
 var fCats=[CATS[0]], fFmts=['Reels'], fSt='Nao Iniciado', fPlats=['Instagram'];
 var calYear=new Date().getFullYear(), calMonth=new Date().getMonth();
@@ -205,6 +206,9 @@ function setView(v){
   document.getElementById('btn-cal').className  ='vbtn'+(v==='cal'?' on':'');
   // Desktop toolbar toggle
   document.querySelectorAll('.d-vbtn').forEach(function(b){ b.classList.toggle('on', b.dataset.v===v); });
+  // Sort controls só na lista
+  var toolbar=document.querySelector('.d-toolbar');
+  if(toolbar) toolbar.classList.toggle('hide-sort', v!=='list');
   var showListUI=(v==='list');
   document.getElementById('ctabs').style.display    =showListUI?'':'none';
   document.getElementById('chips').style.display    =showListUI?'':'none';
@@ -426,18 +430,59 @@ function buildCatTabs(){
   for(var j=0;j<tabs.length;j++){(function(tab){tab.onclick=function(){setCF(tab.getAttribute('data-c'));};})(tabs[j]);}
 }
 
+function setSort(s){
+  curSort=s;
+  document.querySelectorAll('.d-sort-btn').forEach(function(b){ b.classList.toggle('active', b.dataset.sort===s); });
+  renderList();
+}
+
 function renderList(){
   var list=filtered(), el=document.getElementById('list-view');
   if(!list.length){el.innerHTML='<div class="empty"><span class="ico">💡</span><p>Nenhuma ideia aqui ainda.<br>Toque no <b>+</b> para comecar!</p></div>';return;}
-  var cats=allCats(), byC={};
-  for(var i=0;i<list.length;i++){
-    var c=catsOf(list[i])[0]||cats[0]; // group by primary category
-    if(!byC[c]) byC[c]=[];
-    byC[c].push(list[i]);
-  }
-  var order=cats.slice(); for(var k in byC){if(order.indexOf(k)===-1)order.push(k);}
   var html='';
-  for(var ci=0;ci<order.length;ci++){var cat=order[ci];if(!byC[cat])continue;html+='<div class="group-hdr"><span class="group-pill">'+safe(cat)+'</span><span class="group-count">'+byC[cat].length+'</span></div>';for(var ii=0;ii<byC[cat].length;ii++)html+=ideaCardHTML(byC[cat][ii]);}
+
+  if(curSort==='category'){
+    // Agrupar por tema
+    var cats=allCats(), byC={};
+    for(var i=0;i<list.length;i++){
+      var c=catsOf(list[i])[0]||cats[0];
+      if(!byC[c]) byC[c]=[];
+      byC[c].push(list[i]);
+    }
+    var order=cats.slice(); for(var k in byC){if(order.indexOf(k)===-1)order.push(k);}
+    for(var ci=0;ci<order.length;ci++){
+      var cat=order[ci]; if(!byC[cat]) continue;
+      html+='<div class="group-hdr"><span class="group-pill">'+safe(cat)+'</span><span class="group-count">'+byC[cat].length+'</span></div>';
+      for(var ii=0;ii<byC[cat].length;ii++) html+=ideaCardHTML(byC[cat][ii]);
+    }
+  } else if(curSort==='status'){
+    // Agrupar por status
+    var stOrder=['Nao Iniciado','Fila de Gravacao','Editando','Publicado'];
+    for(var si=0;si<stOrder.length;si++){
+      var sv=stOrder[si], sc2=ST[sv]||ST['Nao Iniciado'];
+      var stList=list.filter(function(i){ return i.status===sv; });
+      if(!stList.length) continue;
+      html+='<div class="group-hdr"><span class="group-pill" style="background:'+sc2.dot+'">'+safe(sv)+'</span><span class="group-count">'+stList.length+'</span></div>';
+      for(var sii=0;sii<stList.length;sii++) html+=ideaCardHTML(stList[sii]);
+    }
+  } else if(curSort==='scheduled'){
+    // Ordenar por data agendada (sem data no final)
+    var sorted=list.slice().sort(function(a,b){
+      if(!a.scheduledDate && !b.scheduledDate) return 0;
+      if(!a.scheduledDate) return 1;
+      if(!b.scheduledDate) return -1;
+      return a.scheduledDate < b.scheduledDate ? -1 : 1;
+    });
+    for(var i2=0;i2<sorted.length;i2++) html+=ideaCardHTML(sorted[i2]);
+  } else {
+    // 'date' (padrão): mais recentes primeiro
+    var byDate=list.slice().sort(function(a,b){
+      var da=a.createdAt||'', db=b.createdAt||'';
+      return da < db ? 1 : -1;
+    });
+    for(var i3=0;i3<byDate.length;i3++) html+=ideaCardHTML(byDate[i3]);
+  }
+
   el.innerHTML=html;
   var cards=el.querySelectorAll('.idea-card');
   for(var ci2=0;ci2<cards.length;ci2++){(function(card){card.onclick=function(){openModal(card.getAttribute('data-id'));};})(cards[ci2]);}

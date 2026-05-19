@@ -63,6 +63,8 @@
   <div id="d-sb-cats"></div>
 </aside>
 
+<div class="cont-main-wrap">
+
 <!-- HEADER (mobile) -->
 <div class="hdr">
   <button class="hdr-back" onclick="window.location.href='../'" aria-label="Voltar">
@@ -102,16 +104,25 @@
   <button class="migrate-btn" onclick="migrateData()">Migrar</button>
 </div>
 
-<!-- DESKTOP TOOLBAR (view toggle + contador) -->
+<!-- DESKTOP TOOLBAR (view toggle + contador + sort) -->
 <div class="d-toolbar">
   <div class="d-toolbar-left">
     <span class="d-toolbar-title" id="d-toolbar-title">Todos</span>
     <span class="d-toolbar-cnt"   id="d-toolbar-cnt"></span>
   </div>
-  <div class="d-view-toggle">
-    <button class="d-vbtn on" data-v="list"  onclick="setView('list')">Lista</button>
-    <button class="d-vbtn"    data-v="board" onclick="setView('board')">Board</button>
-    <button class="d-vbtn"    data-v="cal"   onclick="setView('cal')">Calendário</button>
+  <div class="d-toolbar-right">
+    <div class="d-sort-wrap" id="d-sort-wrap">
+      <span class="d-sort-lbl">Ordenar:</span>
+      <button class="d-sort-btn active" data-sort="date"      onclick="setSort('date')">Data</button>
+      <button class="d-sort-btn"        data-sort="category"  onclick="setSort('category')">Tema</button>
+      <button class="d-sort-btn"        data-sort="status"    onclick="setSort('status')">Status</button>
+      <button class="d-sort-btn"        data-sort="scheduled" onclick="setSort('scheduled')">Agendado</button>
+    </div>
+    <div class="d-view-toggle">
+      <button class="d-vbtn on" data-v="list"  onclick="setView('list')">Lista</button>
+      <button class="d-vbtn"    data-v="board" onclick="setView('board')">Board</button>
+      <button class="d-vbtn"    data-v="cal"   onclick="setView('cal')">Calendário</button>
+    </div>
   </div>
 </div>
 
@@ -216,6 +227,8 @@
 </div>
 
 <div class="toast" id="toast"></div>
+
+</div><!-- /cont-main-wrap -->
 
 </div><!-- /cont-app -->
 
