@@ -18,7 +18,8 @@ let selYear        = new Date().getFullYear();
 let listFilter     = 'todos';
 let saidasFormOpen = false;
 let noivaDetail    = null;
-let isSyncing      = false;
+let isSyncing        = false;
+let selectedEntryId  = null;   // master-detail desktop: entrada selecionada
 let F = {}, Fs = {};
 let _pendingDelSaidaId = null;
 

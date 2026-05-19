@@ -104,6 +104,7 @@ function updateSinalPreview() {
 
 // ── SCREEN: LISTA ENTRADAS ──
 function renderLista() {
+    if (window.innerWidth >= 1024) return renderListaDesktop();
     let list = entries.filter(e => { const my=getMonthYear(e.dataPag); return my&&my.m===selMonth&&my.y===selYear; });
     if (listFilter!=='todos') list = list.filter(e=>e.status===listFilter||e.tipo===listFilter);
     list.sort((a,b)=>(b.dataPag||'').localeCompare(a.dataPag||''));
@@ -135,6 +136,125 @@ function renderLista() {
             <button class="delbtn" onclick="delEntry('${e.id}')">${SVG.trash}</button>
         </div>`;
     }).join('')}`;
+}
+
+// ── DESKTOP: seleciona entrada no painel de detalhe ──
+function selectEntry(id) {
+    selectedEntryId = id;
+    const e = entries.find(x => String(x.id) === String(id));
+    if (e) _pick = { tipo: e.tipo||'Pagamento', origem: e.origem||'Produção Social', forma: e.forma||'PIX' };
+    render();
+}
+
+// ── DESKTOP: painel de detalhe/edição inline ──
+function renderEntryDetailPanel(e) {
+    return `
+    <div class="detail-hdr">
+        <span class="detail-name">${e.cliente||'(sem nome)'}</span>
+        <span class="sbadge ${e.status==='Realizado'?'sb-g':'sb-r'}">${e.status==='Realizado'?'Realizado':'Previsto'}</span>
+    </div>
+    <div class="fg"><label class="fl">Cliente</label><input class="fi" type="text" id="ee-cliente" value="${(e.cliente||'').replace(/"/g,'&quot;')}" autocomplete="off"></div>
+    <div class="two">
+        <div class="fg"><label class="fl">Dt. Pagamento</label><input class="fi" type="date" id="ee-dataPag" value="${e.dataPag||''}"></div>
+        <div class="fg"><label class="fl">Dt. Serviço</label><input class="fi" type="date" id="ee-dataServ" value="${e.dataServ||''}"></div>
+    </div>
+    <div class="fg"><label class="fl">Valor (R$)</label><div class="vwrap"><span class="vpfx">R$</span><input class="fi" type="number" id="ee-valor" value="${e.valor||''}" step="0.01" min="0" inputmode="decimal"></div></div>
+    <div class="fg"><label class="fl">Tipo</label><div class="bg">
+        ${['Sinal','Parcela','Pagamento'].map(t=>`<button class="bt ${e.tipo===t?'on':''}" onclick="edPick('tipo','${t}',this)">${t}</button>`).join('')}
+    </div></div>
+    <div class="fg"><label class="fl">Forma</label><div class="bg">
+        ${['PIX','Crédito','Dinheiro'].map(f=>`<button class="bt ${e.forma===f?'on':''}" onclick="edPick('forma','${f}',this)">${f}</button>`).join('')}
+    </div></div>
+    <div class="fg"><label class="fl">Origem</label><div class="bg" style="flex-wrap:wrap">
+        ${['Produção Social','Noiva','Assistência',{l:'Curso Auto',v:'Curso de Automaquiagem'}].map(o=>{const v=typeof o==='string'?o:o.v,l=typeof o==='string'?o:o.l;return `<button class="bt ${e.origem===v?'on':''}" onclick="edPick('origem','${v}',this)">${l}</button>`;}).join('')}
+    </div></div>
+    <div class="fg"><label class="fl">Status</label>
+        <div class="stog">
+            <button class="stbtn ${e.status==='Realizado'?'on-g':''}" onclick="edPickStatus('Realizado',this)">Realizado</button>
+            <button class="stbtn ${e.status==='Previsto'?'on-r':''}" onclick="edPickStatus('Previsto',this)">Previsto</button>
+        </div>
+        <input type="hidden" id="ed-status" value="${e.status||'Realizado'}">
+    </div>
+    <div class="fg"><label class="fl">Equipe <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">(opcional)</span></label><input class="fi" type="text" id="ee-equipe" value="${(e.equipe||'').replace(/"/g,'&quot;')}" placeholder="Ex: Julia" autocomplete="off"></div>
+    <div class="fg"><label class="fl">Observações</label><textarea class="fi ta" id="ee-obs">${e.obs||''}</textarea></div>
+    <div class="detail-actions">
+        <button class="bsub" onclick="saveEditEntry('${e.id}')">Salvar alterações</button>
+        <button class="delbtn" style="width:44px;height:44px;flex-shrink:0" onclick="delEntry('${e.id}')">${SVG.trash}</button>
+    </div>`;
+}
+
+// ── DESKTOP: renderização master-detail da tela Lista ──
+function renderListaDesktop() {
+    let list = entries.filter(e => { const my=getMonthYear(e.dataPag); return my&&my.m===selMonth&&my.y===selYear; });
+    if (listFilter!=='todos') list = list.filter(e=>e.status===listFilter||e.tipo===listFilter);
+    list.sort((a,b)=>(b.dataPag||'').localeCompare(a.dataPag||''));
+    const total    = list.reduce((s,e)=>s+Number(e.valor||0),0);
+    const realized = list.filter(e=>e.status==='Realizado').reduce((s,e)=>s+Number(e.valor||0),0);
+    const previsto = list.filter(e=>e.status==='Previsto').reduce((s,e)=>s+Number(e.valor||0),0);
+    const cntReal  = list.filter(e=>e.status==='Realizado').length;
+    const cntPrev  = list.filter(e=>e.status==='Previsto').length;
+    const filters  = [{k:'todos',l:'Todos'},{k:'Realizado',l:'Realizado'},{k:'Previsto',l:'Previsto'},{k:'Sinal',l:'Sinal'},{k:'Pagamento',l:'Pagamento'},{k:'Parcela',l:'Parcela'}];
+
+    // Limpa seleção se a entrada foi deletada
+    if (selectedEntryId && !entries.find(x=>String(x.id)===String(selectedEntryId))) selectedEntryId = null;
+    const selEntry = selectedEntryId ? entries.find(x=>String(x.id)===String(selectedEntryId)) : null;
+
+    return `
+    <div class="month-hero">
+        <div class="month-nav-d">
+            <button class="mnbtn" onclick="chm(-1)">‹</button>
+            <span class="mlab-d">${MONTHS[selMonth].toUpperCase()} · ${selYear}</span>
+            <button class="mnbtn" onclick="chm(1)">›</button>
+        </div>
+        <div class="stat-row-d">
+            <div class="stat-block-d">
+                <div class="stat-value-d" style="color:var(--ok)">${brl(total)}</div>
+                <div class="stat-label-d">Total faturado no mês</div>
+                <div class="stat-sub-d"><strong>${brl(realized)}</strong> realizado · <strong>${brl(previsto)}</strong> previsto</div>
+            </div>
+            <div class="stat-block-d">
+                <div class="stat-value-d">${list.length} lançamento${list.length!==1?'s':''}</div>
+                <div class="stat-label-d">Movimentações no mês</div>
+                <div class="stat-sub-d"><strong>${cntReal}</strong> realizados · <strong>${cntPrev}</strong> previstos</div>
+            </div>
+        </div>
+    </div>
+    <div class="d-toolbar">
+        <div class="ftabs">${filters.map(f=>`<button class="ftab ${listFilter===f.k?'on':''}" onclick="setF('${f.k}')">${f.l}</button>`).join('')}</div>
+        <button class="d-btn-add" onclick="go('nova')">${SVG.money} Nova entrada</button>
+    </div>
+    <div class="lista-split">
+        <div class="list-col-d">
+            ${list.length===0
+                ?`<div class="empty" style="padding:32px 16px"><div class="ico">${SVG.list}</div><p>Nenhuma entrada em<br><strong>${MONTHS[selMonth]} ${selYear}</strong></p></div>`
+                :list.map(e=>{
+                    const s=entradaStyle(e.origem, e.tipo);
+                    const isSel=String(e.id)===String(selectedEntryId);
+                    const auto=e.auto?`<span class="auto-tag">auto</span>`:'';
+                    const equipe=e.equipe?`<span class="equipe-tag">↑ ${e.equipe}</span>`:'';
+                    return `<div class="entry-row${isSel?' selected':''}" onclick="selectEntry('${e.id}')">
+                        <div class="entry-ico" style="background:${s.bg};color:${s.col}">${s.ico}</div>
+                        <div class="entry-inf">
+                            <div class="entry-cli">${e.cliente||'(sem nome)'}${auto}</div>
+                            <div class="entry-meta"><strong>${fmtDate(e.dataPag)}</strong> · ${e.tipo} · ${e.forma}</div>
+                            <div class="entry-meta">${fmtOrigem(e.origem)}${equipe}</div>
+                        </div>
+                        <div class="entry-right">
+                            <div class="entry-val" style="color:${e.status==='Realizado'?'var(--ok)':'var(--red)'}">${brl(e.valor)}</div>
+                            <span class="sbadge ${e.status==='Realizado'?'sb-g':'sb-r'}" onclick="event.stopPropagation();toggleStatus('${e.id}')">${e.status==='Realizado'?'Realizado':'Previsto'}</span>
+                        </div>
+                    </div>`;
+                }).join('')}
+        </div>
+        <div class="detail-col-d">
+            ${selEntry
+                ? renderEntryDetailPanel(selEntry)
+                :`<div class="detail-empty">
+                    <div class="ico">${SVG.list}</div>
+                    <p>Selecione uma entrada<br>para ver e editar os detalhes</p>
+                </div>`}
+        </div>
+    </div>`;
 }
 
 // ── SCREEN: SAÍDAS ──
@@ -308,11 +428,19 @@ function renderResumo() {
 
 // ── SCREEN: NOIVAS ──
 function renderNoivas() {
-    const sorted = [...noivas].sort((a,b)=>(a.dataCasamento||'').localeCompare(b.dataCasamento||''));
-    return `
-    <button class="add-btn" style="border-color:#e91e63;color:#e91e63;margin-bottom:11px;display:flex;align-items:center;justify-content:center;gap:7px" onclick="openAddNoiva()">${SVG.heart} + Nova Noiva</button>
-    ${sorted.length===0 ? `<div class="empty"><div class="ico">${SVG.heart}</div><p>Nenhuma noiva cadastrada.<br>Adicione para acompanhar os pagamentos.</p></div>` :
-    sorted.map(n=>{
+    // Separa em Próximas (casamento >= hoje, ou sem data) e Realizadas (casamento < hoje)
+    const hoje = new Date(); hoje.setHours(0,0,0,0);
+    const proximas = [], realizadas = [];
+    noivas.forEach(n => {
+        if (!n.dataCasamento) { proximas.push(n); return; }
+        const d = new Date(n.dataCasamento); d.setHours(0,0,0,0);
+        if (d >= hoje) proximas.push(n); else realizadas.push(n);
+    });
+    proximas.sort((a,b)=>(a.dataCasamento||'9999').localeCompare(b.dataCasamento||'9999'));
+    realizadas.sort((a,b)=>(b.dataCasamento||'').localeCompare(a.dataCasamento||''));
+
+    const renderNoivaCard = (n, opts={}) => {
+        const concluida = !!opts.concluida;
         const pgtos = entries.filter(e=>e.noivaId===n.id||(e.origem==='Noiva'&&e.cliente.trim().toLowerCase()===n.nome.trim().toLowerCase()));
         const totalPago = pgtos.filter(e=>e.status==='Realizado').reduce((t,e)=>t+Number(e.valor||0),0);
         const totalPrev = pgtos.filter(e=>e.status==='Previsto').reduce((t,e)=>t+Number(e.valor||0),0);
@@ -324,9 +452,9 @@ function renderNoivas() {
         const diasCasa  = n.dataCasamento ? Math.ceil((new Date(n.dataCasamento)-new Date())/86400000) : null;
         const badge     = totalPago>=contrato&&contrato>0 ? `<span style="background:var(--ok-l);color:var(--ok);font-size:.62rem;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:6px">Quitada</span>`
                         : falta>0&&diasCasa!==null&&diasCasa<30&&diasCasa>0 ? `<span style="background:var(--red-l);color:var(--red);font-size:.62rem;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:6px">${diasCasa}d</span>` : '';
-        return `<div class="card" style="margin-bottom:10px">
+        return `<div class="card noiva-card${concluida?' noiva-realizada':''}" style="margin-bottom:10px">
             <div style="display:flex;align-items:flex-start;gap:11px;cursor:pointer" onclick="toggleNoivaDetail('${n.id}')">
-                <div style="width:42px;height:42px;background:#fce4ec;border-radius:10px;display:flex;align-items:center;justify-content:center;color:#e91e63;flex-shrink:0">${SVG.heart}</div>
+                <div style="width:42px;height:42px;background:${concluida?'var(--surface-2)':'#fce4ec'};border-radius:10px;display:flex;align-items:center;justify-content:center;color:${concluida?'var(--muted)':'#e91e63'};flex-shrink:0">${SVG.gem}</div>
                 <div style="flex:1;min-width:0">
                     <div style="font-weight:700;font-size:.97rem">${n.nome}${badge}</div>
                     <div style="font-size:.71rem;color:var(--muted);margin-top:2px">
@@ -369,5 +497,28 @@ function renderNoivas() {
                 ${n.obs?`<div style="font-size:.74rem;color:var(--muted);margin-top:10px;font-style:italic;line-height:1.4">${n.obs}</div>`:''}
             </div>`:''}
         </div>`;
-    }).join('')}`;
+    };
+
+    if (noivas.length === 0) {
+        return `
+        <button class="add-btn" style="border-color:#e91e63;color:#e91e63;margin-bottom:11px;display:flex;align-items:center;justify-content:center;gap:7px" onclick="openAddNoiva()">${SVG.gem} + Nova Noiva</button>
+        <div class="empty"><div class="ico">${SVG.gem}</div><p>Nenhuma noiva cadastrada.<br>Adicione para acompanhar os pagamentos.</p></div>`;
+    }
+
+    return `
+    <button class="add-btn" style="border-color:#e91e63;color:#e91e63;margin-bottom:11px;display:flex;align-items:center;justify-content:center;gap:7px" onclick="openAddNoiva()">${SVG.gem} + Nova Noiva</button>
+    ${proximas.length ? `
+        <div class="noiva-section-title">
+            <span class="dot" style="background:#e91e63"></span>
+            Próximas <span class="count">${proximas.length}</span>
+        </div>
+        ${proximas.map(n=>renderNoivaCard(n,{concluida:false})).join('')}
+    ` : ''}
+    ${realizadas.length ? `
+        <div class="noiva-section-title realizadas-title">
+            ${SVG.check}
+            Realizadas <span class="count">${realizadas.length}</span>
+        </div>
+        ${realizadas.map(n=>renderNoivaCard(n,{concluida:true})).join('')}
+    ` : ''}`;
 }

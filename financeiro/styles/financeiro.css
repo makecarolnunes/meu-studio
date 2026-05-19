@@ -20,8 +20,11 @@
     --blue-l:  var(--info-soft);
     --card:    var(--surface);
     --muted:   var(--text-muted);
+
+    /* Largura do container — mobile-first; sobe em desktop (ver @media abaixo) */
+    --fin-container: 480px;
 }
-body { max-width: 480px; margin: 0 auto; }
+body { max-width: var(--fin-container); margin: 0 auto; }
 
 /* ── HEADER ── */
 .hdr {
@@ -49,9 +52,13 @@ body { max-width: 480px; margin: 0 auto; }
 }
 .gear-btn:active { background: rgba(255,255,255,.25); }
 
-/* ── BACK FLOAT ── */
+/* ── BACK FLOAT ──
+   Em mobile fica colado na esquerda do viewport; quando o container fica
+   menor que a viewport (desktop), gruda na borda esquerda do container. */
 .btn-back-float {
-    position: fixed; bottom: 74px; left: 14px; z-index: 150;
+    position: fixed; bottom: 74px;
+    left: max(14px, calc(50vw - var(--fin-container) / 2 + 14px));
+    z-index: 150;
     width: 42px; height: 42px; border-radius: 50%; border: none;
     background: rgba(0,0,0,.09); color: var(--text);
     display: flex; align-items: center; justify-content: center;
@@ -66,7 +73,7 @@ body { max-width: 480px; margin: 0 auto; }
 /* ── BOTTOM NAV ── */
 .bnav {
     position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
-    width: 100%; max-width: 480px; background: white;
+    width: 100%; max-width: var(--fin-container); background: white;
     border-top: 1px solid var(--border); display: flex; z-index: 100;
     box-shadow: 0 -2px 8px rgba(0,0,0,.07);
 }
@@ -147,6 +154,55 @@ body { max-width: 480px; margin: 0 auto; }
 .empty p { font-size: .85rem; line-height: 1.5; }
 .eico svg { width: 18px; height: 18px; display: block; }
 .editbtn svg, .delbtn svg { width: 14px; height: 14px; display: block; }
+
+/* ── NOIVAS — section titles & realizadas styling ── */
+.noiva-section-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 18px 0 10px;
+    font-size: .72rem;
+    font-weight: 800;
+    color: var(--text);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+.noiva-section-title:first-of-type { margin-top: 4px; }
+.noiva-section-title .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    flex-shrink: 0;
+}
+.noiva-section-title .count {
+    font-size: .68rem;
+    background: var(--surface-2);
+    color: var(--text-muted);
+    border-radius: 10px;
+    padding: 1px 8px;
+    font-weight: 700;
+    margin-left: 2px;
+}
+.noiva-section-title svg {
+    width: 15px; height: 15px;
+    color: var(--success);
+}
+.noiva-section-title.realizadas-title {
+    color: var(--text-muted);
+    padding-top: 14px;
+    border-top: 1px dashed var(--border);
+}
+.noiva-section-title.realizadas-title .count {
+    background: var(--success-soft);
+    color: var(--success);
+}
+
+.noiva-card.noiva-realizada {
+    opacity: .82;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    box-shadow: none;
+}
+.noiva-card.noiva-realizada .ecli,
+.noiva-card.noiva-realizada [class*="font-weight:700"] { color: var(--text-muted); }
 
 /* ── SINAL BOX ── */
 .sinal-box { background: var(--amber-l); border: 1.5px dashed var(--amber); border-radius: 11px; padding: 12px 13px; margin-top: 9px; font-size: .8rem; color: #7c4a00; line-height: 1.5; display: none; }
@@ -265,9 +321,13 @@ body { max-width: 480px; margin: 0 auto; }
 }
 .logout-btn:active { background: var(--red-l); }
 
-/* ── FAB CHAT ── */
+/* ── FAB CHAT ──
+   Mesma lógica do back-float: gruda na borda direita do container quando
+   a viewport for maior que o container. */
 .fab-chat {
-    position: fixed; bottom: 90px; right: 16px; width: 52px; height: 52px;
+    position: fixed; bottom: 90px;
+    right: max(16px, calc(50vw - var(--fin-container) / 2 + 16px));
+    width: 52px; height: 52px;
     border-radius: 50%; background: var(--brown-d); color: white;
     border: none; font-size: 1.3rem; cursor: pointer; z-index: 200;
     box-shadow: 0 4px 14px rgba(62,39,35,.45);
@@ -328,3 +388,391 @@ body { max-width: 480px; margin: 0 auto; }
 .chat-bar .fi { flex: 1; margin: 0; font-size: .9rem; }
 .chat-send { width: 44px; height: 44px; border-radius: 11px; background: var(--brown); color: white; border: none; font-size: 1.1rem; cursor: pointer; flex-shrink: 0; }
 .chat-send:disabled { opacity: .45; }
+
+/* ═══════════════════════════════════════════════════════════════
+   DESKTOP — ≥1024px
+   Layout reimaginado: shell centralizado em "card" branco com
+   sidebar vertical à esquerda (substituindo o bottom-nav),
+   header com gradiente no topo da coluna de conteúdo,
+   conteúdo emoldurado e floats ancorados às bordas do shell.
+   ═══════════════════════════════════════════════════════════════ */
+@media (min-width: 1024px) {
+    :root {
+        --fin-sidebar: 232px;
+        --fin-shell:   1180px;
+        --fin-shell-pad: 24px;     /* gutter externo do shell */
+    }
+
+    /* Backdrop e shell centralizado */
+    body {
+        max-width: none;
+        margin: 0;
+        background: linear-gradient(180deg, #efe7e0 0%, var(--surface-2) 100%);
+        min-height: 100vh;
+    }
+
+    #app {
+        position: relative;
+        max-width: var(--fin-shell);
+        margin: 0 auto;
+        min-height: 100vh;
+        background: var(--bg);
+        box-shadow: 0 1px 0 var(--border), 0 8px 32px rgba(56,25,11,.06);
+        padding-left: var(--fin-sidebar);
+    }
+
+    /* ─── SIDEBAR (era .bnav) ─────────────────────── */
+    .bnav {
+        position: absolute;
+        top: 0; bottom: 0; left: 0;
+        width: var(--fin-sidebar);
+        height: auto;
+        min-height: 100vh;
+        max-width: none;
+
+        /* layout vertical */
+        flex-direction: column;
+        align-items: stretch;
+        justify-content: flex-start;
+        gap: 4px;
+        padding: 88px 14px 24px;
+
+        background: linear-gradient(180deg, #fbf6f1, #f5ede5);
+        border-top: none;
+        border-right: 1px solid var(--border);
+        box-shadow: none;
+
+        /* reset mobile */
+        transform: none;
+        z-index: 50;
+    }
+    .ni {
+        flex: 0 0 auto;
+        flex-direction: row;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 12px;
+        padding: 11px 14px;
+        border-radius: 11px;
+        font-size: .92rem;
+        font-weight: 600;
+        text-align: left;
+        color: var(--text);
+        transition: background .15s, color .15s, transform .1s;
+    }
+    .ni svg { width: 19px; height: 19px; flex-shrink: 0; }
+    .ni.active {
+        background: linear-gradient(135deg, var(--brown-d), var(--brown));
+        color: #fff;
+        box-shadow: 0 4px 12px rgba(109,76,65,.28);
+    }
+    .ni.active svg { stroke: #fff; }
+    .ni:not(.active):hover {
+        background: rgba(255,255,255,.65);
+        color: var(--brown-d);
+    }
+
+    /* ─── HEADER ─────────────────────────────────── */
+    .hdr {
+        position: static;
+        grid-template-columns: 1fr auto;
+        padding: 22px 32px;
+        background: linear-gradient(135deg, var(--brown-d), var(--brown));
+        border-radius: 0;
+        box-shadow: inset 0 -1px 0 rgba(255,255,255,.08);
+    }
+    .hdr > div:first-child { display: none; }
+    .hdr-center { text-align: left; }
+    .hdr h1 { font-size: 1.4rem; letter-spacing: -.01em; }
+    .hdr-sub { font-size: .82rem; margin-top: 4px; opacity: .8; }
+    .gear-btn { width: 38px; height: 38px; }
+    .gear-btn svg { width: 19px; height: 19px; }
+
+    /* ─── CONTENT ────────────────────────────────── */
+    .content {
+        padding: 32px 36px 64px;
+        max-width: 880px;     /* conforto de leitura, sem virar tela cheia */
+    }
+
+    /* Cards mais arejados e com borda definida */
+    .card {
+        padding: 22px 24px;
+        margin-bottom: 14px;
+        border: 1px solid var(--border);
+        box-shadow: 0 1px 3px rgba(56,25,11,.04);
+    }
+    .card-title { font-size: .72rem; margin-bottom: 14px; }
+
+    /* Form mais respirado */
+    .fg { margin-bottom: 16px; }
+    .fi { padding: 12px 14px; font-size: .95rem; border-radius: 11px; }
+    .fl { font-size: .7rem; margin-bottom: 6px; }
+    .two { gap: 14px; }
+
+    /* Botão submit principal */
+    .bsub {
+        padding: 15px 22px;
+        font-size: 1rem;
+        border-radius: 13px;
+        max-width: 360px;
+        display: block;
+        margin: 18px auto 0;
+    }
+
+    /* Selector de mês mais elegante */
+    .msel {
+        padding: 14px 20px;
+        margin-bottom: 14px;
+        border: 1px solid var(--border);
+        box-shadow: none;
+    }
+    .mlab { font-size: 1.05rem; }
+    .msub { font-size: .75rem; }
+
+    /* Tabs de filtro mais densas */
+    .ftabs { gap: 6px; margin-bottom: 16px; flex-wrap: wrap; overflow-x: visible; }
+    .ftab { padding: 7px 14px; font-size: .8rem; }
+
+    /* Lista de entradas — linhas mais arejadas e enquadradas */
+    .eitem {
+        padding: 14px 18px;
+        margin-bottom: 8px;
+        border-radius: 14px;
+        border: 1px solid var(--border);
+        box-shadow: 0 1px 2px rgba(56,25,11,.03);
+        gap: 14px;
+        transition: border-color .15s, box-shadow .15s, transform .1s;
+    }
+    .eico { width: 42px; height: 42px; border-radius: 12px; }
+    .eico svg { width: 20px; height: 20px; }
+    .ecli { font-size: .95rem; }
+    .emta { font-size: .75rem; }
+    .eval { font-size: 1rem; }
+    .editbtn, .delbtn { width: 34px; height: 34px; }
+    .editbtn svg, .delbtn svg { width: 15px; height: 15px; }
+
+    /* Resumo — grid de cards 4 colunas */
+    .rsum-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+        margin-bottom: 14px;
+    }
+    .rsum-card { padding: 16px; }
+    .rsum-val  { font-size: 1.2rem; }
+
+    /* Tabela anual mais respirada */
+    .year-table { font-size: .8rem; }
+    .year-table th, .year-table td { padding: 9px 12px; }
+
+    /* Botões floats — agora ancorados ao SHELL e não ao viewport */
+    .btn-back-float {
+        position: fixed;
+        top: 24px; bottom: auto;
+        left: max(20px, calc(50vw - var(--fin-shell)/2 + 20px));
+        width: 40px; height: 40px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow-sm);
+        color: var(--brown);
+        z-index: 120;
+    }
+    .btn-back-float:hover {
+        background: var(--brown-l);
+        border-color: var(--brown);
+    }
+
+    .fab-chat {
+        position: fixed;
+        bottom: 28px;
+        right: max(28px, calc(50vw - var(--fin-shell)/2 + 28px));
+        width: 58px; height: 58px;
+    }
+
+    /* Chat modal — restrito à coluna de conteúdo */
+    .chat-modal {
+        left: max(0px, calc(50vw - var(--fin-shell)/2 + var(--fin-sidebar)));
+        right: max(0px, calc(50vw - var(--fin-shell)/2));
+    }
+    .chat-bubble-user, .chat-bubble-ai { max-width: 70%; }
+
+    /* ─── MONTH HERO (desktop lista) ─────────────── */
+    .month-hero {
+        background: linear-gradient(160deg, #fff 0%, #fbf6f1 100%);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 18px 24px;
+        margin-bottom: 18px;
+        box-shadow: 0 2px 8px rgba(56,25,11,.05);
+    }
+    .month-nav-d {
+        display: flex; align-items: center; justify-content: center;
+        gap: 16px; margin-bottom: 14px;
+    }
+    .month-nav-d .mnbtn {
+        background: #fff; border: 1px solid var(--border);
+        width: 30px; height: 30px; border-radius: 50%;
+        font-size: 1.05rem; color: var(--brown);
+        cursor: pointer; display: flex; align-items: center; justify-content: center;
+        transition: border-color .15s, background .15s;
+    }
+    .month-nav-d .mnbtn:hover { border-color: var(--brown); background: var(--brown-l); }
+    .mlab-d {
+        font-size: .95rem; font-weight: 700;
+        color: var(--brown-d); letter-spacing: .12em;
+        min-width: 160px; text-align: center;
+    }
+    .stat-row-d {
+        display: grid; grid-template-columns: 1fr 1fr;
+        align-items: stretch;
+    }
+    .stat-block-d { text-align: center; padding: 2px 16px; }
+    .stat-block-d + .stat-block-d { border-left: 1px solid var(--border); }
+    .stat-value-d {
+        font-size: 1.2rem; font-weight: 800;
+        letter-spacing: -.01em; line-height: 1.2;
+        font-variant-numeric: tabular-nums;
+        color: var(--brown-d);
+    }
+    .stat-label-d {
+        font-size: .67rem; font-weight: 700;
+        color: var(--muted); text-transform: uppercase;
+        letter-spacing: .09em; margin-top: 6px;
+    }
+    .stat-sub-d {
+        font-size: .71rem; color: var(--muted); margin-top: 4px;
+    }
+    .stat-sub-d strong { color: var(--text); }
+
+    /* ─── TOOLBAR (filtros + btn nova) ───────────── */
+    .d-toolbar {
+        display: flex; align-items: center;
+        justify-content: space-between;
+        margin-bottom: 14px; gap: 12px;
+    }
+    .d-toolbar .ftabs {
+        overflow-x: visible; flex-wrap: wrap;
+        margin-bottom: 0; padding-bottom: 0;
+    }
+    .d-btn-add {
+        padding: 9px 16px;
+        background: var(--brown); color: #fff;
+        border: none; border-radius: 10px;
+        font-size: .82rem; font-weight: 700; cursor: pointer;
+        display: inline-flex; align-items: center; gap: 7px;
+        box-shadow: 0 3px 10px rgba(109,76,65,.25);
+        white-space: nowrap; flex-shrink: 0;
+        transition: background .15s;
+    }
+    .d-btn-add:hover { background: var(--brown-d); }
+    .d-btn-add svg { width: 14px; height: 14px; }
+
+    /* ─── MASTER-DETAIL SPLIT ────────────────────── */
+    .lista-split {
+        display: grid; grid-template-columns: 1.1fr 1fr;
+        border: 1px solid var(--border); border-radius: 14px;
+        overflow: hidden; background: #fff;
+        min-height: 420px;
+    }
+    .list-col-d {
+        padding: 10px; border-right: 1px solid var(--border);
+        overflow-y: auto;
+    }
+    .detail-col-d {
+        background: var(--surface-2); padding: 20px 22px;
+        overflow-y: auto;
+    }
+
+    /* ─── LINHAS DA LISTA ────────────────────────── */
+    .entry-row {
+        display: flex; align-items: center; gap: 11px;
+        padding: 11px 11px; border-radius: 10px;
+        border: 1px solid transparent;
+        cursor: pointer; margin-bottom: 3px;
+        transition: background .12s, border-color .12s;
+    }
+    .entry-row:hover { background: var(--surface-2); }
+    .entry-row.selected { background: var(--brown-l); border-color: var(--brown); }
+    .entry-ico {
+        width: 34px; height: 34px; border-radius: 9px;
+        display: flex; align-items: center; justify-content: center;
+        flex-shrink: 0;
+    }
+    .entry-ico svg { width: 16px; height: 16px; display: block; }
+    .entry-inf { flex: 1; min-width: 0; }
+    .entry-cli {
+        font-weight: 600; font-size: .88rem;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .entry-meta { font-size: .7rem; color: var(--muted); margin-top: 2px; }
+    .entry-right { text-align: right; flex-shrink: 0; }
+    .entry-val { font-weight: 700; font-size: .9rem; }
+    .auto-tag {
+        font-size: .55rem; background: var(--amber-l); color: #7c4a00;
+        border-radius: 5px; padding: 1px 4px; margin-left: 4px;
+    }
+    .equipe-tag {
+        background: #e0f7fa; color: #006064;
+        border-radius: 6px; padding: 1px 6px;
+        font-size: .65rem; margin-left: 4px; font-weight: 500;
+    }
+
+    /* ─── PAINEL DE DETALHE ──────────────────────── */
+    .detail-hdr {
+        display: flex; align-items: center; gap: 8px;
+        margin-bottom: 16px;
+    }
+    .detail-name {
+        flex: 1; font-size: 1rem; font-weight: 700;
+        color: var(--brown-d); white-space: nowrap;
+        overflow: hidden; text-overflow: ellipsis;
+    }
+    .detail-actions {
+        display: flex; align-items: center; gap: 8px; margin-top: 14px;
+    }
+    .detail-actions .bsub {
+        flex: 1; padding: 12px 16px; font-size: .9rem;
+        max-width: none; border-radius: 10px; margin: 0;
+        display: block;
+    }
+    .detail-empty {
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        height: 100%; min-height: 300px;
+        color: var(--muted); gap: 12px;
+    }
+    .detail-empty .ico { opacity: .3; }
+    .detail-empty .ico svg { width: 44px; height: 44px; }
+    .detail-empty p {
+        font-size: .85rem; text-align: center;
+        line-height: 1.6; color: var(--muted);
+    }
+
+    /* Quando a lista-split está visível, o content não limita a largura */
+    .content:has(.lista-split) { max-width: none; padding: 28px 32px 48px; }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   HOVER / POINTER FINE
+   Realces de mouse apenas em dispositivos com cursor preciso.
+   Em touch o :hover ficaria "preso" depois do toque.
+   ═══════════════════════════════════════════════════════════════ */
+@media (hover: hover) and (pointer: fine) {
+    .eitem:hover         { border-color: var(--brown); box-shadow: 0 4px 14px rgba(56,25,11,.08); transform: translateY(-1px); }
+    .card-hover:hover    { box-shadow: var(--shadow-md); }
+
+    .ftab:hover:not(.on) { border-color: var(--brown); color: var(--brown); }
+    .bt:hover:not(.on)   { border-color: var(--brown); }
+    .stbtn:hover:not(.on-g):not(.on-r) { color: var(--text); }
+
+    .bsub:hover          { background: var(--brown-d); box-shadow: 0 5px 14px rgba(109,76,65,.35); }
+    .login-btn:hover     { background: var(--brown-d); }
+    .add-btn:hover       { background: var(--red-l); }
+
+    .fab-chat:hover      { transform: scale(1.06); box-shadow: 0 6px 20px rgba(62,39,35,.55); }
+    .btn-back-float:hover{ background: rgba(0,0,0,.18); }
+
+    .editbtn:hover { background: var(--brown); color: #fff; }
+    .delbtn:hover  { background: var(--red);   color: #fff; }
+    .mnbtn:hover   { background: var(--brown-l); border-radius: 8px; }
+    .gear-btn:hover{ background: rgba(255,255,255,.22); }
+}
