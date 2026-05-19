@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-19 12:18 | main | feat: layout desktop responsivo para Tarefas e Anota├º├Áes -->
+<!-- AUTO: 2026-05-19 12:35 | main | feat: layout desktop responsivo para Conte├║do -->
 
