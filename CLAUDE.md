@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-18 23:08 | main | style: data em negrito na lista de entradas -->
+<!-- AUTO: 2026-05-19 00:44 | main | feat: layout desktop master-detail no financeiro -->
 
