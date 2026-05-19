@@ -11,6 +11,8 @@ var SVG_CHECK =
 
 var items     = [];
 var curFilter = 'todos';
+var curSearch = '';
+var curCat    = 'todos';
 var editId    = null;
 
 // ── AUTH ──────────────────────────────────────────────────────
@@ -108,6 +110,87 @@ async function toggleComprado(event, id) {
   }
 }
 
+// ── DESKTOP SIDEBAR ───────────────────────────────────
+function buildSidebar() {
+  var sbStats = document.getElementById('d-sb-stats');
+  if (!sbStats) return;
+
+  var ativos    = items.filter(function(i) { return !i.comprado; });
+  var comprados = items.filter(function(i) { return  i.comprado; });
+  var repor     = ativos.filter(function(i){ return i.status === 'zerado'; }).length;
+  var acabando  = ativos.filter(function(i){ return i.status === 'acabando'; }).length;
+  var investir  = ativos.filter(function(i){ return i.status === 'investir'; }).length;
+  var wishlist  = ativos.filter(function(i){ return i.status === 'wishlist'; }).length;
+  var ok        = ativos.filter(function(i){ return i.status === 'ok'; }).length;
+
+  sbStats.innerHTML =
+    '<div class="d-sb-stats-grid">' +
+      '<div class="d-sb-stat"><div class="d-sb-stat-lbl">Total</div><span class="d-sb-stat-val">' + ativos.length + '</span></div>' +
+      '<div class="d-sb-stat"><div class="d-sb-stat-lbl">Repor</div><span class="d-sb-stat-val c-repor">' + repor + '</span></div>' +
+      '<div class="d-sb-stat"><div class="d-sb-stat-lbl">Acabando</div><span class="d-sb-stat-val c-acabando">' + acabando + '</span></div>' +
+      '<div class="d-sb-stat"><div class="d-sb-stat-lbl">Wishlist</div><span class="d-sb-stat-val c-wishlist">' + wishlist + '</span></div>' +
+    '</div>';
+
+  var statusList = [
+    { v: 'todos',    lbl: 'Todos',          dot: '#aaa',      cnt: ativos.length },
+    { v: 'repor',    lbl: 'Repor (zerado)', dot: '#C62828',   cnt: repor },
+    { v: 'acabando', lbl: 'Acabando',        dot: '#BA7517',   cnt: acabando },
+    { v: 'investir', lbl: 'Investir',        dot: '#6A1B9A',   cnt: investir },
+    { v: 'wishlist', lbl: 'Wishlist',         dot: '#1565C0',   cnt: wishlist },
+  ];
+  var stHtml = '<div class="d-sb-lbl">Status</div>';
+  for (var i = 0; i < statusList.length; i++) {
+    var s = statusList[i];
+    stHtml += '<button class="d-sb-fil' + (curFilter === s.v ? ' active' : '') + '" onclick="setFD(\'' + s.v + '\')">' +
+      '<div class="d-sb-fil-dot" style="background:' + s.dot + '"></div>' +
+      '<span class="d-sb-fil-name">' + s.lbl + '</span>' +
+      '<span class="d-sb-fil-cnt">' + s.cnt + '</span>' +
+    '</button>';
+  }
+  document.getElementById('d-sb-status').innerHTML = stHtml;
+
+  var cats = ['todos', 'Maquiagem', 'Cabelo', 'Skin', 'Equipamentos', 'Consumíveis', 'Outros'];
+  var catHtml = '<div class="d-sb-lbl">Categoria</div><div class="d-sb-cats-row">';
+  for (var c = 0; c < cats.length; c++) {
+    var cv = cats[c], cl = cv === 'todos' ? 'Todas' : cv;
+    catHtml += '<button class="d-sb-cat' + (curCat === cv ? ' active' : '') + '" onclick="setCatD(\'' + esc(cv) + '\')">' + esc(cl) + '</button>';
+  }
+  catHtml += '</div>';
+  document.getElementById('d-sb-cats').innerHTML = catHtml;
+
+  var filterLabels = { todos: 'Todos os itens', repor: 'Repor (zerado)', acabando: 'Acabando', investir: 'Investir', wishlist: 'Wishlist' };
+  var dTitle = document.getElementById('d-toolbar-title');
+  var dCnt   = document.getElementById('d-toolbar-cnt');
+  if (dTitle) dTitle.textContent = filterLabels[curFilter] || 'Todos os itens';
+  if (dCnt) {
+    var cnt = filteredList().length;
+    dCnt.textContent = cnt + ' item' + (cnt !== 1 ? 's' : '');
+  }
+}
+
+function setFD(f) {
+  curFilter = f;
+  document.querySelectorAll('.ftab').forEach(function(b) { b.classList.toggle('on', b.dataset.f === f); });
+  render();
+}
+
+function setCatD(c) { curCat = c; render(); }
+function setSearch(v) { curSearch = (v || '').trim().toLowerCase(); render(); }
+
+function filteredList() {
+  var ativos = items.filter(function(i) { return !i.comprado; });
+  var list = ativos;
+  if (curFilter === 'repor')    list = ativos.filter(function(i){ return i.status === 'zerado' || i.status === 'acabando'; });
+  else if (curFilter === 'acabando') list = ativos.filter(function(i){ return i.status === 'acabando'; });
+  else if (curFilter === 'investir') list = ativos.filter(function(i){ return i.status === 'investir'; });
+  else if (curFilter === 'wishlist') list = ativos.filter(function(i){ return i.status === 'wishlist'; });
+  if (curCat !== 'todos') list = list.filter(function(i){ return i.categoria === curCat; });
+  if (curSearch) list = list.filter(function(i){
+    return (i.nome || '').toLowerCase().includes(curSearch) || (i.obs || '').toLowerCase().includes(curSearch);
+  });
+  return list;
+}
+
 // ── RENDER ────────────────────────────────────────────────────
 function render() {
   var comprados   = items.filter(function(i) { return  i.comprado; });
@@ -126,13 +209,9 @@ function render() {
   document.getElementById('c-wishlist').textContent = counts.wishlist;
   document.getElementById('c-comprado').textContent = comprados.length;
 
-  // Aplica filtro somente nos itens ativos
-  var list = ativos;
-  if (curFilter === 'repor')    list = ativos.filter(function(i){ return i.status === 'zerado' || i.status === 'acabando'; });
-  else if (curFilter === 'acabando') list = ativos.filter(function(i){ return i.status === 'acabando'; });
-  else if (curFilter === 'investir') list = ativos.filter(function(i){ return i.status === 'investir'; });
-  else if (curFilter === 'wishlist') list = ativos.filter(function(i){ return i.status === 'wishlist'; });
+  buildSidebar();
 
+  var list = filteredList();
   var html = '';
 
   if (!list.length && !comprados.length) {
@@ -195,6 +274,8 @@ function setF(f) {
   });
   render();
 }
+
+// Alias para compatibilidade com mobile (setF) e desktop (setFD já existe acima)
 
 // ── PANEL ─────────────────────────────────────────────────────
 function openAdd() {
