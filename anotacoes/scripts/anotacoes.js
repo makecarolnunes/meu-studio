@@ -154,6 +154,12 @@ function showView(v) {
     if (el) el.style.display = (name === v) ? '' : 'none';
   });
 
+  // Ao sair do editor no mobile, oculta o form para o próximo openEditor() inicializar limpo
+  if (v !== 'editor') {
+    var edCont = document.getElementById('d-editor-content');
+    if (edCont) edCont.style.display = 'none';
+  }
+
   var fab       = document.getElementById('fab');
   var hdrStatus = document.getElementById('hdr-save-status');
   var hdrBack   = document.getElementById('hdr-back');
@@ -393,7 +399,7 @@ function openEditor(nota) {
 
   if (isDesktop()) {
     showEditorDesktop(true);
-    renderNotas(); // atualiza selected state na lista
+    renderNotas();
     setTimeout(function() {
       var t = document.getElementById('f-titulo');
       if (t) { t.focus(); if (t.value) { var len = t.value.length; t.setSelectionRange(len, len); } }
@@ -401,11 +407,16 @@ function openEditor(nota) {
     return;
   }
 
+  // Mobile: mostra o conteúdo do editor (estava oculto pelo wrapper desktop)
+  var edCont  = document.getElementById('d-editor-content');
+  var edEmpty = document.getElementById('d-editor-empty');
+  if (edCont)  edCont.style.display  = '';
+  if (edEmpty) edEmpty.style.display = 'none';
+
   showView('editor');
   setTimeout(function() {
     var t = document.getElementById('f-titulo');
-    t.focus();
-    if (t.value) { var len = t.value.length; t.setSelectionRange(len, len); }
+    if (t) { t.focus(); if (t.value) { var len = t.value.length; t.setSelectionRange(len, len); } }
   }, 80);
 }
 
