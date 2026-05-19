@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-18 22:56 | main | feat: simplifica lista de entradas, cores por origem e campo equipe -->
+<!-- AUTO: 2026-05-18 23:08 | main | style: data em negrito na lista de entradas -->
 
