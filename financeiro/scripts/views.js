@@ -125,7 +125,7 @@ function renderLista() {
         return `<div class="eitem">
             <div class="eico" style="background:${s.bg};color:${s.col}">${s.ico}</div>
             <div class="einf"><div class="ecli">${e.cliente||'(sem nome)'}${auto}</div>
-                <div class="emta">${fmtDate(e.dataPag)} · ${e.tipo} · ${e.forma}${extra}</div>
+                <div class="emta"><strong>${fmtDate(e.dataPag)}</strong> · ${e.tipo} · ${e.forma}${extra}</div>
                 <div class="emta">${fmtOrigem(e.origem)}${equipeTag}</div></div>
             <div class="erig">
                 <div class="eval" style="color:${e.status==='Realizado'?'var(--ok)':'var(--red)'}">${brl(e.valor)}</div>
