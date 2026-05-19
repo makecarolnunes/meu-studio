@@ -12,6 +12,52 @@
   <link rel="stylesheet" href="./styles/orcamentos.css">
 </head>
 <body>
+<div id="orca-app">
+
+<!-- ── SIDEBAR DESKTOP ────────────────────────────────────── -->
+<aside class="d-sidebar" id="d-sidebar">
+  <div class="dsb-brand">
+    <button class="dsb-back" onclick="window.location.href='../'">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      Hub
+    </button>
+    <div class="dsb-title">Orçamentos</div>
+    <div class="dsb-sub">CRM comercial</div>
+  </div>
+  <div class="dsb-kpis">
+    <div class="dsb-kpi-grid">
+      <div class="dsb-kpi"><div class="dsb-kv" id="ds-total">—</div><div class="dsb-kl">Total</div></div>
+      <div class="dsb-kpi ok"><div class="dsb-kv" id="ds-fechados">—</div><div class="dsb-kl">Fechados</div></div>
+      <div class="dsb-kpi"><div class="dsb-kv" id="ds-conv">—</div><div class="dsb-kl">Conversão</div></div>
+      <div class="dsb-kpi rose"><div class="dsb-kv" id="ds-receita" style="font-size:.78rem">—</div><div class="dsb-kl">Receita</div></div>
+    </div>
+  </div>
+  <div class="dsb-section">
+    <button class="dsb-novo-btn" onclick="openAddForm()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Novo Orçamento
+    </button>
+  </div>
+  <div class="dsb-section">
+    <div class="dsb-lbl">Status</div>
+    <button class="d-fil-item active" data-f="todos"       onclick="setF('todos')"><span class="d-fil-dot" style="background:var(--muted)"></span>Todos<span class="d-fil-cnt" id="dsf-total">—</span></button>
+    <button class="d-fil-item"        data-f="followup"    onclick="setF('followup')"><span class="d-fil-dot" style="background:#e65100"></span>Follow-up<span class="d-fil-cnt urgent" id="dsf-fu">0</span></button>
+    <button class="d-fil-item"        data-f="novos"       onclick="setF('novos')"><span class="d-fil-dot" style="background:var(--blue)"></span>Novos</button>
+    <button class="d-fil-item"        data-f="negoc"       onclick="setF('negoc')"><span class="d-fil-dot" style="background:#e65100"></span>Negociando</button>
+    <button class="d-fil-item"        data-f="fechados"    onclick="setF('fechados')"><span class="d-fil-dot" style="background:var(--ok)"></span>Fechados</button>
+    <button class="d-fil-item"        data-f="agenda-pend" onclick="setF('agenda-pend')"><span class="d-fil-dot" style="background:var(--red)"></span>Agenda pendente</button>
+    <button class="d-fil-item"        data-f="agenda-ok"   onclick="setF('agenda-ok')"><span class="d-fil-dot" style="background:var(--ok)"></span>Agenda confirmada</button>
+  </div>
+  <div class="dsb-section">
+    <div class="dsb-lbl">Origem</div>
+    <button class="d-fil-item active" data-o="todos"                    onclick="setOrigem('todos')"><span class="d-fil-dot" style="background:var(--muted)"></span>Todas as origens</button>
+    <button class="d-fil-item"        data-o="Produção Social"          onclick="setOrigem('Produção Social')"><span class="d-fil-dot" style="background:var(--brand)"></span>Produção Social</button>
+    <button class="d-fil-item"        data-o="Noiva"                    onclick="setOrigem('Noiva')">
+      <span class="d-fil-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--rose-dark)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12l4 6-10 13L2 9z"/><path d="M11 3 8 9l4 13 4-13-3-6"/><path d="M2 9h20"/></svg></span>Noiva
+    </button>
+    <button class="d-fil-item"        data-o="Curso de Automaquiagem"   onclick="setOrigem('Curso de Automaquiagem')"><span class="d-fil-dot" style="background:var(--amber)"></span>Curso de Automaquiagem</button>
+  </div>
+</aside>
 
 <!-- ── HEADER ─────────────────────────────────────────────── -->
 <div class="hdr">
@@ -40,12 +86,40 @@
   <div class="chip"><div class="chip-lbl" style="color:var(--brown-d)">Receita</div><div class="chip-val" id="c-receita" style="color:var(--brown-d); font-size:0.82rem">—</div></div>
 </div>
 
-<!-- ── MONTH FILTER ────────────────────────────────────────── -->
+<!-- ── DESKTOP: controls bar (período + pesquisa) ─────────── -->
+<div class="d-controls-bar" id="d-controls-bar">
+  <div class="d-period-group">
+    <span class="d-period-lbl">Período:</span>
+    <div class="d-period-toggle">
+      <button id="period-todos" class="d-period-btn on" onclick="clearMonth();updatePeriodToggle()">Todos os meses</button>
+      <button id="period-mes"   class="d-period-btn"   onclick="setPorMes()">Por mês</button>
+    </div>
+    <div class="d-month-nav-inline" id="month-nav-inline" style="opacity:.4;pointer-events:none">
+      <button class="d-month-arrow" onclick="navMonth(-1)">‹</button>
+      <span class="d-month-name" id="d-month-name">Mai · 2026</span>
+      <button class="d-month-arrow" onclick="navMonth(1)">›</button>
+    </div>
+  </div>
+  <div class="search-wrap">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input id="d-search" class="search-input" type="search" placeholder="Pesquisar cliente..." oninput="setSearch(this.value)" autocomplete="off">
+  </div>
+</div>
+
+<!-- ── MONTH FILTER (mobile) ──────────────────────────────── -->
 <div class="month-nav">
   <button class="month-arrow" onclick="navMonth(-1)" title="Mês anterior">‹</button>
   <span class="month-label" id="month-label" onclick="clearMonth()">Todos os meses</span>
   <button class="month-arrow" onclick="navMonth(1)"  title="Próximo mês">›</button>
   <button class="month-clear" id="month-clear" onclick="clearMonth()" title="Ver todos">✕</button>
+</div>
+
+<!-- ── PESQUISA (mobile) ───────────────────────────────────── -->
+<div class="m-search-bar">
+  <div class="m-search-wrap">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input id="m-search" class="m-search-input" type="search" placeholder="Pesquisar cliente..." oninput="setSearch(this.value)" autocomplete="off">
+  </div>
 </div>
 
 <!-- ── FOLLOW-UP ALERT ─────────────────────────────────────── -->
@@ -65,6 +139,14 @@
   <button class="ftab"    data-f="agenda-ok"   onclick="setF('agenda-ok')">📅 Agenda ✅</button>
 </div>
 
+<!-- ── FILTRO ORIGEM (mobile) ─────────────────────────────── -->
+<div class="orig-tabs" id="orig-tabs">
+  <button class="orig-tab on" data-o="todos"                  onclick="setOrigem('todos')">Todos</button>
+  <button class="orig-tab"    data-o="Produção Social"         onclick="setOrigem('Produção Social')">Produção Social</button>
+  <button class="orig-tab"    data-o="Noiva"                   onclick="setOrigem('Noiva')">Noiva</button>
+  <button class="orig-tab"    data-o="Curso de Automaquiagem"  onclick="setOrigem('Curso de Automaquiagem')">Curso</button>
+</div>
+
 <!-- ── CONTENT ────────────────────────────────────────────── -->
 <div class="content" id="content">
   <div class="loader"><div class="spinner"></div><br>Carregando orçamentos...</div>
@@ -72,6 +154,8 @@
 
 <!-- ── FAB ────────────────────────────────────────────────── -->
 <button class="fab" onclick="openAddForm()" title="Novo orçamento">＋</button>
+
+</div><!-- /orca-app -->
 
 <!-- ═══════════════════════════════════════════════════════ -->
 <!--  MODALS                                                  -->

@@ -48,6 +48,8 @@ let entries     = (function() {
 })();
 let services    = safeJSON(localStorage.getItem('orca_services'), DEFAULT_SERVICES);
 let curFilter   = 'todos';
+let curOrigem   = 'todos';   // filtro por origem: 'todos' | 'Produção Social' | 'Noiva' | 'Curso de Automaquiagem'
+let curSearch   = '';        // pesquisa por nome do cliente
 let activeId    = null;
 let filterMonth = null;
 
@@ -808,6 +810,8 @@ function render() {
   }
 
   const fuCount = entries.filter(e => needsFollowup(e)).length;
+  const dsFu = document.getElementById('dsf-fu');
+  if (dsFu) dsFu.textContent = fuCount || '0';
   const fuEl = document.getElementById('fu-alert');
   if (fuCount > 0 && curFilter !== 'followup') {
     fuEl.classList.add('show');
@@ -816,18 +820,30 @@ function render() {
   } else fuEl.classList.remove('show');
 
   let list = entries.slice();
+
+  // Filtro por mês usa DataPedido (data de recebimento), não DataEvento
   if (filterMonth) {
-    list = list.filter(e => {
-      const d = e.DataEvento || e.DataPedido || '';
-      return d && d.startsWith(filterMonth);
-    });
+    list = list.filter(e => (e.DataPedido || '').startsWith(filterMonth));
   }
+
+  // Filtro por status
   if (curFilter === 'followup')      list = list.filter(e => needsFollowup(e));
   else if (curFilter === 'novos')    list = list.filter(e => e.Status === 'Novo Pedido');
   else if (curFilter === 'negoc')    list = list.filter(e => ['Orçamento Enviado','Em Negociação','Sem Resposta'].includes(e.Status));
   else if (curFilter === 'fechados')    list = list.filter(e => e.Status === 'Fechado');
   else if (curFilter === 'agenda-pend') list = list.filter(e => e.Status === 'Fechado' && !getAgendaCriada(e));
   else if (curFilter === 'agenda-ok')   list = list.filter(e => e.Status === 'Fechado' && getAgendaCriada(e));
+
+  // Filtro por origem (Produção Social / Noiva / Curso de Automaquiagem)
+  if (curOrigem !== 'todos') {
+    list = list.filter(e => e.Origem === curOrigem);
+  }
+
+  // Pesquisa por nome do cliente
+  if (curSearch.trim()) {
+    const q = curSearch.toLowerCase().trim();
+    list = list.filter(e => (e.Cliente || '').toLowerCase().includes(q));
+  }
 
   list.sort((a, b) => {
     const af = needsFollowup(a), bf = needsFollowup(b);
@@ -839,7 +855,29 @@ function render() {
     return (b.DataPedido || '').localeCompare(a.DataPedido || '');
   });
 
+  // Atualiza tabs de status (mobile + desktop)
   document.querySelectorAll('.ftab').forEach(t => t.classList.toggle('on', t.dataset.f === curFilter));
+  document.querySelectorAll('.d-fil-item[data-f]').forEach(t => t.classList.toggle('active', t.dataset.f === curFilter));
+
+  // Atualiza tabs de origem (mobile + desktop)
+  document.querySelectorAll('.orig-tab').forEach(t => t.classList.toggle('on', t.dataset.o === curOrigem));
+  document.querySelectorAll('.d-fil-item[data-o]').forEach(t => t.classList.toggle('active', t.dataset.o === curOrigem));
+
+  // Atualiza KPIs do sidebar desktop (se existirem)
+  const dsTotal   = document.getElementById('ds-total');
+  const dsFecTxt  = document.getElementById('ds-fechados');
+  const dsConv    = document.getElementById('ds-conv');
+  const dsReceita = document.getElementById('ds-receita');
+  const total2    = entries.length;
+  const fech2     = entries.filter(e => e.Status === 'Fechado').length;
+  const rec2      = entries.filter(e => e.Status === 'Fechado').reduce((s,e) => s + (parseFloat(e.ValorFechado) || parseFloat(e.ValorProp) || 0), 0);
+  if (dsTotal)   dsTotal.textContent   = total2;
+  if (dsFecTxt)  dsFecTxt.textContent  = fech2;
+  if (dsConv)    dsConv.textContent    = total2 ? Math.round(fech2/total2*100)+'%' : '—';
+  if (dsReceita) dsReceita.textContent = rec2 ? fmtVal(rec2) : '—';
+
+  // Atualiza o period toggle do desktop
+  updatePeriodToggle();
 
   const content = document.getElementById('content');
   if (list.length === 0) {
@@ -899,6 +937,8 @@ function render() {
 //  FILTROS
 // ══════════════════════════════════════════════════════════
 function setF(f) { curFilter = f; render(); }
+function setOrigem(v) { curOrigem = v; render(); }
+function setSearch(v) { curSearch = v; render(); }
 function navMonth(dir) {
   const base = filterMonth ? new Date(filterMonth + '-01T12:00:00') : new Date();
   base.setMonth(base.getMonth() + dir);
@@ -906,6 +946,29 @@ function navMonth(dir) {
   render();
 }
 function clearMonth() { filterMonth = null; render(); }
+function setPorMes() {
+  if (!filterMonth) navMonth(0);   // navMonth() chama render() → updatePeriodToggle()
+}
+function updatePeriodToggle() {
+  const todos    = document.getElementById('period-todos');
+  const porMes   = document.getElementById('period-mes');
+  const monthNav = document.getElementById('month-nav-inline');
+  const dName    = document.getElementById('d-month-name');
+  if (!todos) return;
+  if (filterMonth) {
+    todos.classList.remove('on'); porMes.classList.add('on');
+    if (monthNav) { monthNav.style.opacity = '1'; monthNav.style.pointerEvents = 'auto'; }
+    if (dName) {
+      const [y, m] = filterMonth.split('-');
+      const ms = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+      dName.textContent = ms[parseInt(m)-1] + ' · ' + y;
+    }
+  } else {
+    todos.classList.add('on'); porMes.classList.remove('on');
+    if (monthNav) { monthNav.style.opacity = '0.4'; monthNav.style.pointerEvents = 'none'; }
+    if (dName) dName.textContent = 'Todos';
+  }
+}
 
 // ══════════════════════════════════════════════════════════
 //  OVERLAY / PANELS
