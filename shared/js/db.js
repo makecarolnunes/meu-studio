@@ -49,7 +49,7 @@ const _ENTRY_KEYS = {
   dataPag: 'data_pag', dataServ: 'data_serv', cliente: 'cliente',
   tipo: 'tipo', valor: 'valor', valorTotal: 'valor_total',
   servico: 'servico', local: 'local', forma: 'forma',
-  status: 'status', origem: 'origem', obs: 'obs',
+  status: 'status', origem: 'origem', obs: 'obs', equipe: 'equipe',
   auto: 'auto', noivaId: 'noiva_id', createdAt: 'created_at',
 };
 
@@ -112,6 +112,7 @@ function _entryFromDb(r) {
     status:     r.status       || '',
     origem:     r.origem       || '',
     obs:        r.obs          || '',
+    equipe:     r.equipe       || '',
     auto:       !!r.auto,
     noivaId:    r.noiva_id     || '',
     createdAt:  r.created_at   || '',

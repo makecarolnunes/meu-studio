@@ -171,6 +171,7 @@ function openEditEntry(id) {
         </div>
         <input type="hidden" id="ed-status" value="${e.status||'Realizado'}">
     </div>
+    <div class="fg"><label class="fl">Atendimento pela equipe <span style="color:var(--muted);font-size:.75rem">(opcional)</span></label><input class="fi" type="text" id="ee-equipe" value="${e.equipe||''}" placeholder="Ex: Julia" autocomplete="off"></div>
     <div class="fg"><label class="fl">Observações</label><textarea class="fi ta" id="ee-obs">${e.obs||''}</textarea></div>
     <button class="bsub" style="margin-bottom:8px" onclick="saveEditEntry('${id}')">Salvar</button>
     <button class="skip" onclick="closeModal()">Cancelar</button>`;
@@ -192,6 +193,7 @@ function saveEditEntry(id) {
         forma:  _pick['forma']  || e.forma,
         status: document.getElementById('ed-status').value,
         valor:  String(valor),
+        equipe: document.getElementById('ee-equipe').value.trim(),
         obs:    document.getElementById('ee-obs').value
     };
     const idx = entries.findIndex(x=>String(x.id)===String(id));

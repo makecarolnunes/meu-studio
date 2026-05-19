@@ -44,6 +44,20 @@ function typeStyle(t) {
     return { Sinal:{bg:'#fff3e0',col:'#bf360c',ico:SVG.lock}, Pagamento:{bg:'#efebe9',col:'#4e342e',ico:SVG.money}, Parcela:{bg:'#e3f2fd',col:'#0d47a1',ico:SVG.calendar} }[t]
         || { bg:'#f5f5f5', col:'#666', ico:SVG.money };
 }
+function entradaStyle(origem, tipo) {
+    const ico = {Sinal:SVG.lock, Parcela:SVG.calendar, Pagamento:SVG.money}[tipo] || SVG.money;
+    const cores = {
+        'Noiva':                  {bg:'#fff3e0', col:'#bf360c'},
+        'Produção Social':        {bg:'#e8f5e9', col:'#2e7d32'},
+        'Assistência':            {bg:'#f3e5f5', col:'#6a1b9a'},
+        'Curso de Automaquiagem': {bg:'#e3f2fd', col:'#0d47a1'},
+    };
+    const {bg,col} = cores[origem] || {bg:'#f5f5f5', col:'#666'};
+    return {bg, col, ico};
+}
+function fmtOrigem(o) {
+    return o === 'Curso de Automaquiagem' ? 'Automaquiagem' : (o || '');
+}
 function saidaStyle(t) {
     return { 'DAS':{bg:'#fce4ec',col:'#880e4f',ico:SVG.bank}, 'Curso':{bg:'#e3f2fd',col:'#0d47a1',ico:SVG.book},
              'Assistente':{bg:'#f3e5f5',col:'#6a1b9a',ico:SVG.users}, 'Seguro de Celular':{bg:'#e8eaf6',col:'#283593',ico:SVG.phone},

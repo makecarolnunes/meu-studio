@@ -29,7 +29,7 @@ function cacheNoivas()  { localStorage.setItem('mk_noivas',  JSON.stringify(noiv
 function initF()  {
     F  = { dataPag: today(), dataServ: '', cliente: '', tipo: 'Pagamento',
            valor: '', valorTotal: '', servico: 'Maquiagem', local: 'Studio',
-           forma: 'PIX', status: 'Realizado', origem: 'Produção Social', obs: '' };
+           forma: 'PIX', status: 'Realizado', origem: 'Produção Social', obs: '', equipe: '' };
 }
 function initFs() {
     Fs = { dataPag: today(), valor: '', tipo: 'Reposição de Material',

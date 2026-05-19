@@ -34,7 +34,7 @@ function pick(field, value, form) {
 function syncF() {
     const r = (id, obj, f) => { const el=document.getElementById(id); if(el) obj[f]=el.value; };
     r('i-dp',F,'dataPag'); r('i-ds',F,'dataServ'); r('i-cl',F,'cliente');
-    r('i-v',F,'valor');    r('i-vt',F,'valorTotal'); r('i-ob',F,'obs');
+    r('i-v',F,'valor');    r('i-vt',F,'valorTotal'); r('i-ob',F,'obs'); r('i-eq',F,'equipe');
     r('si-dp',Fs,'dataPag'); r('si-v',Fs,'valor'); r('si-ob',Fs,'obs'); r('si-meses',Fs,'meses');
     const st = document.getElementById('si-tipo'); if(st) Fs.tipo = st.value;
 }
@@ -64,7 +64,7 @@ async function saveEntry() {
         const e2={ id:genId(), dataPag:datRest, dataServ:F.dataServ, cliente:F.cliente,
             tipo:'Pagamento', valor:rest.toFixed(2), valorTotal:'', servico:F.servico, local:F.local,
             forma:F.forma, status:'Previsto', origem:F.origem, obs:`Restante (sinal: ${brl(sinal)})`,
-            auto:true, parentSinalId:sinalId, createdAt:new Date().toISOString() };
+            equipe:F.equipe||'', auto:true, parentSinalId:sinalId, createdAt:new Date().toISOString() };
         entries.unshift(e2); entries.unshift(e1);
         cacheEntries(); render();
         toast(`Sinal + Previsto de ${brl(rest)} criados!`);

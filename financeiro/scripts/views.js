@@ -82,6 +82,7 @@ function renderNova() {
         <div class="fg"><label class="fl">Local</label>${bgroup('local',['Studio','Em Domicílio'])}</div>
         <div class="fg"><label class="fl">Forma de Pagamento</label>${bgroup('forma',['PIX','Crédito','Dinheiro'])}</div>
         <div class="fg"><label class="fl">Origem</label>${bgroup('origem',['Produção Social','Noiva','Assistência',{l:'Curso Auto',v:'Curso de Automaquiagem'}])}</div>
+        <div class="fg"><label class="fl">Atendimento pela equipe <span style="color:var(--muted);font-size:.75rem">(opcional)</span></label><input class="fi" type="text" id="i-eq" placeholder="Ex: Julia" value="${F.equipe||''}" autocomplete="off"></div>
         <div class="fg"><label class="fl">Observações</label><textarea class="fi ta" id="i-ob" placeholder="Opcional...">${F.obs}</textarea></div>
     </div>
     <button class="bsub" onclick="saveEntry()">Salvar Lançamento</button>`;
@@ -117,14 +118,15 @@ function renderLista() {
     <div class="ftabs">${filters.map(f=>`<button class="ftab ${listFilter===f.k?'on':''}" onclick="setF('${f.k}')">${f.l}</button>`).join('')}</div>
     ${list.length===0?`<div class="empty"><div class="ico">${SVG.list}</div><p>Nenhuma entrada em<br><strong>${MONTHS[selMonth]} ${selYear}</strong></p></div>`
     :list.map(e=>{
-        const s=typeStyle(e.tipo);
-        const extra=e.valorTotal?` · Total: ${brl(e.valorTotal)}`:'';
+        const s=entradaStyle(e.origem, e.tipo);
+        const extra=e.valorTotal?` · ${brl(e.valorTotal)}`:'';
         const auto=e.auto?`<span style="font-size:.6rem;background:var(--amber-l);color:#7c4a00;border-radius:7px;padding:1px 5px;margin-left:4px">auto</span>`:'';
+        const equipeTag=e.equipe?`<span style="background:#e0f7fa;color:#006064;border-radius:8px;padding:1px 7px;font-size:.68rem;margin-left:5px;font-weight:500">↑ ${e.equipe}</span>`:'';
         return `<div class="eitem">
             <div class="eico" style="background:${s.bg};color:${s.col}">${s.ico}</div>
             <div class="einf"><div class="ecli">${e.cliente||'(sem nome)'}${auto}</div>
                 <div class="emta">${fmtDate(e.dataPag)} · ${e.tipo} · ${e.forma}${extra}</div>
-                <div class="emta">${e.servico} · ${e.local}</div></div>
+                <div class="emta">${fmtOrigem(e.origem)}${equipeTag}</div></div>
             <div class="erig">
                 <div class="eval" style="color:${e.status==='Realizado'?'var(--ok)':'var(--red)'}">${brl(e.valor)}</div>
                 <span class="sbadge ${e.status==='Realizado'?'sb-g':'sb-r'}" onclick="toggleStatus('${e.id}')">${e.status==='Realizado'?'Realizado':'Previsto'}</span>
