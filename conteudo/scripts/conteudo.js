@@ -203,11 +203,16 @@ function setView(v){
   document.getElementById('btn-list').className ='vbtn'+(v==='list'?' on':'');
   document.getElementById('btn-board').className='vbtn'+(v==='board'?' on':'');
   document.getElementById('btn-cal').className  ='vbtn'+(v==='cal'?' on':'');
+  // Desktop toolbar toggle
+  document.querySelectorAll('.d-vbtn').forEach(function(b){ b.classList.toggle('on', b.dataset.v===v); });
   var showListUI=(v==='list');
   document.getElementById('ctabs').style.display    =showListUI?'':'none';
   document.getElementById('chips').style.display    =showListUI?'':'none';
   document.getElementById('list-view').style.display=showListUI?'':'none';
-  document.getElementById('board-wrap').className   ='board-wrap'+(v==='board'?' active':'');
+  // Mobile board vs desktop board
+  var dboard=document.getElementById('d-board-wrap');
+  if(dboard) dboard.style.display=(v==='board'&&isDesktop())?'flex':'none';
+  document.getElementById('board-wrap').className   ='board-wrap'+((v==='board'&&!isDesktop())?' active':'');
   document.getElementById('cal-wrap').className     ='cal-wrap'+(v==='cal'?' active':'');
   if(v==='board') colIdx=0;
   render();
@@ -241,6 +246,147 @@ function filtered(){
   });
 }
 
+function isDesktop(){ return window.innerWidth >= 1024; }
+
+/* ============================================================
+   SIDEBAR DESKTOP
+   ============================================================ */
+function buildSidebar(){
+  var sbStats = document.getElementById('d-sb-stats');
+  if(!sbStats) return;
+  var platIdeas=ideas.filter(ideaInCurPlat), total=platIdeas.length;
+  var nao =platIdeas.filter(function(i){return i.status==='Nao Iniciado';}).length;
+  var fila=platIdeas.filter(function(i){return i.status==='Fila de Gravacao';}).length;
+  var edit=platIdeas.filter(function(i){return i.status==='Editando';}).length;
+  var pub =platIdeas.filter(function(i){return i.status==='Publicado';}).length;
+
+  // Stats
+  sbStats.innerHTML=
+    '<div class="d-sb-stats-grid">'+
+      '<div class="d-sb-stat"><div class="d-sb-stat-lbl">Total</div><span class="d-sb-stat-val">'+total+'</span></div>'+
+      '<div class="d-sb-stat"><div class="d-sb-stat-lbl">Publicado</div><span class="d-sb-stat-val c-pub">'+pub+'</span></div>'+
+      '<div class="d-sb-stat"><div class="d-sb-stat-lbl">Editando</div><span class="d-sb-stat-val c-edit">'+edit+'</span></div>'+
+      '<div class="d-sb-stat"><div class="d-sb-stat-lbl">Na fila</div><span class="d-sb-stat-val c-fila">'+fila+'</span></div>'+
+    '</div>';
+
+  // Platform
+  var plats=['todos'].concat(allPlats());
+  var platLabels={'todos':'Todas'};
+  var platHtml='<div class="d-sb-lbl">Plataforma</div><div class="d-sb-plat-row">';
+  for(var p=0;p<plats.length;p++){
+    var pv=plats[p], pl=platLabels[pv]||pv;
+    platHtml+='<button class="d-sb-plat'+(curPlat===pv?' active':'')+'" onclick="setPlatD(\''+safe(pv)+'\')">'+safe(pl)+'</button>';
+  }
+  platHtml+='</div>';
+  document.getElementById('d-sb-plats').innerHTML=platHtml;
+
+  // Status
+  var statuses=[
+    {v:'todos',  lbl:'Todos',             dot:'#aaa',      cnt:platIdeas.length},
+    {v:'Nao Iniciado',    lbl:'Não iniciado', dot:'#9e9e9e', cnt:nao},
+    {v:'Fila de Gravacao',lbl:'Fila de gravação', dot:'#e53935', cnt:fila},
+    {v:'Editando',lbl:'Editando',         dot:'#7d3c6e',   cnt:edit},
+    {v:'Publicado',lbl:'Publicado',       dot:'#2d7d3a',   cnt:pub},
+  ];
+  var stHtml='<div class="d-sb-lbl">Status</div>';
+  for(var s=0;s<statuses.length;s++){
+    var st=statuses[s];
+    stHtml+='<button class="d-sb-st-item'+(curSF===st.v?' active':'')+'" onclick="setSFD(\''+safe(st.v)+'\')">'+
+      '<div class="d-sb-st-dot" style="background:'+st.dot+'"></div>'+
+      '<span class="d-sb-st-name">'+st.lbl+'</span>'+
+      '<span class="d-sb-st-cnt">'+st.cnt+'</span>'+
+    '</button>';
+  }
+  document.getElementById('d-sb-status').innerHTML=stHtml;
+
+  // Categories
+  var cats=['todos'].concat(allCats());
+  var catLabels={'todos':'Todas'};
+  var catHtml='<div class="d-sb-lbl">Temas</div><div class="d-sb-cats-row">';
+  for(var c=0;c<cats.length;c++){
+    var cv=cats[c], cl=catLabels[cv]||cv;
+    var isOn=(cv==='todos'&&curCF.length===0)||(curCF.indexOf(cv)!==-1);
+    catHtml+='<button class="d-sb-cat'+(isOn?' active':'')+'" onclick="setCFD(\''+safe(cv)+'\')">'+safe(cl)+'</button>';
+  }
+  catHtml+='</div>';
+  document.getElementById('d-sb-cats').innerHTML=catHtml;
+
+  // Toolbar
+  var filterNames={todos:'Todos','Nao Iniciado':'Não iniciado','Fila de Gravacao':'Fila de gravação','Editando':'Editando','Publicado':'Publicado'};
+  var dTitle=document.getElementById('d-toolbar-title');
+  var dCnt=document.getElementById('d-toolbar-cnt');
+  if(dTitle) dTitle.textContent=filterNames[curSF]||'Todos';
+  if(dCnt){
+    var cnt=filtered().length;
+    dCnt.textContent=cnt+' ideia'+(cnt!==1?'s':'');
+  }
+}
+
+function setPlatD(p){ curPlat=p; saveCurPlat(); render(); }
+function setSFD(s){
+  curSF=s;
+  document.querySelectorAll('.stab').forEach(function(b){b.classList.toggle('on',b.dataset.s===s);});
+  render();
+}
+function setCFD(c){
+  if(c==='todos'){curCF=[];}
+  else{
+    var idx=curCF.indexOf(c);
+    if(idx===-1) curCF.push(c); else curCF.splice(idx,1);
+  }
+  render();
+}
+
+/* ============================================================
+   BOARD DESKTOP (kanban 4 colunas por status)
+   ============================================================ */
+function renderBoardDesktop(){
+  var el=document.getElementById('d-board-wrap');
+  if(!el) return;
+  var cols=[
+    {v:'Nao Iniciado',    lbl:'Não iniciado',    dot:'#9e9e9e', bg:'rgba(0,0,0,.04)'},
+    {v:'Fila de Gravacao',lbl:'Fila de gravação', dot:'#e53935', bg:'rgba(198,40,40,.05)'},
+    {v:'Editando',        lbl:'Editando',         dot:'#7d3c6e', bg:'rgba(126,87,194,.06)'},
+    {v:'Publicado',       lbl:'Publicado',         dot:'#2d7d3a', bg:'rgba(59,109,17,.05)'},
+  ];
+  var html='';
+  for(var ci=0;ci<cols.length;ci++){
+    var col=cols[ci];
+    var colIdeas=ideas.filter(function(idea){
+      if(!ideaInCurPlat(idea)) return false;
+      if(curCF.length>0){
+        var cats=catsOf(idea), match=false;
+        for(var c=0;c<curCF.length;c++) if(cats.indexOf(curCF[c])!==-1){match=true;break;}
+        if(!match) return false;
+      }
+      return idea.status===col.v;
+    });
+    html+='<div class="d-board-col" style="background:'+col.bg+'">'+
+      '<div class="d-board-col-hdr">'+
+        '<div class="d-board-col-dot" style="background:'+col.dot+'"></div>'+
+        '<span class="d-board-col-title">'+col.lbl+'</span>'+
+        '<span class="d-board-col-cnt">'+colIdeas.length+'</span>'+
+      '</div>';
+    if(!colIdeas.length){html+='<div style="text-align:center;padding:18px 0;font-size:.75rem;color:var(--muted)">Nenhuma ideia</div>';}
+    else{
+      for(var ii=0;ii<colIdeas.length;ii++){
+        var idea=colIdeas[ii], cats2=catsOf(idea);
+        var catTag=cats2.length?'<span class="d-bcard-tag" style="background:#f0e6f0;color:#5c2a51">'+safe(cats2[0])+'</span>':'';
+        var dateTag=idea.scheduledDate?'<span class="d-bcard-date">📅 '+fmtDate(idea.scheduledDate)+'</span>':'';
+        html+='<div class="d-bcard" data-id="'+safe(idea.id)+'">'+
+          '<div class="d-bcard-title">'+safe(idea.title)+'</div>'+
+          '<div class="d-bcard-foot">'+catTag+dateTag+'</div>'+
+        '</div>';
+      }
+    }
+    html+='<button class="d-board-add" onclick="openModal(null)">+ Nova ideia</button>';
+    html+='</div>';
+  }
+  el.innerHTML=html;
+  var bcards=el.querySelectorAll('.d-bcard');
+  for(var bi=0;bi<bcards.length;bi++){(function(card){card.onclick=function(){openModal(card.getAttribute('data-id'));};})(bcards[bi]);}
+}
+
 /* ============================================================
    RENDER
    ============================================================ */
@@ -259,8 +405,12 @@ function render(){
     '<div class="chip"><div class="chip-lbl" style="color:#7d3c6e">Editando</div><div class="chip-val" style="color:#7d3c6e">'+edit+'</div></div>'+
     '<div class="chip"><div class="chip-lbl" style="color:#2d7d3a">Publicado</div><div class="chip-val" style="color:#2d7d3a">'+pub+'</div></div>'
   ):'';
+  buildSidebar();
   if(curView==='list')  renderList();
-  else if(curView==='board') renderBoard();
+  else if(curView==='board'){
+    if(isDesktop()){ renderBoardDesktop(); }
+    else { renderBoard(); }
+  }
   else renderCalendar();
 }
 
@@ -295,15 +445,13 @@ function renderList(){
 
 function ideaCardHTML(idea){
   var sc=ST[idea.status]||ST['Nao Iniciado'];
-  var plats=platsOf(idea), cats=catsOf(idea), fmts=fmtsOf(idea);
+  var cats=catsOf(idea);
   var meta='';
-  for(var f=0;f<fmts.length;f++) meta+='<span class="idea-fmt">'+safe(fmts[f])+'</span>';
-  if(cats.length>1) for(var c=0;c<cats.length;c++) meta+='<span class="idea-cat">'+safe(cats[c])+'</span>';
-  if(curPlat==='todos'||plats.length>1) meta+='<span class="idea-plat">'+plats.map(safe).join(' • ')+'</span>';
+  for(var c=0;c<cats.length;c++) meta+='<span class="idea-cat">'+safe(cats[c])+'</span>';
   var notes=idea.notes?'<div class="idea-notes">'+safe(idea.notes)+'</div>':'';
   var calBadge=idea.scheduledDate?'<span class="idea-cal-date">📅 '+fmtDate(idea.scheduledDate)+'</span>':'';
   return '<div class="idea-card '+sc.cls+'" data-id="'+safe(idea.id)+'">'+
-    '<div class="idea-meta">'+meta+'</div>'+
+    (meta?'<div class="idea-meta">'+meta+'</div>':'')+
     '<div class="idea-title">'+safe(idea.title)+'</div>'+
     notes+
     '<div class="idea-footer">'+
