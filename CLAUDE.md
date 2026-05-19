@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-19 15:48 | main | feat: auto-save em Anota├º├Áes (1,5s ap├│s parar de digitar) -->
+<!-- AUTO: 2026-05-19 15:55 | main | fix: editor de notas quebrado no mobile -->
 
