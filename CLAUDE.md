@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-19 00:44 | main | feat: layout desktop master-detail no financeiro -->
+<!-- AUTO: 2026-05-19 11:33 | main | feat: layout desktop + pesquisa + filtro origem no or├ºamentos -->
 
