@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-19 12:56 | main | feat: layout desktop responsivo para Estoque -->
+<!-- AUTO: 2026-05-19 13:00 | main | feat: adiciona Tarefas e Estoque na barra lateral de navega├º├úo -->
 
