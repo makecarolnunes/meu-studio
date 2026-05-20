@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-20 17:44 | main | feat: reorganiza filtros de status dos or├ºamentos -->
+<!-- AUTO: 2026-05-20 19:03 | main | fix: sa├¡das sumiam por constraint de status incorreta no Supabase -->
 
