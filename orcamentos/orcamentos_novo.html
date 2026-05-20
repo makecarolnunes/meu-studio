@@ -41,12 +41,14 @@
   <div class="dsb-section">
     <div class="dsb-lbl">Status</div>
     <button class="d-fil-item active" data-f="todos"       onclick="setF('todos')"><span class="d-fil-dot" style="background:var(--muted)"></span>Todos<span class="d-fil-cnt" id="dsf-total">—</span></button>
-    <button class="d-fil-item"        data-f="followup"    onclick="setF('followup')"><span class="d-fil-dot" style="background:#e65100"></span>Follow-up<span class="d-fil-cnt urgent" id="dsf-fu">0</span></button>
-    <button class="d-fil-item"        data-f="novos"       onclick="setF('novos')"><span class="d-fil-dot" style="background:var(--blue)"></span>Novos</button>
-    <button class="d-fil-item"        data-f="negoc"       onclick="setF('negoc')"><span class="d-fil-dot" style="background:#e65100"></span>Negociando</button>
-    <button class="d-fil-item"        data-f="fechados"    onclick="setF('fechados')"><span class="d-fil-dot" style="background:var(--ok)"></span>Fechados</button>
-    <button class="d-fil-item"        data-f="agenda-pend" onclick="setF('agenda-pend')"><span class="d-fil-dot" style="background:var(--red)"></span>Agenda pendente</button>
-    <button class="d-fil-item"        data-f="agenda-ok"   onclick="setF('agenda-ok')"><span class="d-fil-dot" style="background:var(--ok)"></span>Agenda confirmada</button>
+    <button class="d-fil-item"        data-f="followup"     onclick="setF('followup')"><span class="d-fil-dot" style="background:#e65100"></span>Follow-up<span class="d-fil-cnt urgent" id="dsf-fu">0</span></button>
+    <button class="d-fil-item"        data-f="novos"        onclick="setF('novos')"><span class="d-fil-dot" style="background:var(--blue)"></span>Novos</button>
+    <button class="d-fil-item"        data-f="sem-resposta" onclick="setF('sem-resposta')"><span class="d-fil-dot" style="background:#78909C"></span>Sem resposta</button>
+    <button class="d-fil-item"        data-f="negoc"        onclick="setF('negoc')"><span class="d-fil-dot" style="background:var(--orange)"></span>Negociando</button>
+    <button class="d-fil-item"        data-f="perdidos"     onclick="setF('perdidos')"><span class="d-fil-dot" style="background:var(--red)"></span>Perdidos</button>
+    <button class="d-fil-item"        data-f="fechados"     onclick="setF('fechados')"><span class="d-fil-dot" style="background:var(--ok)"></span>Fechados</button>
+    <button class="d-fil-item"        data-f="agenda-pend"  onclick="setF('agenda-pend')"><span class="d-fil-dot" style="background:var(--red)"></span>Agenda pendente</button>
+    <button class="d-fil-item"        data-f="agenda-ok"    onclick="setF('agenda-ok')"><span class="d-fil-dot" style="background:var(--ok)"></span>Agenda confirmada</button>
   </div>
   <div class="dsb-section">
     <div class="dsb-lbl">Origem</div>
@@ -133,13 +135,15 @@
 
 <!-- ── FILTER TABS ────────────────────────────────────────── -->
 <div class="ftabs">
-  <button class="ftab on" data-f="todos"    onclick="setF('todos')">Todos</button>
-  <button class="ftab"    data-f="followup" onclick="setF('followup')">⚠️ Follow-up</button>
-  <button class="ftab"    data-f="novos"    onclick="setF('novos')">🆕 Novos</button>
-  <button class="ftab"    data-f="negoc"    onclick="setF('negoc')">🤝 Negociando</button>
-  <button class="ftab"    data-f="fechados"    onclick="setF('fechados')">✅ Fechados</button>
-  <button class="ftab"    data-f="agenda-pend" onclick="setF('agenda-pend')">📅 Agenda ⚠️</button>
-  <button class="ftab"    data-f="agenda-ok"   onclick="setF('agenda-ok')">📅 Agenda ✅</button>
+  <button class="ftab on" data-f="todos"        onclick="setF('todos')">Todos</button>
+  <button class="ftab"    data-f="followup"     onclick="setF('followup')">⚠️ Follow-up</button>
+  <button class="ftab"    data-f="novos"        onclick="setF('novos')">🆕 Novos</button>
+  <button class="ftab"    data-f="sem-resposta" onclick="setF('sem-resposta')">🔕 Sem resposta</button>
+  <button class="ftab"    data-f="negoc"        onclick="setF('negoc')">🤝 Negociando</button>
+  <button class="ftab"    data-f="perdidos"     onclick="setF('perdidos')">❌ Perdidos</button>
+  <button class="ftab"    data-f="fechados"     onclick="setF('fechados')">✅ Fechados</button>
+  <button class="ftab"    data-f="agenda-pend"  onclick="setF('agenda-pend')">📅 Agenda ⚠️</button>
+  <button class="ftab"    data-f="agenda-ok"    onclick="setF('agenda-ok')">📅 Agenda ✅</button>
 </div>
 
 <!-- ── FILTRO ORIGEM (mobile) ─────────────────────────────── -->

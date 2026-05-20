@@ -883,12 +883,14 @@ function render() {
   }
 
   // Filtro por status
-  if (curFilter === 'followup')      list = list.filter(e => needsFollowup(e));
-  else if (curFilter === 'novos')    list = list.filter(e => e.Status === 'Novo Pedido');
-  else if (curFilter === 'negoc')    list = list.filter(e => ['Orçamento Enviado','Em Negociação','Sem Resposta'].includes(e.Status));
-  else if (curFilter === 'fechados')    list = list.filter(e => e.Status === 'Fechado');
-  else if (curFilter === 'agenda-pend') list = list.filter(e => e.Status === 'Fechado' && !getAgendaCriada(e));
-  else if (curFilter === 'agenda-ok')   list = list.filter(e => e.Status === 'Fechado' && getAgendaCriada(e));
+  if (curFilter === 'followup')          list = list.filter(e => needsFollowup(e));
+  else if (curFilter === 'novos')        list = list.filter(e => ['Novo Pedido','Orçamento Enviado'].includes(e.Status));
+  else if (curFilter === 'sem-resposta') list = list.filter(e => e.Status === 'Sem Resposta');
+  else if (curFilter === 'negoc')        list = list.filter(e => e.Status === 'Em Negociação');
+  else if (curFilter === 'perdidos')     list = list.filter(e => e.Status === 'Perdido');
+  else if (curFilter === 'fechados')     list = list.filter(e => e.Status === 'Fechado');
+  else if (curFilter === 'agenda-pend')  list = list.filter(e => e.Status === 'Fechado' && !getAgendaCriada(e));
+  else if (curFilter === 'agenda-ok')    list = list.filter(e => e.Status === 'Fechado' && getAgendaCriada(e));
 
   // Filtro por origem (Produção Social / Noiva / Curso de Automaquiagem)
   if (curOrigem !== 'todos') {
