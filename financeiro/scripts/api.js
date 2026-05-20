@@ -49,6 +49,7 @@ async function sbCall(params) {
     } catch(e) {
         updateDot('offline');
         console.warn('sbCall error:', e.message);
+        toast('⚠️ Não foi possível salvar no servidor: ' + (e.message || 'verifique a conexão'));
     }
 }
 
