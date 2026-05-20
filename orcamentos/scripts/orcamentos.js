@@ -2039,7 +2039,7 @@ async function handleComprovanteUpload(event, id) {
 
   // Loading isolado dentro da área de comprovante (não bloqueia o resto)
   const addArea = document.querySelector('.comp-add-area');
-  if (addArea) addArea.innerHTML = '<div class="comp-uploading">⏳ Enviando para o Google Drive...</div>';
+  if (addArea) addArea.innerHTML = '<div class="comp-uploading">⏳ Enviando comprovante...</div>';
 
   try {
     // Ler como base64 (sem prefixo data:...)
@@ -2080,7 +2080,7 @@ async function handleComprovanteUpload(event, id) {
     }
 
     renderActCompSection(id);
-    toast('✅ Comprovante salvo no Google Drive!');
+    toast('✅ Comprovante enviado com sucesso!');
 
   } catch(err) {
     console.error('Upload comprovante:', err);

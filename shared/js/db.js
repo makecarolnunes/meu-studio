@@ -324,7 +324,7 @@ window.DB = {
     // Bucket "comprovantes" deve ser criado no Supabase Dashboard → Storage
     async uploadComprovante(orcaId, file, categoria, base64Data, mimeType) {
       const ts  = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-      const cat = categoria ? `[${categoria.toUpperCase()}]_` : '';
+      const cat = categoria ? `${categoria.toLowerCase()}_` : '';
       const ext = file.name.split('.').pop() || 'bin';
       const path = `${orcaId}/${cat}${ts}.${ext}`;
 
