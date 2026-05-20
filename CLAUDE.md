@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-19 16:09 | main | feat: noivas com agrupamento por m├¬s, edi├º├úo de contrato e anexo de documentos -->
+<!-- AUTO: 2026-05-20 17:19 | main | fix: corrige upload de comprovantes no Supabase Storage -->
 
