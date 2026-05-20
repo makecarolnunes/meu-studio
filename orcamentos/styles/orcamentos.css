@@ -160,7 +160,13 @@
       50%      { box-shadow: -3px 0 20px rgba(198,40,40,0.35); }
     }
 
-    .e-icon { font-size: 1.4rem; flex-shrink: 0; line-height: 1; }
+    .e-icon { display: none; }
+    .e-date {
+      flex-shrink: 0; display: flex; flex-direction: column; align-items: center;
+      justify-content: center; width: 32px; text-align: center;
+    }
+    .e-date-day { font-size: 0.95rem; font-weight: 800; color: var(--brown-d); line-height: 1.1; }
+    .e-date-mon { font-size: 0.57rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
     .e-info { flex: 1; min-width: 0; }
     .e-name {
       font-size: 0.88rem; font-weight: 700;

@@ -80,6 +80,14 @@ function fmtDate(s) {
   const [y,m,d] = s.split('-');
   return d + '/' + m + '/' + y;
 }
+function fmtDateCard(s) {
+  if (!s) return '<span class="e-date-day">—</span><span class="e-date-mon"></span>';
+  const parts = s.split('-');
+  const d = parseInt(parts[2], 10) || '—';
+  const meses = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+  const mon = parts[1] ? (meses[parseInt(parts[1],10)-1] || '') : '';
+  return '<span class="e-date-day">' + d + '</span><span class="e-date-mon">' + mon + '</span>';
+}
 function fmtDateWeek(s) {
   if (!s) return '';
   const [y,m,d] = s.split('-').map(Number);
@@ -845,15 +853,7 @@ function render() {
     list = list.filter(e => (e.Cliente || '').toLowerCase().includes(q));
   }
 
-  list.sort((a, b) => {
-    const af = needsFollowup(a), bf = needsFollowup(b);
-    if (af && !bf) return -1;
-    if (!af && bf) return 1;
-    const ar = ['Fechado','Perdido'].includes(a.Status) ? 1 : 0;
-    const br = ['Fechado','Perdido'].includes(b.Status) ? 1 : 0;
-    if (ar !== br) return ar - br;
-    return (b.DataPedido || '').localeCompare(a.DataPedido || '');
-  });
+  list.sort((a, b) => (b.DataPedido || '').localeCompare(a.DataPedido || ''));
 
   // Atualiza tabs de status (mobile + desktop)
   document.querySelectorAll('.ftab').forEach(t => t.classList.toggle('on', t.dataset.f === curFilter));
@@ -915,7 +915,7 @@ function render() {
       : '';
     return (
       '<div class="entry ' + cls + '" onclick="openAction(\'' + esc(e.ID) + '\')">' +
-        '<span class="e-icon">' + pickIcon(e.Servico) + '</span>' +
+        '<div class="e-date">' + fmtDateCard(e.DataPedido) + '</div>' +
         '<div class="e-info">' +
           '<div class="e-name">' + esc(e.Cliente || '—') + '</div>' +
           '<div class="e-srv">' +

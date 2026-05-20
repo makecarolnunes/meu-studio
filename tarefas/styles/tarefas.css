@@ -419,9 +419,11 @@ body {
   .panel.open { transform: translateX(-50%) translateY(0); }
 }
 
-/* Ocultar sidebar no mobile */
-.tar-d-sidebar   { display: none; }
-.tar-d-toolbar   { display: none; }
+/* Ocultar sidebar e toolbar no mobile */
+@media (max-width: 1023px) {
+  .tar-d-sidebar   { display: none; }
+  .tar-d-toolbar   { display: none; }
+}
 
 
 /* ── OVERLAY + PANEL ── */
