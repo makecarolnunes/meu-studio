@@ -160,6 +160,24 @@
       50%      { box-shadow: -3px 0 20px rgba(198,40,40,0.35); }
     }
 
+    /* ── DATE GROUP ──────────────────────────────────────── */
+    .date-group-hdr {
+      display: flex; align-items: center; gap: 8px;
+      margin: 10px 0 4px; padding: 0 1px;
+    }
+    .date-group-hdr:first-child { margin-top: 2px; }
+    .date-group-pill {
+      font-size: 0.69rem; font-weight: 800;
+      color: var(--brown-d); background: rgba(139,107,97,0.10);
+      padding: 3px 10px; border-radius: 20px; white-space: nowrap;
+    }
+    .date-group-count {
+      font-size: 0.65rem; font-weight: 700;
+      color: var(--muted); background: var(--border);
+      padding: 2px 7px; border-radius: 10px;
+    }
+    .date-group-line { flex: 1; height: 1px; background: var(--border); }
+
     .e-icon { display: none; }
     .e-date {
       flex-shrink: 0; display: flex; flex-direction: column; align-items: center;
@@ -429,7 +447,9 @@
       /* ── Cards 2 colunas no desktop ── */
       .content { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; align-items: start; }
       .content .entry { margin-bottom: 0 !important; }
-      /* Empty state e loader ocupam as 2 colunas */
+      /* Groups e empty/loader ocupam as 2 colunas */
+      .date-group { display: contents; }
+      .date-group-hdr { grid-column: 1 / -1; }
       .content .empty,
       .content .loader { grid-column: 1 / -1; }
     }

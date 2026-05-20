@@ -88,6 +88,54 @@ function fmtDateCard(s) {
   const mon = parts[1] ? (meses[parseInt(parts[1],10)-1] || '') : '';
   return '<span class="e-date-day">' + d + '</span><span class="e-date-mon">' + mon + '</span>';
 }
+function fmtDateGroup(s) {
+  if (!s) return 'Sem data';
+  const parts = s.split('-').map(Number);
+  const [y, m, d] = parts;
+  if (!y || !m || !d) return s;
+  const meses = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+  const dias  = ['dom','seg','ter','qua','qui','sex','sáb'];
+  return pad(d) + ' ' + meses[m-1] + ' · ' + dias[new Date(y, m-1, d).getDay()];
+}
+function renderEntryCard(e) {
+  const sCls   = STATUS_CLASS[e.Status] || 'st-novo';
+  const agOk   = e.Status === 'Fechado' && getAgendaCriada(e);
+  const agPend = e.Status === 'Fechado' && !getAgendaCriada(e);
+  const cls    = agPend ? 'is-agenda-pend' :
+                 agOk   ? 'is-agenda-ok'   :
+                 e.Status === 'Perdido' ? 'is-perdido' :
+                 needsFollowup(e) ? 'needs-fu' : '';
+  const nfu    = needsFollowup(e);
+  const val    = e.ValorFechado ? parseFloat(e.ValorFechado) : parseFloat(e.ValorProp) || 0;
+  const valStr = val ? fmtVal(val) : '—';
+  const meta   = e.DataEvento    ? 'Evento: '      + fmtDate(e.DataEvento)
+               : e.ProxFollowup  ? 'Follow-up: '   + fmtDate(e.ProxFollowup)
+               : '';
+  const compOk = hasComprovante(e);
+  const statusRow = e.Status === 'Fechado'
+    ? '<div class="status-row">' +
+        (agOk ? '<span class="chip chip-ok">📅 Na agenda</span>'
+              : '<span class="chip chip-warn">📅 Agenda pendente</span>') +
+        (compOk
+          ? '<span class="chip chip-ok">🧾 ' + (Array.isArray(e.Comprovantes) && e.Comprovantes.length > 1 ? e.Comprovantes.length + ' comprovantes' : 'Comprovante') + '</span>'
+          : '<span class="chip chip-muted">🧾 Sem comprovante</span>') +
+      '</div>'
+    : '';
+  return (
+    '<div class="entry ' + cls + '" onclick="openAction(\'' + esc(e.ID) + '\')">' +
+      '<div class="e-date">' + fmtDateCard(e.DataPedido) + '</div>' +
+      '<div class="e-info">' +
+        '<div class="e-name">' + esc(e.Cliente || '—') + '</div>' +
+        '<div class="e-srv">' + (nfu ? '<span class="fu-dot"></span>' : '') + esc(e.Servico || '—') + '</div>' +
+        (meta ? '<div class="e-meta">' + esc(meta) + '</div>' : '') +
+        statusRow +
+      '</div>' +
+      '<div class="e-right">' +
+        '<span class="badge ' + sCls + '">' + esc(e.Status || 'Novo') + '</span>' +
+        '<span class="e-val">' + valStr + '</span>' +
+      '</div>' +
+    '</div>');
+}
 function fmtDateWeek(s) {
   if (!s) return '';
   const [y,m,d] = s.split('-').map(Number);
@@ -889,48 +937,23 @@ function render() {
     return;
   }
 
-  content.innerHTML = list.map(e => {
-    const sCls   = STATUS_CLASS[e.Status] || 'st-novo';
-    const agOk   = e.Status === 'Fechado' && getAgendaCriada(e);
-    const agPend = e.Status === 'Fechado' && !getAgendaCriada(e);
-    const cls    = agPend ? 'is-agenda-pend' :
-                   agOk   ? 'is-agenda-ok'   :
-                   e.Status === 'Perdido' ? 'is-perdido' :
-                   needsFollowup(e) ? 'needs-fu' : '';
-    const nfu    = needsFollowup(e);
-    const val    = e.ValorFechado ? parseFloat(e.ValorFechado) : parseFloat(e.ValorProp) || 0;
-    const valStr = val ? fmtVal(val) : '—';
-    const meta   = e.DataEvento ? 'Evento: ' + fmtDate(e.DataEvento)
-                 : (e.ProxFollowup ? 'Follow-up: ' + fmtDate(e.ProxFollowup) : 'Pedido: ' + fmtDate(e.DataPedido));
-    const compOk = hasComprovante(e);
-    const statusRow = e.Status === 'Fechado'
-      ? '<div class="status-row">' +
-          (agOk
-            ? '<span class="chip chip-ok">📅 Na agenda</span>'
-            : '<span class="chip chip-warn">📅 Agenda pendente</span>') +
-          (compOk
-            ? '<span class="chip chip-ok">🧾 ' + (Array.isArray(e.Comprovantes) && e.Comprovantes.length > 1 ? e.Comprovantes.length + ' comprovantes' : 'Comprovante') + '</span>'
-            : '<span class="chip chip-muted">🧾 Sem comprovante</span>') +
-        '</div>'
-      : '';
-    return (
-      '<div class="entry ' + cls + '" onclick="openAction(\'' + esc(e.ID) + '\')">' +
-        '<div class="e-date">' + fmtDateCard(e.DataPedido) + '</div>' +
-        '<div class="e-info">' +
-          '<div class="e-name">' + esc(e.Cliente || '—') + '</div>' +
-          '<div class="e-srv">' +
-            (nfu ? '<span class="fu-dot"></span>' : '') +
-            esc(e.Servico || '—') +
-          '</div>' +
-          '<div class="e-meta">' + esc(meta) + '</div>' +
-          statusRow +
-        '</div>' +
-        '<div class="e-right">' +
-          '<span class="badge ' + sCls + '">' + esc(e.Status || 'Novo') + '</span>' +
-          '<span class="e-val">' + valStr + '</span>' +
-        '</div>' +
-      '</div>');
-  }).join('');
+  const groups = [];
+  const groupMap = {};
+  list.forEach(e => {
+    const key = e.DataPedido || '';
+    if (!groupMap[key]) { groupMap[key] = []; groups.push({ key, items: groupMap[key] }); }
+    groupMap[key].push(e);
+  });
+  content.innerHTML = groups.map(g =>
+    '<div class="date-group">' +
+      '<div class="date-group-hdr">' +
+        '<span class="date-group-pill">' + fmtDateGroup(g.key) + '</span>' +
+        (g.items.length > 1 ? '<span class="date-group-count">' + g.items.length + '</span>' : '') +
+        '<span class="date-group-line"></span>' +
+      '</div>' +
+      g.items.map(renderEntryCard).join('') +
+    '</div>'
+  ).join('');
 }
 
 // ══════════════════════════════════════════════════════════
