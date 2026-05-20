@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-20 17:19 | main | fix: corrige upload de comprovantes no Supabase Storage -->
+<!-- AUTO: 2026-05-20 17:31 | main | feat: ordena├º├úo por data nos or├ºamentos, data no card e bot├úo atualizar -->
 
