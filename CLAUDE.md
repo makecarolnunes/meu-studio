@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-20 17:37 | main | feat: agrupa or├ºamentos por data de recebimento -->
+<!-- AUTO: 2026-05-20 17:44 | main | feat: reorganiza filtros de status dos or├ºamentos -->
 
