@@ -9,6 +9,20 @@ function pick(field, value, form) {
     if (form === 's') Fs[field] = value;
     else F[field] = value;
     if (field === 'tipo' || field === 'recorrencia') { render(); return; }
+    // Auto-detect local quando serviço contém "domicílio" ou "studio"
+    if (!form && field === 'servico') {
+        const low = (value || '').toLowerCase();
+        const SKIP = ['noiva', 'curso', 'automaquiagem', 'automake', 'assistência', 'assistencia'];
+        if (!SKIP.some(s => low.includes(s))) {
+            if (low.includes('domicílio') || low.includes('domicilio')) {
+                F.local = 'Em Domicílio';
+                document.querySelectorAll('[data-f="local"][data-form="e"]').forEach(b => b.classList.toggle('on', b.dataset.v === 'Em Domicílio'));
+            } else if (low.includes('studio') || low.includes('estúdio') || low.includes('estudio')) {
+                F.local = 'Studio';
+                document.querySelectorAll('[data-f="local"][data-form="e"]').forEach(b => b.classList.toggle('on', b.dataset.v === 'Studio'));
+            }
+        }
+    }
     // Auto-fill price when service or local changes
     if (!form && (field === 'servico' || field === 'local')) {
         const prices = getServicePrices();
@@ -192,6 +206,44 @@ async function toggleSaidaStatus(id) {
     cacheSaidas(); render();
     toast(s.status==='Pago'?'Marcado como Pago!':'Marcado como Previsto');
     sbCall({action:'update', table:'saidas', id, field:'status', value:s.status});
+}
+
+// ── COMPROVANTE DE ENTRADA ──
+async function uploadEntradaComprovante(event, entryId) {
+    const file = (event.target.files || [])[0];
+    if (!file) return;
+    event.target.value = '';
+    if (file.size > 10 * 1024 * 1024) { toast('⚠️ Arquivo muito grande. Máx. 10 MB.'); return; }
+    toast('⏳ Enviando comprovante...');
+    try {
+        let b64 = await fileToBase64(file);
+        let tipo = file.type;
+        if (file.type.startsWith('image/')) {
+            b64 = await resizeImageBase64(b64, file.type);
+            tipo = 'image/jpeg';
+        }
+        const result = await DB.storage.uploadEntradaComprovante(entryId, file, b64, tipo);
+        if (!result.ok) throw new Error(result.error || 'Erro no upload');
+        const entry = entries.find(x => String(x.id) === String(entryId));
+        if (entry) { entry.comprovanteUrl = result.link; cacheEntries(); }
+        sbCall({action:'update', table:'entries', id:entryId, field:'comprovanteUrl', value:result.link});
+        render();
+        toast('✅ Comprovante salvo!');
+    } catch(err) {
+        console.error(err);
+        toast('❌ Erro ao enviar: ' + (err.message || err));
+        render();
+    }
+}
+
+function removeEntradaComprovante(entryId) {
+    const entry = entries.find(x => String(x.id) === String(entryId));
+    if (!entry || !confirm('Remover o comprovante?')) return;
+    entry.comprovanteUrl = '';
+    cacheEntries();
+    sbCall({action:'update', table:'entries', id:entryId, field:'comprovanteUrl', value:''});
+    render();
+    toast('🗑 Comprovante removido');
 }
 
 // ── CSV ──

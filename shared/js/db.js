@@ -350,6 +350,22 @@ window.DB = {
       if (error) throw error;
     },
 
+    async uploadEntradaComprovante(entryId, file, base64Data, mimeType) {
+      const ts  = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+      const ext = file.name.split('.').pop() || 'bin';
+      const path = `entradas/${entryId}/${ts}.${ext}`;
+      const byteChars = atob(base64Data);
+      const bytes = new Uint8Array(byteChars.length);
+      for (let i = 0; i < byteChars.length; i++) bytes[i] = byteChars.charCodeAt(i);
+      const blob = new Blob([bytes], { type: mimeType || file.type });
+      const { error } = await _sb.storage.from('comprovantes').upload(path, blob, {
+        cacheControl: '3600', upsert: true,
+      });
+      if (error) throw error;
+      const { data } = _sb.storage.from('comprovantes').getPublicUrl(path);
+      return { ok: true, fileId: path, link: data.publicUrl, nome: file.name };
+    },
+
     async uploadAnotacao(notaId, file, base64Data, mimeType) {
       const ts  = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
       const ext = file.name.split('.').pop() || 'bin';

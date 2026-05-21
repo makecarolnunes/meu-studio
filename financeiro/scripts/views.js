@@ -177,6 +177,21 @@ function renderEntryDetailPanel(e) {
     </div>
     <div class="fg"><label class="fl">Equipe <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">(opcional)</span></label><input class="fi" type="text" id="ee-equipe" value="${(e.equipe||'').replace(/"/g,'&quot;')}" placeholder="Ex: Julia" autocomplete="off"></div>
     <div class="fg"><label class="fl">Observações</label><textarea class="fi ta" id="ee-obs">${e.obs||''}</textarea></div>
+    <div class="fg">
+        <label class="fl">Comprovante de pagamento</label>
+        ${e.comprovanteUrl
+            ? `<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;padding:10px 12px;background:#f0f7ff;border-radius:10px;border:1px solid #c5deff">
+                   <a href="${e.comprovanteUrl}" target="_blank" rel="noopener" style="flex:1;font-size:.82rem;color:#1565c0;font-weight:600;text-decoration:none">📎 Ver comprovante</a>
+                   <button onclick="removeEntradaComprovante('${e.id}')" style="font-size:.72rem;background:none;border:none;color:var(--muted);cursor:pointer;padding:2px 6px">🗑</button>
+               </div>`
+            : ''}
+        <label style="display:flex;align-items:center;justify-content:center;gap:7px;padding:10px 14px;background:var(--bg,#faf8f6);border:1.5px dashed var(--border,#e5ddd8);border-radius:10px;cursor:pointer;font-size:.82rem;font-weight:600;color:var(--muted);transition:border-color .15s" onmouseover="this.style.borderColor='var(--brand,#8B6B61)'" onmouseout="this.style.borderColor='var(--border,#e5ddd8)'" onclick="document.getElementById('entrada-comp-inp').click()">
+            📎 ${e.comprovanteUrl ? 'Trocar comprovante' : 'Anexar comprovante'}
+            <span style="font-size:.7rem;opacity:.65">imagem ou PDF · máx 10 MB</span>
+        </label>
+        <input type="file" id="entrada-comp-inp" style="display:none" accept="image/*,application/pdf"
+               onchange="uploadEntradaComprovante(event,'${e.id}')">
+    </div>
     <div class="detail-actions">
         <button class="bsub" onclick="saveEditEntry('${e.id}')">Salvar alterações</button>
         <button class="delbtn" style="width:44px;height:44px;flex-shrink:0" onclick="delEntry('${e.id}')">${SVG.trash}</button>

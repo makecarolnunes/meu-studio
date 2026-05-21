@@ -79,6 +79,26 @@ function fileToBase64(file) {
     });
 }
 
+function resizeImageBase64(base64, tipo) {
+    return new Promise(res => {
+        const img = new Image();
+        img.onload = function() {
+            const MAX = 1600;
+            let w = img.width, h = img.height;
+            if (w > MAX || h > MAX) {
+                if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
+                else       { w = Math.round(w * MAX / h); h = MAX; }
+            }
+            const cv = document.createElement('canvas');
+            cv.width = w; cv.height = h;
+            cv.getContext('2d').drawImage(img, 0, 0, w, h);
+            res(cv.toDataURL('image/jpeg', 0.82).split(',')[1]);
+        };
+        img.onerror = () => res(base64);
+        img.src = 'data:' + tipo + ';base64,' + base64;
+    });
+}
+
 function dl(csv, name) {
     const blob = new Blob(['﻿'+csv], {type:'text/csv;charset=utf-8;'});
     const url = URL.createObjectURL(blob);

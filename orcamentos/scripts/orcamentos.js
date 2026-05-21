@@ -1330,6 +1330,9 @@ function abrirFechamento() {
 
   document.querySelectorAll('[data-local]').forEach(b => b.classList.toggle('on', b.dataset.local === 'studio'));
   document.getElementById('fech-addr-row').classList.remove('show');
+  // Auto-detect local a partir do serviço pré-preenchido
+  const _primarySvc = (fechSlots[0] && fechSlots[0].servico) || '';
+  if (_primarySvc) autoDetectLocal(_primarySvc);
   document.querySelectorAll('[data-ss]').forEach(b => {
     b.classList.remove('on', 'on-ok');
     if (b.dataset.ss === 'recebido') b.classList.add('on-ok');
