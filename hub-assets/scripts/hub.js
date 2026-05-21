@@ -96,6 +96,12 @@
         '<path d="M4 19.5A2.5 2.5 0 016.5 17H20"/>' +
         '<path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/>' +
       '</svg>',
+    instagram:
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+        '<rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>' +
+        '<path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>' +
+        '<line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>' +
+      '</svg>',
     arrow:
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
         '<path d="M5 12h14M13 6l6 6-6 6"/>' +
@@ -165,13 +171,19 @@
     var contUrl  = (cont && cont.url)  ? cont.url  : 'conteudo/';
     var contNome = (cont && cont.nome) ? cont.nome : 'Conteúdo';
     var contDesc = (cont && cont.descricao) ? cont.descricao : 'Planejamento de posts e ideias';
-    document.getElementById('creative-section').innerHTML =
-      '<a href="' + esc(contUrl) + '" class="sys-card card-cont">' +
-        '<div class="sys-icon-wrap">' + iconSvg('conteudo') + '</div>' +
-        '<div class="sys-name">' + esc(contNome) + '</div>' +
-        '<div class="sys-desc">' + esc(contDesc) + '</div>' +
+
+    var CREATIVE = [
+      { key: 'conteudo',  nome: contNome,    desc: contDesc,                                    url: contUrl,      cls: 'card-cont'  },
+      { key: 'instagram', nome: 'Instagram', desc: 'Dashboard, métricas e relatórios semanais', url: 'instagram/', cls: 'card-insta' },
+    ];
+    document.getElementById('creative-section').innerHTML = CREATIVE.map(function(c) {
+      return '<a href="' + esc(c.url) + '" class="sys-card ' + c.cls + '">' +
+        '<div class="sys-icon-wrap">' + iconSvg(c.key) + '</div>' +
+        '<div class="sys-name">' + esc(c.nome) + '</div>' +
+        '<div class="sys-desc">' + esc(c.desc) + '</div>' +
         '<div class="sys-arrow">' + iconSvg('arrow') + '</div>' +
       '</a>';
+    }).join('');
   }
 
   function esc(s) {

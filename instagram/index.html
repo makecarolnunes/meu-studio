@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Instagram — @makecarolnunes</title>
+  <link rel="stylesheet" href="../shared/css/tokens.css">
+  <link rel="stylesheet" href="../shared/css/base.css">
+  <link rel="stylesheet" href="./styles/instagram.css">
+</head>
+<body>
+
+<div id="ig-app" style="display:none">
+
+  <!-- HEADER -->
+  <header class="ig-hdr">
+    <button class="ig-back" onclick="window.location.href='../'" aria-label="Voltar">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <div class="ig-hdr-center">
+      <h1>Instagram</h1>
+      <div class="ig-hdr-sub" id="hdr-handle">—</div>
+    </div>
+    <div class="ig-hdr-right">
+      <button class="ig-icon-btn" onclick="igRefresh()" id="btn-refresh" aria-label="Atualizar">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+      </button>
+      <button class="ig-icon-btn" onclick="openTokenModal()" aria-label="Configurar">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <main class="ig-main">
+
+    <!-- SETUP / TOKEN AUSENTE -->
+    <section class="ig-setup" id="setup-screen" style="display:none">
+      <div class="setup-icon">🔑</div>
+      <h2>Conectar Instagram</h2>
+      <p>Cole o token de acesso da Instagram Graph API. Ele fica salvo só no seu navegador.</p>
+      <input type="text" class="input" id="setup-token-inp" placeholder="IGAA...">
+      <button class="btn btn-primary" onclick="saveSetupToken()" style="width:100%">Conectar</button>
+      <details class="setup-help">
+        <summary>Como gerar o token?</summary>
+        <ol>
+          <li>Acesse <a href="https://developers.facebook.com/apps/" target="_blank">Facebook Developer</a></li>
+          <li>Abra seu app → "Configuração da API com login do Instagram business"</li>
+          <li>Seção "Gerar tokens de acesso" → clique em "Gerar token" ao lado da sua conta</li>
+          <li>Cole o token aqui</li>
+        </ol>
+      </details>
+    </section>
+
+    <!-- LOADING -->
+    <section class="ig-loading" id="loading-screen" style="display:none">
+      <div class="spinner"></div>
+      <div class="loading-txt" id="loading-txt">Carregando dados do Instagram...</div>
+    </section>
+
+    <!-- ERROR -->
+    <section class="ig-error" id="error-screen" style="display:none">
+      <div class="error-icon">⚠️</div>
+      <h2 id="error-title">Erro ao carregar</h2>
+      <p id="error-msg">—</p>
+      <button class="btn btn-primary" onclick="igRefresh()">Tentar novamente</button>
+      <button class="btn btn-ghost" onclick="openTokenModal()">Atualizar token</button>
+    </section>
+
+    <!-- DASHBOARD -->
+    <div id="dashboard" style="display:none">
+
+      <!-- PROFILE CARD -->
+      <section class="profile-card">
+        <img class="profile-pic" id="profile-pic" src="" alt="" onerror="this.style.display='none'">
+        <div class="profile-info">
+          <div class="profile-username" id="profile-username">—</div>
+          <div class="profile-bio" id="profile-bio">—</div>
+          <div class="profile-bio-meta" id="profile-bio-meta"></div>
+        </div>
+      </section>
+
+      <!-- STATS CARDS -->
+      <section class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Seguidores</div>
+          <div class="stat-value" id="stat-followers">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Posts</div>
+          <div class="stat-value" id="stat-media">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Likes médios</div>
+          <div class="stat-value" id="stat-avg-likes">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Engajamento</div>
+          <div class="stat-value" id="stat-engagement">—</div>
+          <div class="stat-foot">% sobre seguidores</div>
+        </div>
+      </section>
+
+      <!-- PERFORMANCE CHART -->
+      <section class="chart-card">
+        <div class="chart-hdr">
+          <h3>Performance dos últimos posts</h3>
+          <div class="chart-legend">
+            <span class="leg-likes">● Likes</span>
+            <span class="leg-com">● Comentários</span>
+          </div>
+        </div>
+        <div class="chart-wrap">
+          <canvas id="perf-chart"></canvas>
+        </div>
+        <div class="chart-foot" id="perf-foot"></div>
+      </section>
+
+      <!-- TOP POSTS -->
+      <section class="top-card">
+        <h3>🔥 Top 3 posts</h3>
+        <div id="top-posts"></div>
+      </section>
+
+      <!-- BOTTOM POSTS -->
+      <section class="top-card">
+        <h3>📉 Bottom 3 posts</h3>
+        <div id="bottom-posts"></div>
+      </section>
+
+      <!-- HEATMAP -->
+      <section class="chart-card">
+        <h3>Horários e dias de pico</h3>
+        <div class="heatmap-wrap">
+          <table class="heatmap" id="heatmap"></table>
+        </div>
+        <div class="chart-foot" id="heatmap-foot">Cor mais escura = maior engajamento médio</div>
+      </section>
+
+      <!-- HASHTAGS -->
+      <section class="hashtag-card">
+        <h3># Hashtags mais usadas</h3>
+        <div id="hashtag-list"></div>
+      </section>
+
+      <!-- FORMATS -->
+      <section class="format-card">
+        <h3>Formato com melhor engajamento</h3>
+        <div id="format-stats"></div>
+      </section>
+
+      <!-- REPORTS -->
+      <section class="reports-card">
+        <h3>📊 Relatórios semanais</h3>
+        <p class="reports-info">A routine automática roda toda segunda 7h e salva relatórios completos com pautas, análise comparativa e estratégia.</p>
+        <a class="btn btn-outline" href="https://github.com/makecarolnunes/meu-studio/tree/main/instagram/relatorios" target="_blank" style="width:100%;text-align:center;display:block;text-decoration:none">
+          Ver todos no GitHub →
+        </a>
+        <a class="btn btn-ghost" href="https://github.com/makecarolnunes/meu-studio/blob/main/instagram/concorrentes.md" target="_blank" style="width:100%;text-align:center;display:block;text-decoration:none;margin-top:8px">
+          Editar concorrentes.md →
+        </a>
+      </section>
+
+      <div class="ig-foot">
+        Atualizado em <span id="updated-at">—</span>
+      </div>
+
+    </div>
+
+  </main>
+
+</div>
+
+<!-- TOKEN MODAL -->
+<div class="modal-bg" id="token-modal-bg" onclick="if(event.target===this)closeTokenModal()">
+  <div class="modal-box">
+    <div class="modal-title">Configurar Token</div>
+    <p class="modal-desc">Cole o token da Instagram Graph API. Salva só no navegador.</p>
+    <input type="text" class="input" id="token-modal-inp" placeholder="IGAA...">
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeTokenModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveTokenModal()">Salvar</button>
+    </div>
+    <div class="modal-foot" id="token-current"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Dependências -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="../config.js"></script>
+<script src="../shared/js/db.js"></script>
+<script src="./scripts/instagram.js"></script>
+</body>
+</html>

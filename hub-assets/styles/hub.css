@@ -206,6 +206,7 @@
     .card-fin    { --accent: var(--green);  --icon-bg: #CEEAB8; }
     .card-client { --accent: var(--brown);  --icon-bg: #E8D8CE; }
     .card-conf   { --accent: var(--rose-d); --icon-bg: #EADAE8; }
+    .card-insta  { --accent: #D4537E;        --icon-bg: #FBEAF0; }
 
     /* ─── SVG icons (substituem emojis) ──────────── */
     .sys-icon-wrap { color: var(--accent, var(--rose)); }
