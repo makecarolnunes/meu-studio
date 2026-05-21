@@ -427,6 +427,88 @@ window.DB = {
     },
   },
 
+  // ──────────────────────────────────────────────────────────────
+  //  Instagram Dashboard — Validações + estado singleton
+  //  Sincroniza dados estratégicos do módulo Instagram entre devices.
+  // ──────────────────────────────────────────────────────────────
+  instagram: {
+    // ── Validações do Validador de Post (histórico) ──
+    validations: {
+      async list() {
+        _guard();
+        const { data, error } = await _sb
+          .from('instagram_validations')
+          .select('*')
+          .order('generated_at', { ascending: false })
+          .limit(50);
+        if (error) throw error;
+        return (data || []).map(r => ({
+          id:          r.id,
+          generatedAt: r.generated_at ? new Date(r.generated_at).getTime() : Date.now(),
+          inputs:      r.inputs || {},
+          result:      r.result || {},
+          usage:       r.usage_json || null,
+        }));
+      },
+      async upsert(v) {
+        _guard();
+        const row = {
+          id:           String(v.id || Date.now()),
+          generated_at: new Date(v.generatedAt || Date.now()).toISOString(),
+          inputs:       v.inputs || {},
+          result:       v.result || {},
+          usage_json:   v.usage || null,
+        };
+        const { error } = await _sb
+          .from('instagram_validations')
+          .upsert(row, { onConflict: 'id' });
+        if (error) throw error;
+      },
+      async remove(id) {
+        _guard();
+        const { error } = await _sb
+          .from('instagram_validations')
+          .delete()
+          .eq('id', String(id));
+        if (error) throw error;
+      },
+      async clear() {
+        _guard();
+        const { error } = await _sb
+          .from('instagram_validations')
+          .delete()
+          .neq('id', '__none__'); // delete all
+        if (error) throw error;
+      },
+    },
+    // ── Estado singleton (analysis, competitors, manual_inputs) ──
+    async getState(key) {
+      _guard();
+      const { data, error } = await _sb
+        .from('instagram_state')
+        .select('value')
+        .eq('key', key)
+        .maybeSingle();
+      if (error) throw error;
+      return data ? data.value : null;
+    },
+    async setState(key, value) {
+      _guard();
+      const { error } = await _sb
+        .from('instagram_state')
+        .upsert({ key, value, updated_at: new Date().toISOString() }, { onConflict: 'key' });
+      if (error) throw error;
+    },
+    async removeState(key) {
+      _guard();
+      const { error } = await _sb
+        .from('instagram_state')
+        .delete()
+        .eq('key', key);
+      if (error) throw error;
+    },
+  },
+
   valoresServicos: {
     // Retorna mapa { nome: { valor, duracao } }
     async load() {

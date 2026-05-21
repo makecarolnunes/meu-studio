@@ -58,8 +58,95 @@
     // Carrega Brand Brain em paralelo (não bloqueia se falhar)
     loadBrandBrain();
 
+    // Sincroniza com Supabase em background (não bloqueia UI)
+    syncFromSupabase();
+
     if (!state.token) { showSetup(); return; }
     loadFromCacheOrAPI();
+  }
+
+  // ══════════════════════════════════════════════════════════
+  //  SUPABASE SYNC — cross-device
+  //  Mobile/desktop compartilham validações, análise, concorrentes,
+  //  inputs manuais. localStorage = cache local + fallback offline.
+  // ══════════════════════════════════════════════════════════
+  async function syncFromSupabase() {
+    if (typeof DB === 'undefined' || !DB.instagram || window._SB_ERROR) {
+      console.log('[ig] Supabase indisponível — usando só localStorage');
+      return;
+    }
+    try {
+      console.log('[ig] sincronizando do Supabase...');
+      // Validações
+      var supaVals = await DB.instagram.validations.list().catch(function(e) {
+        console.warn('[ig] validations list falhou:', e.message);
+        return null;
+      });
+      if (supaVals && supaVals.length) {
+        localStorage.setItem(VALIDATIONS_KEY, JSON.stringify(supaVals.slice(0, MAX_VALIDATIONS)));
+      }
+      // Singleton states
+      var supaAnalysis = await DB.instagram.getState('analysis').catch(function() { return null; });
+      var supaComps = await DB.instagram.getState('competitors').catch(function() { return null; });
+      var supaManual = await DB.instagram.getState('manual').catch(function() { return null; });
+
+      if (supaAnalysis) {
+        localStorage.setItem(ANALYSIS_KEY, JSON.stringify(supaAnalysis));
+        state.analysis = supaAnalysis;
+      } else {
+        // Supabase vazio mas pode ter no localStorage — empurra pra Supabase
+        var localAn = readJSON(ANALYSIS_KEY, null);
+        if (localAn) pushStateToSupabase('analysis', localAn);
+      }
+      if (supaComps && Array.isArray(supaComps) && supaComps.length) {
+        COMPETITORS = supaComps;
+        localStorage.setItem(COMPETITORS_KEY, JSON.stringify(supaComps));
+      } else if (COMPETITORS && COMPETITORS.length) {
+        pushStateToSupabase('competitors', COMPETITORS);
+      }
+      if (supaManual) {
+        MANUAL = supaManual;
+        localStorage.setItem(MANUAL_KEY, JSON.stringify(supaManual));
+      } else if (MANUAL && Object.keys(MANUAL).length) {
+        pushStateToSupabase('manual', MANUAL);
+      }
+      // Validações locais sem Supabase → empurra
+      if (!supaVals || !supaVals.length) {
+        var localVals = readJSON(VALIDATIONS_KEY, []);
+        if (localVals.length) {
+          console.log('[ig] empurrando', localVals.length, 'validações locais pro Supabase');
+          localVals.forEach(function(v) {
+            if (!v.id) v.id = String(v.generatedAt || Date.now());
+            pushValidationToSupabase(v);
+          });
+        }
+      }
+
+      console.log('[ig] sync OK — validations:', (supaVals || []).length, 'analysis:', !!supaAnalysis, 'comps:', (supaComps || []).length, 'manual:', !!supaManual);
+
+      // Re-render se dashboard já visível
+      var dash = document.getElementById('dashboard');
+      if (dash && dash.style.display === 'block') {
+        renderAnalysis();
+        restoreLastValidation();
+      }
+    } catch (err) {
+      console.warn('[ig] sync error:', err);
+    }
+  }
+
+  function pushValidationToSupabase(v) {
+    if (typeof DB === 'undefined' || !DB.instagram || window._SB_ERROR) return;
+    DB.instagram.validations.upsert(v).catch(function(err) {
+      console.warn('[ig] push validation falhou:', err.message);
+    });
+  }
+
+  function pushStateToSupabase(key, value) {
+    if (typeof DB === 'undefined' || !DB.instagram || window._SB_ERROR) return;
+    DB.instagram.setState(key, value).catch(function(err) {
+      console.warn('[ig] push state ' + key + ' falhou:', err.message);
+    });
   }
 
   // ── UI STATES ─────────────────────────────────────────────
@@ -1183,8 +1270,9 @@
       return copy;
     });
     localStorage.setItem(COMPETITORS_KEY, JSON.stringify(clean));
+    pushStateToSupabase('competitors', clean);
     closeCompetitorsModal();
-    toast('Concorrentes salvos');
+    toast('Concorrentes salvos · sincronizados');
   };
 
   // ══════════════════════════════════════════════════════════
@@ -1227,8 +1315,9 @@
       observacoes: document.getElementById('m-obs').value
     };
     localStorage.setItem(MANUAL_KEY, JSON.stringify(MANUAL));
+    pushStateToSupabase('manual', MANUAL);
     closeManualModal();
-    toast('Inputs salvos');
+    toast('Inputs salvos · sincronizados');
   };
 
   // ══════════════════════════════════════════════════════════
@@ -1563,9 +1652,10 @@
         usage: result.usage
       };
       localStorage.setItem(ANALYSIS_KEY, JSON.stringify(analysis));
+      pushStateToSupabase('analysis', analysis);
       state.analysis = analysis;
       renderAnalysis();
-      toast('Análise gerada ✓');
+      toast('Análise gerada · sincronizada ✓');
     } catch (err) {
       console.error('[ig] análise falhou:', err);
       if (statusEl) statusEl.innerHTML = '<span style="color:var(--danger)">Erro: ' + esc(err.message) + '</span>';
@@ -2234,10 +2324,15 @@
   };
 
   window.clearValidations = function() {
-    if (!confirm('Apagar todo o histórico de validações?')) return;
+    if (!confirm('Apagar todo o histórico de validações (mobile + desktop)?')) return;
     localStorage.removeItem(VALIDATIONS_KEY);
     document.getElementById('validate-result').innerHTML = '';
     renderValidationHistory();
+    if (typeof DB !== 'undefined' && DB.instagram && !window._SB_ERROR) {
+      DB.instagram.validations.clear().catch(function(err) {
+        console.warn('[ig] clear Supabase falhou:', err.message);
+      });
+    }
     toast('Histórico apagado');
   };
 
@@ -2271,6 +2366,7 @@
       console.log('[ig] validator prompt size:', prompt.length);
       var result = await callClaude(prompt);
       var validation = {
+        id: String(Date.now()),
         generatedAt: Date.now(),
         inputs: {
           briefing: briefing,
@@ -2282,10 +2378,11 @@
         result: result.parsed,
         usage: result.usage
       };
-      // Salva no histórico (novo no topo)
+      // Salva no histórico local (novo no topo) + Supabase
       var hist = loadValidations();
       hist.unshift(validation);
       saveValidations(hist);
+      pushValidationToSupabase(validation);
       renderValidatorResult(result.parsed, validation.generatedAt);
       renderValidationHistory();
       if (statusEl) statusEl.innerHTML = '<span class="t-caption">✓ Análise salva · ' + (result.usage ? fmtNum(result.usage.input_tokens) + ' → ' + fmtNum(result.usage.output_tokens) + ' tokens' : '') + '</span>';
