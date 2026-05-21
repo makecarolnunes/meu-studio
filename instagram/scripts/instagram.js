@@ -13,8 +13,10 @@
   var MANUAL_KEY = 'mk_instagram_manual';
   var CLAUDE_KEY = 'mk_claude_key';
   var ANALYSIS_KEY = 'mk_instagram_analysis';
+  var VALIDATIONS_KEY = 'mk_instagram_validations';
   var CACHE_TTL = 30 * 60 * 1000;
   var ANALYSIS_TTL = 7 * 24 * 60 * 60 * 1000; // 7 dias
+  var MAX_VALIDATIONS = 10;
 
   // ── STATE ─────────────────────────────────────────────────
   var state = {
@@ -526,6 +528,8 @@
     renderAnalysis();
     renderUpdatedAt();
     showDashboard();
+    // Restaura última validação se houver
+    setTimeout(restoreLastValidation, 0);
   }
 
   function renderHeader() {
@@ -2148,6 +2152,95 @@
     return ctx + task;
   }
 
+  function loadValidations() {
+    try {
+      var raw = localStorage.getItem(VALIDATIONS_KEY);
+      if (!raw) return [];
+      var arr = JSON.parse(raw);
+      return Array.isArray(arr) ? arr : [];
+    } catch (e) { return []; }
+  }
+
+  function saveValidations(arr) {
+    try {
+      localStorage.setItem(VALIDATIONS_KEY, JSON.stringify(arr.slice(0, MAX_VALIDATIONS)));
+    } catch (e) { console.warn('[ig] não salvou validações:', e); }
+  }
+
+  function restoreLastValidation() {
+    var list = loadValidations();
+    if (!list.length) {
+      renderValidationHistory();
+      return;
+    }
+    var latest = list[0];
+    // Restaura inputs visualmente
+    if (latest.inputs) {
+      var bf = document.getElementById('val-briefing');
+      var vs = document.getElementById('val-visual');
+      if (bf) bf.value = latest.inputs.briefing || '';
+      if (vs) vs.value = latest.inputs.visual || '';
+      if (latest.inputs.formato) setValFormat(latest.inputs.formato);
+      if (latest.inputs.pilar) setValPilar(latest.inputs.pilar);
+      if (latest.inputs.objetivo) setValObj(latest.inputs.objetivo);
+    }
+    // Renderiza resultado salvo
+    if (latest.result) {
+      renderValidatorResult(latest.result, latest.generatedAt);
+    }
+    renderValidationHistory();
+  }
+
+  function renderValidationHistory() {
+    var el = document.getElementById('validate-history');
+    if (!el) return;
+    var list = loadValidations();
+    if (!list.length) {
+      el.innerHTML = '';
+      return;
+    }
+    el.innerHTML = '<div class="hist-card">' +
+      '<div class="hist-h">📜 Validações anteriores (' + list.length + ')</div>' +
+      list.slice(0, 5).map(function(v, i) {
+        var d = new Date(v.generatedAt);
+        var brief = (v.inputs && v.inputs.briefing || '').replace(/\n/g, ' ').slice(0, 60);
+        var ver = (v.result && v.result.veredito) || '—';
+        var verCls = ver === 'PUBLICAR' ? 'pub' : ver === 'AJUSTAR' ? 'adj' : ver === 'REPENSAR' ? 'rep' : '';
+        return '<div class="hist-item" onclick="loadValidation(' + i + ')">' +
+          '<div class="hist-i-l">' +
+            '<div class="hist-i-brief">' + esc(brief) + (brief.length >= 60 ? '...' : '') + '</div>' +
+            '<div class="hist-i-meta">' + humanAgo(d) + ' · ' + esc(v.inputs && v.inputs.formato || '?') + '</div>' +
+          '</div>' +
+          '<div class="hist-i-ver ver-' + verCls + '">' + esc(ver) + '</div>' +
+        '</div>';
+      }).join('') +
+      '<button class="btn btn-ghost btn-sm" onclick="clearValidations()" style="margin-top:8px">🗑 Limpar histórico</button>' +
+    '</div>';
+  }
+
+  window.loadValidation = function(idx) {
+    var list = loadValidations();
+    var v = list[idx];
+    if (!v) return;
+    if (v.inputs) {
+      document.getElementById('val-briefing').value = v.inputs.briefing || '';
+      document.getElementById('val-visual').value = v.inputs.visual || '';
+      if (v.inputs.formato) setValFormat(v.inputs.formato);
+      if (v.inputs.pilar) setValPilar(v.inputs.pilar);
+      if (v.inputs.objetivo) setValObj(v.inputs.objetivo);
+    }
+    if (v.result) renderValidatorResult(v.result, v.generatedAt);
+    toast('Validação carregada');
+  };
+
+  window.clearValidations = function() {
+    if (!confirm('Apagar todo o histórico de validações?')) return;
+    localStorage.removeItem(VALIDATIONS_KEY);
+    document.getElementById('validate-result').innerHTML = '';
+    renderValidationHistory();
+    toast('Histórico apagado');
+  };
+
   window.validatePost = async function() {
     var briefing = (document.getElementById('val-briefing').value || '').trim();
     if (!briefing) {
@@ -2177,8 +2270,25 @@
       var prompt = buildValidatorPrompt(briefing, visual);
       console.log('[ig] validator prompt size:', prompt.length);
       var result = await callClaude(prompt);
-      renderValidatorResult(result.parsed);
-      if (statusEl) statusEl.innerHTML = '<span class="t-caption">✓ Análise pronta · ' + (result.usage ? fmtNum(result.usage.input_tokens) + ' → ' + fmtNum(result.usage.output_tokens) + ' tokens' : '') + '</span>';
+      var validation = {
+        generatedAt: Date.now(),
+        inputs: {
+          briefing: briefing,
+          visual: visual,
+          formato: VAL_STATE.formato,
+          pilar: VAL_STATE.pilar,
+          objetivo: VAL_STATE.objetivo
+        },
+        result: result.parsed,
+        usage: result.usage
+      };
+      // Salva no histórico (novo no topo)
+      var hist = loadValidations();
+      hist.unshift(validation);
+      saveValidations(hist);
+      renderValidatorResult(result.parsed, validation.generatedAt);
+      renderValidationHistory();
+      if (statusEl) statusEl.innerHTML = '<span class="t-caption">✓ Análise salva · ' + (result.usage ? fmtNum(result.usage.input_tokens) + ' → ' + fmtNum(result.usage.output_tokens) + ' tokens' : '') + '</span>';
     } catch (err) {
       console.error('[ig] validator error:', err);
       if (statusEl) statusEl.innerHTML = '<span style="color:var(--danger)">Erro: ' + esc(err.message) + '</span>';
@@ -2188,7 +2298,7 @@
     }
   };
 
-  function renderValidatorResult(r) {
+  function renderValidatorResult(r, generatedAt) {
     var el = document.getElementById('validate-result');
     if (!el) return;
 
@@ -2198,7 +2308,12 @@
                   r.veredito === 'AJUSTAR' ? '✏️' : '🤔';
     var score = r.score_geral || 0;
 
-    var html = '<div class="val-hero ' + verCls + '">' +
+    var html = '';
+    if (generatedAt) {
+      html += '<div class="val-meta">💾 Salva ' + humanAgo(new Date(generatedAt)) + ' · análise persistida no navegador</div>';
+    }
+
+    html += '<div class="val-hero ' + verCls + '">' +
       '<div class="val-verdict">' +
         '<div class="val-verdict-icon">' + verIcon + '</div>' +
         '<div>' +
