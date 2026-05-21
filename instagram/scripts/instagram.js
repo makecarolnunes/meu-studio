@@ -726,34 +726,48 @@
       return;
     }
 
-    // Resume os totais
+    // Resume os totais — suporta 2 formatos:
+    //   Legado: m.values[i].value (time series por dia)
+    //   v22+:   m.total_value.value (escalar agregado)
     var totals = {};
+    var timeSeries = {};
     state.accountInsights.forEach(function(m) {
-      var sum = 0;
-      (m.values || []).forEach(function(v) { sum += (v.value || 0); });
-      totals[m.name] = sum;
+      if (m.total_value && typeof m.total_value.value !== 'undefined') {
+        totals[m.name] = m.total_value.value || 0;
+      } else if (Array.isArray(m.values)) {
+        var sum = 0;
+        var series = [];
+        m.values.forEach(function(v) {
+          sum += (v.value || 0);
+          series.push({ end_time: v.end_time, value: v.value || 0 });
+        });
+        totals[m.name] = sum;
+        if (series.length > 1) timeSeries[m.name] = series;
+      }
     });
 
     el.innerHTML =
       '<div class="account-summary">' +
-        '<div class="acc-item"><span class="acc-label">Impressões 30d</span><strong>' + fmtNum(totals.impressions || 0) + '</strong></div>' +
         '<div class="acc-item"><span class="acc-label">Alcance 30d</span><strong>' + fmtNum(totals.reach || 0) + '</strong></div>' +
+        '<div class="acc-item"><span class="acc-label">Visualizações 30d</span><strong>' + fmtNum(totals.views || totals.impressions || 0) + '</strong></div>' +
         '<div class="acc-item"><span class="acc-label">Visitas ao perfil 30d</span><strong>' + fmtNum(totals.profile_views || 0) + '</strong></div>' +
-        '<div class="acc-item"><span class="acc-label">Cliques no link 30d</span><strong>' + fmtNum(totals.website_clicks || 0) + '</strong></div>' +
+        '<div class="acc-item"><span class="acc-label">Cliques no link 30d</span><strong>' + fmtNum(totals.profile_links_taps || totals.website_clicks || 0) + '</strong></div>' +
+        (totals.accounts_engaged ? '<div class="acc-item"><span class="acc-label">Contas engajadas 30d</span><strong>' + fmtNum(totals.accounts_engaged) + '</strong></div>' : '') +
+        (totals.total_interactions ? '<div class="acc-item"><span class="acc-label">Interações 30d</span><strong>' + fmtNum(totals.total_interactions) + '</strong></div>' : '') +
       '</div>' +
-      '<div class="chart-wrap" style="height:180px"><canvas id="acc-chart"></canvas></div>';
+      (timeSeries.reach || timeSeries.follower_count ? '<div class="chart-wrap" style="height:180px"><canvas id="acc-chart"></canvas></div>' : '');
 
-    // Chart de alcance diário
-    var reachMetric = state.accountInsights.find(function(m) { return m.name === 'reach'; });
-    if (reachMetric && window.Chart) {
+    // Chart só se temos time series (formato legado com .values array)
+    var serieReach = timeSeries.reach || timeSeries.follower_count;
+    if (serieReach && window.Chart) {
       var canvas = document.getElementById('acc-chart');
       if (canvas) {
         if (state.accountChart) state.accountChart.destroy();
-        var labels = reachMetric.values.map(function(v) {
+        var labels = serieReach.map(function(v) {
           var d = new Date(v.end_time);
           return pad(d.getDate()) + '/' + pad(d.getMonth() + 1);
         });
-        var data = reachMetric.values.map(function(v) { return v.value || 0; });
+        var data = serieReach.map(function(v) { return v.value || 0; });
         state.accountChart = new Chart(canvas, {
           type: 'line',
           data: {
