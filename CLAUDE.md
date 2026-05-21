@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-21 16:28 | main | feat(instagram): adiciona estrutura para an├ílise semanal automatizada -->
+<!-- AUTO: 2026-05-21 16:41 | main | feat(instagram): adiciona dashboard visual do Instagram -->
 
