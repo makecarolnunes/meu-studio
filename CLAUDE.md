@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-21 17:05 | main | feat(instagram): Fase 1 do dashboard estrat├®gico -->
+<!-- AUTO: 2026-05-21 17:10 | main | fix(instagram): resili├¬ncia nos insights por post + logging do Brand Brain -->
 
