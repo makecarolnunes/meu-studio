@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-21 11:02 | main | fix: corrige renderiza├º├úo de propostas com escaping seguro e fallback para SVG -->
+<!-- AUTO: 2026-05-21 11:31 | main | chore(hub): remove fun├º├úo setSync n├úo utilizada -->
 
