@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-21 20:16 | main | feat(instagram): overhaul visual + Validador de Post + fix API insights -->
+<!-- AUTO: 2026-05-21 20:20 | main | fix(instagram): aspas simples n├úo escapadas quebravam o script -->
 
