@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-21 11:31 | main | chore(hub): remove fun├º├úo setSync n├úo utilizada -->
+<!-- AUTO: 2026-05-21 11:31 | main | docs: sync CLAUDE.md [auto] -->
 
