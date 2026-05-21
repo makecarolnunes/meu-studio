@@ -82,27 +82,39 @@
   //  Lê instagram/brand-brain-source.html e extrai dados estruturados.
   // ══════════════════════════════════════════════════════════
   async function loadBrandBrain() {
-    try {
-      var res = await fetch('./brand-brain-source.html', { cache: 'force-cache' });
-      if (!res.ok) throw new Error('brand brain HTTP ' + res.status);
-      var html = await res.text();
-      BRAND = parseBrandBrain(html);
-      window.BRAND_BRAIN = BRAND;
-      console.log('[ig] brand brain loaded', BRAND);
-      // Se o dashboard já estiver visível, atualiza a seção de contexto
-      if (document.getElementById('dashboard').style.display === 'block') {
-        renderBrandContext();
+    var urls = ['./brand-brain-source.html', 'brand-brain-source.html'];
+    var lastErr = null;
+    for (var i = 0; i < urls.length; i++) {
+      try {
+        console.log('[ig] tentando carregar Brand Brain de', urls[i]);
+        var res = await fetch(urls[i]);
+        if (!res.ok) { lastErr = new Error('HTTP ' + res.status); continue; }
+        var html = await res.text();
+        if (!html || html.length < 1000) { lastErr = new Error('arquivo vazio ou muito pequeno'); continue; }
+        BRAND = parseBrandBrain(html);
+        window.BRAND_BRAIN = BRAND;
+        console.log('[ig] brand brain loaded ✓', BRAND);
+        if (document.getElementById('dashboard').style.display === 'block') {
+          renderBrandContext();
+        }
+        return;
+      } catch (e) {
+        lastErr = e;
+        console.warn('[ig] falha em', urls[i], ':', e.message);
       }
-    } catch (e) {
-      console.warn('[ig] brand brain unavailable:', e);
-      BRAND = null;
     }
+    BRAND = null;
+    window._BRAND_ERROR = lastErr ? lastErr.message : 'desconhecido';
+    console.error('[ig] brand brain falhou em todas as urls:', lastErr);
   }
 
   function parseBrandBrain(html) {
     var doc = new DOMParser().parseFromString(html, 'text/html');
     function txt(el) { return el ? el.textContent.replace(/\s+/g, ' ').trim() : ''; }
-    function all(sel, root) { return Array.from((root || doc).querySelectorAll(sel)); }
+    function all(sel, root) {
+      try { return Array.from((root || doc).querySelectorAll(sel)); }
+      catch (e) { console.warn('[brand] selector falhou:', sel, e); return []; }
+    }
     function norm(s) {
       return (s || '').toLowerCase()
         .normalize('NFD').replace(/[̀-ͯ]/g, '')
@@ -341,24 +353,52 @@
     return json.data || [];
   }
 
-  async function fetchPostInsights(post) {
-    // Métricas variam por tipo. Reels têm 'plays', outros não.
-    var metrics = ['reach', 'saved', 'shares', 'total_interactions'];
-    if (post.media_product_type === 'REELS' || post.media_type === 'VIDEO') {
-      metrics.push('plays');
+  function metricsForPost(post) {
+    var type = post.media_type;
+    var product = post.media_product_type;
+    // Reels têm o conjunto mais rico
+    if (product === 'REELS') {
+      return ['reach', 'saved', 'shares', 'total_interactions', 'plays', 'likes', 'comments'];
     }
+    // Vídeos (não-Reels)
+    if (type === 'VIDEO') {
+      return ['reach', 'saved', 'total_interactions', 'plays'];
+    }
+    // Imagens / Carrosséis
+    return ['reach', 'saved', 'shares', 'total_interactions'];
+  }
+
+  async function fetchPostInsights(post) {
+    var metrics = metricsForPost(post);
     var url = 'https://graph.instagram.com/' + post.id + '/insights' +
       '?metric=' + metrics.join(',') +
       '&access_token=' + encodeURIComponent(state.token);
     var res = await fetch(url);
     var json = await res.json();
-    if (json.error) throw new Error(json.error.message);
-    var out = {};
+    if (json.error) {
+      // Se uma métrica falhou, tenta uma a uma (mais lento mas resiliente)
+      console.warn('[ig] bulk insights falhou pro post', post.id, '(' + (post.media_product_type || post.media_type) + '):', json.error.message);
+      var out = {};
+      for (var i = 0; i < metrics.length; i++) {
+        try {
+          var singleUrl = 'https://graph.instagram.com/' + post.id + '/insights?metric=' + metrics[i] + '&access_token=' + encodeURIComponent(state.token);
+          var sr = await fetch(singleUrl);
+          var sj = await sr.json();
+          if (!sj.error && sj.data && sj.data[0]) {
+            var sv = sj.data[0].values && sj.data[0].values[0] ? sj.data[0].values[0].value : 0;
+            out[metrics[i]] = sv;
+          }
+        } catch (e) { /* skip */ }
+      }
+      if (Object.keys(out).length) return out;
+      throw new Error(json.error.message);
+    }
+    var out2 = {};
     (json.data || []).forEach(function(m) {
       var v = m.values && m.values[0] ? m.values[0].value : 0;
-      out[m.name] = v;
+      out2[m.name] = v;
     });
-    return out;
+    return out2;
   }
 
   async function fetchAccountInsights() {
