@@ -88,6 +88,20 @@
         </div>
       </section>
 
+      <!-- ANÁLISE IA — botão principal -->
+      <section class="ai-card">
+        <div class="ai-card-hdr">
+          <h3>🧠 Análise Estratégica IA</h3>
+          <button class="ai-key-btn" onclick="openClaudeKeyModal()" aria-label="Configurar chave Claude">🔑</button>
+        </div>
+        <p class="t-caption">Cruza seus dados + Brand Brain + concorrentes via Claude API. Resultado: diagnóstico, padrões, alinhamento de marca, 10 pautas alinhadas.</p>
+        <button class="btn btn-primary" id="btn-generate" onclick="generateAnalysis()" style="width:100%">🧠 Gerar análise estratégica</button>
+        <div id="analysis-status" class="ai-status"></div>
+      </section>
+
+      <!-- ANÁLISE IA — seção renderizada -->
+      <section id="analysis-section"></section>
+
       <!-- STATS CARDS -->
       <section class="stats-grid">
         <div class="stat-card">
@@ -207,6 +221,28 @@
 
   </main>
 
+</div>
+
+<!-- CLAUDE KEY MODAL -->
+<div class="modal-bg" id="claude-key-modal-bg" onclick="if(event.target===this)closeClaudeKeyModal()">
+  <div class="modal-box">
+    <div class="modal-title">Chave Claude API</div>
+    <p class="modal-desc">Cole sua chave da Anthropic (sk-ant-...). Salva só no navegador.</p>
+    <input type="password" class="input" id="claude-key-inp" placeholder="sk-ant-api03-...">
+    <details style="margin-top:8px;font-size:12px">
+      <summary style="cursor:pointer;color:var(--brand)">Como pegar a chave</summary>
+      <ol style="padding-left:20px;color:var(--text-muted);margin-top:6px">
+        <li>Acesse <a href="https://console.anthropic.com/settings/keys" target="_blank">console.anthropic.com/settings/keys</a></li>
+        <li>Clique em "Create Key"</li>
+        <li>Cole aqui</li>
+      </ol>
+    </details>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeClaudeKeyModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveClaudeKey()">Salvar</button>
+    </div>
+    <div class="modal-foot" id="claude-key-current"></div>
+  </div>
 </div>
 
 <!-- TOKEN MODAL -->

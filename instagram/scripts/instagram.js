@@ -11,7 +11,10 @@
   var CACHE_KEY = 'mk_instagram_cache_v2';
   var COMPETITORS_KEY = 'mk_instagram_competitors';
   var MANUAL_KEY = 'mk_instagram_manual';
+  var CLAUDE_KEY = 'mk_claude_key';
+  var ANALYSIS_KEY = 'mk_instagram_analysis';
   var CACHE_TTL = 30 * 60 * 1000;
+  var ANALYSIS_TTL = 7 * 24 * 60 * 60 * 1000; // 7 dias
 
   // ── STATE ─────────────────────────────────────────────────
   var state = {
@@ -441,6 +444,7 @@
     renderHeatmap();
     renderHashtags();
     renderFormats();
+    renderAnalysis();
     renderUpdatedAt();
     showDashboard();
   }
@@ -1090,6 +1094,542 @@
     localStorage.setItem(MANUAL_KEY, JSON.stringify(MANUAL));
     closeManualModal();
     toast('Inputs salvos');
+  };
+
+  // ══════════════════════════════════════════════════════════
+  //  ANÁLISE IA — Claude API
+  // ══════════════════════════════════════════════════════════
+
+  function getClaudeKey() {
+    return localStorage.getItem(CLAUDE_KEY) || '';
+  }
+
+  function loadStoredAnalysis() {
+    try {
+      var raw = localStorage.getItem(ANALYSIS_KEY);
+      if (!raw) return null;
+      var a = JSON.parse(raw);
+      if (!a || !a.generatedAt) return null;
+      return a;
+    } catch (e) { return null; }
+  }
+
+  function brandToText() {
+    if (!BRAND) return '';
+    var lines = ['## BRAND BRAIN — Carol Nunes (@makecarolnunes)\n'];
+
+    if (BRAND.dna) {
+      lines.push('### DNA');
+      Object.keys(BRAND.dna).forEach(function(k) {
+        var d = BRAND.dna[k];
+        if (d && d.label && d.text) lines.push('- **' + d.label + '**: ' + d.text);
+      });
+      lines.push('');
+    }
+
+    if (BRAND.pilares && BRAND.pilares.length) {
+      lines.push('### Pilares');
+      BRAND.pilares.forEach(function(p) {
+        lines.push('**' + p.titulo + '**');
+        (p.itens || []).forEach(function(it) { lines.push('- ' + it); });
+      });
+      lines.push('');
+    }
+
+    if (BRAND.personas && BRAND.personas.length) {
+      lines.push('### Personas');
+      BRAND.personas.forEach(function(p, i) {
+        lines.push('**P' + (i + 1) + ' — ' + p.titulo + '**');
+        if (p.quemEh) lines.push('- Quem é: ' + p.quemEh);
+        if (p.desejo) lines.push('- Quer: ' + p.desejo);
+        if (p.medo) lines.push('- Medo: ' + p.medo);
+        if (p.decisao) lines.push('- Decide: ' + p.decisao);
+      });
+      lines.push('');
+    }
+
+    if (BRAND.arquetipos && BRAND.arquetipos.length) {
+      lines.push('### Arquétipos');
+      BRAND.arquetipos.forEach(function(a) {
+        lines.push('- **' + a.nome + '**: ' + a.como);
+      });
+      lines.push('');
+    }
+
+    if (BRAND.palavrasMarca && BRAND.palavrasMarca.length) {
+      lines.push('### Tom de voz');
+      lines.push('Palavras da marca: ' + BRAND.palavrasMarca.join(', '));
+      lines.push('Palavras PROIBIDAS: ' + (BRAND.palavrasProibidas || []).join(', '));
+      lines.push('');
+    }
+
+    if (BRAND.pilaresEditoriais && BRAND.pilaresEditoriais.length) {
+      lines.push('### Pilares editoriais ideais (% do feed)');
+      BRAND.pilaresEditoriais.forEach(function(p) {
+        lines.push('- ' + p.pilar + ': ' + p.pct + ' — ' + p.tipo);
+      });
+      lines.push('');
+    }
+
+    if (BRAND.categorias && BRAND.categorias.length) {
+      lines.push('### 5 categorias de conteúdo');
+      BRAND.categorias.forEach(function(c) {
+        lines.push('- **' + c.titulo + '**: ' + c.descricao);
+      });
+      lines.push('');
+    }
+
+    if (BRAND.erros && BRAND.erros.length) {
+      lines.push('### O que evitar');
+      BRAND.erros.slice(0, 15).forEach(function(e) {
+        lines.push('- ' + e);
+      });
+    }
+
+    return lines.join('\n');
+  }
+
+  function dataToText() {
+    var p = state.profile || {};
+    var lines = ['## DADOS ATUAIS DA CONTA\n'];
+
+    lines.push('### Perfil');
+    lines.push('- Username: @' + (p.username || ''));
+    lines.push('- Bio: "' + (p.biography || '') + '" (' + (p.biography || '').length + ' chars)');
+    lines.push('- Seguidores: ' + (p.followers_count || 0));
+    lines.push('- Seguindo: ' + (p.follows_count || 0));
+    lines.push('- Total posts: ' + (p.media_count || 0));
+    lines.push('');
+
+    lines.push('### Últimos ' + state.posts.length + ' posts');
+    state.posts.forEach(function(post, i) {
+      var d = new Date(post.timestamp);
+      var ins = state.insights[post.id] || {};
+      var DIAS = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sab'];
+      var fmt = post.media_product_type === 'REELS' ? 'Reel' :
+                post.media_type === 'CAROUSEL_ALBUM' ? 'Carrossel' :
+                post.media_type === 'VIDEO' ? 'Vídeo' :
+                post.media_type === 'IMAGE' ? 'Foto' : (post.media_type || 'Outro');
+      var caption = (post.caption || '').replace(/\n/g, ' ').slice(0, 400);
+      lines.push('[P' + (i + 1) + '] id=' + post.id + ' | ' + fmt + ' | ' +
+        d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + ' ' + DIAS[d.getDay()] + ' ' + pad(d.getHours()) + 'h | ' +
+        '♥' + (post.like_count || 0) + ' 💬' + (post.comments_count || 0) +
+        (typeof ins.reach === 'number' ? ' alc:' + ins.reach : '') +
+        (typeof ins.saved === 'number' ? ' sv:' + ins.saved : '') +
+        (typeof ins.shares === 'number' ? ' sh:' + ins.shares : '') +
+        (typeof ins.plays === 'number' ? ' pl:' + ins.plays : ''));
+      lines.push('  Legenda: ' + caption + (post.caption && post.caption.length > 400 ? '...' : ''));
+      lines.push('  URL: ' + post.permalink);
+    });
+    lines.push('');
+
+    if (state.accountInsights && state.accountInsights.length) {
+      lines.push('### Insights da conta (últimos 30 dias)');
+      state.accountInsights.forEach(function(m) {
+        var sum = 0;
+        (m.values || []).forEach(function(v) { sum += (v.value || 0); });
+        lines.push('- ' + m.name + ': ' + sum + ' (30 dias)');
+      });
+      lines.push('');
+    } else {
+      lines.push('### Insights da conta: indisponível');
+      lines.push('');
+    }
+
+    if (state.audience && state.audience.length) {
+      lines.push('### Demografia');
+      state.audience.forEach(function(m) {
+        var val = m.values && m.values[0] ? m.values[0].value : {};
+        if (typeof val === 'object') {
+          var entries = Object.keys(val).map(function(k) { return k + ':' + val[k]; }).join(', ');
+          lines.push('- ' + m.name + ': ' + entries);
+        }
+      });
+      lines.push('');
+    }
+
+    return lines.join('\n');
+  }
+
+  function competitorsToText() {
+    if (!COMPETITORS || !COMPETITORS.length) return '';
+    var withData = COMPETITORS.filter(function(c) {
+      return (c.posicionamento || c.especialidade || c.estetica || (c.posts && c.posts.length) || c.comentariosTipicos);
+    });
+    if (!withData.length) return '## CONCORRENTES\nNenhum concorrente preenchido. Análise comparativa indisponível.';
+
+    var lines = ['## CONCORRENTES (' + withData.length + ' com dados)\n'];
+    withData.forEach(function(c) {
+      lines.push('### @' + c.handle);
+      if (c.posicionamento) lines.push('- Posicionamento: ' + c.posicionamento);
+      if (c.especialidade) lines.push('- Especialidade declarada: ' + c.especialidade);
+      if (c.estetica) lines.push('- Estética: ' + c.estetica);
+      if (c.relacionamento) lines.push('- Relacionamento com seguidores: ' + c.relacionamento);
+      if (c.comentariosTipicos) lines.push('- Comentários típicos: ' + c.comentariosTipicos);
+      if (c.posts && c.posts.length) {
+        lines.push('- Posts recentes coletados:');
+        c.posts.forEach(function(p, pi) {
+          lines.push('  ' + (pi + 1) + '. ' + (p.tipo || '?') + ' | ' + (p.likes || '?') + 'l ' + (p.comentarios || '?') + 'c | tema: ' + (p.tema || '?'));
+          if (p.legenda) lines.push('     Legenda: ' + p.legenda.slice(0, 200));
+        });
+      }
+      lines.push('');
+    });
+    return lines.join('\n');
+  }
+
+  function manualToText() {
+    if (!MANUAL || !MANUAL.semana) return '';
+    var lines = ['## INPUTS MANUAIS DA CAROL'];
+    lines.push('### Origem do tráfego (%)');
+    if (MANUAL.explorar) lines.push('- Explorar: ' + MANUAL.explorar + '%');
+    if (MANUAL.reels) lines.push('- Reels: ' + MANUAL.reels + '%');
+    if (MANUAL.compart) lines.push('- Compartilhamento: ' + MANUAL.compart + '%');
+    if (MANUAL.perfil) lines.push('- Perfil/Search: ' + MANUAL.perfil + '%');
+    if (MANUAL.outros) lines.push('- Outros: ' + MANUAL.outros + '%');
+    if (MANUAL.reelsTop && MANUAL.reelsTop.length) {
+      lines.push('### Top 3 Reels por retenção');
+      MANUAL.reelsTop.forEach(function(r, i) {
+        if (r.link || r.retencao) lines.push('- Reel ' + (i + 1) + ': ' + (r.link || '?') + ' | retenção: ' + (r.retencao || '?'));
+      });
+    }
+    if (MANUAL.observacoes) lines.push('### Observações da semana\n' + MANUAL.observacoes);
+    return lines.join('\n');
+  }
+
+  function buildAnalysisPrompt() {
+    var sections = [
+      brandToText(),
+      dataToText(),
+      competitorsToText(),
+      manualToText()
+    ].filter(Boolean);
+
+    var data = sections.join('\n\n---\n\n');
+
+    var task = '\n\n---\n\n## TAREFA\n\n' +
+'Você é um estrategista sênior de marca + diretor criativo + analista de Instagram, especializado em maquiadoras profissionais premium. Sua análise é específica, cita evidências concretas, e usa o Brand Brain como lente principal — nunca genérica.\n\n' +
+'Gere uma análise estratégica completa cruzando os dados acima com o Brand Brain. Retorne SOMENTE JSON válido (sem markdown, sem prefácio, sem ```json```) com a estrutura abaixo:\n\n' +
+'```json\n{\n' +
+'  "diagnostico_executivo": "3-5 frases. Os insights mais críticos da semana, conectando performance + Brand Brain. Deve ser tão denso que se a Carol só ler isso, ela já sabe o essencial.",\n' +
+'  "padroes_top": [\n' +
+'    { "padrao": "padrão observado nos top posts", "evidencias_post_ids": ["P1","P3"], "performance_lift": "ex: 3x mais alcance que a média", "hipotese": "por que performou cruzando com Brand Brain (pilar, persona, arquétipo)" }\n' +
+'  ],\n' +
+'  "padroes_bottom": [\n' +
+'    { "padrao": "...", "evidencias_post_ids": ["P5"], "performance_drop": "...", "hipotese": "por que falhou cruzando com Brand Brain" }\n' +
+'  ],\n' +
+'  "alinhamento_marca": {\n' +
+'    "score_geral_0_10": 7.2,\n' +
+'    "dimensoes": { "tom_de_voz": 8, "estetica": 6, "alinhamento_pilar": 7, "posicionamento_premium": 7 },\n' +
+'    "posts_off_brand": [ { "post_id": "P5", "score": 3, "flags": ["usa palavra proibida X", "estética fora da paleta"] } ],\n' +
+'    "posts_perfeitos": [ { "post_id": "P1", "score": 9, "fortalezas": ["alinha com arquétipo Sábia", "tom impecável"] } ]\n' +
+'  },\n' +
+'  "pilares_balance": {\n' +
+'    "diagnostico": "1-2 frases sobre o equilíbrio",\n' +
+'    "desvios_criticos": [ "Pilar X em Y% (ideal Z%)" ]\n' +
+'  },\n' +
+'  "analise_bio": {\n' +
+'    "diagnostico": "o que está bom e o que está ruim na bio atual",\n' +
+'    "sugestao_pronta": "bio nova pronta pra copiar e colar (multilinha com \\n)"\n' +
+'  },\n' +
+'  "audiencia_e_origem": {\n' +
+'    "diagnostico": "quem está engajando, baseado em demografia + comentários. Cruzar com personas.",\n' +
+'    "sinais_audiencia_certa": ["..."],\n' +
+'    "sinais_audiencia_vazia": ["..."]\n' +
+'  },\n' +
+'  "concorrentes": {\n' +
+'    "diferenciais_reais_carol": ["..."],\n' +
+'    "gaps_mercado": [ { "gap": "...", "fit_com_carol": "por que alinha com Brand Brain" } ],\n' +
+'    "formatos_saturados_evitar": ["..."]\n' +
+'  },\n' +
+'  "pautas_proxima_semana": [\n' +
+'    {\n' +
+'      "titulo": "título curto e prático",\n' +
+'      "formato": "Reel|Foto|Carrossel|Story",\n' +
+'      "pilar": "I-Noivas|II-Autoridade|Carol-Presenca|Produtos|Social",\n' +
+'      "persona_alvo": ["P1","P2"],\n' +
+'      "arquetipo_dominante": "Criadora|Cuidadora|Sabia",\n' +
+'      "justificativa": "2-3 frases conectando: dado da performance + gap identificado + alinhamento com Brand Brain + (se aplicável) preparação para Curso VIP",\n' +
+'      "estrutura": ["bullet 1", "bullet 2", "bullet 3", "bullet 4"],\n' +
+'      "score_estrategico_0_10": 9\n' +
+'    }\n' +
+'  ]\n' +
+'}\n```\n\n' +
+'REGRAS CRÍTICAS:\n' +
+'- Use APENAS dados reais fornecidos. Se faltar dado, escreva "dado indisponível" no campo.\n' +
+'- Cite post_ids (formato P1, P2, ...) como evidência específica.\n' +
+'- Seja específico e acionável. Sem genéricos tipo "poste mais Reels".\n' +
+'- Hipóteses devem CRUZAR Brand Brain (pilar, persona, arquétipo, palavras da marca).\n' +
+'- 10 pautas. Cada uma deve fechar um gap específico + reforçar pilar + atrair persona específica.\n' +
+'- Português brasileiro, tom direto e profissional.\n' +
+'- Retorne SOMENTE o JSON. NADA antes ou depois.';
+
+    return data + task;
+  }
+
+  async function callClaude(prompt) {
+    var key = getClaudeKey();
+    if (!key) throw new Error('Chave Claude não configurada. Clica no botão de chave 🔑 pra configurar.');
+
+    var res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-5-20250929',
+        max_tokens: 16000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    var json = await res.json();
+    if (json.error) throw new Error(json.error.message || 'Erro na Claude API');
+    if (!json.content || !json.content.length) throw new Error('Resposta vazia da Claude');
+    var text = json.content.map(function(c) { return c.text || ''; }).join('');
+
+    // Extrai JSON (caso venha com cercas markdown apesar das instruções)
+    var match = text.match(/\{[\s\S]*\}/);
+    if (!match) throw new Error('JSON não encontrado na resposta. Texto:\n' + text.slice(0, 300));
+    try {
+      var parsed = JSON.parse(match[0]);
+      return { parsed: parsed, raw: text, usage: json.usage || null };
+    } catch (e) {
+      throw new Error('JSON inválido: ' + e.message + '\nTexto: ' + match[0].slice(0, 300));
+    }
+  }
+
+  window.generateAnalysis = async function() {
+    if (!state.profile || !state.posts.length) {
+      toast('Aguarda os dados carregarem primeiro', true);
+      return;
+    }
+    if (!getClaudeKey()) {
+      toast('Configure sua chave Claude primeiro', true);
+      openClaudeKeyModal();
+      return;
+    }
+
+    var btn = document.getElementById('btn-generate');
+    var statusEl = document.getElementById('analysis-status');
+    if (btn) { btn.disabled = true; btn.textContent = '🧠 Analisando...'; }
+    if (statusEl) statusEl.innerHTML = '<div class="spinner-sm"></div> Construindo contexto + chamando Claude... isso leva 30-60s.';
+
+    try {
+      var prompt = buildAnalysisPrompt();
+      console.log('[ig] prompt size:', prompt.length, 'chars');
+      var result = await callClaude(prompt);
+      var analysis = {
+        generatedAt: Date.now(),
+        data: result.parsed,
+        usage: result.usage
+      };
+      localStorage.setItem(ANALYSIS_KEY, JSON.stringify(analysis));
+      state.analysis = analysis;
+      renderAnalysis();
+      toast('Análise gerada ✓');
+    } catch (err) {
+      console.error('[ig] análise falhou:', err);
+      if (statusEl) statusEl.innerHTML = '<span style="color:var(--danger)">Erro: ' + esc(err.message) + '</span>';
+      toast('Erro: ' + err.message, true);
+    } finally {
+      if (btn) { btn.disabled = false; updateGenerateButton(); }
+    }
+  };
+
+  function updateGenerateButton() {
+    var btn = document.getElementById('btn-generate');
+    if (!btn) return;
+    var stored = loadStoredAnalysis();
+    if (stored) {
+      btn.textContent = '🔄 Regenerar análise estratégica';
+    } else {
+      btn.textContent = '🧠 Gerar análise estratégica';
+    }
+  }
+
+  function renderAnalysis() {
+    var stored = state.analysis || loadStoredAnalysis();
+    var statusEl = document.getElementById('analysis-status');
+    var sectionEl = document.getElementById('analysis-section');
+    if (!stored) {
+      if (statusEl) statusEl.innerHTML = '<span class="t-muted t-caption">Sem análise ainda. Clica em Gerar para começar.</span>';
+      if (sectionEl) sectionEl.innerHTML = '';
+      return;
+    }
+
+    var d = new Date(stored.generatedAt);
+    if (statusEl) statusEl.innerHTML = '<span class="t-caption">Gerada em ' + formatDateTime(d) + (stored.usage ? ' · ' + stored.usage.input_tokens + ' in / ' + stored.usage.output_tokens + ' out tokens' : '') + '</span>';
+
+    var a = stored.data || {};
+    var html = '';
+
+    // 1. Diagnóstico executivo
+    if (a.diagnostico_executivo) {
+      html += '<div class="analysis-block diag-block">' +
+        '<div class="analysis-h">⭐ Diagnóstico executivo</div>' +
+        '<div class="diag-text">' + esc(a.diagnostico_executivo) + '</div>' +
+      '</div>';
+    }
+
+    // 2. Padrões top/bottom
+    if (a.padroes_top && a.padroes_top.length) {
+      html += '<div class="analysis-block">' +
+        '<div class="analysis-h">🔥 Por que os top performaram</div>' +
+        a.padroes_top.map(renderPatternHTML).join('') +
+      '</div>';
+    }
+    if (a.padroes_bottom && a.padroes_bottom.length) {
+      html += '<div class="analysis-block">' +
+        '<div class="analysis-h">📉 Por que os bottom não performaram</div>' +
+        a.padroes_bottom.map(renderPatternHTML).join('') +
+      '</div>';
+    }
+
+    // 3. Alinhamento de marca
+    if (a.alinhamento_marca) {
+      var al = a.alinhamento_marca;
+      html += '<div class="analysis-block">' +
+        '<div class="analysis-h">🎯 Alinhamento com Brand Brain</div>' +
+        '<div class="align-score">Score geral: <strong>' + (al.score_geral_0_10 || '-') + '/10</strong></div>' +
+        (al.dimensoes ? Object.keys(al.dimensoes).map(function(k) {
+          var v = al.dimensoes[k];
+          return '<div class="align-dim"><span class="align-label">' + esc(k.replace(/_/g, ' ')) + '</span>' +
+            '<div class="align-bar"><div class="align-bar-f" style="width:' + (v * 10) + '%"></div></div>' +
+            '<span class="align-val">' + v + '</span></div>';
+        }).join('') : '') +
+        (al.posts_off_brand && al.posts_off_brand.length ? '<div class="off-brand"><div class="t-label" style="color:var(--danger)">Posts off-brand</div>' +
+          al.posts_off_brand.map(function(p) {
+            return '<div class="off-item">' +
+              '<strong>' + esc(p.post_id) + '</strong> — score ' + p.score + '/10' +
+              (p.flags && p.flags.length ? '<ul>' + p.flags.map(function(f) { return '<li>' + esc(f) + '</li>'; }).join('') + '</ul>' : '') +
+            '</div>';
+          }).join('') + '</div>' : '') +
+        (al.posts_perfeitos && al.posts_perfeitos.length ? '<div class="perfect"><div class="t-label" style="color:var(--success)">Posts alinhados</div>' +
+          al.posts_perfeitos.map(function(p) {
+            return '<div class="off-item">' +
+              '<strong>' + esc(p.post_id) + '</strong> — score ' + p.score + '/10' +
+              (p.fortalezas && p.fortalezas.length ? '<ul>' + p.fortalezas.map(function(f) { return '<li>' + esc(f) + '</li>'; }).join('') + '</ul>' : '') +
+            '</div>';
+          }).join('') + '</div>' : '') +
+      '</div>';
+    }
+
+    // 4. Pilares
+    if (a.pilares_balance) {
+      html += '<div class="analysis-block">' +
+        '<div class="analysis-h">📊 Balance dos pilares</div>' +
+        '<div class="diag-text">' + esc(a.pilares_balance.diagnostico || '') + '</div>' +
+        (a.pilares_balance.desvios_criticos && a.pilares_balance.desvios_criticos.length ?
+          '<ul>' + a.pilares_balance.desvios_criticos.map(function(d) { return '<li>' + esc(d) + '</li>'; }).join('') + '</ul>' : '') +
+      '</div>';
+    }
+
+    // 5. Bio
+    if (a.analise_bio) {
+      html += '<div class="analysis-block">' +
+        '<div class="analysis-h">📝 Análise da bio</div>' +
+        '<div class="diag-text">' + esc(a.analise_bio.diagnostico || '') + '</div>' +
+        (a.analise_bio.sugestao_pronta ? '<div class="bio-suggested"><div class="t-label">Sugestão pronta pra copiar</div><pre>' + esc(a.analise_bio.sugestao_pronta) + '</pre><button class="btn btn-secondary btn-sm" onclick="copyBio()">Copiar</button></div>' : '') +
+      '</div>';
+    }
+
+    // 6. Audiência
+    if (a.audiencia_e_origem) {
+      var au = a.audiencia_e_origem;
+      html += '<div class="analysis-block">' +
+        '<div class="analysis-h">👥 Audiência e origem</div>' +
+        '<div class="diag-text">' + esc(au.diagnostico || '') + '</div>' +
+        (au.sinais_audiencia_certa && au.sinais_audiencia_certa.length ? '<div class="t-label" style="color:var(--success)">Sinais de audiência certa</div><ul>' + au.sinais_audiencia_certa.map(function(s) { return '<li>' + esc(s) + '</li>'; }).join('') + '</ul>' : '') +
+        (au.sinais_audiencia_vazia && au.sinais_audiencia_vazia.length ? '<div class="t-label" style="color:var(--warning)">Sinais de audiência vazia</div><ul>' + au.sinais_audiencia_vazia.map(function(s) { return '<li>' + esc(s) + '</li>'; }).join('') + '</ul>' : '') +
+      '</div>';
+    }
+
+    // 7. Concorrentes
+    if (a.concorrentes) {
+      var c = a.concorrentes;
+      html += '<div class="analysis-block">' +
+        '<div class="analysis-h">🎯 Concorrentes — análise estratégica</div>' +
+        (c.diferenciais_reais_carol && c.diferenciais_reais_carol.length ? '<div class="t-label">Seus diferenciais reais</div><ul>' + c.diferenciais_reais_carol.map(function(s) { return '<li>' + esc(s) + '</li>'; }).join('') + '</ul>' : '') +
+        (c.gaps_mercado && c.gaps_mercado.length ? '<div class="t-label">Gaps de mercado</div>' + c.gaps_mercado.map(function(g) {
+          return '<div class="gap-item"><strong>' + esc(g.gap) + '</strong>' + (g.fit_com_carol ? '<div class="t-caption">' + esc(g.fit_com_carol) + '</div>' : '') + '</div>';
+        }).join('') : '') +
+        (c.formatos_saturados_evitar && c.formatos_saturados_evitar.length ? '<div class="t-label" style="color:var(--warning)">Formatos saturados (evitar)</div><ul>' + c.formatos_saturados_evitar.map(function(s) { return '<li>' + esc(s) + '</li>'; }).join('') + '</ul>' : '') +
+      '</div>';
+    }
+
+    // 8. 10 pautas
+    if (a.pautas_proxima_semana && a.pautas_proxima_semana.length) {
+      html += '<div class="analysis-block">' +
+        '<div class="analysis-h">✍️ Pautas para a próxima semana</div>' +
+        a.pautas_proxima_semana.map(renderPautaHTML).join('') +
+      '</div>';
+    }
+
+    if (sectionEl) sectionEl.innerHTML = html;
+    updateGenerateButton();
+  }
+
+  function renderPatternHTML(p) {
+    return '<div class="pattern-item">' +
+      '<div class="pattern-name">' + esc(p.padrao || '') + '</div>' +
+      (p.performance_lift ? '<div class="pattern-lift">📈 ' + esc(p.performance_lift) + '</div>' : '') +
+      (p.performance_drop ? '<div class="pattern-lift" style="color:var(--danger)">📉 ' + esc(p.performance_drop) + '</div>' : '') +
+      (p.evidencias_post_ids && p.evidencias_post_ids.length ? '<div class="pattern-ev">Evidência: ' + p.evidencias_post_ids.map(esc).join(', ') + '</div>' : '') +
+      (p.hipotese ? '<div class="pattern-hyp">' + esc(p.hipotese) + '</div>' : '') +
+    '</div>';
+  }
+
+  function renderPautaHTML(p) {
+    return '<div class="pauta-item">' +
+      '<div class="pauta-head">' +
+        '<div class="pauta-title">' + esc(p.titulo || '') + '</div>' +
+        (typeof p.score_estrategico_0_10 === 'number' ? '<div class="pauta-score">' + p.score_estrategico_0_10 + '/10</div>' : '') +
+      '</div>' +
+      '<div class="pauta-tags">' +
+        (p.formato ? '<span class="pauta-tag">' + esc(p.formato) + '</span>' : '') +
+        (p.pilar ? '<span class="pauta-tag tag-pilar">' + esc(p.pilar) + '</span>' : '') +
+        (p.arquetipo_dominante ? '<span class="pauta-tag tag-arq">' + esc(p.arquetipo_dominante) + '</span>' : '') +
+        (p.persona_alvo && p.persona_alvo.length ? p.persona_alvo.map(function(x) { return '<span class="pauta-tag tag-pers">' + esc(x) + '</span>'; }).join('') : '') +
+      '</div>' +
+      (p.justificativa ? '<div class="pauta-just">' + esc(p.justificativa) + '</div>' : '') +
+      (p.estrutura && p.estrutura.length ? '<div class="pauta-est"><div class="t-label">Estrutura</div><ul>' + p.estrutura.map(function(s) { return '<li>' + esc(s) + '</li>'; }).join('') + '</ul></div>' : '') +
+    '</div>';
+  }
+
+  window.copyBio = function() {
+    var a = (state.analysis || loadStoredAnalysis() || {}).data;
+    if (!a || !a.analise_bio || !a.analise_bio.sugestao_pronta) return;
+    navigator.clipboard.writeText(a.analise_bio.sugestao_pronta).then(function() {
+      toast('Bio copiada');
+    });
+  };
+
+  // ── Claude Key Modal ─────────────────────────────────────
+  window.openClaudeKeyModal = function() {
+    var current = getClaudeKey();
+    document.getElementById('claude-key-inp').value = current;
+    var hint = current ? 'Atual: ' + current.slice(0, 14) + '...' + current.slice(-6) : 'Nenhuma chave configurada.';
+    document.getElementById('claude-key-current').textContent = hint;
+    document.getElementById('claude-key-modal-bg').classList.add('open');
+  };
+
+  window.closeClaudeKeyModal = function() {
+    document.getElementById('claude-key-modal-bg').classList.remove('open');
+  };
+
+  window.saveClaudeKey = function() {
+    var v = (document.getElementById('claude-key-inp').value || '').trim();
+    if (!v) { toast('Cole a chave primeiro', true); return; }
+    if (!v.startsWith('sk-ant-')) {
+      if (!confirm('Essa chave não começa com "sk-ant-". Tem certeza que é uma chave Claude?')) return;
+    }
+    localStorage.setItem(CLAUDE_KEY, v);
+    closeClaudeKeyModal();
+    toast('Chave salva ✓');
   };
 
   // ══════════════════════════════════════════════════════════
