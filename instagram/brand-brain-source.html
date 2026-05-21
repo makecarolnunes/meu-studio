@@ -1,0 +1,1879 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Centro de Comando — @makecarolnunes</title>
+<style>
+:root {
+  --cafe:#4A2E1A; --caramelo:#8B5E3C; --terra:#C4956A;
+  --nude:#E8D5C0; --creme:#F5EDE3; --branco:#FDFAF7;
+  --carvao:#1A1A1A; --grafite:#3D3D3D; --dourado:#B8975A;
+  --cachos:#6B4226; --verde:#2D6A4F; --vermelho:#8B2020;
+  --tab-h:56px; --nav-w:220px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Georgia',serif;background:var(--branco);color:var(--carvao);line-height:1.75;font-size:15px;}
+
+/* ── TABS ── */
+.tab-bar{
+  position:fixed;top:0;left:0;right:0;height:var(--tab-h);
+  background:var(--carvao);display:flex;align-items:stretch;
+  z-index:200;border-bottom:2px solid var(--cafe);
+}
+.tab-bar .logo{
+  padding:0 20px;display:flex;align-items:center;
+  font-size:11px;letter-spacing:3px;text-transform:uppercase;
+  color:var(--terra);font-family:sans-serif;white-space:nowrap;
+  border-right:1px solid rgba(255,255,255,0.08);
+}
+.tab-btn{
+  padding:0 24px;border:none;background:transparent;
+  color:rgba(255,255,255,0.45);cursor:pointer;
+  font-family:sans-serif;font-size:11px;letter-spacing:2px;
+  text-transform:uppercase;transition:all .2s;
+  border-bottom:3px solid transparent;
+  border-right:1px solid rgba(255,255,255,0.06);
+}
+.tab-btn:hover{color:var(--nude);}
+.tab-btn.active{color:var(--terra);border-bottom-color:var(--terra);background:rgba(196,149,106,0.06);}
+
+/* ── SIDEBAR ── */
+#sidebar{
+  position:fixed;top:var(--tab-h);left:0;width:var(--nav-w);
+  height:calc(100vh - var(--tab-h));
+  background:var(--cafe);overflow-y:auto;z-index:150;
+  padding:20px 0;
+}
+#sidebar .nav-group{margin-bottom:4px;}
+#sidebar .nav-label{
+  font-size:9px;letter-spacing:2.5px;text-transform:uppercase;
+  color:rgba(232,213,192,0.3);font-family:sans-serif;
+  padding:12px 18px 4px;display:block;
+}
+#sidebar a{
+  display:block;color:rgba(232,213,192,0.65);text-decoration:none;
+  font-size:10.5px;letter-spacing:1px;text-transform:uppercase;
+  font-family:sans-serif;padding:7px 18px;
+  border-left:2px solid transparent;transition:all .15s;
+}
+#sidebar a:hover{color:var(--terra);border-left-color:var(--terra);}
+#sidebar a .n{color:var(--terra);margin-right:6px;font-size:9px;}
+
+/* ── MAIN ── */
+#main{margin-left:var(--nav-w);padding-top:var(--tab-h);}
+.tab-panel{display:none;}
+.tab-panel.active{display:block;}
+
+/* ── HERO ── */
+.hero{padding:72px 64px 56px;color:var(--creme);}
+.hero.bg-cafe{background:var(--cafe);}
+.hero.bg-dark{background:var(--carvao);}
+.hero.bg-cachos{background:var(--cachos);}
+.hero-tag{font-size:9px;letter-spacing:4px;text-transform:uppercase;color:var(--terra);font-family:sans-serif;margin-bottom:14px;}
+.hero h1{font-size:40px;line-height:1.15;color:var(--nude);margin-bottom:12px;}
+.hero h1 em{color:var(--terra);font-style:italic;}
+.hero p{font-size:15px;color:rgba(232,213,192,0.65);max-width:560px;margin-top:14px;}
+.hero-chips{display:flex;gap:12px;flex-wrap:wrap;margin-top:24px;}
+.chip{background:rgba(196,149,106,0.15);border:1px solid rgba(196,149,106,0.3);color:var(--terra);padding:4px 12px;border-radius:2px;font-size:11px;font-family:sans-serif;letter-spacing:1px;}
+
+/* ── SECTIONS ── */
+.sec{padding:56px 64px;border-bottom:1px solid var(--nude);}
+.sec:nth-child(even){background:var(--creme);}
+.sec-tag{font-size:9px;letter-spacing:4px;text-transform:uppercase;color:var(--terra);font-family:sans-serif;margin-bottom:8px;}
+h2.sec-h{font-size:28px;color:var(--cafe);margin-bottom:28px;line-height:1.2;}
+h2.sec-h em{color:var(--caramelo);font-style:italic;}
+h3.sub{font-size:16px;color:var(--cafe);margin:28px 0 12px;padding-bottom:6px;border-bottom:2px solid var(--terra);display:inline-block;}
+h4.label{font-size:10px;color:var(--caramelo);margin:16px 0 6px;font-family:sans-serif;letter-spacing:1px;text-transform:uppercase;}
+p{margin-bottom:12px;color:var(--grafite);font-size:14px;}
+
+/* ── GRIDS ── */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin:20px 0;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin:20px 0;}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:20px 0;}
+
+/* ── CARDS ── */
+.card{background:white;border-radius:2px;padding:22px;border-left:3px solid var(--terra);box-shadow:0 2px 12px rgba(74,46,26,.06);}
+.card h4.label{margin-top:0;}
+.card p{font-size:13px;margin:0;}
+.card ul{font-size:13px;padding-left:14px;margin-top:8px;color:var(--grafite);}
+.card ul li{margin-bottom:4px;}
+.card.dark{background:var(--cafe);border-left-color:var(--terra);}
+.card.dark p,.card.dark ul{color:rgba(232,213,192,0.8);}
+.card.dark h4.label{color:var(--terra);}
+
+/* ── TABLE ── */
+table{width:100%;border-collapse:collapse;margin:16px 0;font-size:13px;}
+th{background:var(--cafe);color:var(--nude);padding:9px 12px;text-align:left;font-family:sans-serif;font-size:9px;letter-spacing:1px;text-transform:uppercase;}
+td{padding:9px 12px;border-bottom:1px solid var(--nude);color:var(--grafite);vertical-align:top;}
+tr:nth-child(even) td{background:var(--creme);}
+.td-v{font-family:sans-serif;font-size:10px;font-weight:bold;letter-spacing:1px;white-space:nowrap;}
+.td-v.red{color:var(--vermelho);}
+.td-v.green{color:var(--verde);}
+.td-v.yellow{color:#B7950B;}
+
+/* ── ALERT ── */
+.alert{background:#FDF3EE;border-left:4px solid var(--terra);padding:14px 18px;margin:16px 0;border-radius:0 2px 2px 0;}
+.alert.danger{background:#FDF0EE;border-color:var(--vermelho);}
+.alert.success{background:#EFF8F2;border-color:var(--verde);}
+.alert.dark{background:var(--cafe);border:none;padding:28px 36px;border-radius:2px;}
+.alert.dark p{color:rgba(232,213,192,0.85);font-size:14px;margin:0;}
+.alert.dark strong{color:var(--terra);}
+.alert p{font-size:13px;margin:0;color:var(--grafite);}
+.alert strong{color:var(--cafe);}
+
+/* ── TAGS ── */
+.tag{display:inline-block;background:var(--nude);color:var(--cafe);padding:3px 9px;border-radius:20px;font-size:11px;font-family:sans-serif;margin:2px;}
+.tag.a{background:var(--terra);color:white;}
+.tag.d{background:var(--cafe);color:var(--nude);}
+.tag.g{background:var(--verde);color:white;}
+.tag.r{background:var(--vermelho);color:white;}
+.tag.y{background:#B8975A;color:white;}
+
+/* ── PALETTE ── */
+.pal{display:flex;margin:16px 0;border-radius:2px;overflow:hidden;}
+.swatch{flex:1;height:72px;display:flex;align-items:flex-end;padding:8px;}
+.swatch span{font-size:9px;font-family:sans-serif;}
+
+/* ── QUOTE ── */
+.quote{background:var(--cafe);color:var(--nude);padding:36px 52px;margin:28px 0;border-radius:2px;font-size:18px;line-height:1.7;font-style:italic;position:relative;}
+.quote::before{content:'"';font-size:90px;color:var(--terra);position:absolute;top:-14px;left:22px;line-height:1;}
+.quote .src{font-style:normal;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--terra);margin-top:12px;font-family:sans-serif;}
+
+/* ── LIST ── */
+ul.cl{list-style:none;padding:0;}
+ul.cl li{padding:8px 0 8px 18px;border-bottom:1px solid var(--nude);position:relative;font-size:14px;color:var(--grafite);}
+ul.cl li::before{content:'—';position:absolute;left:0;color:var(--terra);}
+
+/* ── VERDICT CARD ── */
+.vc{background:white;border-radius:2px;padding:22px 26px;margin:14px 0;border-left:4px solid;box-shadow:0 2px 10px rgba(0,0,0,.05);}
+.vc.arc{border-color:var(--vermelho);}
+.vc.kep{border-color:var(--verde);}
+.vc.sav{border-color:#B8975A;}
+.vc-top{display:flex;align-items:flex-start;gap:14px;margin-bottom:12px;}
+.vbadge{font-size:9px;letter-spacing:2px;text-transform:uppercase;font-family:sans-serif;padding:3px 8px;border-radius:2px;white-space:nowrap;flex-shrink:0;}
+.vbadge.arc{background:var(--vermelho);color:white;}
+.vbadge.kep{background:var(--verde);color:white;}
+.vbadge.sav{background:#B8975A;color:white;}
+.vc-name{font-size:15px;font-weight:bold;color:var(--cafe);}
+.vc-desc{font-size:12px;color:var(--caramelo);font-family:sans-serif;margin-top:2px;}
+.vc-body{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:14px;}
+.vc-block h4.label{margin-top:0;}
+.vc-block p{font-size:13px;color:var(--grafite);}
+.vc-action{background:var(--creme);padding:12px 16px;border-radius:2px;margin-top:12px;font-size:13px;}
+.vc-action strong{color:var(--cafe);}
+
+/* ── PHASE ── */
+.phase{border-radius:2px;padding:24px;margin:12px 0;}
+.phase.p1{background:#F5EDE3;border-top:4px solid var(--caramelo);}
+.phase.p2{background:#EDE4D8;border-top:4px solid var(--terra);}
+.phase.p3{background:var(--cafe);border-top:4px solid var(--dourado);color:var(--nude);}
+.phase.p3 p,.phase.p3 li{color:rgba(232,213,192,0.8);}
+.phase.p3 h4.label{color:var(--terra);}
+.phase.p4{background:#EFF8F2;border-top:4px solid var(--verde);}
+.phase h4.label{font-size:11px;margin:0 0 10px;}
+.phase ul{padding-left:16px;font-size:13px;margin-top:8px;}
+.phase ul li{margin-bottom:4px;}
+
+/* ── TIMELINE ── */
+.tl{margin:20px 0;}
+.tl-row{display:grid;grid-template-columns:80px 1fr;gap:0;}
+.tl-h{font-family:sans-serif;font-size:11px;font-weight:bold;color:var(--terra);padding:12px 14px 12px 0;text-align:right;border-right:2px solid var(--terra);}
+.tl-b{padding:10px 0 10px 16px;border-bottom:1px solid var(--nude);}
+.tl-b h4{margin:0 0 3px;color:var(--cafe);font-size:13px;font-family:sans-serif;letter-spacing:0;text-transform:none;}
+.tl-b p{font-size:12px;margin:0;color:var(--grafite);}
+.tl-b .d{font-size:11px;color:var(--terra);font-style:italic;margin-top:3px;}
+
+/* ── ROADMAP ── */
+.road{display:flex;gap:0;margin:24px 0;flex-wrap:wrap;}
+.road-step{flex:1;min-width:100px;padding:16px 12px;text-align:center;position:relative;border-right:1px solid var(--nude);}
+.road-step:last-child{border-right:none;}
+.road-step.now{background:var(--cafe);}
+.road-step.nxt{background:var(--creme);}
+.road-step.far{background:white;}
+.road-label{font-size:9px;font-family:sans-serif;letter-spacing:2px;text-transform:uppercase;margin-bottom:5px;}
+.road-step.now .road-label{color:var(--terra);}
+.road-step.nxt .road-label{color:var(--caramelo);}
+.road-step.far .road-label{color:rgba(0,0,0,.3);}
+.road-name{font-size:13px;font-weight:bold;}
+.road-step.now .road-name{color:var(--nude);}
+.road-step.nxt .road-name{color:var(--cafe);}
+.road-step.far .road-name{color:rgba(0,0,0,.4);}
+.road-when{font-size:11px;font-family:sans-serif;margin-top:4px;}
+.road-step.now .road-when{color:rgba(232,213,192,0.5);}
+.road-step.nxt .road-when{color:var(--grafite);}
+
+/* ── COMPARISON ── */
+.comp{display:grid;grid-template-columns:1fr 1fr;gap:0;margin:20px 0;border-radius:2px;overflow:hidden;border:1px solid var(--nude);}
+.comp-col{padding:24px;}
+.comp-col.a{background:var(--creme);border-right:1px solid var(--nude);}
+.comp-col.b{background:var(--cafe);}
+.comp-col.b h4.label{color:var(--terra);}
+.comp-col.b ul{color:rgba(232,213,192,0.8);}
+.comp-col h4.label{margin-top:0;}
+.comp-col ul{font-size:13px;padding-left:14px;color:var(--grafite);}
+.comp-col ul li{margin-bottom:6px;}
+
+/* ── PRIORITY ── */
+.prio{display:flex;gap:14px;padding:16px 0;border-bottom:1px solid var(--nude);align-items:flex-start;}
+.prio-n{font-size:26px;color:var(--nude);font-weight:bold;line-height:1;flex-shrink:0;width:40px;font-family:sans-serif;}
+.prio-c h4{color:var(--cafe);font-size:15px;margin-bottom:4px;font-family:sans-serif;text-transform:none;letter-spacing:0;}
+.prio-c p{font-size:13px;color:var(--grafite);margin:0;}
+.ptag{font-size:9px;font-family:sans-serif;letter-spacing:1px;text-transform:uppercase;padding:2px 7px;border-radius:2px;display:inline-block;margin-bottom:6px;}
+.pt-u{background:var(--vermelho);color:white;}
+.pt-m{background:var(--terra);color:white;}
+.pt-f{background:var(--verde);color:white;}
+
+/* ── REEL CARD ── */
+.reel{background:white;border-radius:2px;padding:20px;border-top:3px solid var(--terra);box-shadow:0 2px 10px rgba(74,46,26,.05);margin:10px 0;}
+.reel .tipo{font-size:9px;font-family:sans-serif;letter-spacing:2px;text-transform:uppercase;color:var(--terra);margin-bottom:5px;display:block;}
+.reel .gancho{font-size:16px;font-weight:bold;color:var(--cafe);margin-bottom:8px;}
+.reel p{font-size:13px;color:var(--grafite);margin:0;}
+
+/* ── LEGENDA ── */
+.legenda{background:#fafafa;border:1px solid var(--nude);border-radius:2px;padding:18px;margin:12px 0;font-size:14px;line-height:1.85;color:var(--grafite);white-space:pre-line;}
+
+/* ── STORY ROW ── */
+.story-row{display:flex;gap:8px;overflow-x:auto;padding:12px 0;}
+.story{background:var(--carvao);color:var(--nude);border-radius:6px;padding:16px 12px;min-width:140px;max-width:140px;text-align:center;flex-shrink:0;}
+.story .sn{font-size:8px;font-family:sans-serif;letter-spacing:2px;color:var(--terra);margin-bottom:5px;display:block;text-transform:uppercase;}
+.story h5{font-size:11px;color:var(--terra);margin-bottom:5px;font-family:sans-serif;}
+.story p{font-size:10px;color:rgba(232,213,192,0.8);line-height:1.5;margin:0;}
+
+/* ── PRICE BOX ── */
+.price-g{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:20px 0;}
+.price-box{border-radius:2px;padding:28px;text-align:center;}
+.price-box.fund{background:var(--creme);border:2px solid var(--terra);}
+.price-box.full{background:var(--cafe);}
+.plabel{font-size:9px;letter-spacing:2px;text-transform:uppercase;font-family:sans-serif;margin-bottom:8px;display:block;}
+.price-box.fund .plabel{color:var(--caramelo);}
+.price-box.full .plabel{color:rgba(232,213,192,0.6);}
+.preco{font-size:40px;font-weight:bold;}
+.price-box.fund .preco{color:var(--cafe);}
+.price-box.full .preco{color:var(--terra);}
+.pnote{font-size:12px;margin-top:8px;}
+.price-box.fund .pnote{color:var(--grafite);}
+.price-box.full .pnote{color:rgba(232,213,192,0.55);}
+
+/* ── BIO BOX ── */
+.bio-box{background:white;border:1px solid var(--nude);border-radius:2px;padding:20px;margin:10px 0;}
+.bio-lbl{font-size:9px;letter-spacing:2px;font-family:sans-serif;text-transform:uppercase;color:var(--terra);margin-bottom:8px;display:block;}
+.bio-txt{font-family:sans-serif;font-size:14px;line-height:1.7;color:var(--carvao);background:#f8f8f8;padding:12px;border-radius:4px;white-space:pre-line;}
+
+/* ── CHECKLIST ── */
+.ck{margin:16px 0;}
+.ck-item{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid var(--nude);align-items:flex-start;}
+.ck-box{width:16px;height:16px;border:2px solid var(--terra);border-radius:2px;flex-shrink:0;margin-top:1px;}
+.ck-item p{font-size:13px;margin:0;color:var(--grafite);}
+
+/* ── OBJ CARD ── */
+.obj{background:white;border-radius:2px;padding:20px;margin:10px 0;box-shadow:0 2px 8px rgba(74,46,26,.05);}
+.obj .pergunta{font-size:15px;font-weight:bold;color:var(--cafe);margin-bottom:8px;}
+.obj .resposta{font-size:13px;color:var(--grafite);}
+
+/* ── DIFF SCORE ── */
+.sc-item{display:grid;grid-template-columns:180px 1fr 50px;gap:10px;align-items:center;padding:7px 0;border-bottom:1px solid var(--nude);}
+.sc-lbl{font-family:sans-serif;font-size:12px;color:var(--grafite);}
+.sc-wrap{background:var(--nude);height:5px;border-radius:3px;}
+.sc-bar{height:5px;border-radius:3px;background:var(--terra);}
+.sc-val{font-family:sans-serif;font-size:10px;color:var(--caramelo);text-align:right;}
+
+/* ── MANIFESTO ── */
+.manifesto{font-size:20px;line-height:1.9;color:var(--cafe);font-style:italic;border-left:4px solid var(--terra);padding-left:32px;margin:28px 0;}
+
+/* ── FEED GRID ── */
+.feed-grid{display:grid;grid-template-columns:repeat(9,1fr);gap:3px;margin:20px 0;}
+.feed-cell{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:9px;text-align:center;padding:3px;font-family:sans-serif;font-weight:bold;color:white;border-radius:1px;}
+.f-noiva{background:var(--caramelo);}.f-preta{background:var(--cafe);}
+.f-cachos{background:#6B4226;}.f-editorial{background:var(--dourado);}
+.f-tecnico{background:var(--grafite);}.f-carol{background:#5C3D2E;}
+
+/* ── CAPA ── */
+.capa-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:20px 0;}
+.capa-ex{background:var(--cafe);color:var(--nude);padding:22px;border-radius:2px;aspect-ratio:9/16;display:flex;flex-direction:column;justify-content:flex-end;position:relative;overflow:hidden;}
+.capa-ex .overlay{font-size:9px;letter-spacing:2px;color:var(--terra);text-transform:uppercase;font-family:sans-serif;margin-bottom:6px;}
+.capa-ex .ctitle{font-size:16px;line-height:1.3;margin-bottom:5px;}
+.capa-ex .csub{font-size:10px;color:rgba(232,213,192,0.6);font-family:sans-serif;}
+
+/* ── JOURNEY ── */
+.journey{margin:20px 0;}
+.j-step{display:grid;grid-template-columns:48px 1fr;gap:0;}
+.j-num{font-size:22px;color:var(--nude);font-weight:bold;line-height:1;padding:16px 12px 16px 0;text-align:right;border-right:2px solid var(--terra);font-family:sans-serif;}
+.j-body{padding:14px 0 14px 18px;border-bottom:1px solid var(--nude);}
+.j-body h4.jh{color:var(--cafe);font-size:14px;margin:0 0 4px;font-family:sans-serif;text-transform:none;letter-spacing:0;}
+.j-body p{font-size:13px;margin:0;color:var(--grafite);}
+.j-note{font-size:12px;color:var(--terra);font-style:italic;margin-top:4px !important;}
+
+/* ── BARS ── */
+.bar-wrap{margin:6px 0;}
+.bar-labels{display:flex;justify-content:space-between;font-family:sans-serif;font-size:11px;margin-bottom:2px;color:inherit;}
+.bar{height:6px;border-radius:3px;}
+
+/* ── PILLAR DARK ── */
+.pillar{background:var(--cafe);color:var(--creme);border-radius:2px;padding:28px;position:relative;overflow:hidden;}
+.pillar::before{content:attr(data-num);position:absolute;top:-8px;right:14px;font-size:80px;color:rgba(255,255,255,0.04);font-family:sans-serif;font-weight:bold;}
+.pillar h3.sub{color:var(--terra);border-color:var(--terra);font-size:16px;margin-top:0;}
+.pillar p,.pillar ul{color:rgba(232,213,192,0.8);font-size:13px;}
+.pillar ul{padding-left:16px;margin-top:6px;}
+.pillar ul li{margin-bottom:4px;}
+
+@media(max-width:900px){
+  #sidebar{display:none;}
+  #main{margin-left:0;}
+  .sec,.hero{padding:32px 20px;}
+  .g2,.g3,.g4,.comp,.price-g{grid-template-columns:1fr;}
+  .hero h1{font-size:28px;}
+  .road{flex-direction:column;}
+  .vc-body{grid-template-columns:1fr;}
+  .tab-bar .logo{display:none;}
+  .capa-grid{grid-template-columns:1fr 1fr;}
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════ TAB BAR ══════════════════ -->
+<div class="tab-bar">
+  <div class="logo">@makecarolnunes</div>
+  <button class="tab-btn active" onclick="switchTab('brand')">Brand Brain</button>
+  <button class="tab-btn" onclick="switchTab('insta')">Instagram</button>
+  <button class="tab-btn" onclick="switchTab('curso')">Curso VIP ★</button>
+</div>
+
+<!-- ══════════════════ SIDEBAR ══════════════════ -->
+<div id="sidebar"></div>
+
+<!-- ══════════════════ MAIN ══════════════════ -->
+<div id="main">
+
+<!-- ════════════════════════════════════════════
+     TAB 0 · BRAND BRAIN
+════════════════════════════════════════════ -->
+<div id="tab-brand" class="tab-panel active">
+
+<div class="hero bg-cafe">
+  <div class="hero-tag">Brand Brain · Manual Mestre da Marca · 2026</div>
+  <h1>Carol Nunes<br><em>makecarolnunes</em></h1>
+  <p>O DNA completo da marca. Dois pilares. Uma essência. O manual que orienta cada decisão de conteúdo, visual e posicionamento.</p>
+  <div class="hero-chips">
+    <span class="chip">Noivas Premium</span>
+    <span class="chip">Pele Preta</span>
+    <span class="chip">Cachos & Crespos</span>
+    <span class="chip">Educação Profissional</span>
+    <span class="chip">Rio de Janeiro</span>
+  </div>
+</div>
+
+<!-- DNA -->
+<div class="sec" id="b-dna">
+  <div class="sec-tag">Fundação</div>
+  <h2 class="sec-h">DNA da Marca</h2>
+  <div class="g3">
+    <div class="card"><h4 class="label">Essência</h4><p><em style="color:var(--cafe);font-size:16px;">"Beleza que revela quem você já é."</em></p></div>
+    <div class="card"><h4 class="label">Propósito</h4><p>Fazer cada mulher se reconhecer no espelho — no dia mais especial ou no dia mais comum. Carol não transforma. Carol revela.</p></div>
+    <div class="card"><h4 class="label">Diferencial Central</h4><p>10 anos de publicidade + 7 de beleza. Pensamento estratégico + técnica refinada. <strong>Nenhuma concorrente tem isso.</strong></p></div>
+    <div class="card"><h4 class="label">Posicionamento</h4><p>Premium acessível. Ticket noiva R$2.000. Caminho ao ultra-premium via autoridade digital e portfólio editorial crescente.</p></div>
+    <div class="card"><h4 class="label">Visão</h4><p>Referência em RJ para noivas que querem ser elas mesmas + maior autoridade técnica em pele preta e cachos/crespos do estado.</p></div>
+    <div class="card"><h4 class="label">Promessa</h4><p>A maquiagem dura quanto a memória do dia. Você chega ao altar sendo você — só mais você.</p></div>
+  </div>
+  <div class="manifesto">
+    A beleza mais bonita não é a que impressiona.<br>
+    É a que reconhece. A que olha no espelho e diz: <em>"É isso. Sou eu."</em><br><br>
+    Cada pele tem sua linguagem. Cada cacho tem sua assinatura.<br>
+    Cada noiva carrega uma história que a maquiagem precisa honrar — nunca apagar.<br><br>
+    Aqui, a beleza não transforma. <em>Ela revela.</em>
+  </div>
+</div>
+
+<!-- PILARES -->
+<div class="sec" id="b-pilares">
+  <div class="sec-tag">Estrutura</div>
+  <h2 class="sec-h">Os Dois Pilares — <em>que coexistem</em></h2>
+  <div class="g2">
+    <div class="card dark">
+      <h4 class="label">Pilar I · Noivas Premium</h4>
+      <ul>
+        <li>Luxo emocional — presença total do making of ao altar</li>
+        <li>Exclusividade de data (só a noiva naquele dia)</li>
+        <li>Jornada completa: reunião → prévia → 6-8h making of</li>
+        <li>Maquiagem + penteado completamente personalizados</li>
+        <li>Produtos Dior, NARS, MAC, Lancôme, Kryolan</li>
+        <li>Sem surpresas — noiva sai da prévia com certeza do resultado</li>
+      </ul>
+    </div>
+    <div class="card dark">
+      <h4 class="label">Pilar II · Autoridade Técnica</h4>
+      <ul>
+        <li>Especialização real em pele preta (não performática)</li>
+        <li>Domínio técnico de cachos e crespos valorizados</li>
+        <li>Educação para profissionais — cursos como evolução natural</li>
+        <li>Representatividade com sofisticação editorial</li>
+        <li>Técnica específica para melanina — subtom, base, acabamento</li>
+        <li>Referência de mercado — não só uma opção</li>
+      </ul>
+    </div>
+  </div>
+  <div class="alert dark">
+    <p><strong>Regra de ouro da coerência:</strong> Se você cobrir o assunto da foto (noiva ou pele preta) e ver apenas o tratamento visual, os dois devem parecer do mesmo lugar. A consistência está na luz quente, na paleta terra/nude, no sentimento — não no tema.</p>
+  </div>
+</div>
+
+<!-- PÚBLICO-ALVO -->
+<div class="sec" id="b-publico">
+  <div class="sec-tag">Público</div>
+  <h2 class="sec-h">Público-Alvo — <em>Quem ela serve</em></h2>
+  <div class="g2">
+    <div class="card">
+      <h4 class="label">Persona 1 · A Noiva Premium</h4>
+      <p><strong>Quem é:</strong> 28–38 anos. Profissional estabelecida, planejou o casamento por meses. Não abre mão de qualidade. Prefere pagar mais por quem vai cuidar dela de verdade.</p>
+      <p style="margin-top:8px;"><strong>O que ela quer:</strong> Se sentir ela mesma no dia mais importante. Não quer parecer "fantasia de noiva". Quer durabilidade, atenção e tranquilidade.</p>
+      <p style="margin-top:8px;"><strong>Inseguranças:</strong> Medo de não se reconhecer nas fotos. Medo de a maquiagem borrar. Medo de uma profissional que não vai ouvi-la.</p>
+      <p style="margin-top:8px;"><strong>Como decide:</strong> Portfólio + feedbacks + sensação de confiança no primeiro contato. Preço importante mas não é o filtro principal.</p>
+    </div>
+    <div class="card">
+      <h4 class="label">Persona 2 · A Noiva Preta</h4>
+      <p><strong>Quem é:</strong> 25–38 anos. Mulher negra que já foi invisibilizada pelo mercado da beleza. Busca ativamente profissionais que entendem sua pele, seu cabelo, sua estética.</p>
+      <p style="margin-top:8px;"><strong>O que ela quer:</strong> Uma maquiadora que não vai "clarear" sua pele. Que sabe trabalhar seu tom, que valoriza seus traços e respeita seus cachos ou crespos.</p>
+      <p style="margin-top:8px;"><strong>Inseguranças:</strong> Já teve experiências ruins. Desconfia de profissionais que "atendem todo mundo". Busca especialização real, não inclusão performática.</p>
+      <p style="margin-top:8px;"><strong>Como decide:</strong> Portfólio com peles pretas reais (não editadas demais) + recomendação de outras mulheres negras.</p>
+    </div>
+    <div class="card">
+      <h4 class="label">Persona 3 · A Mulher Cacheada / Crespa</h4>
+      <p><strong>Quem é:</strong> 22–40 anos. Em transição capilar ou já assumida. Busca profissionais que entendam sua textura. Quer resultado bonito sem alisar, sem destruir.</p>
+      <p style="margin-top:8px;"><strong>O que ela quer:</strong> Penteado que valorize seus cachos ou crespos. Maquiagem que harmonize com sua textura natural. Se ver linda sendo ela mesma.</p>
+      <p style="margin-top:8px;"><strong>Inseguranças:</strong> Cabelo "difícil". Penteados que não duram. Profissionais que sugerem alisar.</p>
+      <p style="margin-top:8px;"><strong>Como decide:</strong> Reels de processo com cachos/crespos reais. Conteúdo educativo. Ver Carol trabalhando com texturas semelhantes.</p>
+    </div>
+    <div class="card">
+      <h4 class="label">Persona 4 · A Profissional em Formação</h4>
+      <p><strong>Quem é:</strong> Maquiadora iniciante ou intermediária, 20–32 anos. Quer se especializar em pele preta e cabelos texturizados. Vê demanda e pouca oferta de qualidade.</p>
+      <p style="margin-top:8px;"><strong>O que ela quer:</strong> Aprender com quem realmente domina. Cursos com técnica real, não teoria genérica. Uma mentora que já trilhou o caminho.</p>
+      <p style="margin-top:8px;"><strong>Inseguranças:</strong> Medo de errar com clientes. Falta de confiança com peles mais escuras. Não sabe como precificar.</p>
+      <p style="margin-top:8px;"><strong>Como decide:</strong> Autoridade percebida no conteúdo. Conteúdo técnico gratuito de qualidade. Testemunhos de ex-alunas.</p>
+    </div>
+  </div>
+  <h3 class="sub">Mapa Emocional</h3>
+  <table>
+    <tr><th>Público</th><th>Desejo profundo</th><th>Medo real</th><th>Como Carol resolve</th></tr>
+    <tr><td>Noiva premium</td><td>Ser lembrada como linda de verdade</td><td>Não se reconhecer nas fotos</td><td>Escuta + prévia + presença total 6-8h</td></tr>
+    <tr><td>Noiva preta</td><td>Ser vista e valorizada em seu tom</td><td>Ser invisibilizada ou alterada</td><td>Técnica específica + portfólio diverso</td></tr>
+    <tr><td>Cacheada/crespa</td><td>Beleza que valoriza sua textura</td><td>Ser pressionada a alisar</td><td>Especialidade em cachos + resultados reais</td></tr>
+    <tr><td>Profissional</td><td>Autoridade e segurança técnica</td><td>Cometer erros com clientes</td><td>Educação técnica de alta qualidade</td></tr>
+  </table>
+</div>
+
+<!-- VALORES + ARQUÉTIPOS -->
+<div class="sec" id="b-arq">
+  <div class="sec-tag">Identidade</div>
+  <h2 class="sec-h">Valores e Arquétipos</h2>
+  <div class="g3">
+    <div class="card"><h4 class="label">Autenticidade</h4><p>Beleza que revela, não disfarça.</p></div>
+    <div class="card"><h4 class="label">Excelência Técnica</h4><p>Produtos importados. Resultado durável. Nunca mediocridade.</p></div>
+    <div class="card"><h4 class="label">Presença Real</h4><p>Carol está junto — no making of, na ansiedade, na alegria.</p></div>
+    <div class="card"><h4 class="label">Representatividade</h4><p>Pele preta merece técnica especializada, não adaptação.</p></div>
+    <div class="card"><h4 class="label">Empatia</h4><p>Ouvir antes de fazer. Respeitar as escolhas de cada mulher.</p></div>
+    <div class="card"><h4 class="label">Sofisticação Leve</h4><p>Premium sem ostentação. Luxo que se sente, não que se grita.</p></div>
+  </div>
+  <h3 class="sub">Arquétipos</h3>
+  <table>
+    <tr><th>Arquétipo</th><th>Como é</th><th>Onde aparece</th></tr>
+    <tr><td><strong>A Criadora</strong> · Principal</td><td>Transforma visão em forma. Técnica profunda. Cria referência.</td><td>Portfólio editorial, composições intencionais, pele preta com luz precisa</td></tr>
+    <tr><td><strong>A Cuidadora</strong> · Secundário</td><td>Presente. Acolhedora. Ao lado da noiva nervosa.</td><td>Making of, WhatsApp, prévia, 6-8h de produção</td></tr>
+    <tr><td><strong>A Sábia</strong> · Secundário</td><td>Professora. Sabe o porquê de cada escolha técnica.</td><td>Reels técnicos, FAQ, futuros cursos</td></tr>
+  </table>
+  <h3 class="sub">Como os Arquétipos Aparecem na Prática</h3>
+  <table>
+    <tr><th>Contexto</th><th>Criadora</th><th>Cuidadora</th><th>Sábia</th></tr>
+    <tr><td>Feed / Reels</td><td>Portfólio editorial, composições cuidadas</td><td>Momentos de making of, emoção real</td><td>Reels técnicos explicados com profundidade</td></tr>
+    <tr><td>Stories</td><td>Bastidores com estética intencional</td><td>FAQ, WhatsApp, presença diária autêntica</td><td>Dicas técnicas curtas e precisas</td></tr>
+    <tr><td>Atendimento</td><td>Proposta visual cuidada, PDF elegante</td><td>Disponibilidade, escuta, tranquilidade</td><td>Explicação dos produtos e técnica aplicada</td></tr>
+    <tr><td>Cursos</td><td>Materiais visuais de alta qualidade</td><td>Suporte, comunidade, acolhimento pós-curso</td><td>Conteúdo técnico profundo e estruturado</td></tr>
+  </table>
+  <div class="alert"><p><strong>Tensão arquetípica (força da marca):</strong> A combinação Criadora + Cuidadora + Sábia cria uma marca rara — técnica sem frieza, cuidado sem ingenuidade, autoridade sem arrogância. Essa tensão é o que a torna memorável.</p></div>
+</div>
+
+<!-- TOM DE VOZ -->
+<div class="sec" id="b-voz">
+  <div class="sec-tag">Comunicação</div>
+  <h2 class="sec-h">Tom de Voz</h2>
+  <div class="g2">
+    <div>
+      <h3 class="sub">Palavras da Marca</h3>
+      <span class="tag a">revelar</span><span class="tag a">realçar</span><span class="tag a">presença</span>
+      <span class="tag a">atemporal</span><span class="tag a">se reconhecer</span><span class="tag a">sua essência</span>
+      <span class="tag a">durabilidade</span><span class="tag a">acolhimento</span><span class="tag a">técnica</span>
+      <span class="tag">naturalidade</span><span class="tag">refinamento</span><span class="tag">exclusividade</span>
+      <span class="tag">inteiramente seu</span><span class="tag">sem surpresas</span><span class="tag">sem pressa</span>
+    </div>
+    <div>
+      <h3 class="sub">Palavras Proibidas</h3>
+      <span class="tag d">incrível</span><span class="tag d">perfeito</span><span class="tag d">arrasou</span>
+      <span class="tag d">que dream</span><span class="tag d">passando aqui pra</span><span class="tag d">conteudão</span>
+      <span class="tag d">transformação</span><span class="tag d">apagamos</span><span class="tag d">nova versão de você</span>
+      <span class="tag d">para todos</span><span class="tag d">qualquer tipo de pele</span>
+    </div>
+  </div>
+  <h3 class="sub">Exemplos de Linguagem</h3>
+  <div class="g2">
+    <div>
+      <h4 class="label">Legenda Emocional · Noiva</h4>
+      <div class="legenda">"A Camila chegou até mim três meses antes, um pouco ansiosa, mas com um brilho nos olhos que já dizia tudo. O making of foi compartilhado com a mãe, a irmã e a sobrinha. Muito sorriso real. Isso é o que eu faço: garanto que você chegue ao altar sendo exatamente você — só mais você."</div>
+    </div>
+    <div>
+      <h4 class="label">Legenda Técnica · Pele Preta</h4>
+      <div class="legenda">"Tornar o belo ainda mais belo. Pele melanada tem sua própria linguagem — e eu aprendi a ouvi-la. Produtos que respeitam o subtom, técnica que valoriza o brilho natural. Aqui, não tem adaptação. Tem especialização."</div>
+    </div>
+  </div>
+  <table>
+    <tr><th>Situação</th><th>Tom certo</th><th>Tom errado</th></tr>
+    <tr><td>CTA noivas</td><td>"Me manda uma mensagem. Vamos conversar sobre o seu dia."</td><td>"Últimas vagas! Link na bio!"</td></tr>
+    <tr><td>Abertura de stories</td><td>Começa com a cena: "Ela chegou às 6h da manhã..."</td><td>"Oi gente, passando rapidinho!"</td></tr>
+    <tr><td>Post técnico</td><td>"Subtom frio em pele negra: como identificar antes de escolher a base"</td><td>"5 dicas de maquiagem para você arrasar"</td></tr>
+    <tr><td>Legenda de bastidores</td><td>Narrativa com contexto emocional real da situação</td><td>Foto com "linda demais essa produção né?"</td></tr>
+  </table>
+  <h3 class="sub">Exemplos Completos de Linguagem</h3>
+  <div class="g2">
+    <div>
+      <h4 class="label">Legenda de Bastidores</h4>
+      <div class="legenda">"Tem fases que pedem novos olhares, e essa é uma delas. Atualizar as fotos profissionais é registrar o que você se tornou — não só o que você faz. Essas imagens são um retrato dessa nova energia, mais alinhada com quem sou e com o que venho construindo."</div>
+    </div>
+    <div>
+      <h4 class="label">CTA Educacional</h4>
+      <div class="legenda">"Se você quer aprender a trabalhar pele preta com a técnica que ela merece, [próxima turma / lista de espera]."</div>
+    </div>
+  </div>
+  <h3 class="sub">Stories — Ritmo de Fala</h3>
+  <ul class="cl">
+    <li>Frases curtas. Uma ideia por frame.</li>
+    <li>Começa com a cena, não com a conclusão: "Ela chegou às 6h da manhã..."</li>
+    <li>Usa vírgulas para criar pausa emocional.</li>
+    <li>Termina com uma pergunta ou convite genuíno — nunca com "link na bio".</li>
+    <li>Nunca usa "oi gente" ou "passando rapidinho".</li>
+    <li>Tom de conversa com uma pessoa, não com uma audiência.</li>
+    <li>Máximo 7 stories por dia para não saturar. Um único CTA por dia.</li>
+  </ul>
+</div>
+
+<!-- VISUAL -->
+<div class="sec" id="b-visual">
+  <div class="sec-tag">Estética</div>
+  <h2 class="sec-h">Paleta + Tipografia</h2>
+  <h3 class="sub">Paleta Principal</h3>
+  <div class="pal">
+    <div class="swatch" style="background:#4A2E1A;"><span style="color:#E8D5C0;">Café<br>#4A2E1A</span></div>
+    <div class="swatch" style="background:#8B5E3C;"><span style="color:#E8D5C0;">Caramelo<br>#8B5E3C</span></div>
+    <div class="swatch" style="background:#C4956A;"><span style="color:#FDF5EC;">Terra<br>#C4956A</span></div>
+    <div class="swatch" style="background:#E8D5C0;"><span style="color:#4A2E1A;">Nude<br>#E8D5C0</span></div>
+    <div class="swatch" style="background:#F5EDE3;"><span style="color:#4A2E1A;">Creme<br>#F5EDE3</span></div>
+    <div class="swatch" style="background:#FDFAF7;"><span style="color:#4A2E1A;">Off-White<br>#FDFAF7</span></div>
+    <div class="swatch" style="background:#B8975A;"><span style="color:#FDF5EC;">Dourado<br>#B8975A</span></div>
+  </div>
+  <div class="alert"><p><strong>Proibido:</strong> preto puro (#000), branco puro (#FFF), rosa, azul, verde vibrante em qualquer material da marca. Nunca mais de 3 cores da paleta numa peça.</p></div>
+
+  <h3 class="sub">Paleta Secundária</h3>
+  <div class="pal">
+    <div class="swatch" style="background:#B8975A;"><span style="color:#FDF5EC;">Dourado<br>#B8975A</span></div>
+    <div class="swatch" style="background:#6B4226;"><span style="color:#E8D5C0;">Tabaco<br>#6B4226</span></div>
+    <div class="swatch" style="background:#D4B896;"><span style="color:#4A2E1A;">Areia<br>#D4B896</span></div>
+    <div class="swatch" style="background:#2C1A0E;"><span style="color:#E8D5C0;">Ébano<br>#2C1A0E</span></div>
+  </div>
+
+  <h3 class="sub">Sensação Emocional das Cores</h3>
+  <div class="g2">
+    <div class="card"><h4 class="label">Café Escuro + Caramelo</h4><p>Autoridade silenciosa. Sofisticação quente. Raízes. Terra. A cor da pele que a marca valoriza. Seriedade sem frieza, profundidade sem pretensão. Use em títulos, fundos premium, materiais de noivas.</p></div>
+    <div class="card"><h4 class="label">Terra + Nude</h4><p>Naturalidade refinada. Elegância sem esforço. A sensação de algo que foi feito para você. Transmite acolhimento, calor, intimidade. Use em fundos secundários, cards, textos longos.</p></div>
+    <div class="card"><h4 class="label">Creme + Off-White</h4><p>Leveza. Espaço para respirar. A clareza de quem sabe o que faz. Use generosamente como espaço negativo. O branco faz parte da sofisticação — nunca preencha tudo.</p></div>
+    <div class="card"><h4 class="label">Dourado</h4><p>Luxo discreto. Detalhe que eleva. Use com parcimônia: linha divisória, letra inicial, detalhe em materiais premium. Nunca como cor dominante.</p></div>
+  </div>
+
+  <h3 class="sub">Regras de Uso da Paleta</h3>
+  <ul class="cl">
+    <li>Café Escuro (#4A2E1A) é a cor principal — títulos, destaques, fundos premium</li>
+    <li>Terra (#C4956A) é o acento — destaque de elementos importantes, não fundo dominante</li>
+    <li>Nunca mais de 3 cores da paleta em um único material</li>
+    <li>Jamais use preto puro (#000000) — use Café Escuro ou Ébano</li>
+    <li>Jamais use branco puro (#FFFFFF) — use Off-White ou Creme</li>
+    <li>Cores vibrantes (rosa, azul, verde) são proibidas em todos os materiais</li>
+    <li>Fundos de materiais educacionais: Off-White/Creme + texto Café Escuro</li>
+    <li>Fundos de materiais de noivas: Café Escuro + texto Nude (ou foto com sobreposição)</li>
+  </ul>
+
+  <h3 class="sub">Estética dos Dois Pilares</h3>
+  <div class="g2">
+    <div class="card"><h4 class="label">Pilar Noivas · Estética</h4><p>Luz natural suave. Granulado de filme. Tons de branco, creme e marrom quente. Momentos íntimos: noiva olhando para baixo, sorriso antes da cerimônia, mãos com buquê. Profundidade de campo rasa. Foco no rosto, nos detalhes. Nunca perfeito demais — humano, real.</p></div>
+    <div class="card"><h4 class="label">Pilar Pele Preta / Cachos · Estética</h4><p>Luz lateral que valoriza volume do cabelo e brilho da pele melanada. Fundos neutros (off-white, bege) que colocam o rosto como protagonista. Close-ups que mostram textura da pele e dos cachos. Composição centralizada, olhar direto, presença total.</p></div>
+  </div>
+  <div class="alert"><p><strong>Regra de ouro da integração visual:</strong> Se você cobrir o assunto da foto (noiva ou pele preta) e ver apenas o tratamento visual, os dois devem parecer do mesmo lugar. A consistência está na luz quente, na paleta terra/nude, no sentimento — não no tema.</p></div>
+
+  <h3 class="sub">Linguagem Fotográfica Detalhada</h3>
+  <table>
+    <tr><th>Elemento</th><th>Diretriz</th><th>O que evitar</th></tr>
+    <tr><td>Luz</td><td>Natural lateral ou frontal difusa. Quente 3000–4000K. Nunca flash direto.</td><td>Luz fria, dura, artificial demais</td></tr>
+    <tr><td>Enquadramento</td><td>Close do rosto (pescoço ao topo). Meio-corpo com intenção. Detalhe (olhos, lábios, mãos).</td><td>Foto de corpo inteiro sem intenção, fundo bagunçado visível</td></tr>
+    <tr><td>Profundidade</td><td>Fundo desfocado (bokeh suave). Assunto nítido.</td><td>Tudo em foco, foto de celular sem blur</td></tr>
+    <tr><td>Tratamento</td><td>Tons quentes. Levemente desaturado. Preserva textura da pele.</td><td>Filtros prontos do Instagram, saturação excessiva, pele "plastificada"</td></tr>
+    <tr><td>Composição</td><td>Regra dos terços. Espaço para respirar. Elementos mínimos.</td><td>Foto lotada, texto em cima de área importante</td></tr>
+    <tr><td>Ângulo</td><td>Altura dos olhos ou levemente abaixo. Perfil ¾.</td><td>Ângulo de baixo desfavorável, câmera muito acima</td></tr>
+    <tr><td>Expressão</td><td>Natural, presente, real. Olho fechado em êxtase. Sorriso genuíno.</td><td>Pose forçada, sorriso de passaporte, olhar vazio</td></tr>
+  </table>
+
+  <h3 class="sub">Universo Visual de Referência</h3>
+  <ul class="cl">
+    <li>Fotografias de Helmut Newton com a leveza de Jamie Beck</li>
+    <li>Editorial de beleza da Vogue Brasil — edição pele negra</li>
+    <li>Making of de casamentos cariocas com luz dourada de final de tarde</li>
+    <li>Lookbooks de marcas como Veja, Totême, Studio Nicholson (cores terra, silhuetas limpas)</li>
+    <li>Fotografias de Deun Ivory (beleza negra com profundidade artística)</li>
+  </ul>
+
+  <h3 class="sub">Sistema Tipográfico</h3>
+  <table>
+    <tr><th>Uso</th><th>Fonte</th><th>Peso</th><th>Sensação</th></tr>
+    <tr><td>Títulos, capas de PDF, nome da marca</td><td><strong>Cormorant Garamond</strong></td><td>Bold Italic</td><td>Elegante, literária, atemporal</td></tr>
+    <tr><td>Corpo de texto, informações, preços</td><td><strong>Jost / DM Sans</strong></td><td>Light 300</td><td>Moderna, limpa, profissional</td></tr>
+    <tr><td>1-2 palavras de destaque emocional</td><td><strong>Pinyon Script</strong></td><td>Regular</td><td>Artesanal, íntimo, assinado</td></tr>
+    <tr><td>Capas de reels</td><td>Cormorant grande + Jost pequeno</td><td>—</td><td>Hierarquia clara, máx. 5 palavras</td></tr>
+  </table>
+  <h3 class="sub">Tipografia — Detalhamento</h3>
+  <div class="g2">
+    <div class="card"><h4 class="label">Cormorant Garamond · Principal Serif</h4><p>Google Fonts, gratuita. Alternativa: Playfair Display.<br>Para: títulos, nome da marca, capas de PDF, capas de reels emocionais.<br><em>Sensação:</em> Elegante. Literária. Atemporal. Feminina sem ser frágil.</p></div>
+    <div class="card"><h4 class="label">Jost · Sans Secundária</h4><p>Google Fonts, gratuita. Alternativa: DM Sans.<br>Para: corpo de texto, legendas em materiais, informações práticas, preços, datas.<br><em>Sensação:</em> Moderna. Limpa. Profissional. Contraste perfeito com a serif.</p></div>
+    <div class="card"><h4 class="label">Pinyon Script · Emocional</h4><p>Google Fonts, gratuita. Alternativa: Great Vibes.<br>Para: palavras de destaque em capas, assinatura da marca.<br><em>Sensação:</em> Artesanal. Íntimo. Use com parcimônia — máximo 1-2 palavras por peça.</p></div>
+    <div class="card"><h4 class="label">Hierarquia em Reels</h4><p>Serif grande para palavra de impacto (máx. 3 palavras) + sans pequena para subtítulo.<br><em>Regra:</em> Nunca mais de 2 fontes num reel. Uma palavra domina. Hierarquia clara.</p></div>
+  </div>
+  <div class="alert"><p><strong>Combinação ideal:</strong> Cormorant Garamond Bold Italic (título) + Jost Light (texto) + Pinyon Script (destaque emocional único). Essa combinação já existe nos PDFs da Carol — replicar para todo o ecossistema digital.</p></div>
+</div>
+
+<!-- INSTAGRAM ESTRATÉGIA -->
+<div class="sec" id="b-instagram">
+  <div class="sec-tag">Instagram</div>
+  <h2 class="sec-h">Instagram — <em>Estratégia do feed</em></h2>
+  <h3 class="sub">Análise do Perfil Atual</h3>
+  <div class="g2">
+    <div class="card">
+      <h4 class="label">O que funciona bem</h4>
+      <ul>
+        <li>Bio clara e direta + 3 posts fixados estratégicos</li>
+        <li>Pele preta afro editorial (Erykah Badu) — padrão do feed</li>
+        <li>Série de retratos profissionais Carol (brown shirt)</li>
+        <li>40k visualizações/mês com 951 seguidores — taxa excepcional</li>
+        <li>Legendas de noivas com emoção real (Dinaci, Camila)</li>
+        <li>Conteúdo "o que ela me pediu" com bom engajamento</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4 class="label">O que precisa evoluir</h4>
+      <ul>
+        <li>Feed sem ritmo visual — mistura desigual de qualidades</li>
+        <li>Bio genérica — não comunica os dois pilares</li>
+        <li>Capas de reels inconsistentes</li>
+        <li>"Pele Madu" — destaque com título truncado e confuso</li>
+        <li>Sem destaque de Cachos & Crespos</li>
+        <li>Sem destaque de Feedbacks (o mais crítico para conversão)</li>
+        <li>Sem pilar educacional ativo</li>
+      </ul>
+    </div>
+  </div>
+  <h3 class="sub">Pilares Editoriais do Feed</h3>
+  <table>
+    <tr><th>Pilar</th><th>%</th><th>Tipo de conteúdo</th><th>Frequência</th></tr>
+    <tr><td>Noivas — Emoção</td><td>25%</td><td>Making of, reel do dia, legenda narrativa</td><td>1x/semana</td></tr>
+    <tr><td>Pele Preta — Portfólio</td><td>20%</td><td>Editorial, resultado final, processo técnico</td><td>1x/semana</td></tr>
+    <tr><td>Cachos & Crespos</td><td>15%</td><td>Penteados, finalização, antes/depois</td><td>3x/2 semanas</td></tr>
+    <tr><td>Técnica — Educacional</td><td>15%</td><td>Reel técnico, dica rápida, FAQ visual</td><td>3x/2 semanas</td></tr>
+    <tr><td>Carol — Presença</td><td>10%</td><td>Bastidores, retrato, processo de trabalho</td><td>2x/mês</td></tr>
+    <tr><td>Produtos & Bancada</td><td>10%</td><td>Flat lay, novidades, bancada organizada</td><td>2x/mês</td></tr>
+    <tr><td>Social Beauty</td><td>5%</td><td>Produções sociais, festas, madrinhas</td><td>1x/mês</td></tr>
+  </table>
+  <h3 class="sub">Ritmo Ideal do Feed — Sequência de 9</h3>
+  <div class="feed-grid">
+    <div class="feed-cell f-noiva">NOIVA<br>Editorial</div>
+    <div class="feed-cell f-preta">PELE<br>Close</div>
+    <div class="feed-cell f-tecnico">TÉCNICO<br>Reel</div>
+    <div class="feed-cell f-cachos">CACHOS<br>Penteado</div>
+    <div class="feed-cell f-carol">CAROL<br>Retrato</div>
+    <div class="feed-cell f-noiva">NOIVA<br>Making of</div>
+    <div class="feed-cell f-editorial">PRODUTO<br>Flat lay</div>
+    <div class="feed-cell f-preta">PELE<br>Técnico</div>
+    <div class="feed-cell f-cachos">CACHOS<br>Reel</div>
+  </div>
+  <p style="font-size:12px;color:var(--caramelo);margin-top:6px;">Caramelo = Noivas · Café escuro = Pele Preta · Tabaco médio = Cachos · Dourado = Produto · Cinza = Técnico</p>
+</div>
+
+<!-- CAPAS DE REELS -->
+<div class="sec" id="b-capas">
+  <div class="sec-tag">Visual</div>
+  <h2 class="sec-h">Capas de Reels — <em>O primeiro impacto</em></h2>
+  <p>Toda capa deve comunicar <strong>em 1 segundo</strong> o universo da marca: sofisticação quente, técnica presente, emoção real. A capa não é o início do reel — é o convite para entrar.</p>
+  <div class="g3">
+    <div class="card">
+      <h4 class="label">Princípios Visuais</h4>
+      <ul>
+        <li>Imagem de alta qualidade (nunca screenshot)</li>
+        <li>Máximo 1 frase curta na capa</li>
+        <li>Fonte: Cormorant + Jost (família da marca)</li>
+        <li>Tratamento de cor quente</li>
+        <li>Texto no terço inferior — nunca centralizado</li>
+        <li>Sem molduras ou bordas decorativas</li>
+        <li>Sem emojis no texto da capa</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4 class="label">Nunca Fazer</h4>
+      <ul>
+        <li>Screenshot do vídeo como capa</li>
+        <li>Fundo sólido colorido com texto bold</li>
+        <li>Mais de 1 frase na capa</li>
+        <li>Fonte padrão do Instagram</li>
+        <li>Fundo branco com texto preto (genérico)</li>
+        <li>Antes/Depois colado na thumbnail</li>
+        <li>Rosto cortado pela moldura da capa</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4 class="label">Hierarquia da Capa</h4>
+      <p>1. Imagem (ocupa tudo — protagonista)<br>2. Palavra de impacto (grande, serif, terço inferior)<br>3. Complemento (pequeno, sans, abaixo da palavra)<br>4. @makecarolnunes (discreto, canto inferior)</p>
+    </div>
+  </div>
+  <h3 class="sub">Exemplos por Tipo de Conteúdo</h3>
+  <div class="capa-grid">
+    <div class="capa-ex">
+      <div class="overlay">Noiva · Emocional</div>
+      <div class="ctitle">O dia que ela sempre sonhou</div>
+      <div class="csub">Making of · Rio de Janeiro</div>
+    </div>
+    <div class="capa-ex" style="background:#6B4226;">
+      <div class="overlay">Técnico · Pele Preta</div>
+      <div class="ctitle">Pele melanada merece técnica especializada</div>
+      <div class="csub">Fundação · Subtom · Acabamento</div>
+    </div>
+    <div class="capa-ex" style="background:#5C3D2E;">
+      <div class="overlay">Cachos & Crespos</div>
+      <div class="ctitle">Coque com cachos naturais</div>
+      <div class="csub">Sem alisar. Sem abrir mão.</div>
+    </div>
+    <div class="capa-ex" style="background:#3D2B1A;">
+      <div class="overlay">Editorial · Autoridade</div>
+      <div class="ctitle">O que a maquiagem certa faz por você</div>
+      <div class="csub">Técnica · Presença · Resultado</div>
+    </div>
+    <div class="capa-ex">
+      <div class="overlay">Bastidores · Carol</div>
+      <div class="ctitle">Por trás de cada produção</div>
+      <div class="csub">7 anos. Uma bancada. Muito amor.</div>
+    </div>
+    <div class="capa-ex" style="background:#8B5E3C;">
+      <div class="overlay">Educacional</div>
+      <div class="ctitle">3 erros na maquiagem de pele escura</div>
+      <div class="csub">E como corrigir no próximo atendimento</div>
+    </div>
+  </div>
+</div>
+
+<!-- MOCKUPS -->
+<div class="sec" id="b-mockups">
+  <div class="sec-tag">Briefings</div>
+  <h2 class="sec-h">Mockups — <em>Briefings executáveis</em></h2>
+  <h3 class="sub">Feed Ideal — 9 Posts</h3>
+  <table>
+    <tr><th>Pos.</th><th>Tipo</th><th>Descrição Visual</th><th>Início da legenda</th></tr>
+    <tr><td>1</td><td>Retrato Carol</td><td>Foto editorial de Carol sentada, camisa terra, fundo neutro, cachos definidos, sorriso genuíno. Luz natural lateral.</td><td>"Sou a Carol. E esse sou eu agora..."</td></tr>
+    <tr><td>2</td><td>Noiva Premium</td><td>Close lateral da noiva (ângulo ¾), véu desfocado, luz de lustre quente, expressão serena. Tratamento P&B com granulado.</td><td>"Ela chegou. E o making of começou..."</td></tr>
+    <tr><td>3</td><td>Pele Preta</td><td>Close frontal de mulher negra, pele iluminada, afro volumoso, fundo off-white, olhar direto. Som: Erykah Badu.</td><td>"Tornar o belo ainda mais belo."</td></tr>
+    <tr><td>4</td><td>Reel Técnico</td><td>Capa: mãos de Carol aplicando base em pele escura, close extremo, luz lateral. Texto "Subtom frio ou quente?" em serif.</td><td>"Antes de escolher a base..."</td></tr>
+    <tr><td>5</td><td>Cachos</td><td>Perfil com cachos estilizados em coque alto, luz dourada lateral, brinco pendente. Expressão de confiança. Fundo neutro.</td><td>"Coque com cachos. Sem alisar nenhum fio."</td></tr>
+    <tr><td>6</td><td>Noiva Preta</td><td>Noiva negra em vestido branco, cachos soltos com flor, sorriso aberto, luz de jardim (bokeh). Emoção real, não pose.</td><td>"A noiva que chegou transbordando felicidade."</td></tr>
+    <tr><td>7</td><td>Flat lay</td><td>Bancada organizada: Dior, NARS, Fenty. Luz natural de janela. Mãos de Carol escolhendo produto.</td><td>"Cada produto na bancada é uma escolha..."</td></tr>
+    <tr><td>8</td><td>Reel Educacional</td><td>Capa: close de olhos de mulher negra com delineado preciso. Texto: "Cat eye em epicanto" em serif.</td><td>"Delineado não é igual para todos os olhos."</td></tr>
+    <tr><td>9</td><td>Making of Noiva</td><td>Carol de costas aplicando no rosto da noiva, noiva em robe branco, sorriso no espelho ao fundo. Cena íntima.</td><td>"6 a 8 horas ao lado dela..."</td></tr>
+  </table>
+  <h3 class="sub">Reel Emocional de Noiva — Briefing</h3>
+  <div class="card">
+    <h4 class="label">Estrutura narrativa 30–60 segundos</h4>
+    <p><strong>0–3s:</strong> Bancada com produtos. Luz quente. Sem texto. Música instrumental.<br>
+    <strong>3–10s:</strong> Close das mãos de Carol preparando. Câmera lenta. Texto mínimo: nome da noiva.<br>
+    <strong>10–25s:</strong> Noiva no espelho → detalhe do olho → Carol aplicando → satisfação da noiva.<br>
+    <strong>25–35s:</strong> Foto final do resultado. Frase mais bonita da legenda aparece gradualmente.<br>
+    <strong>35–45s:</strong> Making of — noiva saindo, sorrindo, família ao fundo. Celebração contida.<br>
+    <strong>Frame final:</strong> Fundo escuro. @makecarolnunes. "Beleza que faz você se reconhecer."</p>
+  </div>
+  <h3 class="sub">PDF Premium de Noivas — Briefing</h3>
+  <div class="card">
+    <h4 class="label">Estrutura visual</h4>
+    <p><strong>Capa:</strong> Foto de noiva (luz dourada) + sobreposição escura no rodapé. Texto: "Beleza para Noivas" (script) + "por Carol Nunes" (sans). Ano. Handle.<br>
+    <strong>Páginas internas:</strong> Alternância foto página inteira + página fundo off-white, texto Café Escuro, título serif, corpo sans.<br>
+    <strong>Detalhe:</strong> Linha fina dourada como divisória. Espaço generoso — nunca tudo preenchido.<br>
+    <strong>Preços:</strong> Fundo off-white. Título serif grande. Grid 2 colunas. Valor em bold. Linha divisória finíssima.</p>
+  </div>
+  <h3 class="sub">Carrossel Educacional — Briefing</h3>
+  <div class="card">
+    <h4 class="label">Estrutura de 6–8 slides</h4>
+    <p><strong>Slide 1 (capa):</strong> Foto de impacto + título em serif grande. Ex: "3 erros na maquiagem de pele preta" sobre pele preta iluminada.<br>
+    <strong>Slides 2–6:</strong> Fundo Off-White. Título do erro/dica em Café Escuro, serif. Texto em Jost Light. Foto do lado (50% do slide). Numeração discreta no canto.<br>
+    <strong>Último slide:</strong> Fundo Café Escuro. Texto Nude: "Curtiu? Salva pra não perder." + @makecarolnunes + CTA.</p>
+  </div>
+</div>
+
+<!-- SISTEMA DE CONTEÚDO -->
+<div class="sec" id="b-conteudo">
+  <div class="sec-tag">Conteúdo</div>
+  <h2 class="sec-h">Sistema de Conteúdo — <em>As 5 categorias</em></h2>
+  <div class="g3">
+    <div class="pillar" data-num="I">
+      <h3 class="sub">Portfólio Emocional</h3>
+      <p>Resultado com narrativa. Não "foto bonita" — a história da cliente. Atrai noivas e gera identificação.</p>
+      <ul><li>Reels de making of com música</li><li>Legenda que conta a história</li><li>Séries antes/durante/depois</li></ul>
+    </div>
+    <div class="pillar" data-num="II">
+      <h3 class="sub">Autoridade Técnica</h3>
+      <p>Bridge Content. Explica técnica, produto, processo. Serve para noiva E profissional ao mesmo tempo.</p>
+      <ul><li>Reels técnicos sobre pele preta</li><li>Carrosséis "como eu faço"</li><li>Análise de produto por subtom</li></ul>
+    </div>
+    <div class="pillar" data-num="III">
+      <h3 class="sub">Bastidores Estratégicos</h3>
+      <p>Humanização com intenção. Não qualquer bastidor — o que reforça percepção de nível premium.</p>
+      <ul><li>Bancada organizada antes de atendimento</li><li>Montagem de kit para noiva</li><li>Carol pesquisando nova técnica</li></ul>
+    </div>
+    <div class="pillar" data-num="IV">
+      <h3 class="sub">Storytelling de Autoridade</h3>
+      <p>Histórias que provam por que você é a escolha certa. Narrativas com profundidade real.</p>
+      <ul><li>"O que aprendi depois de 7 anos"</li><li>"Por que nunca uso X em pele melanada"</li><li>"A noiva que chegou desconfiando"</li></ul>
+    </div>
+    <div class="pillar" data-num="V">
+      <h3 class="sub">Conexão e Valores</h3>
+      <p>Conteúdo pessoal com propósito. Valores que constroem identidade de marca.</p>
+      <ul><li>Por que escolheu se especializar</li><li>O que beleza natural significa para você</li><li>Retratos profissionais + legenda</li></ul>
+    </div>
+  </div>
+  <h3 class="sub">Conteúdos por Objetivo</h3>
+  <table>
+    <tr><th>Objetivo</th><th>Formato ideal</th><th>Exemplo de tema</th></tr>
+    <tr><td>Salvamento</td><td>Carrossel educativo</td><td>"5 produtos que nunca saem do meu kit para pele preta"</td></tr>
+    <tr><td>Compartilhamento</td><td>Reel emocional</td><td>Making of de noiva negra cacheada com narrativa poderosa</td></tr>
+    <tr><td>Comentários</td><td>Legenda com pergunta</td><td>"Qual o maior medo sobre maquiagem no seu casamento?"</td></tr>
+    <tr><td>DMs de noivas</td><td>Resultado + CTA específico</td><td>Foto de resultado terminando em "me manda mensagem"</td></tr>
+    <tr><td>DMs de profissionais</td><td>Conteúdo técnico + teaser</td><td>"Aprofundo isso na formação... Lista de espera no link"</td></tr>
+    <tr><td>Novos seguidores</td><td>Reel gancho forte</td><td>"Ninguém te conta isso sobre maquiagem para pele preta"</td></tr>
+    <tr><td>Autoridade percebida</td><td>Carrossel técnico</td><td>"Por que a maioria erra na base para pele negra"</td></tr>
+  </table>
+  <h3 class="sub">Como Crescer como Especialista sem Perder Sofisticação</h3>
+  <ul class="cl">
+    <li><strong>Noivas:</strong> Publicar making of com narração em legenda. Mostrar o cronograma, a prévia, a presença. Nunca só o resultado final — o processo é o produto.</li>
+    <li><strong>Pele preta:</strong> Reels técnicos com close de pele real. Explicar produto por produto, subtom por subtom. Linguagem de especialista, não de influenciadora.</li>
+    <li><strong>Cachos/Crespos:</strong> Mostrar o processo de penteado em texturas naturais. Antes/depois que valoriza a textura, não a "domestica".</li>
+    <li><strong>Educação:</strong> Começar com reels técnicos gratuitos. Construir lista. Lançar curso como resultado natural — não como anúncio surpresa.</li>
+    <li><strong>Sofisticação:</strong> Nunca usar linguagem de "guru". Sempre mostrar trabalho real com honestidade técnica. Nunca prometer resultados impossíveis.</li>
+  </ul>
+</div>
+
+<!-- EXPERIÊNCIA DA MARCA -->
+<div class="sec" id="b-experiencia">
+  <div class="sec-tag">Experiência</div>
+  <h2 class="sec-h">Experiência da Marca — <em>O que se sente</em></h2>
+  <div class="g3">
+    <div class="card"><h4 class="label">Ao entrar no perfil</h4><p>Sensação: "Essa pessoa sabe o que está fazendo." Feed visualmente coeso, quente, elegante. Bio que comunica claramente. A pessoa certa para quem quer qualidade real.</p></div>
+    <div class="card"><h4 class="label">Nos stories</h4><p>Sensação: "Ela é real." Carol presente, humana, bastidores verdadeiros. Não performático. A pessoa que você quer ao seu lado no dia do casamento.</p></div>
+    <div class="card"><h4 class="label">Nos reels</h4><p>Sensação: "Ela realmente sabe fazer isso." Técnica visível. Resultado belíssimo. Emoção no making of. Educação que impressiona pelo conhecimento real.</p></div>
+    <div class="card"><h4 class="label">No atendimento</h4><p>Sensação: "Eu confio nela." PDF elegante, linguagem cuidada, resposta pensada. A proposta já transmite o nível do serviço antes de começar.</p></div>
+    <div class="card"><h4 class="label">No making of</h4><p>Sensação: "Ela está realmente aqui comigo." Presença total. Sem pressa. Cronograma que funciona. Noiva que aproveita cada segundo.</p></div>
+    <div class="card"><h4 class="label">Nos feedbacks</h4><p>Sensação: "É isso. É ela." Clientes que voltam, que recomendam, que mandam mensagem meses depois cheias de gratidão. Prova social real.</p></div>
+  </div>
+  <div class="quote">A melhor forma de descrever a experiência Carol Nunes: é a sensação de ter alguém do seu lado que sabe o que está fazendo, que ouve de verdade, que vai garantir que você chegue até o altar sendo você — e que a maquiagem vai durar tanto quanto a memória do dia.</div>
+</div>
+
+<!-- O QUE EVITAR -->
+<div class="sec" id="b-evitar">
+  <div class="sec-tag">Guardrails</div>
+  <h2 class="sec-h">O Que Evitar — <em>Erros que destroem o posicionamento</em></h2>
+  <div class="g2">
+    <div>
+      <h3 class="sub">Erros Visuais</h3>
+      <div class="alert danger"><p><strong>Fundo sólido colorido em capa de reel</strong> — transmite conteúdo genérico de micro-influenciadora iniciante</p></div>
+      <div class="alert danger"><p><strong>Misturar estilos fotográficos no feed</strong> — editorial ao lado de selfie desfocada rebaixa tudo</p></div>
+      <div class="alert danger"><p><strong>Filtros automáticos do Instagram nas fotos de trabalho</strong> — desonestidade técnica com o resultado real</p></div>
+      <div class="alert danger"><p><strong>Fundo com objetos competindo com o rosto</strong> — lâmpada, prateleiras, mesa bagunçada visíveis</p></div>
+    </div>
+    <div>
+      <h3 class="sub">Erros de Posicionamento</h3>
+      <div class="alert danger"><p><strong>"Maquiadora para todos"</strong> — especialização não exclui, atrai quem valoriza</p></div>
+      <div class="alert danger"><p><strong>Promoção de preço</strong> — escassez sim, desconto não. Nunca "vagas com desconto"</p></div>
+      <div class="alert danger"><p><strong>"Transformação"</strong> para noivas — a noiva quer ser revelada, não transformada</p></div>
+      <div class="alert danger"><p><strong>Representatividade performática</strong> — foto de pele negra sem conteúdo técnico real não é especialização</p></div>
+    </div>
+  </div>
+  <h3 class="sub">Erros no Nicho de Noivas</h3>
+  <div class="alert danger"><p><strong>Mostrar apenas o resultado final:</strong> O diferencial de Carol é a experiência completa. Não postar making of é esconder o maior produto da marca.</p></div>
+  <div class="alert danger"><p><strong>Usar a palavra "transformação" para noivas:</strong> A noiva não quer ser transformada. Quer ser revelada. Quer se reconhecer. "Transformação" é a antítese do posicionamento de Carol.</p></div>
+  <h3 class="sub">Erros no Nicho de Pele Preta / Cachos</h3>
+  <div class="alert danger"><p><strong>Representatividade performática:</strong> Postar uma foto de pele negra "para incluir" sem conteúdo técnico real. O público percebe. A especialização precisa ser demonstrada, não declarada.</p></div>
+  <div class="alert danger"><p><strong>Termos genéricos como "pele escura" sem especificidade técnica:</strong> Subtom, tipo de melanina, produtos adequados — isso é o que demonstra domínio real.</p></div>
+  <div class="alert danger"><p><strong>Mostrar cachos "domados" ou "controlados":</strong> Os cachos e crespos que Carol trabalha são valorizados como são. Penteados que reduzem o volume sem intenção passam a mensagem errada.</p></div>
+  <h3 class="sub">Erros em Perfis Educacionais</h3>
+  <div class="alert danger"><p><strong>Transformar o feed em perfil de cursos antes de ter autoridade visual:</strong> Curso lançado antes de portfólio sólido = ceticismo. Construir primeiro, monetizar depois.</p></div>
+  <div class="alert danger"><p><strong>Conteúdo educacional superficial:</strong> "5 dicas de maquiagem" sem profundidade técnica. O público de educação que Carol quer atrair é profissional — eles percebem quando é raso.</p></div>
+  <div class="alert danger"><p><strong>Seguir trends sem adaptação:</strong> Trends do TikTok/Reels que não têm nada a ver com a marca. A marca tem uma voz — ela não dança ao som das tendências, ela cria as próprias.</p></div>
+</div>
+
+<!-- GUIA OPERACIONAL -->
+<div class="sec" id="b-operacional">
+  <div class="sec-tag">Operacional</div>
+  <h2 class="sec-h">Guia Operacional — <em>Regras práticas do dia a dia</em></h2>
+  <div class="g2">
+    <div>
+      <h3 class="sub">Reels — Checklist Antes de Publicar</h3>
+      <ul class="cl">
+        <li>A capa tem qualidade de foto (não screenshot)?</li>
+        <li>O texto da capa tem máximo 1 frase curta?</li>
+        <li>A fonte usada é da família tipográfica da marca?</li>
+        <li>O tratamento de cor está dentro da paleta quente?</li>
+        <li>A música é consistente com o território emocional da marca?</li>
+        <li>A legenda começa com uma frase de impacto (não "oi gente")?</li>
+        <li>O handle @makecarolnunes aparece discretamente na capa?</li>
+      </ul>
+      <h3 class="sub">Stories — Regras Diárias</h3>
+      <ul class="cl">
+        <li>Nunca iniciar com "Oii, gente!" ou "Passando rapidinho"</li>
+        <li>Máximo 7 stories por dia para não saturar</li>
+        <li>Um CTA por dia — e apenas um</li>
+        <li>Bastidores reais têm mais valor que stories produzidos demais</li>
+        <li>FAQ guardado em destaque — sempre</li>
+        <li>Feedbacks de clientes viram destaque e stories avulsos</li>
+      </ul>
+    </div>
+    <div>
+      <h3 class="sub">PDFs e Materiais Premium</h3>
+      <ul class="cl">
+        <li>Sempre usar as fontes da marca (Cormorant/Playfair + Jost)</li>
+        <li>Paleta restrita: Café Escuro + Terra + Nude + Off-White</li>
+        <li>Foto em pelo menos 50% das páginas</li>
+        <li>Rodapé discreto com @makecarolnunes em toda página</li>
+        <li>Nunca usar clip-art, ícones genéricos ou elementos de Canva padrão</li>
+        <li>Proposta de noivas: sempre com foto personalizada quando disponível</li>
+      </ul>
+      <h3 class="sub">Comunicação — Regras de Atendimento</h3>
+      <ul class="cl">
+        <li>Responder mensagens em até 4h em dias úteis</li>
+        <li>Tom no WhatsApp: caloroso, profissional, sem abreviações</li>
+        <li>Envio da proposta: sempre em PDF, nunca só texto no chat</li>
+        <li>Nunca negociar preço por mensagem — contextualizar o valor primeiro</li>
+        <li>Feedback de clientes sempre solicitado 7 dias após o evento</li>
+      </ul>
+    </div>
+  </div>
+  <h3 class="sub">Direção Criativa — Perguntas de Controle</h3>
+  <ul class="cl">
+    <li>Antes de qualquer decisão visual: "Isso parece editorial ou genérico?"</li>
+    <li>Antes de qualquer texto: "Isso soa como Carol ou como qualquer maquiadora?"</li>
+    <li>Toda semana: checar se o feed tem equilíbrio entre os dois pilares</li>
+    <li>A cada mês: mini-auditoria de 3 posts — o que funcionou e por quê</li>
+    <li>Antes de qualquer post: "Uma noiva de R$2.000 veria isso e confiaria mais em mim?"</li>
+  </ul>
+</div>
+
+<!-- TRANSFORMAÇÃO DO FEED -->
+<div class="sec" id="b-transformacao">
+  <div class="sec-tag">Plano</div>
+  <h2 class="sec-h">Transformação do Feed — <em>O plano prático de 90 dias</em></h2>
+  <div class="alert"><p><strong>Diagnóstico central:</strong> A Carol tem talento editorial real — fica evidente nos melhores posts. O problema não é a qualidade do trabalho. É a inconsistência na qualidade da apresentação. Um feed que mistura editorial com casual parece amador mesmo quando o trabalho por trás é premium.</p></div>
+  <h3 class="sub">Posts que Fortalecem — Manter e Destacar</h3>
+  <table>
+    <tr><th>Tipo de post</th><th>Por quê funciona</th><th>Ação</th></tr>
+    <tr><td>Pele preta editorial (afro, Erykah Badu)</td><td>Editorial impecável, representa o pilar com sofisticação, música autoral</td><td class="td-v green">Fixar. Referência para futuros posts.</td></tr>
+    <tr><td>Fotos profissionais novas de Carol</td><td>Tratamento visual coeso, presença forte, autenticidade</td><td class="td-v green">Manter. Âncora do retrato da marca.</td></tr>
+    <tr><td>Making of Dinaci (noiva madura)</td><td>Emoção real, legenda profunda, diferencia pelo humano</td><td class="td-v green">Manter. Modelo para próximas narrações.</td></tr>
+    <tr><td>Post "Tornar o belo ainda mais belo"</td><td>Conceito poderoso, imagem limpa, filosofia da marca em uma frase</td><td class="td-v green">Fixar ou repostar como carrossel ampliado.</td></tr>
+  </table>
+  <h3 class="sub">Posts que Precisam ser Arquivados</h3>
+  <ul class="cl">
+    <li>Fotos com iluminação muito precária (fundo escuro, sem definição)</li>
+    <li>Screenshots de tela ou stories repostados como feed</li>
+    <li>Antes/depois com tratamentos visuais muito diferentes entre os dois lados</li>
+    <li>Posts de carnaval com estética distante do universo da marca</li>
+    <li>Qualquer post onde a qualidade da foto contradiz o nível premium que o preço exige</li>
+  </ul>
+  <h3 class="sub">6 Mudanças Imediatas (sem mudar nada no trabalho real)</h3>
+  <div class="g2">
+    <div class="card"><h4 class="label">1. Refazer capas dos reels existentes</h4><p>Escolher o frame mais bonito de cada reel e recolocar como capa com tipografia da marca. Custo: zero. Impacto: imediato.</p></div>
+    <div class="card"><h4 class="label">2. Arquivar posts visualmente destoantes</h4><p>10-15 posts que quebram a coerência. Não deletar — arquivar. Limpa o feed sem perder o histórico.</p></div>
+    <div class="card"><h4 class="label">3. Atualizar a bio</h4><p>Usar uma das versões propostas que comunica os dois pilares + chamada para orçamento. Custo: zero. Impacto: conversão imediata.</p></div>
+    <div class="card"><h4 class="label">4. Renomear destaque "Pele Madu"</h4><p>Para "Pele Preta" ou escrito por inteiro. Clareza antes de elegância — título truncado confunde.</p></div>
+    <div class="card"><h4 class="label">5. Padronizar capas dos destaques</h4><p>Criar capas coesas para todos os destaques usando a paleta da marca. Canva com as cores certas resolve em 1h.</p></div>
+    <div class="card"><h4 class="label">6. Fixar 3 posts estratégicos</h4><p>Carol (retrato), Noiva (melhor making of), Pele Preta (editorial). Os três comunicam a marca completa na primeira visita.</p></div>
+  </div>
+  <h3 class="sub">Plano de Evolução — 90 Dias</h3>
+  <table>
+    <tr><th>Período</th><th>Foco</th><th>Ações principais</th></tr>
+    <tr><td><strong>Dias 1–30</strong></td><td>Limpeza e ancoragem</td><td>Arquivar posts fracos. Refazer capas. Atualizar bio. Padronizar destaques. Publicar 2 posts/semana com qualidade controlada.</td></tr>
+    <tr><td><strong>Dias 31–60</strong></td><td>Ritmo editorial</td><td>Implementar alternância de pilares no feed. Iniciar série de reels técnicos sobre pele preta. Criar 1 making of de noiva com narração.</td></tr>
+    <tr><td><strong>Dias 61–90</strong></td><td>Autoridade e conversão</td><td>Lançar carrossel educacional. Criar série de stories FAQ. Iniciar captação de lista para curso. Medir: taxa de conversão de orçamentos.</td></tr>
+  </table>
+  <h3 class="sub">Como Fazer a Transição sem Parecer Brusca</h3>
+  <ul class="cl">
+    <li>Nunca deletar — sempre arquivar. O histórico é valioso.</li>
+    <li>Introduzir o novo padrão gradualmente: a cada 3 posts novos, a coerência já começa a aparecer.</li>
+    <li>Não anunciar "mudança" — simplesmente começar. Audiência percebe evolução, não ruptura.</li>
+    <li>Manter a autenticidade: a transição não é sobre se tornar outra pessoa — é sobre mostrar quem Carol já é, com mais clareza e consistência.</li>
+    <li>As novas fotos profissionais de Carol (série brown shirt) são a âncora visual de tudo que vem a seguir.</li>
+  </ul>
+  <div class="quote">A marca Carol Nunes já existe em sua forma mais poderosa — no trabalho real, na emoção das noivas, na técnica impecável. O que falta é tornar esse nível de qualidade visível de forma consistente, em cada ponto de contato. O feed atual tem os ingredientes certos. Precisa de curadoria, não de reinvenção.</div>
+</div>
+
+</div><!-- fim tab-brand -->
+
+
+<!-- ════════════════════════════════════════════
+     TAB 1 · INSTAGRAM
+════════════════════════════════════════════ -->
+<div id="tab-insta" class="tab-panel">
+
+<div class="hero bg-dark">
+  <div class="hero-tag">Auditoria Prática · Feed @makecarolnunes · 2026</div>
+  <h1>O que fica.<br>O que sai.<br><em>O que muda.</em></h1>
+  <p>Análise direta do feed atual, plano de ação imediato e diretrizes completas para o Instagram da marca.</p>
+</div>
+
+<!-- DIAGNÓSTICO -->
+<div class="sec" id="i-diag">
+  <div class="sec-tag">Situação atual</div>
+  <h2 class="sec-h">Diagnóstico do Perfil</h2>
+  <div class="g2">
+    <div class="card">
+      <h4 class="label">O que está forte</h4>
+      <ul>
+        <li>3 posts fixados estratégicos (Carol + Noiva + Pele preta)</li>
+        <li>Pele preta afro editorial (Erykah Badu) — melhor post do feed</li>
+        <li>Série de retratos profissionais Carol (brown shirt)</li>
+        <li>Legendas emocionais de noivas (Dinaci, Camila)</li>
+        <li>40k visualizações/mês com 951 seguidores — taxa excepcional</li>
+        <li>Carrossel Emily P Santos (2.6k views)</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4 class="label">O que precisa mudar</h4>
+      <ul>
+        <li>Feed sem ritmo visual — mistura desigual de qualidades</li>
+        <li>Bio genérica — não comunica os dois pilares</li>
+        <li>Capa laranja "o que ela me pediu" — mais prejudicial do que parece</li>
+        <li>"Pele Madu" — destaque com título truncado e confuso</li>
+        <li>Capas de reels inconsistentes</li>
+        <li>Sem destaque de Cachos & Crespos</li>
+        <li>Sem destaque de Feedbacks</li>
+      </ul>
+    </div>
+  </div>
+  <h3 class="sub">Bio</h3>
+  <div class="bio-box">
+    <span class="bio-lbl">Bio Atual · Problema</span>
+    <div class="bio-txt">Carol Nunes | Maquiadora RJ
+Beleza natural e sofisticada para noivas e produções sociais
+📍 RJ | Agende pelo link abaixo</div>
+    <p style="font-size:12px;color:var(--vermelho);margin-top:8px;">❌ Não comunica pele preta nem cachos. "Produções sociais" é genérico. Sem personalidade.</p>
+  </div>
+  <div class="g2">
+    <div class="bio-box">
+      <span class="bio-lbl">Bio Proposta v1 · Dois pilares</span>
+      <div class="bio-txt">Carol Nunes · Maquiadora RJ
+Beleza de noivas — do making of ao altar
+Especialista em pele preta · cachos e crespos
+📍 Tijuca · Atendo RJ · Cursos em breve
+↓ Orçamentos e agenda</div>
+    </div>
+    <div class="bio-box">
+      <span class="bio-lbl">Bio Proposta v2 · Emocional</span>
+      <div class="bio-txt">Carol Nunes · Maquiadora
+A beleza que faz você se reconhecer no espelho
+Noivas · Pele preta · Cachos e crespos
+📍 Rio de Janeiro
+↓ Orçamentos e agenda</div>
+    </div>
+  </div>
+</div>
+
+<!-- POSTS: ARQUIVAR -->
+<div class="sec" id="i-arq">
+  <div class="sec-tag">Decisões</div>
+  <h2 class="sec-h">Posts para Arquivar — <em>Ação imediata</em></h2>
+
+  <div class="vc arc">
+    <div class="vc-top"><span class="vbadge arc">Arquivar · Urgente</span><div><div class="vc-name">Rosto com glitter de carnaval</div><div class="vc-desc">Post mais antigo — estética festival/carnaval</div></div></div>
+    <div class="vc-action"><strong>Por quê:</strong> Glitter colorido está no território oposto da paleta terra/nude. Qualquer noiva premium que vê esse post tem percepção do nível rebaixada imediatamente. Incompatível sem ajuste possível.</div>
+  </div>
+
+  <div class="vc arc">
+    <div class="vc-top"><span class="vbadge arc">Arquivar Capa · Urgente</span><div><div class="vc-name">Thumbnail laranja "O que ela me pediu X o que eu entreguei"</div><div class="vc-desc">Fundo laranja sólido com texto bold centralizado</div></div></div>
+    <div class="vc-action"><strong>Por quê:</strong> O reel fica (1.1k views, bom conteúdo). A capa vai. Trocar para o frame da cliente com o resultado mais bonito. Texto: 1 linha serif discreta no terço inferior. Isso é 2 minutos de trabalho, impacto imediato.</div>
+  </div>
+
+  <div class="vc arc">
+    <div class="vc-top"><span class="vbadge arc">Arquivar</span><div><div class="vc-name">Mesa de maquiagem bagunçada / sem composição</div></div></div>
+    <div class="vc-action"><strong>Por quê:</strong> Bagunça não é bastidor premium. Noiva que paga R$2.000 precisa ver organização. O reel da bancada com Dior/NARS organizada é o substituto correto.</div>
+  </div>
+
+  <div class="vc arc">
+    <div class="vc-top"><span class="vbadge arc">Arquivar</span><div><div class="vc-name">Carol + cliente foto casual (pink hoodie)</div></div></div>
+    <div class="vc-action"><strong>Por quê:</strong> Ao lado das fotos profissionais (brown shirt), essa imagem desfaz o posicionamento visual em 1 segundo.</div>
+  </div>
+
+  <div class="vc arc">
+    <div class="vc-top"><span class="vbadge arc">Arquivar</span><div><div class="vc-name">Posts com fundo poluído (lâmpadas, prateleiras visíveis)</div></div></div>
+    <div class="vc-action"><strong>Por quê:</strong> Quando o fundo compete com o rosto, a foto parece amadora mesmo com maquiagem excelente. Caso Laura (dez/2025): lâmpada vintage no fundo, composta com a cabeça da cliente.</div>
+  </div>
+</div>
+
+<!-- POSTS: MANTER -->
+<div class="sec" id="i-mant">
+  <div class="sec-tag">Decisões</div>
+  <h2 class="sec-h">Posts para Manter — <em>Âncoras do feed</em></h2>
+  <table>
+    <tr><th>Post</th><th>Por que funciona</th><th>Ação</th></tr>
+    <tr><td><strong>Pele preta afro editorial</strong><br>Erykah Badu, 1.2k views</td><td>Melhor post do feed. Editorial impecável, luz lateral, fundo neutro, música autoral. É o padrão que todos os outros precisam atingir.</td><td class="td-v green">Fixar</td></tr>
+    <tr><td><strong>Carrossel Emily P Santos</strong><br>2.6k views — maior alcance do feed</td><td>Primeira foto: glossy lip, cat eye, luz perfeita, ¾ angle. Para o scroll. Referência de abertura de carrossel.</td><td class="td-v green">Manter · Referência</td></tr>
+    <tr><td><strong>Série retratos Carol</strong><br>Camisa marrom, fundo neutro</td><td>Paleta terra/bege/café = paleta da marca. Âncora visual da identidade inteira.</td><td class="td-v green">Manter todos</td></tr>
+    <tr><td><strong>Making of Dinaci</strong><br>Noiva madura, legenda narrativa</td><td>Legenda excepcional com emoção real. Modelo de narrativa para futuros posts de noiva.</td><td class="td-v green">Manter</td></tr>
+    <tr><td><strong>Noiva no espelho</strong><br>Reflexo pela porta, luz de lustre</td><td>Foto mais cinematográfica do pilar noivas. Enquadramento através da porta = profundidade editorial.</td><td class="td-v green">Manter · Referência</td></tr>
+    <tr><td><strong>Flat lay: Dior + pérolas + rosas</strong></td><td>Mais próximo da estética da marca entre os flat lays. Paleta nude, produtos premium visíveis.</td><td class="td-v green">Manter</td></tr>
+    <tr><td><strong>Reel Carol "Produto importado faz..."</strong><br>65 likes · 6.8% engajamento</td><td>Carol na câmera = face da marca. Taxa de engajamento excepcional. Série a replicar.</td><td class="td-v green">Manter · Série</td></tr>
+    <tr><td><strong>Close cachos textura extrema</strong><br>Semi-preso da Maria</td><td>Visualmente impactante. Domínio técnico na definição dos cachos. Para quem tem cabelo cacheado no scroll.</td><td class="td-v green">Manter</td></tr>
+  </table>
+</div>
+
+<!-- CAPAS -->
+<div class="sec" id="i-capas">
+  <div class="sec-tag">Visual</div>
+  <h2 class="sec-h">Sistema de Capas</h2>
+  <table>
+    <tr><th>Tipo de reel</th><th>Capa atual</th><th>Veredicto</th><th>Nova capa ideal</th></tr>
+    <tr><td>Pele preta afro (Erykah Badu)</td><td>Close frontal, olhar direto</td><td class="td-v green">Perfeita</td><td>Não mudar. É o padrão.</td></tr>
+    <tr><td>Emily P Santos carrossel</td><td>Glossy lip, cat eye, ¾</td><td class="td-v green">Excelente</td><td>Não mudar. É o padrão de carrossel.</td></tr>
+    <tr><td>"O que ela me pediu"</td><td>Fundo laranja com texto bold</td><td class="td-v red">Muito Fraca</td><td>Frame do resultado da cliente + 1 linha serif no terço inferior</td></tr>
+    <tr><td>Carol falando "Produto importado"</td><td>Carol de frente, expressão natural</td><td class="td-v green">Boa</td><td>Funciona. Carol na capa = branding.</td></tr>
+    <tr><td>Reels de penteado</td><td>Frame do processo ao acaso</td><td class="td-v yellow">Variável</td><td>Sempre o resultado final do penteado. Close, luz quente, desfoque atrás.</td></tr>
+    <tr><td>Making of de noiva</td><td>Frame aleatório</td><td class="td-v yellow">Fraca</td><td>Frame da noiva no momento mais bonito + nome dela em script.</td></tr>
+  </table>
+  <h3 class="sub">Regras Definitivas</h3>
+  <div class="g2">
+    <div>
+      <h4 class="label">✅ Sempre</h4>
+      <ul class="cl">
+        <li>Foto real de alta qualidade como fundo (nunca screenshot)</li>
+        <li>Máximo 1 frase curta na capa</li>
+        <li>Fonte: Cormorant + Jost (da família tipográfica da marca)</li>
+        <li>Texto no terço inferior — nunca centralizado</li>
+        <li>@makecarolnunes discreto no canto inferior</li>
+      </ul>
+    </div>
+    <div>
+      <h4 class="label">❌ Nunca</h4>
+      <ul class="cl">
+        <li>Fundo sólido colorido com texto</li>
+        <li>Mais de 1 frase na capa</li>
+        <li>Fonte padrão do Instagram</li>
+        <li>Emojis no texto da capa</li>
+        <li>Antes/Depois colado na thumbnail</li>
+        <li>Rosto cortado pela moldura</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- DESTAQUES -->
+<div class="sec" id="i-dest">
+  <div class="sec-tag">Perfil</div>
+  <h2 class="sec-h">Destaques Ideais</h2>
+  <div class="g3">
+    <div class="card"><h4 class="label">Noivas</h4><p>Making of, resultados, narrativa emocional. Capa: foto editorial de noiva com texto "Noivas" em serif.</p></div>
+    <div class="card"><h4 class="label">Pele Preta</h4><p>Portfólio em peles melanadas + reels técnicos. Capa: close de pele preta com luz lateral.</p></div>
+    <div class="card"><h4 class="label">Cachos & Crespos</h4><p>Penteados, finalizações, processo. Capa: perfil de cabelo crespo bem definido.</p></div>
+    <div class="card"><h4 class="label">Feedbacks ← Criar hoje</h4><p>WhatsApp de clientes, comentários reais. É o mais crítico para conversão de noivas.</p></div>
+    <div class="card"><h4 class="label">Bastidores</h4><p>Bancada organizada, produtos, making of. Capa: flat lay da bancada Dior/NARS.</p></div>
+    <div class="card"><h4 class="label">FAQ</h4><p>Já existe, excelente. Padronizar a capa para consistência visual com os outros destaques.</p></div>
+  </div>
+</div>
+
+<!-- PLANO IMEDIATO -->
+<div class="sec" id="i-plano">
+  <div class="sec-tag">Execução</div>
+  <h2 class="sec-h">Plano de Ação — <em>8 prioridades</em></h2>
+
+  <div class="prio"><div class="prio-n" style="color:var(--terra);">1</div><div class="prio-c"><span class="ptag pt-u">Hoje · 2min</span><h4>Trocar capa do reel "O que ela me pediu"</h4><p>Entrar no reel → Editar → Trocar capa para o frame do resultado mais bonito. Capa laranja sai. Maior impacto visual imediato do plano inteiro.</p></div></div>
+
+  <div class="prio"><div class="prio-n" style="color:var(--terra);">2</div><div class="prio-c"><span class="ptag pt-u">Hoje · 30s</span><h4>Arquivar o post de carnaval com glitter</h4><p>Sem possibilidade de ajuste. Incompatível com posicionamento premium. Não há debate.</p></div></div>
+
+  <div class="prio"><div class="prio-n" style="color:var(--terra);">3</div><div class="prio-c"><span class="ptag pt-u">Hoje · 5min</span><h4>Atualizar a bio do perfil</h4><p>Usar uma das versões propostas. A bio atual não comunica pele preta nem cachos — que é metade da marca.</p></div></div>
+
+  <div class="prio"><div class="prio-n" style="color:var(--terra);">4</div><div class="prio-c"><span class="ptag pt-m">Esta semana</span><h4>Criar destaque "Feedbacks" com os prints de clientes que já existem</h4><p>É o conteúdo que mais converte noiva. Abrir o WhatsApp, pegar os prints que já existem (Bianca, Isadora, Amanda) e montar agora.</p></div></div>
+
+  <div class="prio"><div class="prio-n" style="color:var(--terra);">5</div><div class="prio-c"><span class="ptag pt-m">Esta semana · 2h</span><h4>Padronizar capas de todos os destaques no Canva</h4><p>Café Escuro + Terra + Nude. Renomear "Pele Madu" para "Pele Preta". Criar novo destaque "Cachos & Crespos".</p></div></div>
+
+  <div class="prio"><div class="prio-n" style="color:var(--terra);">6</div><div class="prio-c"><span class="ptag pt-m">Esta semana</span><h4>Arquivar 5-8 posts visualmente mais fracos</h4><p>Mesa bagunçada, Carol + cliente pink hoodie, posts com fundo poluído, cachos frizados sem resultado claro. Arquivar, não deletar.</p></div></div>
+
+  <div class="prio"><div class="prio-n" style="color:var(--terra);">7</div><div class="prio-c"><span class="ptag pt-f">Próximas 2 semanas</span><h4>Criar template de capa para reels no Canva</h4><p>Cormorant Garamond + Jost. Paleta da marca. Aplicar em todos os reels existentes. Isso unifica o feed instantaneamente.</p></div></div>
+
+  <div class="prio"><div class="prio-n" style="color:var(--terra);">8</div><div class="prio-c"><span class="ptag pt-f">Próximo mês</span><h4>Publicar 3 posts de pele preta no nível editorial do afro</h4><p>Sessões dedicadas. Fundo neutro, luz lateral quente, diferentes tons de pele negra. Esse nível constrói a autoridade no nicho.</p></div></div>
+</div>
+
+</div><!-- fim tab-insta -->
+
+
+<!-- ════════════════════════════════════════════
+     TAB 2 · CURSO VIP ★
+════════════════════════════════════════════ -->
+<div id="tab-curso" class="tab-panel">
+
+<div class="hero bg-cachos">
+  <div class="hero-tag">Lançamento · Formação VIP · Cachos & Crespos · 2026</div>
+  <h1>Uma aluna.<br>Um dia inteiro.<br>A atenção <em>completa</em>.</h1>
+  <p>Estratégia completa para lançar o curso presencial VIP sem descaracterizar o posicionamento de noivas — e construir a autoridade educacional de forma orgânica e sofisticada.</p>
+  <div class="hero-chips">
+    <span class="chip">Foco: Noivas mantido</span>
+    <span class="chip">Formato: Individual · Home Studio</span>
+    <span class="chip">Evolução: Turmas em 4-6m</span>
+    <span class="chip">Futuro: Curso Pele Preta</span>
+  </div>
+</div>
+
+<!-- POSICIONAMENTO DO PRODUTO -->
+<div class="sec" id="c-pos">
+  <div class="sec-tag">Produto</div>
+  <h2 class="sec-h">Posicionamento — <em>O que é esse produto</em></h2>
+
+  <div class="quote">
+    O home studio não é onde você não cabe uma turma. É onde a Carol atende as noivas. E agora, é onde ela vai te ensinar tudo que sabe — com a mesma atenção que ela dá às noivas.
+    <div class="src">— a virada de perspectiva que muda o produto inteiro</div>
+  </div>
+
+  <h3 class="sub">Nome do Produto</h3>
+  <table>
+    <tr><th>Nome</th><th>Tom</th><th>Recomendação</th></tr>
+    <tr><td><strong>Formação VIP Individual</strong></td><td>Premium, exclusivo, direto</td><td class="td-v green">✅ Recomendado — posicionamento principal</td></tr>
+    <tr><td><strong>Dia de Imersão</strong></td><td>Experiencial, profundo</td><td class="td-v green">✅ Ótimo como descrição do formato</td></tr>
+    <tr><td>Atendimento Particular de Formação</td><td>Sofisticado</td><td class="td-v yellow">✅ Funciona junto com VIP</td></tr>
+    <tr><td>Private Training</td><td>Internacional</td><td class="td-v yellow">⚠️ Só se o posicionamento subir mais</td></tr>
+    <tr><td>Masterclass Particular</td><td>Híbrido</td><td class="td-v red">❌ "Masterclass" está saturado</td></tr>
+  </table>
+
+  <h3 class="sub">O Reframe do Home Studio</h3>
+  <div class="alert dark">
+    <p><strong>Nunca dizer:</strong> "O espaço é pequeno, então atendo individualmente."<br><br>
+    <strong>Sempre dizer:</strong> "A formação é individual porque acredito que aprendizado real precisa de atenção real. Uma aluna de cada vez — no meu espaço, do jeito que eu trabalho."<br><br>
+    A primeira é uma desculpa. A segunda é um posicionamento.</p>
+  </div>
+
+  <h3 class="sub">VIP Individual vs. Turma</h3>
+  <div class="comp">
+    <div class="comp-col a">
+      <h4 class="label">Curso em turma (mercado)</h4>
+      <ul>
+        <li>Atenção dividida por 8-12 alunas</li>
+        <li>Ritmo médio — nem rápido nem lento</li>
+        <li>A aluna tem vergonha de errar na frente de outras</li>
+        <li>Conteúdo fixo — mesmo currículo para todos os níveis</li>
+        <li>Carol precisa gerenciar grupo enquanto ensina</li>
+        <li>A aluna é uma entre várias</li>
+      </ul>
+    </div>
+    <div class="comp-col b">
+      <h4 class="label">Formação VIP (Carol)</h4>
+      <ul>
+        <li>100% da atenção de Carol pelo dia inteiro</li>
+        <li>Ritmo adaptado ao nível da aluna</li>
+        <li>Ambiente seguro — errar faz parte, sem audiência</li>
+        <li>Currículo construído para ela e suas necessidades reais</li>
+        <li>Carol 100% presente como professora</li>
+        <li>A aluna é a única — e sente isso</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3 class="sub">Diferenciais vs. Concorrentes</h3>
+  <div class="sc-item"><div class="sc-lbl">Técnica de cachos/crespos</div><div class="sc-wrap"><div class="sc-bar" style="width:95%"></div></div><div class="sc-val">Carol 95%</div></div>
+  <div class="sc-item"><div class="sc-lbl">Atenção individual à aluna</div><div class="sc-wrap"><div class="sc-bar" style="width:100%"></div></div><div class="sc-val">100%</div></div>
+  <div class="sc-item"><div class="sc-lbl">Suporte pós-curso</div><div class="sc-wrap"><div class="sc-bar" style="width:90%"></div></div><div class="sc-val">Alto</div></div>
+  <div class="sc-item"><div class="sc-lbl">Integração maquiagem + penteado</div><div class="sc-wrap"><div class="sc-bar" style="width:100%"></div></div><div class="sc-val">Única</div></div>
+  <div class="sc-item"><div class="sc-lbl">Ensino de posicionamento pós-curso</div><div class="sc-wrap"><div class="sc-bar" style="width:85%"></div></div><div class="sc-val">Ninguém faz</div></div>
+  <div class="sc-item"><div class="sc-lbl">Modelo incluso (sem logística da aluna)</div><div class="sc-wrap"><div class="sc-bar" style="width:90%"></div></div><div class="sc-val">Alto</div></div>
+</div>
+
+<!-- JORNADA DA ALUNA -->
+<div class="sec" id="c-jornada">
+  <div class="sec-tag">Produto</div>
+  <h2 class="sec-h">Jornada da Aluna — <em>Do primeiro contato ao pós-curso</em></h2>
+  <div class="journey">
+    <div class="j-step">
+      <div class="j-num">01</div>
+      <div class="j-body">
+        <h4 class="jh">Primeiro contato — ela chega pelo conteúdo</h4>
+        <p>A aluna te segue há semanas. Salvou o carrossel técnico. Comentou no reel. Viu a legenda "estou organizando algo". Manda mensagem no DM: "vi que você vai abrir formação. Tem mais informações?"</p>
+        <p class="j-note">Ela já chegou aquecida. A maior parte do convencimento foi feito pelo conteúdo. A conversa começa do meio — não do zero.</p>
+      </div>
+    </div>
+    <div class="j-step">
+      <div class="j-num">02</div>
+      <div class="j-body">
+        <h4 class="jh">Conversa de apresentação — Carol responde com cuidado</h4>
+        <p>Não um PDF automático. Uma resposta real que pergunta o contexto dela: "me conta um pouco sobre você — você já trabalha com textura? Qual é a sua maior dificuldade?" Essa pergunta cria conexão e dá a Carol informação para adaptar o dia.</p>
+        <p class="j-note">Esse momento é o primeiro filtro natural: quem responde com entusiasmo já está comprometida emocionalmente antes de pagar.</p>
+      </div>
+    </div>
+    <div class="j-step">
+      <div class="j-num">03</div>
+      <div class="j-body">
+        <h4 class="jh">Apresentação do produto — PDF de apresentação</h4>
+        <p>Carol envia o PDF da Formação VIP com resumo do que inclui, como funciona, datas disponíveis e o investimento. Não uma lista de bônus — uma apresentação elegante que reflete o nível do produto.</p>
+        <p class="j-note">O PDF já é parte da experiência premium. Se parecer amador, a percepção do curso cai antes de começar.</p>
+      </div>
+    </div>
+    <div class="j-step">
+      <div class="j-num">04</div>
+      <div class="j-body">
+        <h4 class="jh">Confirmação — sinal reserva a data</h4>
+        <p>Aluna escolhe a data e paga o sinal. Carol confirma e manda a lista do que precisa levar (se aplicável) + aviso sobre os vídeos pré-curso que vai receber.</p>
+        <p class="j-note">A comunicação do sinal deve ser humana: "para garantir sua data, peço R$X de sinal. O restante você paga no dia ou na semana anterior."</p>
+      </div>
+    </div>
+    <div class="j-step">
+      <div class="j-num">05</div>
+      <div class="j-body">
+        <h4 class="jh">Pré-curso — vídeos de preparação</h4>
+        <p>Nos dias seguintes, Carol envia 2-3 vídeos pré-curso: boas-vindas pessoal + teoria do fio texturizado + o que esperar do dia. A aluna chega preparada, não ansiosa.</p>
+        <p class="j-note">Esse contato antes do dia cria relacionamento. A aluna chega no home studio sentindo que já conhece Carol — não como uma estranha.</p>
+      </div>
+    </div>
+    <div class="j-step">
+      <div class="j-num">06</div>
+      <div class="j-body">
+        <h4 class="jh">O dia da formação — imersão completa</h4>
+        <p>A imersão completa — descrita em detalhe na seção seguinte. Do café de chegada ao encerramento com o certificado.</p>
+      </div>
+    </div>
+    <div class="j-step">
+      <div class="j-num">07</div>
+      <div class="j-body">
+        <h4 class="jh">Pós-curso — suporte individual por 30 dias</h4>
+        <p>Carol manda mensagem no dia seguinte perguntando como ela está. Libera os vídeos de revisão na sequência certa. Disponível via WhatsApp direto para dúvidas técnicas reais que aparecem nos primeiros atendimentos.</p>
+        <p class="j-note">Esse suporte é individual — não grupo. WhatsApp direto. Isso é o que diferencia da turma. Ela tem acesso a Carol pessoalmente.</p>
+      </div>
+    </div>
+    <div class="j-step">
+      <div class="j-num">08</div>
+      <div class="j-body">
+        <h4 class="jh">Após 30 dias — a relação continua</h4>
+        <p>Carol encerra o suporte com uma mensagem de agradecimento + convite para a próxima formação (pele preta) com condição especial de ex-aluna.</p>
+        <p class="j-note">Essa aluna vai indicar 2-3 profissionais do ciclo dela. Ela é o principal canal de marketing da próxima formação.</p>
+      </div>
+    </div>
+  </div>
+  <h3 class="sub">O Que a Aluna Escolhe Antes do Curso</h3>
+  <p>Carol faz uma conversa rápida (WhatsApp ou chamada breve) para entender e personalizar o dia:</p>
+  <ul class="cl">
+    <li>Nível atual com texturas (nunca fez / fez pouco / faz mas trava)</li>
+    <li>Qual tipo de textura mais aparece na clientela ou que quer atender</li>
+    <li>O que mais trava: preparação, estrutura do penteado, acabamento, maquiagem integrada</li>
+    <li>Se quer foco em cachos, crespos ou os dois</li>
+    <li>Se quer incluir o módulo de maquiagem integrada ou focar só no penteado</li>
+  </ul>
+  <div class="alert"><p>A partir disso, Carol define o programa do dia. Pode ser uma mensagem de voz: "aqui está o que vamos fazer". O cuidado de preparar o dia especificamente para ela já é percebido como premium — sem precisar de documento formal.</p></div>
+</div>
+
+<!-- ESTRUTURA DO CURSO -->
+<div class="sec" id="c-estrutura">
+  <div class="sec-tag">Produto</div>
+  <h2 class="sec-h">Estrutura do Dia — <em>Cronograma completo</em></h2>
+
+  <div class="tl">
+    <div class="tl-row"><div class="tl-h">08h30</div><div class="tl-b"><h4>Recepção e acolhimento</h4><p>Apresentação do espaço, bancada, produtos. Carol explica o que vai acontecer no dia. Café.</p><p class="d">Instagramável: bancada organizada, ambiente da sessão</p></div></div>
+    <div class="tl-row"><div class="tl-h">09h00</div><div class="tl-b"><h4>Teoria: estrutura e leitura dos fios</h4><p>Tipos de cachos (2B a 4C), estrutura do fio, porosidade, comportamento com umidade. Como diagnosticar antes de começar.</p></div></div>
+    <div class="tl-row"><div class="tl-h">10h00</div><div class="tl-b"><h4>Mãos na massa: preparação do cabelo</h4><p>Lavagem, hidratação, preparação para finalização. Carol demonstra. Aluna refaz no modelo.</p></div></div>
+    <div class="tl-row"><div class="tl-h">11h30</div><div class="tl-b"><h4>Técnicas de finalização</h4><p>Squish to condish, raking, praying hands, scrunching. Para cada tipo de textura.</p></div></div>
+    <div class="tl-row"><div class="tl-h">13h00</div><div class="tl-b"><h4>Pausa para almoço</h4><p>30-40 minutos. Carol fornece café/lanche.</p><p class="d">Momento de troca informal — perguntas, alinhamento</p></div></div>
+    <div class="tl-row"><div class="tl-h">14h00</div><div class="tl-b"><h4>Penteados: técnica e execução</h4><p>Fitagem, semi-presos, coques, penteados soltos para diferentes tipos de textura. Aluna pratica cada técnica.</p><p class="d">Instagramável: resultado de cada penteado no modelo</p></div></div>
+    <div class="tl-row"><div class="tl-h">16h00</div><div class="tl-b"><h4>Integração: look completo</h4><p>Carol mostra como o penteado e a maquiagem constroem um look coerente. Integração que ninguém ensina.</p></div></div>
+    <div class="tl-row"><div class="tl-h">17h00</div><div class="tl-b"><h4>Ensaio fotográfico e fechamento</h4><p>Fotografar o trabalho da aluna (Carol orienta luz, ângulo, enquadramento). Entrega dos materiais. Feedback personalizado. Certificado.</p><p class="d">Instagramável: foto do resultado + certificado</p></div></div>
+    <div class="tl-row"><div class="tl-h">17h30</div><div class="tl-b"><h4>Encerramento</h4><p>Conversa sobre próximos passos, precificação, como divulgar o novo serviço. Carol entrega materiais de suporte.</p></div></div>
+  </div>
+
+  <h3 class="sub">Materiais Inclusos</h3>
+  <div class="g2">
+    <div class="card"><h4 class="label">Kit físico</h4><p>Apostila impressa premium (encadernada, com a identidade visual da marca), lista de produtos recomendados com fornecedores, caderno de anotações da Carol.</p></div>
+    <div class="card"><h4 class="label">Material digital</h4><p>Videoaulas de revisão para consulta pós-curso (3-5 vídeos gravados), PDF dos tipos de fio com diagnóstico visual, guia de precificação básico.</p></div>
+    <div class="card"><h4 class="label">Bônus</h4><p>Fotografias profissionais do trabalho feito no dia (para portfólio da aluna), acesso a grupo exclusivo com 30 dias de suporte de dúvidas.</p></div>
+    <div class="card"><h4 class="label">Modelo incluso</h4><p>Carol traz o modelo. A aluna não precisa se preocupar com logística. Remove ansiedade e sinaliza cuidado com a experiência.</p></div>
+  </div>
+</div>
+
+<!-- PÚBLICO-ALVO -->
+<div class="sec" id="c-publico">
+  <div class="sec-tag">Público</div>
+  <h2 class="sec-h">Aluna Ideal — <em>Quem você vai transformar</em></h2>
+
+  <div class="g2">
+    <div class="card">
+      <h4 class="label">Perfil da Aluna</h4>
+      <p><strong>Quem é:</strong> Maquiadora ou penteadista profissional, 22-38 anos, com alguma experiência mas sem confiança para atender cabelos cacheados e crespos com qualidade real. Já teve situações de insegurança com esse tipo de textura.</p>
+      <br>
+      <p><strong>Onde está:</strong> Já atende clientes de cabelo liso sem dificuldade. Sabe que há demanda crescente por profissionais que entendem textura, mas sente que não tem a técnica necessária.</p>
+    </div>
+    <div class="card">
+      <h4 class="label">O que ela busca</h4>
+      <ul>
+        <li>Confiança técnica — poder dizer "sim" sem medo</li>
+        <li>Legitimidade — algo para mostrar às clientes</li>
+        <li>Nova fonte de renda com clientela diferente</li>
+        <li>Aprender com quem tem portfólio real no nicho</li>
+        <li>Segurança de não estar sozinha depois do curso</li>
+        <li>Ser referência em cachos/crespos na sua cidade</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3 class="sub">Objeções e Respostas</h3>
+  <div class="obj">
+    <div class="pergunta">"R$[valor] é caro para um curso de um dia."</div>
+    <div class="resposta">Você está pagando por atenção individual de um dia inteiro, não por uma cadeira numa sala com 10 pessoas. O meu home studio é onde as noivas vêm antes do casamento. Você vai aprender no mesmo espaço onde esses resultados foram criados — não numa sala alugada.</div>
+  </div>
+  <div class="obj">
+    <div class="pergunta">"Eu poderia aprender o mesmo no YouTube."</div>
+    <div class="resposta">Você pode ver vídeos, sim. Mas nenhum vídeo te diz quando você está errando em tempo real. Nenhum vídeo ajusta a sua técnica específica no fio específico que você está segurando. Isso é o que um dia presencial faz que o YouTube nunca vai fazer.</div>
+  </div>
+  <div class="obj">
+    <div class="pergunta">"Não sei se vou conseguir praticar depois."</div>
+    <div class="resposta">Por isso o material digital existe. Os vídeos de revisão ficam com você para consultar quando travar. E o grupo de suporte de 30 dias é exatamente para as primeiras clientes reais — quando você mais precisa.</div>
+  </div>
+  <div class="obj">
+    <div class="pergunta">"Quero esperar o curso em turma."</div>
+    <div class="resposta">O formato individual existe exatamente porque você não aprende igual em grupo. Turmas vêm em breve — mas o que você aprende individualmente é fundamentalmente diferente. Pergunte a você mesma: quanto você progride quando alguém está olhando só para você?</div>
+  </div>
+</div>
+
+<!-- PRECIFICAÇÃO -->
+<div class="sec" id="c-preco">
+  <div class="sec-tag">Comercial</div>
+  <h2 class="sec-h">Precificação — <em>Lógica estratégica</em></h2>
+
+  <div class="price-g">
+    <div class="price-box fund">
+      <span class="plabel">Preço Fundadoras · Primeiras 3 vagas</span>
+      <div class="preco">R$680</div>
+      <div class="pnote">Para validação e testemunhos reais. Cria urgência legítima sem desvalorizar.</div>
+    </div>
+    <div class="price-box full">
+      <span class="plabel">Preço Cheio · A partir da 4ª vaga</span>
+      <div class="preco">R$850</div>
+      <div class="pnote">Posicionado acima do mercado (R$600-1.150 concorrência) com diferenciação real.</div>
+    </div>
+  </div>
+
+  <h3 class="sub">Lógica do Preço</h3>
+  <table>
+    <tr><th>Referência de mercado</th><th>Preço</th><th>Formato</th></tr>
+    <tr><td>SP Masterclass (2 dias, aluna traz modelo)</td><td>R$1.450</td><td>Coletivo</td></tr>
+    <tr><td>Vitória VIP (1-2 dias, modelo incluso)</td><td>R$600–R$1.150</td><td>Individual/Coletivo</td></tr>
+    <tr><td>Workshop Vitória (observação)</td><td>R$200–R$225</td><td>Observação</td></tr>
+    <tr><td><strong>Carol · Formação VIP Individual</strong></td><td><strong>R$680–R$850</strong></td><td><strong>Individual + modelo incluso</strong></td></tr>
+  </table>
+  <div class="alert success"><p><strong>Diferencial de preço:</strong> Você não compete no mais barato. O modelo incluso, o suporte pós-curso, a atenção individual e a integração maquiagem+penteado justificam o preço acima da média do segmento individual.</p></div>
+
+  <h3 class="sub">Roadmap de Escalabilidade</h3>
+  <div class="road">
+    <div class="road-step now"><div class="road-label">Agora</div><div class="road-name">VIP Individual</div><div class="road-when">R$680–850 · 1 aluna</div></div>
+    <div class="road-step nxt"><div class="road-label">4-6 meses</div><div class="road-name">Turma Pequena</div><div class="road-when">3-5 alunas · R$450-600</div></div>
+    <div class="road-step nxt"><div class="road-label">6-12 meses</div><div class="road-name">Curso Pele Preta</div><div class="road-when">VIP ou turma pequena</div></div>
+    <div class="road-step far"><div class="road-label">12+ meses</div><div class="road-name">Online / Mentoria</div><div class="road-when">Escalabilidade real</div></div>
+  </div>
+</div>
+
+<!-- ANÁLISE DE CONCORRENTES -->
+<div class="sec" id="c-concorrentes">
+  <div class="sec-tag">Mercado</div>
+  <h2 class="sec-h">Análise de Concorrentes — <em>O mercado ao redor</em></h2>
+  <table>
+    <tr><th>Perfil</th><th>Posicionamento</th><th>Força</th><th>Lacuna que você preenche</th></tr>
+    <tr><td>@vitoriaanastacioo</td><td>Educadora de maquiagem e cabelo, conteúdo técnico frequente</td><td>Volume de conteúdo educativo, presença consistente</td><td>Sofisticação visual e posicionamento premium. Você parece mais artista, ela mais educadora genérica.</td></tr>
+    <tr><td>@p.t.a.v.a.r.e.s</td><td>Maquiagem + educação, foco em técnica</td><td>Autoridade técnica bem comunicada</td><td>Especialização real em pele preta + especialização em noivas — combinação que ela não tem.</td></tr>
+    <tr><td>@lucillahorta</td><td>Maquiadora sofisticada com cursos</td><td>Estética premium + educação</td><td>Representatividade. Cachos, crespos, pele preta como especialidade técnica real não é o nicho dela.</td></tr>
+    <tr><td>@belpenteados</td><td>Especialista em penteados, educa profissionais</td><td>Nicho claríssimo: penteados</td><td>A combinação maquiagem + penteado + texturas é única. Você faz os dois — ela só um.</td></tr>
+    <tr><td>@euamandaasas</td><td>Beleza + educação + lifestyle</td><td>Conexão com audiência, humanidade</td><td>Profundidade técnica. Domínio especializado mais profundo, que transpira no portfólio.</td></tr>
+  </table>
+  <h3 class="sub">O Que os Concorrentes Têm em Comum</h3>
+  <ul class="cl">
+    <li>Conteúdo educativo aparece regularmente sem que elas precisem se declarar "professoras" — autoridade vem pelo conteúdo, não pelo título</li>
+    <li>O curso é a consequência natural da autoridade demonstrada no feed, nunca a causa</li>
+    <li>Nenhuma combina as três especialidades ao mesmo tempo: noivas premium + pele preta + cachos/crespos</li>
+    <li>Posicionamento de educadora não as fez perder clientela — o conteúdo técnico aumentou percepção de valor do serviço</li>
+  </ul>
+  <div class="alert dark">
+    <p><strong>A Lacuna Real de Mercado:</strong> Não existe no mercado uma profissional que seja simultaneamente especialista em noivas premium (R$2.000+) + especialista em pele preta e cabelos texturizados + educadora de profissionais + com background em comunicação e marketing. <strong>Você pode ser a primeira com esse posicionamento específico. Isso não é nicho — é categoria própria.</strong></p>
+  </div>
+</div>
+
+<!-- SISTEMA DE CONTEÚDO PARA O CURSO -->
+<div class="sec" id="c-conteudo">
+  <div class="sec-tag">Conteúdo</div>
+  <h2 class="sec-h">Sistema de Conteúdo — <em>As 5 categorias</em></h2>
+  <p style="font-size:15px;color:var(--cafe);font-style:italic;margin-bottom:20px;">O maior risco de quem lança um curso é criar dois perfis separados no mesmo @. Não precisa. Existe conteúdo que funciona para clientes e alunas ao mesmo tempo.</p>
+  <div class="g3">
+    <div class="pillar" data-num="I">
+      <h3 class="sub">Portfólio Emocional</h3>
+      <p>Resultado com narrativa. Atrai noivas E desperta admiração de profissionais.</p>
+      <ul><li>Reels de making of com música</li><li>Legenda que conta a história</li><li>Noiva cacheada: conecta os dois pilares</li></ul>
+    </div>
+    <div class="pillar" data-num="II">
+      <h3 class="sub">Autoridade Técnica</h3>
+      <p>Bridge Content perfeito. Um post, dois públicos: noiva confia + profissional quer aprender.</p>
+      <ul><li>Reels técnicos sobre pele preta</li><li>Carrosséis "como eu faço"</li><li>Análise de produto por subtom</li></ul>
+    </div>
+    <div class="pillar" data-num="III">
+      <h3 class="sub">Bastidores Estratégicos</h3>
+      <p>Humanização com intenção. O que reforça percepção de nível premium + desperta vontade de aprender.</p>
+      <ul><li>Bancada organizada antes de atendimento</li><li>Preparação para formação com aluna</li><li>Carol pesquisando e estudando</li></ul>
+    </div>
+    <div class="pillar" data-num="IV">
+      <h3 class="sub">Storytelling de Autoridade</h3>
+      <p>Histórias que provam por que você é a escolha certa — para noiva e para aluna.</p>
+      <ul><li>"O que aprendi depois de 7 anos"</li><li>"Por que nunca uso X em pele melanada"</li><li>"A primeira aluna que formei"</li></ul>
+    </div>
+    <div class="pillar" data-num="V">
+      <h3 class="sub">Conexão e Valores</h3>
+      <p>Conteúdo pessoal com propósito. Valores que constroem identidade de marca e decisão de compra.</p>
+      <ul><li>Por que escolheu se especializar em textura</li><li>O que representatividade real significa</li><li>Retratos profissionais + manifesto</li></ul>
+    </div>
+  </div>
+  <h3 class="sub">Bridge Content — Um Post, Dois Públicos</h3>
+  <table>
+    <tr><th>Post</th><th>O que a noiva pensa</th><th>O que a profissional pensa</th><th>Efeito</th></tr>
+    <tr><td>"3 erros em pele com alto índice de melanina"</td><td>"Ela sabe minha pele. Quero ela no meu casamento."</td><td>"Ela domina. Quero aprender com ela."</td><td>Atrai cliente + valida autoridade</td></tr>
+    <tr><td>Reel: penteado de noiva crespa sem alisar</td><td>"Ela faz isso? Vou marcar prévia!"</td><td>"Que técnica. Onde aprendo?"</td><td>Agendamento + interesse no curso</td></tr>
+    <tr><td>"O que uso para maquiagem durar em pele preta"</td><td>"Ela conhece minha pele."</td><td>"Produto novo para aprender."</td><td>Confiança de cliente + prova para aluna</td></tr>
+    <tr><td>Carrossel: "Como leio o subtom em peles escuras"</td><td>"Finalmente alguém falando sério sobre isso."</td><td>"Isso é uma aula. Salvo."</td><td>Salvamentos + autoridade + alcance</td></tr>
+  </table>
+  <div class="alert success"><p><strong>Regra de ouro antes de criar qualquer conteúdo:</strong> "Esse post também poderia atrair uma noiva ou cliente?" Se sim, é Bridge Content — o tipo ideal para esse momento de transição. Se só serve para profissional, espere a fase de pré-lançamento.</p></div>
+</div>
+
+<!-- EQUILÍBRIO POR FASE -->
+<div class="sec" id="c-equilibrio">
+  <div class="sec-tag">Estratégia</div>
+  <h2 class="sec-h">Equilíbrio de Conteúdo por Fase — <em>Percentagens e proporções</em></h2>
+  <div class="alert"><p><strong>A mensagem nunca é "Carol faz as duas coisas".</strong> É: "Carol domina profundamente a arte de revelar a beleza de qualquer mulher — e é exatamente por isso que profissionais querem aprender com ela." Uma Carol. Dois públicos. Uma única narrativa.</p></div>
+  <div class="g2">
+    <div class="phase p1">
+      <h4 class="label">Fase Atual → Pré-Pré (agora)</h4>
+      <div class="bar-wrap"><div class="bar-labels"><span>Portfólio (noivas + social)</span><span>55%</span></div><div class="bar" style="background:var(--caramelo);width:55%;"></div></div>
+      <div class="bar-wrap"><div class="bar-labels"><span>Bridge Content técnico</span><span>25%</span></div><div class="bar" style="background:var(--terra);width:25%;"></div></div>
+      <div class="bar-wrap"><div class="bar-labels"><span>Bastidores / humanização</span><span>15%</span></div><div class="bar" style="background:#8B6B5A;width:15%;"></div></div>
+      <div class="bar-wrap"><div class="bar-labels"><span>Carol pessoal / valores</span><span>5%</span></div><div class="bar" style="background:#5C3D2E;width:5%;"></div></div>
+    </div>
+    <div class="phase p2">
+      <h4 class="label">Pré-Lançamento · 3-4 semanas antes</h4>
+      <div class="bar-wrap"><div class="bar-labels"><span>Portfólio</span><span>40%</span></div><div class="bar" style="background:var(--caramelo);width:40%;"></div></div>
+      <div class="bar-wrap"><div class="bar-labels"><span>Bridge Content técnico</span><span>30%</span></div><div class="bar" style="background:var(--terra);width:30%;"></div></div>
+      <div class="bar-wrap"><div class="bar-labels"><span>Teaser / curiosidade</span><span>20%</span></div><div class="bar" style="background:var(--dourado);width:20%;"></div></div>
+      <div class="bar-wrap"><div class="bar-labels"><span>Bastidores</span><span>10%</span></div><div class="bar" style="background:#8B6B5A;width:10%;"></div></div>
+    </div>
+    <div class="phase p3">
+      <h4 class="label">Lançamento · 7-10 dias</h4>
+      <div class="bar-wrap"><div class="bar-labels" style="color:var(--nude);"><span>Conteúdo do curso / conversão</span><span>40%</span></div><div class="bar" style="background:var(--dourado);width:40%;"></div></div>
+      <div class="bar-wrap"><div class="bar-labels" style="color:var(--nude);"><span>Portfólio (âncora de credibilidade)</span><span>35%</span></div><div class="bar" style="background:var(--caramelo);width:35%;"></div></div>
+      <div class="bar-wrap"><div class="bar-labels" style="color:var(--nude);"><span>Prova social / depoimentos</span><span>25%</span></div><div class="bar" style="background:var(--terra);width:25%;"></div></div>
+    </div>
+    <div class="phase p4">
+      <h4 class="label">Pós-Lançamento · Retorno ao normal</h4>
+      <div class="bar-wrap"><div class="bar-labels"><span>Portfólio</span><span>55%</span></div><div class="bar" style="background:var(--caramelo);width:55%;"></div></div>
+      <div class="bar-wrap"><div class="bar-labels"><span>Bridge Content</span><span>25%</span></div><div class="bar" style="background:var(--terra);width:25%;"></div></div>
+      <div class="bar-wrap"><div class="bar-labels"><span>Resultados de alunas (sutil)</span><span>10%</span></div><div class="bar" style="background:var(--verde);width:10%;"></div></div>
+      <div class="bar-wrap"><div class="bar-labels"><span>Bastidores / pessoal</span><span>10%</span></div><div class="bar" style="background:#8B6B5A;width:10%;"></div></div>
+    </div>
+  </div>
+  <h3 class="sub">Como Manter o Posicionamento Premium Durante o Lançamento</h3>
+  <table>
+    <tr><th>Risco</th><th>Como evitar</th></tr>
+    <tr><td>Parecer que virou perfil de mentoria</td><td>Nunca parar de postar portfólio — mesmo durante o lançamento. 1 post de resultado a cada 2 posts de curso.</td></tr>
+    <tr><td>Usar linguagem de coach/mentora</td><td>Nunca usar: "minha mentoria", "meus mentorados", "transformação". Usar: "o que ensino", "formação", "especialização".</td></tr>
+    <tr><td>Afastar noivas com conteúdo de curso</td><td>Bridge Content funciona para ambos. Posts exclusivos de curso aparecem apenas 2-3x no lançamento, não como padrão.</td></tr>
+    <tr><td>Perder sofisticação visual</td><td>Mesmo padrão visual para posts do curso. Sem templates genéricos, sem fundo sólido, sem bold colorido.</td></tr>
+  </table>
+</div>
+
+<!-- BRIDGE CONTENT -->
+<div class="sec" id="c-bridge">
+  <div class="sec-tag">Conteúdo</div>
+  <h2 class="sec-h">Bridge Content — <em>Como introduzir sem parecer forçado</em></h2>
+
+  <p style="font-size:16px;color:var(--cafe);font-style:italic;">O maior risco do lançamento é parecer que você "virou professora de repente". A solução é construir uma ponte: mostrar que você sempre soube ensinar antes de anunciar que está ensinando.</p>
+
+  <h3 class="sub">Os 3 Tipos de Conteúdo Ponte</h3>
+  <div class="g3">
+    <div class="card" style="border-left-color:var(--cafe);">
+      <h4 class="label">Tipo 1 · Autoridade que já existe</h4>
+      <p>Conteúdo técnico que você já deveria estar publicando: "como identificar subtom em pele negra", "como fazer coque durar em cachos". Isso não anuncia curso — constrói a expert que vai lançar o curso.</p>
+    </div>
+    <div class="card" style="border-left-color:var(--caramelo);">
+      <h4 class="label">Tipo 2 · Bastidores do saber</h4>
+      <p>Conteúdo que mostra o processo de aprendizado e domínio técnico: "o que considero antes de começar um penteado em crespo", "os produtos que uso e por quê". Ensina sem ser um "post de dica".</p>
+    </div>
+    <div class="card" style="border-left-color:var(--terra);">
+      <h4 class="label">Tipo 3 · Semente direta</h4>
+      <p>Conteúdo que introduz a ideia do ensino: "já me perguntaram como aprendo novas técnicas", "alguém me pediu para ensinar". Planta o conceito sem anunciar. A audiência começa a pedir antes de você oferecer.</p>
+    </div>
+  </div>
+
+  <h3 class="sub">Exemplos Prontos de Reels Bridge</h3>
+  <div class="reel">
+    <span class="tipo">Autoridade · Técnico</span>
+    <div class="gancho">"Antes de começar qualquer penteado em cabelo cacheado, eu leio 3 coisas."</div>
+    <p>Reel mostrando o processo real: porosidade, tipo de fio, elasticidade. Carol explica em voz over enquanto trabalha. Fecha com: "Saber isso muda tudo no resultado."</p>
+  </div>
+  <div class="reel">
+    <span class="tipo">Bastidores · Processo</span>
+    <div class="gancho">"O que ninguém mostra antes de um coque em crespos."</div>
+    <p>Processo de fitagem + preparação que garante durabilidade. Carol dá contexto técnico de cada etapa. Naturalidade de quem domina profundamente — não de quem está ensinando.</p>
+  </div>
+  <div class="reel">
+    <span class="tipo">Semente · Pessoal</span>
+    <div class="gancho">"Recebi essa mensagem e precisei compartilhar."</div>
+    <p>Carol lê uma mensagem de profissional que pergunta como ela trabalha com cachos. Responde de forma generosa. Termina: "Fico feliz em ajudar. E tô pensando em formas de fazer isso mais vezes." — sem anunciar.</p>
+  </div>
+  <div class="reel">
+    <span class="tipo">Autoridade · Noiva + Cachos</span>
+    <div class="gancho">"Noiva com cachos: como eu garanto que o penteado dura 12 horas."</div>
+    <p>Conecta os dois pilares: especialidade em noivas + especialidade em cachos. A noiva que procura maquiadora e a profissional que quer aprender ambas se identificam com esse conteúdo.</p>
+  </div>
+
+  <h3 class="sub">Exemplos de Legendas</h3>
+  <div class="legenda">Cachos têm estrutura própria.
+Antes de qualquer penteado, eu leio o fio.
+Tipo, porosidade, elasticidade.
+Isso não é perfumaria — é o que decide se o penteado vai durar 2 horas ou o dia inteiro.
+
+Trabalhar com textura é uma linguagem diferente.
+E quando você aprende a ouvi-la,
+tudo muda.</div>
+
+  <div class="legenda">Ela chegou ao making of com cachos longos e o sonho de um semi-preso delicado.
+Capaz que muita gente dissesse que "não ia dar".
+Mas quem trabalha com textura sabe:
+cada fio tem o que precisa.
+É só saber ouvir.
+
+O penteado seguiu intacto até a última música.
+E o sorriso dela quando olhou no espelho —
+esse ninguém tira.</div>
+</div>
+
+<!-- FASES DE LANÇAMENTO -->
+<div class="sec" id="c-fases">
+  <div class="sec-tag">Lançamento</div>
+  <h2 class="sec-h">Fases de Lançamento — <em>Do aquecimento ao fechamento</em></h2>
+
+  <div class="phase p1">
+    <h4 class="label">Fase 1 · Aquecimento · 3-4 semanas antes</h4>
+    <ul>
+      <li>Publicar 2x por semana conteúdo técnico de cachos/crespos (bridge content tipo 1 e 2)</li>
+      <li>Stories mostrando bastidores de trabalhos com textura</li>
+      <li>Criar e completar destaque "Cachos & Crespos"</li>
+      <li>Nenhuma menção ao curso — só construção de autoridade</li>
+      <li>Objetivo: audiência começa a associar Carol = especialista em textura</li>
+    </ul>
+  </div>
+
+  <div class="phase p2">
+    <h4 class="label">Fase 2 · Construção de desejo · 2 semanas antes</h4>
+    <ul>
+      <li>Reel "semente" — profissional manda mensagem perguntando como aprende</li>
+      <li>Stories perguntando: "Quantos de vocês são profissionais de beleza?" / "Já tiveram dificuldade com cachos/crespos?"</li>
+      <li>Mostrar a bancada, os materiais, o espaço — sem contexto de curso ainda</li>
+      <li>Responder DMs de profissionais de forma generosa e pública (stories)</li>
+      <li>Objetivo: audiência começa a PEDIR antes de você oferecer</li>
+    </ul>
+  </div>
+
+  <div class="phase p3">
+    <h4 class="label">Fase 3 · Abertura · Dia do lançamento</h4>
+    <ul>
+      <li>Story de anúncio: 5-7 frames sequenciais contando a história do produto</li>
+      <li>Post no feed: imagem editorial + legenda que explica o que é a Formação VIP</li>
+      <li>Preço de fundadora para as primeiras 3 vagas (escassez real)</li>
+      <li>Link de contato direto (WhatsApp ou formulário) — sem landing page complicada</li>
+      <li>Objetivo: converter as pessoas que já estavam esperando</li>
+    </ul>
+  </div>
+
+  <div class="phase p4">
+    <h4 class="label">Fase 4 · Fechamento · 48-72h depois</h4>
+    <ul>
+      <li>Stories de prova social: DMs de interesse recebidas, perguntas respondidas publicamente</li>
+      <li>Conteúdo "por que criei esse formato" — a história por trás do produto</li>
+      <li>Lembrete: vagas fundadoras se esgotam em X dias</li>
+      <li>Fechamento oficial das vagas fundadoras — transição para preço cheio</li>
+      <li>Objetivo: capturar quem estava em dúvida</li>
+    </ul>
+  </div>
+
+  <h3 class="sub">Sequência de Stories de Lançamento</h3>
+  <div class="story-row">
+    <div class="story"><span class="sn">Frame 1</span><h5>A decisão</h5><p>"Depois de muito tempo recebendo mensagens de profissionais..."</p></div>
+    <div class="story"><span class="sn">Frame 2</span><h5>O que é</h5><p>"Formação VIP Individual. Um dia. No meu home studio. Para uma profissional."</p></div>
+    <div class="story"><span class="sn">Frame 3</span><h5>O formato</h5><p>"8h30 às 17h30. Modelo incluso. Do diagnóstico ao penteado finalizado."</p></div>
+    <div class="story"><span class="sn">Frame 4</span><h5>O que inclui</h5><p>"Apostila. Vídeos de revisão. Suporte por 30 dias. Certificado."</p></div>
+    <div class="story"><span class="sn">Frame 5</span><h5>O preço</h5><p>"Primeiras 3 vagas: R$680. Preço cheio: R$850. Vagas fundadoras por 5 dias."</p></div>
+    <div class="story"><span class="sn">Frame 6</span><h5>CTA</h5><p>"Me manda uma mensagem: 'quero saber mais' e eu te explico tudo."</p></div>
+  </div>
+</div>
+
+<!-- CALENDÁRIO 30 DIAS -->
+<div class="sec" id="c-cal">
+  <div class="sec-tag">Execução</div>
+  <h2 class="sec-h">Calendário 30 Dias — <em>O que publicar quando</em></h2>
+
+  <table>
+    <tr><th>Semana</th><th>Fase</th><th>Feed (2x/sem)</th><th>Stories (diário)</th><th>Objetivo</th></tr>
+    <tr><td><strong>Sem 1-2</strong></td><td>Aquecimento</td><td>Reel técnico cachos. Carrossel "tipos de textura".</td><td>Bastidores de trabalhos com textura. FAQ rápido.</td><td>Construir associação Carol = especialista em textura</td></tr>
+    <tr><td><strong>Sem 3</strong></td><td>Desejo</td><td>Reel "semente" (profissional manda mensagem). Post resultado noiva com cachos.</td><td>Enquetes com profissionais. Mostrar bancada sem contexto de curso.</td><td>Audiência começa a pedir antes de você oferecer</td></tr>
+    <tr><td><strong>Sem 4 · Dia X</strong></td><td>Abertura</td><td>Post de lançamento oficial. Legenda narrativa do produto.</td><td>Sequência de 6 frames de lançamento. DMs públicos.</td><td>Converter quem já estava esperando</td></tr>
+    <tr><td><strong>Sem 4 · D+3</strong></td><td>Fechamento</td><td>Post "por que criei esse formato" emocional.</td><td>Prova social, contagem de vagas, urgência real.</td><td>Capturar quem estava em dúvida</td></tr>
+  </table>
+
+  <h3 class="sub">Equilíbrio de Conteúdo Durante o Lançamento</h3>
+  <div class="alert"><p><strong>Regra de ouro:</strong> Para cada post relacionado ao curso, publique 2 posts de noivas/trabalho real. O lançamento acontece dentro do perfil premium de noivas — não transforma o perfil em "perfil de curso". A audiência nunca deve sentir que Carol "virou professora".</p></div>
+  <table>
+    <tr><th>Semana</th><th>Posts de noivas/trabalho</th><th>Posts de curso/autoridade técnica</th></tr>
+    <tr><td>Semanas 1-2</td><td>60%</td><td>40% (bridge content, sem mencionar curso)</td></tr>
+    <tr><td>Semana 3</td><td>50%</td><td>50% (semente + noiva com cachos)</td></tr>
+    <tr><td>Semana 4</td><td>40%</td><td>60% (lançamento ativo)</td></tr>
+    <tr><td>Pós-lançamento</td><td>70%</td><td>30% (manutenção de autoridade)</td></tr>
+  </table>
+</div>
+
+<!-- EXECUÇÃO PRÁTICA -->
+<div class="sec" id="c-exec">
+  <div class="sec-tag">Execução</div>
+  <h2 class="sec-h">Checklist — <em>O que fazer primeiro</em></h2>
+
+  <h3 class="sub">Antes de Lançar (estrutura mínima)</h3>
+  <div class="ck">
+    <div class="ck-item"><div class="ck-box"></div><p><strong>Definir preço fundadora e preço cheio</strong> — ex: R$680 / R$850</p></div>
+    <div class="ck-item"><div class="ck-box"></div><p><strong>Escolher o nome oficial</strong> — "Formação VIP Individual" ou "Dia de Imersão"</p></div>
+    <div class="ck-item"><div class="ck-box"></div><p><strong>Estruturar o cronograma do dia</strong> (horário a horário) — para apresentar na venda</p></div>
+    <div class="ck-item"><div class="ck-box"></div><p><strong>Criar destaque "Cachos & Crespos"</strong> com os melhores trabalhos que já existem</p></div>
+    <div class="ck-item"><div class="ck-box"></div><p><strong>Produzir 2 reels de bridge content técnico</strong> — autoridade antes do anúncio</p></div>
+    <div class="ck-item"><div class="ck-box"></div><p><strong>Definir o formato de contato</strong> — WhatsApp ou formulário simples</p></div>
+    <div class="ck-item"><div class="ck-box"></div><p><strong>Preparar o kit de materiais</strong> — apostila, lista de produtos, o que a aluna recebe</p></div>
+    <div class="ck-item"><div class="ck-box"></div><p><strong>Ter pelo menos 1 modelo contatado</strong> para as primeiras turmas</p></div>
+  </div>
+
+  <h3 class="sub">Prioridades desta semana</h3>
+
+  <div class="prio"><div class="prio-n" style="color:var(--terra);">1</div><div class="prio-c"><span class="ptag pt-u">Hoje</span><h4>Criar destaque "Cachos & Crespos" com o que já existe</h4><p>Não esperar conteúdo novo. Usar os melhores trabalhos com textura que já estão no perfil. Isso já inicia o aquecimento.</p></div></div>
+
+  <div class="prio"><div class="prio-n" style="color:var(--terra);">2</div><div class="prio-c"><span class="ptag pt-u">Esta semana</span><h4>Publicar 1 reel técnico de cachos/crespos</h4><p>Não sobre o curso. Sobre a técnica. Qualquer um dos exemplos de bridge content desta seção. O conteúdo que constrói a expert antes de anunciar o produto.</p></div></div>
+
+  <div class="prio"><div class="prio-n" style="color:var(--terra);">3</div><div class="prio-c"><span class="ptag pt-m">Esta semana</span><h4>Definir preços e estrutura do dia (cronograma)</h4><p>São as duas coisas que você precisa ter claras antes de qualquer conversa de venda. Sem isso, não tem lançamento.</p></div></div>
+
+  <div class="prio"><div class="prio-n" style="color:var(--terra);">4</div><div class="prio-c"><span class="ptag pt-m">Próxima semana</span><h4>Preparar apostila e kit de materiais</h4><p>Pode ser versão simples para as primeiras alunas. Não precisa ser perfeito — precisa ser presente e cuidado.</p></div></div>
+
+  <div class="prio"><div class="prio-n" style="color:var(--terra);">5</div><div class="prio-c"><span class="ptag pt-f">Em 2-3 semanas</span><h4>Lançar para as 3 vagas fundadoras</h4><p>Sequência de stories de 6 frames + post no feed. Contato direto pelo WhatsApp. Sem landing page complexa para o primeiro lançamento.</p></div></div>
+
+</div>
+
+</div><!-- fim tab-curso -->
+
+</div><!-- fim #main -->
+
+<!-- ══════════════════ JAVASCRIPT ══════════════════ -->
+<script>
+const navLinks = {
+  brand: [
+    {group:'Fundação', links:[
+      {href:'#b-dna',label:'DNA da Marca'},
+      {href:'#b-pilares',label:'Os Dois Pilares'},
+      {href:'#b-publico',label:'Público-Alvo'}
+    ]},
+    {group:'Identidade', links:[
+      {href:'#b-arq',label:'Valores · Arquétipos'},
+      {href:'#b-voz',label:'Tom de Voz'}
+    ]},
+    {group:'Estética', links:[
+      {href:'#b-visual',label:'Direção Visual · Cores'},
+      {href:'#b-instagram',label:'Instagram · Estratégia'},
+      {href:'#b-capas',label:'Capas de Reels'},
+      {href:'#b-mockups',label:'Mockups · Briefings'}
+    ]},
+    {group:'Conteúdo', links:[
+      {href:'#b-conteudo',label:'Sistema de Conteúdo'},
+      {href:'#b-experiencia',label:'Experiência da Marca'}
+    ]},
+    {group:'Guardrails', links:[
+      {href:'#b-evitar',label:'O Que Evitar'},
+      {href:'#b-operacional',label:'Guia Operacional'},
+      {href:'#b-transformacao',label:'Transformação do Feed'}
+    ]}
+  ],
+  insta: [
+    {group:'Diagnóstico', links:[{href:'#i-diag',label:'Perfil Atual · Bio'}]},
+    {group:'Decisões', links:[{href:'#i-arq',label:'Posts para Arquivar'},{href:'#i-mant',label:'Posts para Manter'}]},
+    {group:'Visual', links:[{href:'#i-capas',label:'Sistema de Capas'}]},
+    {group:'Perfil', links:[{href:'#i-dest',label:'Destaques Ideais'}]},
+    {group:'Execução', links:[{href:'#i-plano',label:'Plano 8 Prioridades'}]}
+  ],
+  curso: [
+    {group:'Produto', links:[
+      {href:'#c-pos',label:'Posicionamento'},
+      {href:'#c-jornada',label:'Jornada da Aluna'},
+      {href:'#c-estrutura',label:'Estrutura do Dia'}
+    ]},
+    {group:'Público', links:[
+      {href:'#c-publico',label:'Aluna Ideal · Objeções'}
+    ]},
+    {group:'Comercial', links:[
+      {href:'#c-preco',label:'Precificação · Roadmap'},
+      {href:'#c-concorrentes',label:'Análise de Concorrentes'}
+    ]},
+    {group:'Conteúdo', links:[
+      {href:'#c-bridge',label:'Bridge Content'},
+      {href:'#c-conteudo',label:'Sistema de Conteúdo'},
+      {href:'#c-equilibrio',label:'Equilíbrio por Fase'}
+    ]},
+    {group:'Lançamento', links:[
+      {href:'#c-fases',label:'4 Fases de Lançamento'},
+      {href:'#c-cal',label:'Calendário 30 Dias'}
+    ]},
+    {group:'Execução', links:[
+      {href:'#c-exec',label:'Checklist · Prioridades'}
+    ]}
+  ]
+};
+
+function buildSidebar(tab){
+  const s = document.getElementById('sidebar');
+  s.innerHTML = '';
+  navLinks[tab].forEach(g => {
+    const grp = document.createElement('div');
+    grp.className = 'nav-group';
+    const lbl = document.createElement('span');
+    lbl.className = 'nav-label';
+    lbl.textContent = g.group;
+    grp.appendChild(lbl);
+    g.links.forEach(l => {
+      const a = document.createElement('a');
+      a.href = l.href;
+      a.innerHTML = l.label;
+      grp.appendChild(a);
+    });
+    s.appendChild(grp);
+  });
+}
+
+function switchTab(name){
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  const btns = document.querySelectorAll('.tab-btn');
+  const map = {brand:0, insta:1, curso:2};
+  btns[map[name]].classList.add('active');
+  buildSidebar(name);
+  window.scrollTo(0,0);
+}
+
+buildSidebar('brand');
+</script>
+</body>
+</html>
