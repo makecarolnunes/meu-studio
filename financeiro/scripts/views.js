@@ -482,7 +482,7 @@ function renderNoivas() {
 
         const docsHtml = (() => {
             const docs = n.contratos || [];
-            const tipoLabel = { CONTRATO: 'Contrato', ADITIVO: 'Aditivo' };
+            const tipoLabel = { CONTRATO: 'Contrato', ADITIVO: 'Aditivo', PROPOSTA: 'Proposta Enviada' };
             return `
             <div style="margin-top:14px;padding-top:12px;border-top:1px dashed var(--border)">
                 <div style="font-size:.7rem;font-weight:700;color:var(--brown);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Documentos</div>
@@ -493,9 +493,10 @@ function renderNoivas() {
                     <a href="${d.link}" target="_blank" rel="noopener" class="noiva-doc-link">${d.nome}</a>
                     <button class="delbtn" style="width:24px;height:24px;flex-shrink:0" onclick="deleteNoivaDoc('${n.id}','${d.fileId}')">${SVG.trash}</button>
                 </div>`).join('')}
-                <div style="display:flex;gap:7px;margin-top:6px">
+                <div style="display:flex;gap:7px;margin-top:6px;flex-wrap:wrap">
                     <button class="noiva-doc-add-btn" onclick="uploadNoivaDoc('${n.id}','CONTRATO')">+ Contrato</button>
                     <button class="noiva-doc-add-btn" onclick="uploadNoivaDoc('${n.id}','ADITIVO')">+ Aditivo</button>
+                    <button class="noiva-doc-add-btn" onclick="uploadNoivaDoc('${n.id}','PROPOSTA')">+ Proposta</button>
                 </div>
             </div>`;
         })();

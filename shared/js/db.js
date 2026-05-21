@@ -74,7 +74,7 @@ const _ORC_KEYS = {
   Origem: 'origem', Endereco: 'endereco', Obs: 'obs', ProxFollowup: 'prox_followup',
   AgendaCriada: 'agenda_criada', EnderecoEvento: 'endereco_evento', LocalTipo: 'local_tipo',
   SinalFech: 'sinal_fech', SaldoFech: 'saldo_fech', Comprovantes: 'comprovantes',
-  DataCriacao: 'created_at',
+  Propostas: 'propostas', DataCriacao: 'created_at',
 };
 
 // Converte apenas os campos presentes (para update parcial)

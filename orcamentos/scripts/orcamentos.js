@@ -58,6 +58,7 @@ let fechSlots         = [];
 let fechLocal         = 'studio';
 let fechSinalRecebido = true;
 let fechSinalManual   = false;
+let fechPropostas     = [];
 let lastFechamento    = null;
 
 const coworkDisponivel = (typeof window !== 'undefined' && typeof window.cowork !== 'undefined');
@@ -1198,6 +1199,7 @@ function openAction(id) {
 
   document.getElementById('val-fechado-row').style.display = e.Status === 'Fechado' ? 'block' : 'none';
   document.getElementById('act-val-fechado').value = e.ValorFechado || '';
+  document.getElementById('act-val-enviado').value = e.ValorProp || '';
   document.getElementById('act-followup').value = e.ProxFollowup || '';
   document.getElementById('act-obs').value      = entryCleanObs(e);
 
@@ -1241,7 +1243,9 @@ async function saveAction() {
   e.Obs = packSlots(newObs, existingSlots);
   e.ProxFollowup = document.getElementById('act-followup').value;
   const vf = document.getElementById('act-val-fechado').value;
+  const ve = document.getElementById('act-val-enviado').value;
   if (e.Status === 'Fechado' && vf) e.ValorFechado = vf;
+  if (ve) e.ValorProp = ve;
 
   cacheEntries();
   closeAll();
@@ -1254,6 +1258,7 @@ async function saveAction() {
     DataFechamento:e.DataFechamento,
     ProxFollowup:  e.ProxFollowup,
     ValorFechado:  e.ValorFechado,
+    ValorProp:     e.ValorProp,
     Obs:           e.Obs,
   };
   const result = await postEntry({ action: 'update', id: e.ID, fields });
@@ -1310,12 +1315,14 @@ function abrirFechamento() {
   fechSinalManual = false;
   fechLocal = 'studio';
   fechSinalRecebido = true;
+  fechPropostas = e.Propostas || [];
 
   document.getElementById('fech-nome').textContent = e.Cliente || '';
   document.getElementById('fech-addr').value = '';
   document.getElementById('fech-obs').value  = entryCleanObs(e);
   document.getElementById('fech-origem').value = e.Origem || 'Produção Social';
   document.getElementById('fech-forma').value  = 'PIX';
+  document.getElementById('fech-valor-enviado').value = e.ValorProp || '';
 
   const existingSlots = entrySlots(e);
   fechSlots = existingSlots.length
@@ -1338,12 +1345,66 @@ function abrirFechamento() {
     if (b.dataset.ss === 'recebido') b.classList.add('on-ok');
   });
 
+  updatePropostaSection();
+  renderFechPropostas();
   openPanel('panel-fechar');
 }
 
 function voltarFechamento() {
   closePanel('panel-fechar');
   openAction(activeId);
+}
+
+function updatePropostaSection() {
+  const origem = document.getElementById('fech-origem').value;
+  const section = document.getElementById('fech-proposta-section');
+  if (section) {
+    section.style.display = origem === 'Noiva' ? 'block' : 'none';
+  }
+}
+
+function renderFechPropostas() {
+  const list = document.getElementById('fech-proposta-list');
+  if (!list) return;
+  if (fechPropostas.length === 0) {
+    list.innerHTML = '<p style="font-size:0.75rem;color:var(--muted);margin:0 0 8px">Nenhuma proposta anexada</p>';
+  } else {
+    list.innerHTML = fechPropostas.map(p => `
+      <div style="display:flex;align-items:center;gap:8px;padding:8px;background:#fafafa;border-radius:8px;margin-bottom:6px">
+        <span style="flex:1;font-size:0.85rem;color:var(--brown);word-break:break-word">${esc(p.nome)}</span>
+        <a href="${p.link}" target="_blank" rel="noopener" style="font-size:0.75rem;color:#1976d2;padding:4px 8px;border-radius:4px;background:#e3f2fd;text-decoration:none;white-space:nowrap">📄 Ver</a>
+        <button class="delbtn" style="width:24px;height:24px;flex-shrink:0" type="button" onclick="deleteFechProposta('${p.fileId}')" title="Remover">${SVG.trash}</button>
+      </div>`).join('');
+  }
+}
+
+async function uploadOrcProposal() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'application/pdf,image/*';
+  input.onchange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    toast('Enviando proposta...');
+    try {
+      const b64 = await fileToBase64(file);
+      const result = await DB.storage.uploadComprovante(activeId, file, 'PROPOSTA', b64, file.type);
+      fechPropostas.push({ fileId: result.fileId, link: result.link, nome: file.name, ts: Date.now() });
+      renderFechPropostas();
+      toast('Proposta anexada!');
+    } catch(err) {
+      toast('Erro ao enviar: ' + err.message);
+    }
+  };
+  input.click();
+}
+
+function deleteFechProposta(fileId) {
+  if (!confirm('Remover esta proposta?')) return;
+  fechPropostas = fechPropostas.filter(p => p.fileId !== fileId);
+  try { DB.storage.deleteComprovante(fileId); } catch(_) {}
+  renderFechPropostas();
+  toast('Proposta removida');
 }
 
 function addFechSlot() {
@@ -1500,8 +1561,10 @@ async function confirmarFechamento() {
     horario: s.horario || '',
   }));
   const datasOrdenadas = slotsValidos.map(s => s.data).filter(Boolean).sort();
+  const valorEnviado = document.getElementById('fech-valor-enviado').value;
   e.Status         = 'Fechado';
   e.ValorFechado   = total;
+  e.ValorProp      = valorEnviado || total;
   e.DataFechamento = todayStr();
   e.DataEvento     = datasOrdenadas[0] || e.DataEvento || '';
   e.Servico        = descreveSlots(slotsValidos);
@@ -1511,6 +1574,7 @@ async function confirmarFechamento() {
   e.LocalTipo      = fechLocal;
   e.SinalFech      = sinal;
   e.SaldoFech      = saldo;
+  e.Propostas      = fechPropostas;
   e.AgendaCriada   = false;
   cacheEntries();
 
@@ -1520,11 +1584,13 @@ async function confirmarFechamento() {
     fields: {
       Status:         e.Status,
       ValorFechado:   e.ValorFechado,
+      ValorProp:      e.ValorProp,
       DataFechamento: e.DataFechamento,
       DataEvento:     e.DataEvento,
       Servico:        e.Servico,
       Obs:            e.Obs,
       Origem:         e.Origem,
+      Propostas:      e.Propostas,
     },
   });
 
@@ -2115,6 +2181,15 @@ async function handleComprovanteUpload(event, id) {
     toast('❌ Erro ao enviar: ' + (err.message || err));
     renderActCompSection(id);
   }
+}
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => resolve(e.target.result.split(',')[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
 }
 
 function resizeImageBase64(base64, tipo) {

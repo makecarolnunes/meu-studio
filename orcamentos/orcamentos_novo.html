@@ -278,7 +278,13 @@
     </div>
   </div>
 
-  <!-- Valor fechado -->
+  <!-- Valor enviado e Valor fechado -->
+  <div style="padding:10px 18px 0;">
+    <div class="form-group">
+      <label class="form-label">Valor enviado à cliente (R$)</label>
+      <input class="form-input" id="act-val-enviado" type="number" placeholder="0,00" step="0.01">
+    </div>
+  </div>
   <div id="val-fechado-row" style="display:none; padding:10px 18px 0;">
     <div class="form-group">
       <label class="form-label">Valor fechado (R$)</label>
@@ -387,6 +393,12 @@
       <input class="form-input input-readonly" id="fech-saldo" type="number" placeholder="—" readonly>
     </div>
 
+    <!-- Valor Enviado (editável) -->
+    <div class="form-group">
+      <label class="form-label">Valor enviado à cliente (R$) <span style="font-weight:400;color:var(--muted)">(editável)</span></label>
+      <input class="form-input" id="fech-valor-enviado" type="number" placeholder="—" step="0.01" min="0">
+    </div>
+
     <!-- Sinal já recebido? -->
     <div class="form-group">
       <label class="form-label">Sinal já recebido?</label>
@@ -410,13 +422,22 @@
       </div>
       <div class="form-group">
         <label class="form-label">Origem</label>
-        <select class="form-input" id="fech-origem">
+        <select class="form-input" id="fech-origem" onchange="updatePropostaSection()">
           <option>Produção Social</option>
           <option>Noiva</option>
           <option>Assistência</option>
           <option>Curso de Automaquiagem</option>
         </select>
       </div>
+    </div>
+
+    <!-- Proposta (apenas para Noivas) -->
+    <div id="fech-proposta-section" style="display:none">
+      <div style="font-size:0.68rem;font-weight:700;color:var(--rose-dark);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;margin-top:4px">
+        📄 Proposta Enviada
+      </div>
+      <div id="fech-proposta-list" style="margin-bottom:10px"></div>
+      <button class="btn-add-slot" type="button" onclick="uploadOrcProposal()" style="margin-bottom:12px">+ Anexar Proposta</button>
     </div>
 
     <!-- Obs -->
