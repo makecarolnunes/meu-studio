@@ -1377,11 +1377,12 @@ function renderFechPropostas() {
   if (fechPropostas.length === 0) {
     list.innerHTML = '<p style="font-size:0.75rem;color:var(--muted);margin:0 0 8px">Nenhuma proposta anexada</p>';
   } else {
+    const trash = (window.SVG && window.SVG.trash) ? window.SVG.trash : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path></svg>';
     list.innerHTML = fechPropostas.map(p => `
       <div style="display:flex;align-items:center;gap:8px;padding:8px;background:#fafafa;border-radius:8px;margin-bottom:6px">
-        <span style="flex:1;font-size:0.85rem;color:var(--brown);word-break:break-word">${esc(p.nome)}</span>
-        <a href="${p.link}" target="_blank" rel="noopener" style="font-size:0.75rem;color:#1976d2;padding:4px 8px;border-radius:4px;background:#e3f2fd;text-decoration:none;white-space:nowrap">📄 Ver</a>
-        <button class="delbtn" style="width:24px;height:24px;flex-shrink:0" type="button" onclick="deleteFechProposta('${p.fileId}')" title="Remover">${SVG.trash}</button>
+        <span style="flex:1;font-size:0.85rem;color:var(--brown);word-break:break-word">${esc(p.nome || 'proposta')}</span>
+        <a href="${esc(p.link || '#')}" target="_blank" rel="noopener" style="font-size:0.75rem;color:#1976d2;padding:4px 8px;border-radius:4px;background:#e3f2fd;text-decoration:none;white-space:nowrap">📄 Ver</a>
+        <button class="delbtn" style="width:24px;height:24px;flex-shrink:0;padding:0;border:none;background:none;cursor:pointer" type="button" onclick="deleteFechProposta('${esc(p.fileId || '')}');" title="Remover">${trash}</button>
       </div>`).join('');
   }
 }
@@ -1946,11 +1947,12 @@ function renderActPropostas() {
   if (actPropostas.length === 0) {
     list.innerHTML = '<p style="font-size:0.75rem;color:var(--muted);margin:0 0 8px">Nenhuma proposta anexada</p>';
   } else {
+    const trash = (window.SVG && window.SVG.trash) ? window.SVG.trash : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path></svg>';
     list.innerHTML = actPropostas.map(p => `
       <div style="display:flex;align-items:center;gap:8px;padding:8px;background:#fafafa;border-radius:8px;margin-bottom:6px">
-        <span style="flex:1;font-size:0.85rem;color:var(--brown);word-break:break-word">${esc(p.nome)}</span>
-        <a href="${p.link}" target="_blank" rel="noopener" style="font-size:0.75rem;color:#1976d2;padding:4px 8px;border-radius:4px;background:#e3f2fd;text-decoration:none;white-space:nowrap">📄 Ver</a>
-        <button class="delbtn" style="width:24px;height:24px;flex-shrink:0" type="button" onclick="deleteActProposta('${p.fileId}')" title="Remover">${SVG.trash}</button>
+        <span style="flex:1;font-size:0.85rem;color:var(--brown);word-break:break-word">${esc(p.nome || 'proposta')}</span>
+        <a href="${esc(p.link || '#')}" target="_blank" rel="noopener" style="font-size:0.75rem;color:#1976d2;padding:4px 8px;border-radius:4px;background:#e3f2fd;text-decoration:none;white-space:nowrap">📄 Ver</a>
+        <button class="delbtn" style="width:24px;height:24px;flex-shrink:0;padding:0;border:none;background:none;cursor:pointer" type="button" onclick="deleteActProposta('${esc(p.fileId || '')}');" title="Remover">${trash}</button>
       </div>`).join('');
   }
 }
