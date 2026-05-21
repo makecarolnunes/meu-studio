@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-21 17:52 | main | feat(instagram): Fase 2 ÔÇö an├ílise estrat├®gica IA no dashboard -->
+<!-- AUTO: 2026-05-21 20:16 | main | feat(instagram): overhaul visual + Validador de Post + fix API insights -->
 
