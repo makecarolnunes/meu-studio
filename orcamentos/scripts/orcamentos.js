@@ -1192,9 +1192,6 @@ function openAction(id) {
   if (e.DataEvento) meta.push('Evento: ' + fmtDate(e.DataEvento));
   document.getElementById('act-meta').textContent = meta.join(' · ');
 
-  const tmpl = getWaTemplate(e);
-  document.getElementById('act-wa-hint').textContent = (tmpl.code && tmpl.code !== '—' ? '[' + tmpl.code + '] ' : '') + tmpl.hint;
-
   document.querySelectorAll('#status-grid .st-btn').forEach(b =>
     b.classList.toggle('active', b.dataset.s === e.Status));
 
