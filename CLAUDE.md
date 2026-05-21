@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-21 10:50 | main | feat: editable budget value + proposal attachments for brides -->
+<!-- AUTO: 2026-05-21 10:58 | main | feat: adiciona proposta enviada no action sheet e remove whatsapp direto -->
 
