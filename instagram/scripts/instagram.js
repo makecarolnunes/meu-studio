@@ -407,25 +407,104 @@
   async function fetchAccountInsights() {
     var today = Math.floor(Date.now() / 1000);
     var since = today - 30 * 24 * 60 * 60;
-    var url = 'https://graph.instagram.com/me/insights' +
-      '?metric=impressions,reach,profile_views,website_clicks,follower_count' +
-      '&period=day&since=' + since + '&until=' + today +
-      '&access_token=' + encodeURIComponent(state.token);
-    var res = await fetch(url);
-    var json = await res.json();
-    if (json.error) throw new Error(json.error.message);
-    return json.data || [];
+    // Em API v22+ várias métricas exigem metric_type=total_value.
+    // Tenta múltiplas combinações por métrica.
+    var requests = [
+      // Métricas atuais (v22+) com metric_type
+      { metric: 'reach', extra: '&metric_type=total_value', period: 'day' },
+      { metric: 'views', extra: '&metric_type=total_value', period: 'day' },
+      { metric: 'profile_views', extra: '&metric_type=total_value', period: 'day' },
+      { metric: 'accounts_engaged', extra: '&metric_type=total_value', period: 'day' },
+      { metric: 'total_interactions', extra: '&metric_type=total_value', period: 'day' },
+      { metric: 'likes', extra: '&metric_type=total_value', period: 'day' },
+      { metric: 'comments', extra: '&metric_type=total_value', period: 'day' },
+      { metric: 'shares', extra: '&metric_type=total_value', period: 'day' },
+      { metric: 'saves', extra: '&metric_type=total_value', period: 'day' },
+      { metric: 'replies', extra: '&metric_type=total_value', period: 'day' },
+      { metric: 'profile_links_taps', extra: '&metric_type=total_value', period: 'day' },
+      { metric: 'follower_count', extra: '', period: 'day' },
+      // Fallbacks legados sem metric_type
+      { metric: 'reach', extra: '', period: 'day' },
+      { metric: 'impressions', extra: '', period: 'day' },
+      { metric: 'website_clicks', extra: '', period: 'day' }
+    ];
+    var results = [];
+    var errors = [];
+    var seen = {};
+    for (var i = 0; i < requests.length; i++) {
+      var r = requests[i];
+      if (seen[r.metric]) continue;
+      try {
+        var url = 'https://graph.instagram.com/me/insights' +
+          '?metric=' + r.metric + r.extra +
+          '&period=' + r.period + '&since=' + since + '&until=' + today +
+          '&access_token=' + encodeURIComponent(state.token);
+        var res = await fetch(url);
+        var json = await res.json();
+        if (json.error) {
+          errors.push(r.metric + (r.extra ? ' (com metric_type)' : '') + ': ' + json.error.message);
+          continue;
+        }
+        if (json.data && json.data.length) {
+          seen[r.metric] = true;
+          results.push.apply(results, json.data);
+        }
+      } catch (e) {
+        errors.push(r.metric + ': ' + e.message);
+      }
+    }
+    if (!results.length && errors.length) {
+      console.warn('[ig] account insights — todas as métricas falharam:', errors);
+      state.accountInsightsError = errors.slice(0, 5).join(' · ');
+    } else if (errors.length) {
+      console.log('[ig] account insights — algumas métricas falharam:', errors);
+    }
+    console.log('[ig] account insights — coletadas:', results.map(function(r) { return r.name; }));
+    return results;
   }
 
   async function fetchAudienceInsights() {
-    var url = 'https://graph.instagram.com/me/insights' +
-      '?metric=audience_gender_age,audience_city,audience_country' +
-      '&period=lifetime' +
-      '&access_token=' + encodeURIComponent(state.token);
-    var res = await fetch(url);
-    var json = await res.json();
-    if (json.error) throw new Error(json.error.message);
-    return json.data || [];
+    // v22+ usa follower_demographics com breakdown
+    var requests = [
+      { metric: 'follower_demographics', params: '&metric_type=total_value&timeframe=this_month&breakdown=age' },
+      { metric: 'follower_demographics', params: '&metric_type=total_value&timeframe=this_month&breakdown=gender' },
+      { metric: 'follower_demographics', params: '&metric_type=total_value&timeframe=this_month&breakdown=city' },
+      { metric: 'follower_demographics', params: '&metric_type=total_value&timeframe=this_month&breakdown=country' },
+      { metric: 'engaged_audience_demographics', params: '&metric_type=total_value&timeframe=this_month&breakdown=age' },
+      // Fallback antigo
+      { metric: 'audience_gender_age', params: '&period=lifetime' },
+      { metric: 'audience_city', params: '&period=lifetime' },
+      { metric: 'audience_country', params: '&period=lifetime' }
+    ];
+    var results = [];
+    var errors = [];
+    for (var i = 0; i < requests.length; i++) {
+      var r = requests[i];
+      try {
+        var url = 'https://graph.instagram.com/me/insights' +
+          '?metric=' + r.metric + r.params +
+          '&access_token=' + encodeURIComponent(state.token);
+        var res = await fetch(url);
+        var json = await res.json();
+        if (json.error) {
+          errors.push(r.metric + ': ' + json.error.message);
+          continue;
+        }
+        if (json.data && json.data.length) {
+          results.push.apply(results, json.data);
+        }
+      } catch (e) {
+        errors.push(r.metric + ': ' + e.message);
+      }
+    }
+    if (!results.length && errors.length) {
+      console.warn('[ig] audience — todas as métricas falharam:', errors);
+      state.audienceError = errors.slice(0, 5).join(' · ');
+    } else if (errors.length) {
+      console.log('[ig] audience — algumas métricas falharam:', errors);
+    }
+    console.log('[ig] audience — coletadas:', results.length, 'métricas');
+    return results;
   }
 
   // ══════════════════════════════════════════════════════════
@@ -547,7 +626,12 @@
     var el = document.getElementById('account-insights');
     if (!el) return;
     if (!state.accountInsights || !state.accountInsights.length) {
-      el.innerHTML = '<div class="t-muted t-caption">Insights da conta indisponíveis. Pode ser limitação de permissão do token ou conta com menos de 100 seguidores.</div>';
+      var msg = '<div class="t-muted t-caption">Insights da conta indisponíveis.</div>';
+      if (state.accountInsightsError) {
+        msg += '<details class="error-details"><summary>Ver erro detalhado</summary><pre>' + esc(state.accountInsightsError) + '</pre></details>';
+      }
+      msg += '<div class="t-caption" style="margin-top:6px">Verifique: (1) token tem permissão <code>instagram_business_manage_insights</code>, (2) gerou um token NOVO após adicionar a permissão, (3) clicou em refresh 🔄 no header pra limpar cache.</div>';
+      el.innerHTML = msg;
       return;
     }
 
@@ -611,54 +695,101 @@
     var el = document.getElementById('audience-section');
     if (!el) return;
     if (!state.audience || !state.audience.length) {
-      el.innerHTML = '<div class="t-muted t-caption">Demografia indisponível. Requer 100+ seguidores e permissão de audience insights.</div>';
+      var msg = '<div class="t-muted t-caption">Demografia indisponível.</div>';
+      if (state.audienceError) {
+        msg += '<details class="error-details"><summary>Ver erro detalhado</summary><pre>' + esc(state.audienceError) + '</pre></details>';
+      }
+      msg += '<div class="t-caption" style="margin-top:6px">Requer 100+ seguidores (você tem ✓) e permissão de audience insights no token.</div>';
+      el.innerHTML = msg;
       return;
     }
 
-    var html = '';
+    // Normaliza para um formato único: { age: {...}, gender: {...}, city: {...}, country: {...} }
+    var bins = { age: {}, gender: {}, city: {}, country: {} };
     state.audience.forEach(function(m) {
-      var val = m.values && m.values[0] ? m.values[0].value : {};
-      if (m.name === 'audience_gender_age') {
-        // val é {F.18-24: 12, M.18-24: 3, ...}
-        var groups = {};
-        Object.keys(val).forEach(function(k) {
-          var parts = k.split('.');
-          var gender = parts[0];
-          var age = parts[1] || '?';
-          if (!groups[age]) groups[age] = { F: 0, M: 0, U: 0 };
-          groups[age][gender] = val[k];
+      // Formato moderno: total_value.breakdowns
+      if (m.total_value && m.total_value.breakdowns) {
+        m.total_value.breakdowns.forEach(function(bd) {
+          var dim = (bd.dimension_keys && bd.dimension_keys[0]) || '';
+          var key = dim.toLowerCase();
+          if (!bins[key]) bins[key] = {};
+          (bd.results || []).forEach(function(r) {
+            var label = r.dimension_values && r.dimension_values[0];
+            if (label) bins[key][label] = (bins[key][label] || 0) + (r.value || 0);
+          });
         });
-        var ages = Object.keys(groups).sort();
-        var maxAge = Math.max.apply(null, ages.map(function(a) { return (groups[a].F || 0) + (groups[a].M || 0) + (groups[a].U || 0); }));
-        html += '<div class="aud-block"><div class="t-label">Idade × Gênero</div>';
-        ages.forEach(function(age) {
-          var f = groups[age].F || 0, m = groups[age].M || 0, u = groups[age].U || 0;
-          var total = f + m + u;
-          var pct = maxAge ? (total / maxAge * 100) : 0;
-          html += '<div class="aud-row">' +
-            '<span class="aud-age">' + esc(age) + '</span>' +
-            '<div class="aud-bar"><div class="aud-bar-f" style="width:' + ((f / (maxAge || 1)) * 100) + '%"></div></div>' +
-            '<span class="aud-num">' + total + '</span>' +
-          '</div>';
-        });
-        html += '</div>';
-      } else if (m.name === 'audience_city') {
-        var cities = Object.keys(val).sort(function(a, b) { return val[b] - val[a]; }).slice(0, 5);
-        html += '<div class="aud-block"><div class="t-label">Top cidades</div>';
-        cities.forEach(function(c) {
-          html += '<div class="aud-row"><span class="aud-city">' + esc(c) + '</span><span class="aud-num">' + val[c] + '</span></div>';
-        });
-        html += '</div>';
-      } else if (m.name === 'audience_country') {
-        var countries = Object.keys(val).sort(function(a, b) { return val[b] - val[a]; }).slice(0, 5);
-        html += '<div class="aud-block"><div class="t-label">Top países</div>';
-        countries.forEach(function(c) {
-          html += '<div class="aud-row"><span class="aud-city">' + esc(c) + '</span><span class="aud-num">' + val[c] + '</span></div>';
-        });
-        html += '</div>';
+      }
+      // Formato legado: values[0].value como objeto
+      else if (m.values && m.values[0] && typeof m.values[0].value === 'object') {
+        var val = m.values[0].value;
+        if (m.name === 'audience_gender_age') {
+          Object.keys(val).forEach(function(k) {
+            var parts = k.split('.');
+            var gender = parts[0], age = parts[1];
+            if (age) bins.age[age] = (bins.age[age] || 0) + val[k];
+            if (gender) bins.gender[gender] = (bins.gender[gender] || 0) + val[k];
+          });
+        } else if (m.name === 'audience_city') {
+          Object.keys(val).forEach(function(k) { bins.city[k] = (bins.city[k] || 0) + val[k]; });
+        } else if (m.name === 'audience_country') {
+          Object.keys(val).forEach(function(k) { bins.country[k] = (bins.country[k] || 0) + val[k]; });
+        }
       }
     });
-    el.innerHTML = html || '<div class="t-muted t-caption">Sem dados de demografia.</div>';
+
+    var html = '';
+    // Render idade
+    if (Object.keys(bins.age).length) {
+      var ages = Object.keys(bins.age).sort();
+      var maxA = Math.max.apply(null, ages.map(function(a) { return bins.age[a]; }));
+      html += '<div class="aud-block"><div class="t-label">Idade</div>';
+      ages.forEach(function(a) {
+        var pct = maxA ? (bins.age[a] / maxA * 100) : 0;
+        html += '<div class="aud-row">' +
+          '<span class="aud-age">' + esc(a) + '</span>' +
+          '<div class="aud-bar"><div class="aud-bar-f" style="width:' + pct + '%"></div></div>' +
+          '<span class="aud-num">' + bins.age[a] + '</span>' +
+        '</div>';
+      });
+      html += '</div>';
+    }
+    // Gênero
+    if (Object.keys(bins.gender).length) {
+      var genders = Object.keys(bins.gender);
+      var maxG = Math.max.apply(null, genders.map(function(g) { return bins.gender[g]; }));
+      html += '<div class="aud-block"><div class="t-label">Gênero</div>';
+      genders.forEach(function(g) {
+        var pct = maxG ? (bins.gender[g] / maxG * 100) : 0;
+        var label = g === 'F' ? 'Feminino' : g === 'M' ? 'Masculino' : g === 'U' ? 'Não-binário' : g;
+        html += '<div class="aud-row">' +
+          '<span class="aud-age">' + esc(label) + '</span>' +
+          '<div class="aud-bar"><div class="aud-bar-f" style="width:' + pct + '%"></div></div>' +
+          '<span class="aud-num">' + bins.gender[g] + '</span>' +
+        '</div>';
+      });
+      html += '</div>';
+    }
+    // Cidade
+    if (Object.keys(bins.city).length) {
+      var cities = Object.keys(bins.city).sort(function(a, b) { return bins.city[b] - bins.city[a]; }).slice(0, 5);
+      html += '<div class="aud-block"><div class="t-label">Top cidades</div>';
+      cities.forEach(function(c) {
+        html += '<div class="aud-row"><span class="aud-city">' + esc(c) + '</span><span class="aud-num">' + bins.city[c] + '</span></div>';
+      });
+      html += '</div>';
+    }
+    // País
+    if (Object.keys(bins.country).length) {
+      var countries = Object.keys(bins.country).sort(function(a, b) { return bins.country[b] - bins.country[a]; }).slice(0, 5);
+      html += '<div class="aud-block"><div class="t-label">Top países</div>';
+      countries.forEach(function(c) {
+        html += '<div class="aud-row"><span class="aud-city">' + esc(c) + '</span><span class="aud-num">' + bins.country[c] + '</span></div>';
+      });
+      html += '</div>';
+    }
+
+    if (!html) html = '<div class="t-muted t-caption">Dados de audiência retornados mas formato não reconhecido. Veja console para debug.</div>';
+    el.innerHTML = html;
   }
 
   function renderPerformanceChart() {
@@ -1454,131 +1585,316 @@
   function renderAnalysis() {
     var stored = state.analysis || loadStoredAnalysis();
     var statusEl = document.getElementById('analysis-status');
-    var sectionEl = document.getElementById('analysis-section');
+    var subnav = document.getElementById('insights-subtabs');
+
     if (!stored) {
-      if (statusEl) statusEl.innerHTML = '<span class="t-muted t-caption">Sem análise ainda. Clica em Gerar para começar.</span>';
-      if (sectionEl) sectionEl.innerHTML = '';
+      if (statusEl) statusEl.innerHTML = '<span class="t-muted t-caption">Sem análise ainda. Clica em Gerar.</span>';
+      if (subnav) subnav.style.display = 'none';
+      ['diagnostico','padroes','alinhamento','oportunidades','pautas','alertas'].forEach(function(s) {
+        var el = document.getElementById('sub-' + s);
+        if (el) el.innerHTML = '';
+      });
+      renderAlertsStrip();
+      renderQuickDiagnostic();
       return;
     }
 
     var d = new Date(stored.generatedAt);
-    if (statusEl) statusEl.innerHTML = '<span class="t-caption">Gerada em ' + formatDateTime(d) + (stored.usage ? ' · ' + stored.usage.input_tokens + ' in / ' + stored.usage.output_tokens + ' out tokens' : '') + '</span>';
+    if (statusEl) {
+      var ago = humanAgo(d);
+      statusEl.innerHTML = '<span class="t-caption">✓ Gerada ' + ago + (stored.usage ? ' · ' + fmtNum(stored.usage.input_tokens) + ' → ' + fmtNum(stored.usage.output_tokens) + ' tokens' : '') + '</span>';
+    }
+    if (subnav) subnav.style.display = 'flex';
 
     var a = stored.data || {};
-    var html = '';
 
-    // 1. Diagnóstico executivo
-    if (a.diagnostico_executivo) {
-      html += '<div class="analysis-block diag-block">' +
-        '<div class="analysis-h">⭐ Diagnóstico executivo</div>' +
-        '<div class="diag-text">' + esc(a.diagnostico_executivo) + '</div>' +
-      '</div>';
-    }
-
-    // 2. Padrões top/bottom
-    if (a.padroes_top && a.padroes_top.length) {
-      html += '<div class="analysis-block">' +
-        '<div class="analysis-h">🔥 Por que os top performaram</div>' +
-        a.padroes_top.map(renderPatternHTML).join('') +
-      '</div>';
-    }
-    if (a.padroes_bottom && a.padroes_bottom.length) {
-      html += '<div class="analysis-block">' +
-        '<div class="analysis-h">📉 Por que os bottom não performaram</div>' +
-        a.padroes_bottom.map(renderPatternHTML).join('') +
-      '</div>';
-    }
-
-    // 3. Alinhamento de marca
+    // Métricas resumo do diagnóstico — calcula a partir dos dados
+    var metricsHTML = '';
     if (a.alinhamento_marca) {
       var al = a.alinhamento_marca;
-      html += '<div class="analysis-block">' +
-        '<div class="analysis-h">🎯 Alinhamento com Brand Brain</div>' +
-        '<div class="align-score">Score geral: <strong>' + (al.score_geral_0_10 || '-') + '/10</strong></div>' +
-        (al.dimensoes ? Object.keys(al.dimensoes).map(function(k) {
-          var v = al.dimensoes[k];
-          return '<div class="align-dim"><span class="align-label">' + esc(k.replace(/_/g, ' ')) + '</span>' +
-            '<div class="align-bar"><div class="align-bar-f" style="width:' + (v * 10) + '%"></div></div>' +
-            '<span class="align-val">' + v + '</span></div>';
-        }).join('') : '') +
-        (al.posts_off_brand && al.posts_off_brand.length ? '<div class="off-brand"><div class="t-label" style="color:var(--danger)">Posts off-brand</div>' +
-          al.posts_off_brand.map(function(p) {
-            return '<div class="off-item">' +
-              '<strong>' + esc(p.post_id) + '</strong> — score ' + p.score + '/10' +
-              (p.flags && p.flags.length ? '<ul>' + p.flags.map(function(f) { return '<li>' + esc(f) + '</li>'; }).join('') + '</ul>' : '') +
-            '</div>';
-          }).join('') + '</div>' : '') +
-        (al.posts_perfeitos && al.posts_perfeitos.length ? '<div class="perfect"><div class="t-label" style="color:var(--success)">Posts alinhados</div>' +
-          al.posts_perfeitos.map(function(p) {
-            return '<div class="off-item">' +
-              '<strong>' + esc(p.post_id) + '</strong> — score ' + p.score + '/10' +
-              (p.fortalezas && p.fortalezas.length ? '<ul>' + p.fortalezas.map(function(f) { return '<li>' + esc(f) + '</li>'; }).join('') + '</ul>' : '') +
-            '</div>';
-          }).join('') + '</div>' : '') +
-      '</div>';
+      var offCount = (al.posts_off_brand || []).length;
+      var perfCount = (al.posts_perfeitos || []).length;
+      var pautasCount = (a.pautas_proxima_semana || []).length;
+      var gapsCount = (a.concorrentes && a.concorrentes.gaps_mercado || []).length;
+      var topCount = (a.padroes_top || []).length;
+      metricsHTML =
+        '<div class="diag-metrics">' +
+          '<div class="diag-metric"><div class="diag-metric-v">' + (al.score_geral_0_10 || '—') + '/10</div><div class="diag-metric-l">Alinhamento</div></div>' +
+          '<div class="diag-metric"><div class="diag-metric-v">' + offCount + '</div><div class="diag-metric-l">Posts off-brand</div></div>' +
+          '<div class="diag-metric"><div class="diag-metric-v">' + perfCount + '</div><div class="diag-metric-l">Posts alinhados</div></div>' +
+          '<div class="diag-metric"><div class="diag-metric-v">' + topCount + '</div><div class="diag-metric-l">Padrões top</div></div>' +
+          '<div class="diag-metric"><div class="diag-metric-v">' + gapsCount + '</div><div class="diag-metric-l">Gaps mercado</div></div>' +
+          '<div class="diag-metric"><div class="diag-metric-v">' + pautasCount + '</div><div class="diag-metric-l">Pautas</div></div>' +
+        '</div>';
     }
 
-    // 4. Pilares
-    if (a.pilares_balance) {
-      html += '<div class="analysis-block">' +
-        '<div class="analysis-h">📊 Balance dos pilares</div>' +
-        '<div class="diag-text">' + esc(a.pilares_balance.diagnostico || '') + '</div>' +
-        (a.pilares_balance.desvios_criticos && a.pilares_balance.desvios_criticos.length ?
-          '<ul>' + a.pilares_balance.desvios_criticos.map(function(d) { return '<li>' + esc(d) + '</li>'; }).join('') + '</ul>' : '') +
+    // ── SUB-PANEL: DIAGNÓSTICO ──
+    var diagHTML = '';
+    if (a.diagnostico_executivo) {
+      diagHTML += '<div class="hero-diag">' +
+        '<div class="hero-diag-tag">DIAGNÓSTICO EXECUTIVO</div>' +
+        '<div class="hero-diag-text">' + esc(a.diagnostico_executivo) + '</div>' +
+        metricsHTML +
       '</div>';
     }
-
-    // 5. Bio
-    if (a.analise_bio) {
-      html += '<div class="analysis-block">' +
-        '<div class="analysis-h">📝 Análise da bio</div>' +
-        '<div class="diag-text">' + esc(a.analise_bio.diagnostico || '') + '</div>' +
-        (a.analise_bio.sugestao_pronta ? '<div class="bio-suggested"><div class="t-label">Sugestão pronta pra copiar</div><pre>' + esc(a.analise_bio.sugestao_pronta) + '</pre><button class="btn btn-secondary btn-sm" onclick="copyBio()">Copiar</button></div>' : '') +
-      '</div>';
-    }
-
-    // 6. Audiência
     if (a.audiencia_e_origem) {
       var au = a.audiencia_e_origem;
-      html += '<div class="analysis-block">' +
+      diagHTML += '<div class="analysis-block">' +
         '<div class="analysis-h">👥 Audiência e origem</div>' +
         '<div class="diag-text">' + esc(au.diagnostico || '') + '</div>' +
-        (au.sinais_audiencia_certa && au.sinais_audiencia_certa.length ? '<div class="t-label" style="color:var(--success)">Sinais de audiência certa</div><ul>' + au.sinais_audiencia_certa.map(function(s) { return '<li>' + esc(s) + '</li>'; }).join('') + '</ul>' : '') +
-        (au.sinais_audiencia_vazia && au.sinais_audiencia_vazia.length ? '<div class="t-label" style="color:var(--warning)">Sinais de audiência vazia</div><ul>' + au.sinais_audiencia_vazia.map(function(s) { return '<li>' + esc(s) + '</li>'; }).join('') + '</ul>' : '') +
+        '<div class="audience-cols">' +
+          (au.sinais_audiencia_certa && au.sinais_audiencia_certa.length ?
+            '<div class="aud-col aud-col-good"><div class="aud-col-h">✓ Audiência certa</div><ul>' +
+            au.sinais_audiencia_certa.map(function(s) { return '<li>' + esc(s) + '</li>'; }).join('') +
+            '</ul></div>' : '') +
+          (au.sinais_audiencia_vazia && au.sinais_audiencia_vazia.length ?
+            '<div class="aud-col aud-col-bad"><div class="aud-col-h">⚠ Audiência vazia</div><ul>' +
+            au.sinais_audiencia_vazia.map(function(s) { return '<li>' + esc(s) + '</li>'; }).join('') +
+            '</ul></div>' : '') +
+        '</div>' +
       '</div>';
     }
+    setHTML('sub-diagnostico', diagHTML);
 
-    // 7. Concorrentes
+    // ── SUB-PANEL: PADRÕES ──
+    var padHTML = '';
+    if (a.padroes_top && a.padroes_top.length) {
+      padHTML += '<div class="pattern-cols">' +
+        '<div class="pattern-col pattern-col-top">' +
+          '<div class="pattern-col-h">🔥 Por que performaram</div>' +
+          a.padroes_top.map(renderPatternHTML).join('') +
+        '</div>';
+      if (a.padroes_bottom && a.padroes_bottom.length) {
+        padHTML += '<div class="pattern-col pattern-col-bottom">' +
+          '<div class="pattern-col-h">📉 Por que falharam</div>' +
+          a.padroes_bottom.map(function(p) { return renderPatternHTML(p, true); }).join('') +
+        '</div>';
+      }
+      padHTML += '</div>';
+    }
+    setHTML('sub-padroes', padHTML);
+
+    // ── SUB-PANEL: ALINHAMENTO ──
+    var alinHTML = '';
+    if (a.alinhamento_marca) {
+      var al2 = a.alinhamento_marca;
+      var score = al2.score_geral_0_10 || 0;
+      alinHTML += '<div class="hero-diag">' +
+        '<div class="hero-diag-tag">SCORE DE ALINHAMENTO</div>' +
+        '<div class="score-big">' + score + '<span class="score-out">/10</span></div>' +
+        '<div class="score-bar"><div class="score-bar-f" style="width:' + (score * 10) + '%"></div></div>' +
+      '</div>';
+
+      if (al2.dimensoes) {
+        alinHTML += '<div class="analysis-block">' +
+          '<div class="analysis-h">Dimensões avaliadas</div>' +
+          Object.keys(al2.dimensoes).map(function(k) {
+            var v = al2.dimensoes[k];
+            var color = v >= 8 ? 'var(--success)' : v >= 6 ? 'var(--brand)' : v >= 4 ? 'var(--warning)' : 'var(--danger)';
+            return '<div class="align-dim"><span class="align-label">' + esc(k.replace(/_/g, ' ')) + '</span>' +
+              '<div class="align-bar"><div class="align-bar-f" style="width:' + (v * 10) + '%;background:' + color + '"></div></div>' +
+              '<span class="align-val">' + v + '</span></div>';
+          }).join('') +
+        '</div>';
+      }
+
+      if (al2.posts_perfeitos && al2.posts_perfeitos.length) {
+        alinHTML += '<div class="analysis-block">' +
+          '<div class="analysis-h" style="color:var(--success)">✓ Posts alinhados (replicar)</div>' +
+          al2.posts_perfeitos.map(function(p) { return renderPostAlignmentHTML(p, true); }).join('') +
+        '</div>';
+      }
+      if (al2.posts_off_brand && al2.posts_off_brand.length) {
+        alinHTML += '<div class="analysis-block">' +
+          '<div class="analysis-h" style="color:var(--danger)">⚠ Posts off-brand (corrigir)</div>' +
+          al2.posts_off_brand.map(function(p) { return renderPostAlignmentHTML(p, false); }).join('') +
+        '</div>';
+      }
+    }
+    setHTML('sub-alinhamento', alinHTML);
+
+    // ── SUB-PANEL: OPORTUNIDADES ──
+    var opHTML = '';
+    if (a.pilares_balance) {
+      opHTML += '<div class="analysis-block">' +
+        '<div class="analysis-h">📊 Balance dos pilares editoriais</div>' +
+        '<div class="diag-text">' + esc(a.pilares_balance.diagnostico || '') + '</div>' +
+        (a.pilares_balance.desvios_criticos && a.pilares_balance.desvios_criticos.length ?
+          '<div class="deviation-list">' +
+          a.pilares_balance.desvios_criticos.map(function(d) {
+            return '<div class="deviation-item">⚠ ' + esc(d) + '</div>';
+          }).join('') +
+          '</div>' : '') +
+      '</div>';
+    }
+    if (a.analise_bio) {
+      opHTML += '<div class="analysis-block">' +
+        '<div class="analysis-h">📝 Análise da bio</div>' +
+        '<div class="diag-text">' + esc(a.analise_bio.diagnostico || '') + '</div>' +
+        (a.analise_bio.sugestao_pronta ?
+          '<div class="bio-suggested">' +
+          '<div class="t-label">Bio sugerida</div>' +
+          '<pre>' + esc(a.analise_bio.sugestao_pronta) + '</pre>' +
+          '<button class="btn btn-secondary btn-sm" onclick="copyBio()">📋 Copiar</button>' +
+          '</div>' : '') +
+      '</div>';
+    }
     if (a.concorrentes) {
-      var c = a.concorrentes;
-      html += '<div class="analysis-block">' +
-        '<div class="analysis-h">🎯 Concorrentes — análise estratégica</div>' +
-        (c.diferenciais_reais_carol && c.diferenciais_reais_carol.length ? '<div class="t-label">Seus diferenciais reais</div><ul>' + c.diferenciais_reais_carol.map(function(s) { return '<li>' + esc(s) + '</li>'; }).join('') + '</ul>' : '') +
-        (c.gaps_mercado && c.gaps_mercado.length ? '<div class="t-label">Gaps de mercado</div>' + c.gaps_mercado.map(function(g) {
-          return '<div class="gap-item"><strong>' + esc(g.gap) + '</strong>' + (g.fit_com_carol ? '<div class="t-caption">' + esc(g.fit_com_carol) + '</div>' : '') + '</div>';
-        }).join('') : '') +
-        (c.formatos_saturados_evitar && c.formatos_saturados_evitar.length ? '<div class="t-label" style="color:var(--warning)">Formatos saturados (evitar)</div><ul>' + c.formatos_saturados_evitar.map(function(s) { return '<li>' + esc(s) + '</li>'; }).join('') + '</ul>' : '') +
-      '</div>';
+      var co = a.concorrentes;
+      opHTML += '<div class="analysis-block">' +
+        '<div class="analysis-h">🎯 Análise comparativa</div>';
+      if (co.diferenciais_reais_carol && co.diferenciais_reais_carol.length) {
+        opHTML += '<div class="comp-section comp-good"><div class="t-label">Seus diferenciais reais</div>' +
+          '<ul>' + co.diferenciais_reais_carol.map(function(s) { return '<li>' + esc(s) + '</li>'; }).join('') + '</ul></div>';
+      }
+      if (co.gaps_mercado && co.gaps_mercado.length) {
+        opHTML += '<div class="comp-section comp-gap"><div class="t-label">Gaps de mercado pra dominar</div>' +
+          co.gaps_mercado.map(function(g) {
+            return '<div class="gap-item"><strong>' + esc(g.gap) + '</strong>' +
+              (g.fit_com_carol ? '<div class="gap-fit">↳ ' + esc(g.fit_com_carol) + '</div>' : '') + '</div>';
+          }).join('') + '</div>';
+      }
+      if (co.formatos_saturados_evitar && co.formatos_saturados_evitar.length) {
+        opHTML += '<div class="comp-section comp-avoid"><div class="t-label">Formatos saturados (evitar)</div>' +
+          '<ul>' + co.formatos_saturados_evitar.map(function(s) { return '<li>' + esc(s) + '</li>'; }).join('') + '</ul></div>';
+      }
+      opHTML += '</div>';
     }
+    setHTML('sub-oportunidades', opHTML);
 
-    // 8. 10 pautas
+    // ── SUB-PANEL: PAUTAS ──
+    var pauHTML = '';
     if (a.pautas_proxima_semana && a.pautas_proxima_semana.length) {
-      html += '<div class="analysis-block">' +
-        '<div class="analysis-h">✍️ Pautas para a próxima semana</div>' +
-        a.pautas_proxima_semana.map(renderPautaHTML).join('') +
-      '</div>';
+      pauHTML += '<div class="pauta-list">' + a.pautas_proxima_semana.map(renderPautaHTML).join('') + '</div>';
     }
+    setHTML('sub-pautas', pauHTML);
 
-    if (sectionEl) sectionEl.innerHTML = html;
+    // ── SUB-PANEL: ALERTAS ──
+    var alertHTML = '';
+    var alerts = collectAlerts(a);
+    if (alerts.length) {
+      alertHTML += '<div class="alert-list">' +
+        alerts.map(function(al) {
+          return '<div class="alert-item alert-' + al.level + '">' +
+            '<div class="alert-icon">' + (al.level === 'high' ? '🚨' : al.level === 'medium' ? '⚠️' : 'ℹ️') + '</div>' +
+            '<div class="alert-body">' +
+              '<div class="alert-title">' + esc(al.title) + '</div>' +
+              '<div class="alert-desc">' + esc(al.desc) + '</div>' +
+            '</div>' +
+          '</div>';
+        }).join('') +
+      '</div>';
+    } else {
+      alertHTML = '<div class="t-muted t-caption" style="text-align:center;padding:20px">Nenhum alerta crítico no momento.</div>';
+    }
+    setHTML('sub-alertas', alertHTML);
+
+    renderAlertsStrip(alerts);
+    renderQuickDiagnostic();
     updateGenerateButton();
   }
 
-  function renderPatternHTML(p) {
-    return '<div class="pattern-item">' +
+  function setHTML(id, html) {
+    var el = document.getElementById(id);
+    if (el) el.innerHTML = html;
+  }
+
+  function collectAlerts(a) {
+    var out = [];
+    if (a.alinhamento_marca && a.alinhamento_marca.posts_off_brand) {
+      a.alinhamento_marca.posts_off_brand.forEach(function(p) {
+        out.push({
+          level: p.score < 4 ? 'high' : 'medium',
+          title: 'Post off-brand: ' + (p.post_id || ''),
+          desc: (p.flags || []).join(' · ')
+        });
+      });
+    }
+    if (a.pilares_balance && a.pilares_balance.desvios_criticos) {
+      a.pilares_balance.desvios_criticos.forEach(function(d) {
+        out.push({ level: 'medium', title: 'Desvio de pilar', desc: d });
+      });
+    }
+    if (a.audiencia_e_origem && a.audiencia_e_origem.sinais_audiencia_vazia) {
+      a.audiencia_e_origem.sinais_audiencia_vazia.forEach(function(s) {
+        out.push({ level: 'low', title: 'Audiência vazia', desc: s });
+      });
+    }
+    return out;
+  }
+
+  function renderAlertsStrip(alerts) {
+    var el = document.getElementById('alerts-strip');
+    if (!el) return;
+    if (!alerts) {
+      var stored = state.analysis || loadStoredAnalysis();
+      if (!stored) { el.innerHTML = ''; return; }
+      alerts = collectAlerts(stored.data || {});
+    }
+    if (!alerts.length) { el.innerHTML = ''; return; }
+    var high = alerts.filter(function(a) { return a.level === 'high'; }).length;
+    var med = alerts.filter(function(a) { return a.level === 'medium'; }).length;
+    el.innerHTML = '<div class="alerts-strip">' +
+      '<div class="alerts-strip-h">⚠️ Alertas ativos</div>' +
+      (high ? '<span class="alert-badge alert-high">' + high + ' críticos</span>' : '') +
+      (med ? '<span class="alert-badge alert-medium">' + med + ' atenção</span>' : '') +
+      '<button class="alert-jump" onclick="switchTab(\'estrategia\');switchSubtab(\'alertas\')">Ver detalhes →</button>' +
+    '</div>';
+  }
+
+  function renderQuickDiagnostic() {
+    var el = document.getElementById('quick-diagnostic');
+    if (!el) return;
+    var stored = state.analysis || loadStoredAnalysis();
+    if (!stored || !stored.data || !stored.data.diagnostico_executivo) {
+      el.innerHTML = '';
+      return;
+    }
+    el.innerHTML = '<div class="quick-diag">' +
+      '<div class="t-label">⭐ Diagnóstico mais recente</div>' +
+      '<div class="quick-diag-text">' + esc(stored.data.diagnostico_executivo) + '</div>' +
+      '<button class="btn btn-ghost btn-sm" onclick="switchTab(\'estrategia\')">Ver análise completa →</button>' +
+    '</div>';
+  }
+
+  function renderPostAlignmentHTML(p, isGood) {
+    return '<div class="post-align ' + (isGood ? 'pa-good' : 'pa-bad') + '">' +
+      '<div class="pa-head">' +
+        '<strong>' + esc(p.post_id || '') + '</strong>' +
+        '<div class="pa-score">' + (p.score || 0) + '/10</div>' +
+      '</div>' +
+      (p.flags && p.flags.length ? '<ul class="pa-list">' + p.flags.map(function(f) { return '<li>' + esc(f) + '</li>'; }).join('') + '</ul>' : '') +
+      (p.fortalezas && p.fortalezas.length ? '<ul class="pa-list pa-list-good">' + p.fortalezas.map(function(f) { return '<li>' + esc(f) + '</li>'; }).join('') + '</ul>' : '') +
+    '</div>';
+  }
+
+  function humanAgo(d) {
+    var diff = Date.now() - d.getTime();
+    var mins = Math.floor(diff / 60000);
+    if (mins < 1) return 'agora';
+    if (mins < 60) return 'há ' + mins + 'min';
+    var h = Math.floor(mins / 60);
+    if (h < 24) return 'há ' + h + 'h';
+    var d2 = Math.floor(h / 24);
+    return 'há ' + d2 + 'd';
+  }
+
+  window.switchSubtab = function(name) {
+    document.querySelectorAll('.ig-subtab').forEach(function(b) {
+      b.classList.toggle('active', b.dataset.sub === name);
+    });
+    document.querySelectorAll('.sub-panel').forEach(function(p) {
+      p.classList.toggle('active', p.id === 'sub-' + name);
+    });
+  };
+
+  function renderPatternHTML(p, isBottom) {
+    return '<div class="pattern-item ' + (isBottom ? 'pattern-bad' : 'pattern-good') + '">' +
       '<div class="pattern-name">' + esc(p.padrao || '') + '</div>' +
       (p.performance_lift ? '<div class="pattern-lift">📈 ' + esc(p.performance_lift) + '</div>' : '') +
-      (p.performance_drop ? '<div class="pattern-lift" style="color:var(--danger)">📉 ' + esc(p.performance_drop) + '</div>' : '') +
-      (p.evidencias_post_ids && p.evidencias_post_ids.length ? '<div class="pattern-ev">Evidência: ' + p.evidencias_post_ids.map(esc).join(', ') + '</div>' : '') +
+      (p.performance_drop ? '<div class="pattern-lift pattern-down">📉 ' + esc(p.performance_drop) + '</div>' : '') +
+      (p.evidencias_post_ids && p.evidencias_post_ids.length ?
+        '<div class="pattern-ev">' + p.evidencias_post_ids.map(function(e) { return '<span class="ev-tag">' + esc(e) + '</span>'; }).join('') + '</div>' : '') +
       (p.hipotese ? '<div class="pattern-hyp">' + esc(p.hipotese) + '</div>' : '') +
     '</div>';
   }
@@ -1705,6 +2021,366 @@
     el.classList.add('show');
     setTimeout(function() { el.classList.remove('show'); }, 2500);
   }
+
+  // ══════════════════════════════════════════════════════════
+  //  TAB SWITCHING
+  // ══════════════════════════════════════════════════════════
+  window.switchTab = function(name) {
+    document.querySelectorAll('.ig-tab').forEach(function(b) {
+      b.classList.toggle('active', b.dataset.tab === name);
+    });
+    document.querySelectorAll('.tab-panel').forEach(function(p) {
+      p.classList.toggle('active', p.id === 'tab-' + name);
+    });
+    // Scroll top do conteúdo
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // ══════════════════════════════════════════════════════════
+  //  VALIDADOR DE POST — Post Strategist
+  // ══════════════════════════════════════════════════════════
+  var VAL_STATE = { formato: 'reel', pilar: 'auto', objetivo: 'auto' };
+
+  window.setValFormat = function(f) {
+    VAL_STATE.formato = f;
+    document.querySelectorAll('.format-pill[data-fmt]').forEach(function(b) {
+      b.classList.toggle('active', b.dataset.fmt === f);
+    });
+  };
+  window.setValPilar = function(p) {
+    VAL_STATE.pilar = p;
+    document.querySelectorAll('.format-pill[data-pilar]').forEach(function(b) {
+      b.classList.toggle('active', b.dataset.pilar === p);
+    });
+  };
+  window.setValObj = function(o) {
+    VAL_STATE.objetivo = o;
+    document.querySelectorAll('.format-pill[data-obj]').forEach(function(b) {
+      b.classList.toggle('active', b.dataset.obj === o);
+    });
+  };
+
+  function buildValidatorPrompt(briefing, visual) {
+    var sections = [
+      brandToText(),
+      dataToText().split('### Insights da conta')[0],  // só perfil + posts (sem insights, mais conciso)
+    ].filter(Boolean);
+
+    var ctx = sections.join('\n\n---\n\n');
+
+    var task = '\n\n---\n\n## TAREFA — VALIDAÇÃO DE POST PRÉ-PUBLICAÇÃO\n\n' +
+'Você é estrategista de marca + diretor criativo + social media premium + analista de comportamento + especialista em posicionamento. Atue como consultor que valida cada post antes de a Carol publicar.\n\n' +
+'## POST EM AVALIAÇÃO\n\n' +
+'**Formato planejado:** ' + VAL_STATE.formato + '\n' +
+'**Pilar pretendido:** ' + VAL_STATE.pilar + (VAL_STATE.pilar === 'auto' ? ' (você identifica)' : '') + '\n' +
+'**Objetivo:** ' + VAL_STATE.objetivo + (VAL_STATE.objetivo === 'auto' ? ' (você sugere)' : '') + '\n\n' +
+'**Briefing / ideia:**\n' + briefing + '\n\n' +
+(visual ? '**Descrição visual:**\n' + visual + '\n\n' : '') +
+'## OUTPUT — JSON ESTRUTURADO\n\n' +
+'Retorne SOMENTE JSON válido (sem markdown ```json```, sem prefácio, nada antes ou depois). Estrutura:\n\n' +
+'```json\n{\n' +
+'  "score_geral": 0,\n' +
+'  "veredito": "PUBLICAR|AJUSTAR|REPENSAR",\n' +
+'  "veredito_resumo": "1 frase justificando o veredito",\n' +
+'  "pilar_identificado": {\n' +
+'    "pilar": "Noivas Premium|Autoridade Técnica|Cachos & Crespos|Carol-Presença|Produtos|Social Beauty",\n' +
+'    "justificativa": "por que esse pilar"\n' +
+'  },\n' +
+'  "alinhamento_brand_brain": {\n' +
+'    "score_0_10": 0,\n' +
+'    "pontos_fortes": ["alinha com X do Brand Brain", "..."],\n' +
+'    "pontos_fracos": ["usa palavra proibida Y", "..."]\n' +
+'  },\n' +
+'  "persona_atrai": {\n' +
+'    "principal": "P1 Noiva Premium|P2 Noiva Preta|P3 Cacheada/Crespa|P4 Profissional em Formação",\n' +
+'    "secundaria": "...",\n' +
+'    "justificativa": "por que essas personas"\n' +
+'  },\n' +
+'  "arquetipo_ativado": "Criadora|Cuidadora|Sábia",\n' +
+'  "formato_ideal": {\n' +
+'    "sugerido": "Reel|Carrossel|Foto|Story|Storytelling|Bastidores|Autoridade|Conversão",\n' +
+'    "justificativa": "por que esse formato considerando objetivo + Brand Brain + performance recente"\n' +
+'  },\n' +
+'  "problemas_identificados": [\n' +
+'    { "categoria": "Tom|Visual|Posicionamento|Estrutura", "problema": "descrição específica", "gravidade": "alta|media|baixa" }\n' +
+'  ],\n' +
+'  "melhorias_sugeridas": [\n' +
+'    { "antes": "trecho original", "depois": "trecho melhorado", "porque": "razão" }\n' +
+'  ],\n' +
+'  "hook_sugerido": {\n' +
+'    "primeira_opcao": "hook pronto pra usar",\n' +
+'    "segunda_opcao": "alternativa",\n' +
+'    "principio": "o princípio do hook escolhido (ex: começa com cena, não 'oi gente')"\n' +
+'  },\n' +
+'  "cta_sugerido": {\n' +
+'    "texto": "CTA pronto",\n' +
+'    "justificativa": "por que esse CTA"\n' +
+'  },\n' +
+'  "legenda_sugerida": "Legenda completa pronta pra copiar e colar, no tom da marca, multilinha com \\n",\n' +
+'  "titulo_capa": {\n' +
+'    "texto": "máximo 3 palavras pra capa do Reel/Carrossel",\n' +
+'    "fonte_recomendada": "Cormorant Garamond Bold Italic"\n' +
+'  },\n' +
+'  "melhorias_visuais": [\n' +
+'    { "elemento": "luz|enquadramento|composição|tratamento|fundo", "diretriz": "recomendação específica" }\n' +
+'  ],\n' +
+'  "potencial_performance": {\n' +
+'    "alcance": "alto|medio|baixo",\n' +
+'    "engajamento": "alto|medio|baixo",\n' +
+'    "conversao": "alto|medio|baixo",\n' +
+'    "salvamento": "alto|medio|baixo",\n' +
+'    "justificativa": "cruzando com performance recente do feed da Carol"\n' +
+'  },\n' +
+'  "vs_feed_recente": {\n' +
+'    "repetitivo": false,\n' +
+'    "diversidade": "complementa pilar X subaproveitado | repete o que ela já fez 3x",\n' +
+'    "posts_relacionados": ["P1", "P5"],\n' +
+'    "proximo_passo_sugerido": "post seguinte que conecta com este"\n' +
+'  }\n' +
+'}\n```\n\n' +
+'## REGRAS\n\n' +
+'- Use Brand Brain como lente principal. Avalie posicionamento, tom, palavras da marca/proibidas.\n' +
+'- Seja específico. Cite trechos exatos do briefing quando apontar problemas.\n' +
+'- Sugestões devem soar como a Carol — usar palavras da marca, evitar palavras proibidas.\n' +
+'- Português brasileiro, tom direto e profissional.\n' +
+'- Retorne SOMENTE o JSON.';
+
+    return ctx + task;
+  }
+
+  window.validatePost = async function() {
+    var briefing = (document.getElementById('val-briefing').value || '').trim();
+    if (!briefing) {
+      toast('Cole a ideia/briefing primeiro', true);
+      return;
+    }
+    if (!getClaudeKey()) {
+      toast('Configure sua chave Claude primeiro', true);
+      openClaudeKeyModal();
+      return;
+    }
+    if (!state.profile) {
+      toast('Aguarda os dados do Instagram carregarem', true);
+      return;
+    }
+
+    var visual = (document.getElementById('val-visual').value || '').trim();
+    var btn = document.getElementById('btn-validate');
+    var statusEl = document.getElementById('validate-status');
+    var resultEl = document.getElementById('validate-result');
+
+    if (btn) { btn.disabled = true; btn.textContent = '✨ Analisando...'; }
+    if (statusEl) statusEl.innerHTML = '<div class="spinner-sm"></div> Cruzando com Brand Brain + performance recente...';
+    if (resultEl) resultEl.innerHTML = '';
+
+    try {
+      var prompt = buildValidatorPrompt(briefing, visual);
+      console.log('[ig] validator prompt size:', prompt.length);
+      var result = await callClaude(prompt);
+      renderValidatorResult(result.parsed);
+      if (statusEl) statusEl.innerHTML = '<span class="t-caption">✓ Análise pronta · ' + (result.usage ? fmtNum(result.usage.input_tokens) + ' → ' + fmtNum(result.usage.output_tokens) + ' tokens' : '') + '</span>';
+    } catch (err) {
+      console.error('[ig] validator error:', err);
+      if (statusEl) statusEl.innerHTML = '<span style="color:var(--danger)">Erro: ' + esc(err.message) + '</span>';
+      toast('Erro: ' + err.message, true);
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = '✨ Validar com IA'; }
+    }
+  };
+
+  function renderValidatorResult(r) {
+    var el = document.getElementById('validate-result');
+    if (!el) return;
+
+    var verCls = r.veredito === 'PUBLICAR' ? 'ver-publish' :
+                 r.veredito === 'AJUSTAR' ? 'ver-adjust' : 'ver-rethink';
+    var verIcon = r.veredito === 'PUBLICAR' ? '✅' :
+                  r.veredito === 'AJUSTAR' ? '✏️' : '🤔';
+    var score = r.score_geral || 0;
+
+    var html = '<div class="val-hero ' + verCls + '">' +
+      '<div class="val-verdict">' +
+        '<div class="val-verdict-icon">' + verIcon + '</div>' +
+        '<div>' +
+          '<div class="val-verdict-label">' + esc(r.veredito || '—') + '</div>' +
+          '<div class="val-verdict-sub">' + esc(r.veredito_resumo || '') + '</div>' +
+        '</div>' +
+        '<div class="val-score-big">' + score + '<span>/10</span></div>' +
+      '</div>' +
+      '<div class="score-bar"><div class="score-bar-f" style="width:' + (score * 10) + '%"></div></div>' +
+    '</div>';
+
+    // Identificação (pilar, persona, arquétipo, formato)
+    html += '<div class="val-grid">';
+    if (r.pilar_identificado) {
+      html += '<div class="val-tile"><div class="val-tile-h">🏛️ Pilar</div>' +
+        '<div class="val-tile-v">' + esc(r.pilar_identificado.pilar || '—') + '</div>' +
+        '<div class="val-tile-d">' + esc(r.pilar_identificado.justificativa || '') + '</div></div>';
+    }
+    if (r.persona_atrai) {
+      html += '<div class="val-tile"><div class="val-tile-h">🎯 Persona</div>' +
+        '<div class="val-tile-v">' + esc(r.persona_atrai.principal || '—') + '</div>' +
+        (r.persona_atrai.secundaria ? '<div class="val-tile-sub">+ ' + esc(r.persona_atrai.secundaria) + '</div>' : '') +
+        '<div class="val-tile-d">' + esc(r.persona_atrai.justificativa || '') + '</div></div>';
+    }
+    if (r.arquetipo_ativado) {
+      html += '<div class="val-tile"><div class="val-tile-h">⚡ Arquétipo</div>' +
+        '<div class="val-tile-v">' + esc(r.arquetipo_ativado) + '</div></div>';
+    }
+    if (r.formato_ideal) {
+      html += '<div class="val-tile"><div class="val-tile-h">🎬 Formato ideal</div>' +
+        '<div class="val-tile-v">' + esc(r.formato_ideal.sugerido || '—') + '</div>' +
+        '<div class="val-tile-d">' + esc(r.formato_ideal.justificativa || '') + '</div></div>';
+    }
+    html += '</div>';
+
+    // Alinhamento brand brain
+    if (r.alinhamento_brand_brain) {
+      var ab = r.alinhamento_brand_brain;
+      html += '<div class="analysis-block">' +
+        '<div class="analysis-h">🎯 Alinhamento Brand Brain · ' + (ab.score_0_10 || 0) + '/10</div>' +
+        '<div class="val-cols">' +
+          (ab.pontos_fortes && ab.pontos_fortes.length ?
+            '<div class="aud-col aud-col-good"><div class="aud-col-h">✓ Pontos fortes</div><ul>' +
+            ab.pontos_fortes.map(function(s) { return '<li>' + esc(s) + '</li>'; }).join('') +
+            '</ul></div>' : '') +
+          (ab.pontos_fracos && ab.pontos_fracos.length ?
+            '<div class="aud-col aud-col-bad"><div class="aud-col-h">⚠ Pontos fracos</div><ul>' +
+            ab.pontos_fracos.map(function(s) { return '<li>' + esc(s) + '</li>'; }).join('') +
+            '</ul></div>' : '') +
+        '</div>' +
+      '</div>';
+    }
+
+    // Problemas
+    if (r.problemas_identificados && r.problemas_identificados.length) {
+      html += '<div class="analysis-block">' +
+        '<div class="analysis-h">🚨 Problemas identificados</div>' +
+        r.problemas_identificados.map(function(p) {
+          var sevCls = p.gravidade === 'alta' ? 'sev-high' : p.gravidade === 'media' ? 'sev-med' : 'sev-low';
+          return '<div class="problem-item ' + sevCls + '">' +
+            '<div class="problem-cat">' + esc(p.categoria || '') + '</div>' +
+            '<div class="problem-desc">' + esc(p.problema || '') + '</div>' +
+          '</div>';
+        }).join('') +
+      '</div>';
+    }
+
+    // Melhorias
+    if (r.melhorias_sugeridas && r.melhorias_sugeridas.length) {
+      html += '<div class="analysis-block">' +
+        '<div class="analysis-h">💡 Melhorias sugeridas</div>' +
+        r.melhorias_sugeridas.map(function(m) {
+          return '<div class="improve-item">' +
+            '<div class="improve-before"><div class="improve-tag">ANTES</div>' + esc(m.antes || '') + '</div>' +
+            '<div class="improve-after"><div class="improve-tag">DEPOIS</div>' + esc(m.depois || '') + '</div>' +
+            (m.porque ? '<div class="improve-why">↳ ' + esc(m.porque) + '</div>' : '') +
+          '</div>';
+        }).join('') +
+      '</div>';
+    }
+
+    // Hook
+    if (r.hook_sugerido) {
+      var h = r.hook_sugerido;
+      html += '<div class="analysis-block">' +
+        '<div class="analysis-h">🎣 Hook sugerido</div>' +
+        '<div class="hook-opt"><div class="hook-num">1</div><div class="hook-text">' + esc(h.primeira_opcao || '') + '</div><button class="btn btn-ghost btn-sm" onclick="copyText(\'' + esc(h.primeira_opcao || '').replace(/'/g, "\\'") + '\')">📋</button></div>' +
+        (h.segunda_opcao ? '<div class="hook-opt"><div class="hook-num">2</div><div class="hook-text">' + esc(h.segunda_opcao) + '</div><button class="btn btn-ghost btn-sm" onclick="copyText(\'' + esc(h.segunda_opcao).replace(/'/g, "\\'") + '\')">📋</button></div>' : '') +
+        (h.principio ? '<div class="hook-prin">↳ ' + esc(h.principio) + '</div>' : '') +
+      '</div>';
+    }
+
+    // CTA
+    if (r.cta_sugerido) {
+      html += '<div class="analysis-block">' +
+        '<div class="analysis-h">💬 CTA sugerido</div>' +
+        '<div class="cta-box">' +
+          '<div class="cta-text">' + esc(r.cta_sugerido.texto || '') + '</div>' +
+          '<button class="btn btn-secondary btn-sm" onclick="copyText(\'' + esc(r.cta_sugerido.texto || '').replace(/'/g, "\\'") + '\')">📋 Copiar</button>' +
+        '</div>' +
+        (r.cta_sugerido.justificativa ? '<div class="cta-why">↳ ' + esc(r.cta_sugerido.justificativa) + '</div>' : '') +
+      '</div>';
+    }
+
+    // Legenda
+    if (r.legenda_sugerida) {
+      html += '<div class="analysis-block">' +
+        '<div class="analysis-h">📝 Legenda sugerida</div>' +
+        '<pre class="legenda-pre">' + esc(r.legenda_sugerida) + '</pre>' +
+        '<button class="btn btn-primary btn-sm" onclick="copyText(' + JSON.stringify(r.legenda_sugerida) + ')">📋 Copiar legenda</button>' +
+      '</div>';
+    }
+
+    // Capa
+    if (r.titulo_capa) {
+      html += '<div class="analysis-block">' +
+        '<div class="analysis-h">🖼️ Título da capa</div>' +
+        '<div class="capa-preview">' +
+          '<div class="capa-title">' + esc(r.titulo_capa.texto || '') + '</div>' +
+          (r.titulo_capa.fonte_recomendada ? '<div class="capa-font">Fonte: ' + esc(r.titulo_capa.fonte_recomendada) + '</div>' : '') +
+        '</div>' +
+      '</div>';
+    }
+
+    // Melhorias visuais
+    if (r.melhorias_visuais && r.melhorias_visuais.length) {
+      html += '<div class="analysis-block">' +
+        '<div class="analysis-h">🎨 Diretrizes visuais</div>' +
+        r.melhorias_visuais.map(function(v) {
+          return '<div class="visual-guide"><strong>' + esc(v.elemento || '') + ':</strong> ' + esc(v.diretriz || '') + '</div>';
+        }).join('') +
+      '</div>';
+    }
+
+    // Potencial
+    if (r.potencial_performance) {
+      var pp = r.potencial_performance;
+      html += '<div class="analysis-block">' +
+        '<div class="analysis-h">📈 Potencial previsto</div>' +
+        '<div class="potential-grid">' +
+          renderPotentialPill('Alcance', pp.alcance) +
+          renderPotentialPill('Engajamento', pp.engajamento) +
+          renderPotentialPill('Conversão', pp.conversao) +
+          renderPotentialPill('Salvamento', pp.salvamento) +
+        '</div>' +
+        (pp.justificativa ? '<div class="diag-text" style="margin-top:10px">' + esc(pp.justificativa) + '</div>' : '') +
+      '</div>';
+    }
+
+    // vs Feed
+    if (r.vs_feed_recente) {
+      var vf = r.vs_feed_recente;
+      html += '<div class="analysis-block">' +
+        '<div class="analysis-h">🔁 Versus feed recente</div>' +
+        '<div class="vsfeed-row">' +
+          '<div class="vsfeed-status ' + (vf.repetitivo ? 'vsfeed-rep' : 'vsfeed-fresh') + '">' +
+            (vf.repetitivo ? '⚠ Repetitivo' : '✓ Não repetitivo') +
+          '</div>' +
+        '</div>' +
+        (vf.diversidade ? '<div class="diag-text">' + esc(vf.diversidade) + '</div>' : '') +
+        (vf.posts_relacionados && vf.posts_relacionados.length ?
+          '<div class="vsfeed-related">Conecta com: ' + vf.posts_relacionados.map(function(p) { return '<span class="ev-tag">' + esc(p) + '</span>'; }).join('') + '</div>' : '') +
+        (vf.proximo_passo_sugerido ? '<div class="vsfeed-next"><div class="t-label">Próximo passo sugerido</div>' + esc(vf.proximo_passo_sugerido) + '</div>' : '') +
+      '</div>';
+    }
+
+    el.innerHTML = html;
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function renderPotentialPill(label, value) {
+    var cls = value === 'alto' ? 'pot-high' : value === 'medio' ? 'pot-med' : 'pot-low';
+    var icon = value === 'alto' ? '↑' : value === 'medio' ? '→' : '↓';
+    return '<div class="pot-pill ' + cls + '">' +
+      '<div class="pot-label">' + esc(label) + '</div>' +
+      '<div class="pot-value">' + icon + ' ' + esc(value || '—') + '</div>' +
+    '</div>';
+  }
+
+  window.copyText = function(t) {
+    navigator.clipboard.writeText(t).then(function() { toast('Copiado'); });
+  };
 
   // ── BOOT ──────────────────────────────────────────────────
   if (document.readyState === 'loading') {

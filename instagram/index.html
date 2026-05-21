@@ -70,7 +70,7 @@
     <!-- DASHBOARD -->
     <div id="dashboard" style="display:none">
 
-      <!-- PROFILE CARD -->
+      <!-- PROFILE CARD (sempre visível) -->
       <section class="profile-card">
         <img class="profile-pic" id="profile-pic" src="" alt="" onerror="this.style.display='none'">
         <div class="profile-info">
@@ -80,138 +80,262 @@
         </div>
       </section>
 
-      <!-- BRAND CONTEXT -->
-      <section class="brand-card">
-        <h3>🧬 Brand Brain · Contexto</h3>
-        <div id="brand-context">
-          <div class="t-muted t-caption">Carregando...</div>
-        </div>
-      </section>
+      <!-- TABS -->
+      <nav class="ig-tabs">
+        <button class="ig-tab active" data-tab="visao" onclick="switchTab('visao')">📊 Visão Geral</button>
+        <button class="ig-tab" data-tab="performance" onclick="switchTab('performance')">📈 Performance</button>
+        <button class="ig-tab" data-tab="estrategia" onclick="switchTab('estrategia')">🧠 Insights IA</button>
+        <button class="ig-tab" data-tab="validador" onclick="switchTab('validador')">✨ Validador</button>
+        <button class="ig-tab" data-tab="brand" onclick="switchTab('brand')">🧬 Brand</button>
+      </nav>
 
-      <!-- ANÁLISE IA — botão principal -->
-      <section class="ai-card">
-        <div class="ai-card-hdr">
-          <h3>🧠 Análise Estratégica IA</h3>
-          <button class="ai-key-btn" onclick="openClaudeKeyModal()" aria-label="Configurar chave Claude">🔑</button>
-        </div>
-        <p class="t-caption">Cruza seus dados + Brand Brain + concorrentes via Claude API. Resultado: diagnóstico, padrões, alinhamento de marca, 10 pautas alinhadas.</p>
-        <button class="btn btn-primary" id="btn-generate" onclick="generateAnalysis()" style="width:100%">🧠 Gerar análise estratégica</button>
-        <div id="analysis-status" class="ai-status"></div>
-      </section>
+      <!-- ══════════════ ABA VISÃO GERAL ══════════════ -->
+      <div class="tab-panel active" id="tab-visao">
 
-      <!-- ANÁLISE IA — seção renderizada -->
-      <section id="analysis-section"></section>
+        <!-- ALERTAS NO TOPO (vindos da IA) -->
+        <section id="alerts-strip"></section>
 
-      <!-- STATS CARDS -->
-      <section class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-label">Seguidores</div>
-          <div class="stat-value" id="stat-followers">—</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Posts</div>
-          <div class="stat-value" id="stat-media">—</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Likes médios</div>
-          <div class="stat-value" id="stat-avg-likes">—</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Engajamento</div>
-          <div class="stat-value" id="stat-engagement">—</div>
-          <div class="stat-foot">% sobre seguidores</div>
-        </div>
-      </section>
-
-      <!-- STATS EXTRA: alcance, saves, shares -->
-      <section class="stats-grid stats-grid-3" id="stats-extra"></section>
-
-      <!-- ACCOUNT INSIGHTS -->
-      <section class="chart-card">
-        <h3>📈 Insights da conta · últimos 30 dias</h3>
-        <div id="account-insights">
-          <div class="t-muted t-caption">Carregando...</div>
-        </div>
-      </section>
-
-      <!-- AUDIENCE / DEMOGRAFIA -->
-      <section class="chart-card">
-        <h3>👥 Demografia da audiência</h3>
-        <div id="audience-section">
-          <div class="t-muted t-caption">Carregando...</div>
-        </div>
-      </section>
-
-      <!-- INPUTS MANUAIS -->
-      <section class="manual-card">
-        <h3>✍️ Inputs manuais</h3>
-        <p class="t-caption">Dados que a Graph API não entrega: origem do tráfego (Explorar/Reels/etc) e retenção dos Reels. Pegue no app do Instagram → Insights e cole aqui.</p>
-        <button class="btn btn-outline" onclick="openManualModal()" style="width:100%">Preencher inputs da semana</button>
-      </section>
-
-      <!-- PERFORMANCE CHART -->
-      <section class="chart-card">
-        <div class="chart-hdr">
-          <h3>Performance dos últimos posts</h3>
-          <div class="chart-legend">
-            <span class="leg-likes">● Likes</span>
-            <span class="leg-com">● Comentários</span>
+        <!-- STATS CARDS PRINCIPAIS -->
+        <div class="t-label section-lbl">Métricas principais</div>
+        <section class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-label">Seguidores</div>
+            <div class="stat-value" id="stat-followers">—</div>
           </div>
+          <div class="stat-card">
+            <div class="stat-label">Posts</div>
+            <div class="stat-value" id="stat-media">—</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Likes médios</div>
+            <div class="stat-value" id="stat-avg-likes">—</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Engajamento</div>
+            <div class="stat-value" id="stat-engagement">—</div>
+            <div class="stat-foot">% sobre seguidores</div>
+          </div>
+        </section>
+
+        <!-- STATS EXTRA: alcance, saves, shares -->
+        <section class="stats-grid stats-grid-3" id="stats-extra"></section>
+
+        <div class="t-label section-lbl">Conta · últimos 30 dias</div>
+        <div class="metric-grid">
+          <!-- ACCOUNT INSIGHTS -->
+          <section class="chart-card">
+            <h3>📈 Insights da conta</h3>
+            <div id="account-insights">
+              <div class="t-muted t-caption">Carregando...</div>
+            </div>
+          </section>
+
+          <!-- AUDIENCE / DEMOGRAFIA -->
+          <section class="chart-card">
+            <h3>👥 Demografia da audiência</h3>
+            <div id="audience-section">
+              <div class="t-muted t-caption">Carregando...</div>
+            </div>
+          </section>
         </div>
-        <div class="chart-wrap">
-          <canvas id="perf-chart"></canvas>
+
+        <!-- DIAGNÓSTICO RÁPIDO (IA snippet) -->
+        <section id="quick-diagnostic"></section>
+
+      </div><!-- /tab-visao -->
+
+      <!-- ══════════════ ABA PERFORMANCE ══════════════ -->
+      <div class="tab-panel" id="tab-performance">
+
+        <!-- PERFORMANCE CHART -->
+        <section class="chart-card">
+          <div class="chart-hdr">
+            <h3>📊 Performance dos últimos posts</h3>
+            <div class="chart-legend">
+              <span class="leg-likes">● Likes</span>
+              <span class="leg-com">● Comentários</span>
+            </div>
+          </div>
+          <div class="chart-wrap">
+            <canvas id="perf-chart"></canvas>
+          </div>
+          <div class="chart-foot" id="perf-foot"></div>
+        </section>
+
+        <div class="metric-grid">
+          <!-- TOP POSTS -->
+          <section class="top-card">
+            <h3>🔥 Top 3 posts</h3>
+            <div id="top-posts"></div>
+          </section>
+
+          <!-- BOTTOM POSTS -->
+          <section class="top-card">
+            <h3>📉 Bottom 3 posts</h3>
+            <div id="bottom-posts"></div>
+          </section>
         </div>
-        <div class="chart-foot" id="perf-foot"></div>
-      </section>
 
-      <!-- TOP POSTS -->
-      <section class="top-card">
-        <h3>🔥 Top 3 posts</h3>
-        <div id="top-posts"></div>
-      </section>
+        <div class="metric-grid">
+          <!-- HEATMAP -->
+          <section class="chart-card">
+            <h3>🕐 Horários e dias de pico</h3>
+            <div class="heatmap-wrap">
+              <table class="heatmap" id="heatmap"></table>
+            </div>
+            <div class="chart-foot" id="heatmap-foot">Cor mais escura = maior engajamento médio</div>
+          </section>
 
-      <!-- BOTTOM POSTS -->
-      <section class="top-card">
-        <h3>📉 Bottom 3 posts</h3>
-        <div id="bottom-posts"></div>
-      </section>
-
-      <!-- HEATMAP -->
-      <section class="chart-card">
-        <h3>Horários e dias de pico</h3>
-        <div class="heatmap-wrap">
-          <table class="heatmap" id="heatmap"></table>
+          <!-- FORMATS -->
+          <section class="format-card">
+            <h3>🎬 Formato com melhor engajamento</h3>
+            <div id="format-stats"></div>
+          </section>
         </div>
-        <div class="chart-foot" id="heatmap-foot">Cor mais escura = maior engajamento médio</div>
-      </section>
 
-      <!-- HASHTAGS -->
-      <section class="hashtag-card">
-        <h3># Hashtags mais usadas</h3>
-        <div id="hashtag-list"></div>
-      </section>
+        <!-- HASHTAGS -->
+        <section class="hashtag-card">
+          <h3># Hashtags mais usadas</h3>
+          <div id="hashtag-list"></div>
+        </section>
 
-      <!-- FORMATS -->
-      <section class="format-card">
-        <h3>Formato com melhor engajamento</h3>
-        <div id="format-stats"></div>
-      </section>
+      </div><!-- /tab-performance -->
 
-      <!-- CONCORRENTES -->
-      <section class="competitors-card">
-        <h3>🎯 Concorrentes</h3>
-        <p class="t-caption">Preencha os dados dos concorrentes para alimentar a análise comparativa estratégica.</p>
-        <button class="btn btn-outline" onclick="openCompetitorsModal()" style="width:100%">Gerenciar concorrentes</button>
-      </section>
+      <!-- ══════════════ ABA INSIGHTS IA ══════════════ -->
+      <div class="tab-panel" id="tab-estrategia">
 
-      <!-- REPORTS -->
-      <section class="reports-card">
-        <h3>📊 Relatórios semanais</h3>
-        <p class="reports-info">A routine automática roda toda segunda 7h e salva relatórios completos com pautas, análise comparativa e estratégia.</p>
-        <a class="btn btn-outline" href="https://github.com/makecarolnunes/meu-studio/tree/main/instagram/relatorios" target="_blank" style="width:100%;text-align:center;display:block;text-decoration:none">
-          Ver todos no GitHub →
-        </a>
-      </section>
+        <!-- ANÁLISE IA — controles -->
+        <section class="ai-card">
+          <div class="ai-card-hdr">
+            <div>
+              <h3>🧠 Análise Estratégica</h3>
+              <div class="ai-sub" id="ai-meta">Cruza todos os dados + Brand Brain</div>
+            </div>
+            <button class="ai-key-btn" onclick="openClaudeKeyModal()" aria-label="Configurar chave Claude">🔑</button>
+          </div>
+          <div class="ai-actions">
+            <button class="btn btn-primary" id="btn-generate" onclick="generateAnalysis()">🧠 Gerar análise</button>
+            <button class="btn btn-outline btn-sm" onclick="openManualModal()">✍️ Inputs manuais</button>
+            <button class="btn btn-outline btn-sm" onclick="openCompetitorsModal()">🎯 Concorrentes</button>
+          </div>
+          <div id="analysis-status" class="ai-status"></div>
+        </section>
+
+        <!-- SUB-NAV DE INSIGHTS -->
+        <nav class="ig-subtabs" id="insights-subtabs" style="display:none">
+          <button class="ig-subtab active" data-sub="diagnostico" onclick="switchSubtab('diagnostico')">⭐ Diagnóstico</button>
+          <button class="ig-subtab" data-sub="padroes" onclick="switchSubtab('padroes')">🔍 Padrões</button>
+          <button class="ig-subtab" data-sub="alinhamento" onclick="switchSubtab('alinhamento')">🎯 Alinhamento</button>
+          <button class="ig-subtab" data-sub="oportunidades" onclick="switchSubtab('oportunidades')">💡 Oportunidades</button>
+          <button class="ig-subtab" data-sub="pautas" onclick="switchSubtab('pautas')">✍️ Pautas</button>
+          <button class="ig-subtab" data-sub="alertas" onclick="switchSubtab('alertas')">⚠ Alertas</button>
+        </nav>
+
+        <!-- ANÁLISE IA — sub-seções -->
+        <div id="sub-diagnostico" class="sub-panel active"></div>
+        <div id="sub-padroes" class="sub-panel"></div>
+        <div id="sub-alinhamento" class="sub-panel"></div>
+        <div id="sub-oportunidades" class="sub-panel"></div>
+        <div id="sub-pautas" class="sub-panel"></div>
+        <div id="sub-alertas" class="sub-panel"></div>
+
+        <!-- REPORTS HISTÓRICOS -->
+        <section class="reports-card" style="margin-top:24px">
+          <h3>📊 Histórico de análises</h3>
+          <p class="reports-info">Relatórios markdown gerados pela routine semanal.</p>
+          <a class="btn btn-outline" href="https://github.com/makecarolnunes/meu-studio/tree/main/instagram/relatorios" target="_blank" style="width:100%;text-align:center;display:block;text-decoration:none">
+            Ver no GitHub →
+          </a>
+        </section>
+
+      </div><!-- /tab-estrategia -->
+
+      <!-- ══════════════ ABA VALIDADOR DE POST ══════════════ -->
+      <div class="tab-panel" id="tab-validador">
+
+        <section class="ai-card validator-card">
+          <div class="ai-card-hdr">
+            <div>
+              <h3>✨ Validador de Post</h3>
+              <div class="ai-sub">Análise estratégica pré-publicação</div>
+            </div>
+          </div>
+          <p class="t-caption">Cola sua ideia, briefing ou rascunho. Eu analiso considerando Brand Brain, posicionamento, pilares, performance recente e estética. Devolvo: validação, melhorias, hook/CTA/legenda sugeridos.</p>
+        </section>
+
+        <section class="validator-form">
+          <div class="form-row">
+            <label class="form-label">Formato planejado</label>
+            <div class="format-pills">
+              <button class="format-pill active" data-fmt="reel" onclick="setValFormat('reel')">🎬 Reel</button>
+              <button class="format-pill" data-fmt="carrossel" onclick="setValFormat('carrossel')">📑 Carrossel</button>
+              <button class="format-pill" data-fmt="foto" onclick="setValFormat('foto')">📸 Foto</button>
+              <button class="format-pill" data-fmt="story" onclick="setValFormat('story')">📖 Story</button>
+              <button class="format-pill" data-fmt="ainda-decidindo" onclick="setValFormat('ainda-decidindo')">🤔 Ainda decidindo</button>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <label class="form-label">Briefing / ideia do post <span class="t-caption">(obrigatório)</span></label>
+            <textarea class="input" id="val-briefing" rows="6" placeholder="Cole sua ideia, legenda, briefing, rascunho de roteiro... Quanto mais detalhe, melhor a análise."></textarea>
+          </div>
+
+          <div class="form-row">
+            <label class="form-label">Pilar pretendido <span class="t-caption">(opcional — vou identificar se não souber)</span></label>
+            <div class="format-pills">
+              <button class="format-pill" data-pilar="auto" onclick="setValPilar('auto')">🤖 IA decide</button>
+              <button class="format-pill" data-pilar="noivas" onclick="setValPilar('noivas')">💍 Noivas</button>
+              <button class="format-pill" data-pilar="autoridade" onclick="setValPilar('autoridade')">📚 Autoridade Técnica</button>
+              <button class="format-pill" data-pilar="cachos" onclick="setValPilar('cachos')">✨ Cachos & Crespos</button>
+              <button class="format-pill" data-pilar="carol" onclick="setValPilar('carol')">👤 Carol-Presença</button>
+              <button class="format-pill" data-pilar="produtos" onclick="setValPilar('produtos')">🧴 Produtos</button>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <label class="form-label">Objetivo principal <span class="t-caption">(opcional)</span></label>
+            <div class="format-pills">
+              <button class="format-pill" data-obj="auto" onclick="setValObj('auto')">🤖 IA decide</button>
+              <button class="format-pill" data-obj="alcance" onclick="setValObj('alcance')">📡 Alcance</button>
+              <button class="format-pill" data-obj="autoridade" onclick="setValObj('autoridade')">🏆 Autoridade</button>
+              <button class="format-pill" data-obj="conversao" onclick="setValObj('conversao')">💰 Conversão</button>
+              <button class="format-pill" data-obj="engajamento" onclick="setValObj('engajamento')">💬 Engajamento</button>
+              <button class="format-pill" data-obj="curso" onclick="setValObj('curso')">🎓 Aquecer Curso VIP</button>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <label class="form-label">Descrição visual <span class="t-caption">(opcional — se já tem foto/cena em mente)</span></label>
+            <textarea class="input" id="val-visual" rows="3" placeholder="ex: Close de pele negra com luz lateral, fundo off-white, expressão serena..."></textarea>
+          </div>
+
+          <button class="btn btn-primary" id="btn-validate" onclick="validatePost()" style="width:100%;margin-top:14px">✨ Validar com IA</button>
+          <div id="validate-status" class="ai-status"></div>
+        </section>
+
+        <section id="validate-result"></section>
+
+      </div><!-- /tab-validador -->
+
+      <!-- ══════════════ ABA BRAND ══════════════ -->
+      <div class="tab-panel" id="tab-brand">
+
+        <section class="brand-card">
+          <h3>🧬 Brand Brain · Contexto</h3>
+          <div id="brand-context">
+            <div class="t-muted t-caption">Carregando...</div>
+          </div>
+        </section>
+
+        <section class="reports-card">
+          <h3>📖 Brand Brain completo</h3>
+          <p class="t-caption">O documento mestre da marca com DNA, pilares, personas, paleta, estratégia.</p>
+          <a class="btn btn-outline" href="../centro de comando/centro-de-comando.html" target="_blank" style="width:100%;text-align:center;display:block;text-decoration:none">
+            Abrir Centro de Comando →
+          </a>
+        </section>
+
+      </div><!-- /tab-brand -->
 
       <div class="ig-foot">
         Atualizado em <span id="updated-at">—</span>
