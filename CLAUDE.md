@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-20 19:03 | main | fix: sa├¡das sumiam por constraint de status incorreta no Supabase -->
+<!-- AUTO: 2026-05-20 22:37 | main | feat: auto-detect local por servi├ºo + comprovante em entradas financeiras -->
 
