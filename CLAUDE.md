@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-21 20:30 | main | feat(instagram): persist├¬ncia do Validador + hist├│rico -->
+<!-- AUTO: 2026-05-21 20:35 | main | feat(instagram): sincroniza├º├úo cross-device via Supabase -->
 
