@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-21 20:45 | main | docs: sync CLAUDE.md [auto] -->
+<!-- AUTO: 2026-05-21 20:50 | main | fix(instagram): renderAccountInsights quebrava com formato v22 da Graph API -->
 
