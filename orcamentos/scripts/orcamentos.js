@@ -1246,8 +1246,8 @@ async function saveAction() {
   if (e.Status === 'Fechado' && vf) e.ValorFechado = vf;
   if (ve) e.ValorProp = ve;
 
-  // Salvar propostas se origem é Noiva
-  if (e.Origem === 'Noiva' && actPropostas.length > 0) {
+  // Salvar propostas se for noiva (por origem ou serviço)
+  if (isNoivaEntry(e) && actPropostas.length > 0) {
     e.Propostas = actPropostas;
   }
 
@@ -1923,17 +1923,22 @@ function renderActGcalSection(e) {
   }
 }
 
+function isNoivaEntry(e) {
+  if (!e) return false;
+  if (e.Origem === 'Noiva') return true;
+  const servico = String(e.Servico || '').toLowerCase();
+  return servico.includes('noiva');
+}
+
 function renderActPropostaSection(e) {
   const section = document.getElementById('act-proposta-section');
   if (!section) return;
 
-  // Mostrar seção apenas para Noivas
-  const isNoiva = e.Origem === 'Noiva';
+  const isNoiva = isNoivaEntry(e);
   section.style.display = isNoiva ? 'block' : 'none';
 
   if (!isNoiva) return;
 
-  // Carregar propostas do orçamento
   actPropostas = (e.Propostas && Array.isArray(e.Propostas)) ? e.Propostas : [];
   renderActPropostas();
 }
