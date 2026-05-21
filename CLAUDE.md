@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-20 22:37 | main | feat: auto-detect local por servi├ºo + comprovante em entradas financeiras -->
+<!-- AUTO: 2026-05-21 10:50 | main | feat: editable budget value + proposal attachments for brides -->
 
