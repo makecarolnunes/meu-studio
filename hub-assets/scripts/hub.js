@@ -19,11 +19,6 @@
     var t = new Date();
     return t.getFullYear() + '-' + pad(t.getMonth()+1) + '-' + pad(t.getDate());
   }
-  function setSync(state, text) {
-    var pill = document.getElementById('sync-pill');
-    pill.className = 'sync-pill ' + (state || '');
-    document.getElementById('sync-text').textContent = text || '';
-  }
   function norm(s) {
     return String(s || '')
       .normalize('NFD').replace(/[̀-ͯ]/g,'')
