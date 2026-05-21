@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-21 10:58 | main | feat: adiciona proposta enviada no action sheet e remove whatsapp direto -->
+<!-- AUTO: 2026-05-21 11:02 | main | fix: corrige renderiza├º├úo de propostas com escaping seguro e fallback para SVG -->
 
