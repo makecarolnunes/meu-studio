@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<!-- saved from url=(0055)https://planejamentoconteudomakecarolnunes.netlify.app/ -->
+<html lang="pt-BR"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Planejamento de Conteudo</title>
+  <style>
+    :root {
+      --brown:   #6d4c41;
+      --brown-d: #3e2723;
+      --brown-l: #efebe9;
+      --purple:  #7d3c6e;
+      --purple-d:#5c2a51;
+      --purple-l:#f5edf3;
+      --ok:      #2d7d3a;
+      --ok-l:    #e8f5e9;
+      --red:     #e53935;
+      --red-l:   #ffebee;
+      --muted:   #6b7280;
+      --border:  #e0d5dc;
+      --bg:      #f3ede8;
+      --card:    #fff;
+      --text:    #1a1a1a;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    /* SCROLL FIX */
+    html {
+      height: 100%;
+      overflow-y: auto;
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg); color: var(--text);
+      max-width: 480px; margin: 0 auto;
+      min-height: 100%;
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior-y: contain;
+    }
+
+    /* HEADER */
+    .hdr {
+      background: linear-gradient(135deg, var(--brown-d), var(--brown));
+      color: #fff; padding: 13px 18px 11px;
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .hdr h1 { font-size: 1rem; font-weight: 700; }
+    .hdr-sub { font-size: 0.7rem; opacity: .75; margin-top: 1px; }
+    .hdr-right { display: flex; align-items: center; gap: 8px; }
+    .hub-btn {
+      background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.25);
+      color: #fff; border-radius: 8px; padding: 5px 9px;
+      font-size: .72rem; font-weight: 600; text-decoration: none;
+      display: flex; align-items: center; gap: 3px;
+    }
+    .view-toggle {
+      display: flex; background: rgba(255,255,255,.15); border-radius: 8px; padding: 2px; gap: 2px;
+    }
+    .vbtn {
+      background: none; border: none; color: rgba(255,255,255,.65);
+      border-radius: 6px; padding: 6px 10px; font-size: .72rem; font-weight: 700; cursor: pointer;
+    }
+    .vbtn.on { background: rgba(255,255,255,.28); color: #fff; }
+
+    /* PLATFORM TABS */
+    .ptabs {
+      display: flex; gap: 6px; padding: 10px 14px;
+      background: linear-gradient(180deg, var(--purple-l), var(--card));
+      border-bottom: 1px solid var(--border);
+      overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch;
+      touch-action: pan-x;
+      position: sticky; top: 53px; z-index: 90;
+    }
+    .ptabs::-webkit-scrollbar { display: none; }
+    .ptab {
+      padding: 7px 14px; border-radius: 20px; border: 1.5px solid var(--purple);
+      background: var(--card); font-size: .74rem; font-weight: 700;
+      cursor: pointer; white-space: nowrap; color: var(--purple); flex-shrink: 0;
+      display: flex; align-items: center; gap: 5px; position: relative;
+    }
+    .ptab.on { background: var(--purple-d); border-color: var(--purple-d); color: #fff; box-shadow: 0 2px 6px rgba(125,60,110,.25); }
+    .ptab-all { border-color: var(--brown); color: var(--brown); }
+    .ptab-all.on { background: var(--brown); border-color: var(--brown); color: #fff; }
+    .ptab-add {
+      color: var(--brown); border-color: var(--brown); border-style: dashed; background: transparent;
+    }
+    .ptab-add:hover { background: var(--brown-l); }
+    .ptab-del {
+      margin-left: 4px; opacity: .8; font-size: .95rem; line-height: 1;
+    }
+
+    /* STATUS TABS */
+    .stabs {
+      display: flex; gap: 6px; padding: 10px 14px;
+      background: var(--card); border-bottom: 1px solid var(--border);
+      overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch;
+      touch-action: pan-x;
+    }
+    .stabs::-webkit-scrollbar { display: none; }
+    .stab {
+      padding: 5px 13px; border-radius: 20px; border: 1.5px solid var(--border);
+      background: var(--card); font-size: .71rem; font-weight: 600;
+      cursor: pointer; white-space: nowrap; color: var(--muted); flex-shrink: 0;
+    }
+    .stab.on { background: var(--brown); border-color: var(--brown); color: #fff; }
+
+    /* CAT TABS */
+    .ctabs {
+      display: flex; gap: 6px; padding: 8px 14px;
+      overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch;
+      touch-action: pan-x;
+    }
+    .ctabs::-webkit-scrollbar { display: none; }
+    .ctab {
+      padding: 4px 11px; border-radius: 20px; border: 1.5px solid var(--border);
+      background: var(--card); font-size: .69rem; font-weight: 600;
+      cursor: pointer; white-space: nowrap; color: var(--muted); flex-shrink: 0;
+    }
+    .ctab.on { background: var(--purple); border-color: var(--purple); color: #fff; }
+
+    /* CHIPS */
+    .chips { display: flex; gap: 8px; padding: 4px 13px 8px; }
+    .chip {
+      flex: 1; background: var(--card); border-radius: 10px; padding: 8px 6px;
+      text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,.06);
+    }
+    .chip-lbl { font-size: .54rem; font-weight: 700; text-transform: uppercase; color: var(--muted); }
+    .chip-val { font-size: 1rem; font-weight: 800; display: block; margin-top: 2px; }
+
+    /* LIST */
+    .list-view { padding: 4px 13px 100px; }
+    .group-hdr { display: flex; align-items: center; gap: 8px; margin: 14px 0 7px; }
+    .group-pill { background: var(--brown); color: #fff; border-radius: 8px; padding: 3px 10px; font-size: .68rem; font-weight: 700; }
+    .group-count { font-size: .64rem; color: var(--brown); background: var(--brown-l); padding: 2px 7px; border-radius: 10px; font-weight: 700; margin-left: auto; }
+
+    .idea-card {
+      background: var(--card); border-radius: 12px; padding: 12px 14px; margin-bottom: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,.07); border-left: 3px solid #ccc; cursor: pointer;
+    }
+    .idea-card:active { opacity: .85; }
+    .idea-card.s-nao  { border-left-color: #9e9e9e; }
+    .idea-card.s-fila { border-left-color: var(--red); }
+    .idea-card.s-edit { border-left-color: var(--purple); }
+    .idea-card.s-pub  { border-left-color: var(--ok); }
+    .idea-meta { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 5px; }
+    .idea-fmt { font-size: .59rem; font-weight: 700; padding: 2px 7px; border-radius: 9px; background: var(--brown-l); color: var(--brown); display: inline-block; }
+    .idea-plat { font-size: .59rem; font-weight: 700; padding: 2px 7px; border-radius: 9px; background: var(--purple-l); color: var(--purple-d); display: inline-block; }
+    .idea-title { font-size: .88rem; font-weight: 700; line-height: 1.35; margin-bottom: 4px; }
+    .idea-notes { font-size: .72rem; color: var(--muted); margin-bottom: 6px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+    .idea-footer { display: flex; align-items: center; justify-content: space-between; }
+    .status-pill { display: flex; align-items: center; gap: 4px; font-size: .64rem; font-weight: 700; padding: 3px 8px; border-radius: 10px; }
+    .sdot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+    .idea-date { font-size: .62rem; color: var(--muted); }
+
+    /* BOARD */
+    .board-wrap { display: none; padding: 0 13px 100px; }
+    .board-wrap.active { display: block; }
+
+    .board-nav {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 0 12px;
+    }
+    .board-nav-info { font-size: .75rem; font-weight: 700; color: var(--brown-d); }
+    .board-nav-sub  { font-size: .65rem; color: var(--muted); margin-top: 1px; }
+    .board-arrows { display: flex; gap: 8px; }
+    .arr-btn {
+      width: 40px; height: 40px; border-radius: 11px;
+      background: var(--card); border: 1.5px solid var(--border);
+      font-size: 1.2rem; color: var(--brown); cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 1px 3px rgba(0,0,0,.07);
+    }
+    .arr-btn:hover { background: var(--brown-l); border-color: var(--brown); }
+    .arr-btn:disabled { opacity: .3; cursor: default; }
+
+    .board-col-view {
+      background: rgba(125,60,110,.07); border-radius: 14px; padding: 12px 11px; min-height: 120px;
+    }
+    .col-col-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+    .col-col-title { font-size: .75rem; font-weight: 800; color: var(--brown-d); }
+    .col-col-count { font-size: .62rem; background: rgba(109,76,65,.14); color: var(--brown); padding: 2px 7px; border-radius: 9px; font-weight: 700; }
+
+    .board-card {
+      background: var(--card); border-radius: 10px; padding: 10px 11px; margin-bottom: 7px;
+      box-shadow: 0 1px 3px rgba(0,0,0,.08); cursor: pointer;
+    }
+    .board-card:active { opacity: .85; }
+    .board-card-title { font-size: .84rem; font-weight: 600; line-height: 1.3; margin-bottom: 7px; }
+    .board-card-row { display: flex; align-items: center; justify-content: space-between; gap: 4px; }
+    .bstatus { font-size: .6rem; font-weight: 700; padding: 2px 7px; border-radius: 9px; }
+    .bfmt { font-size: .6rem; color: var(--muted); }
+
+    .col-add-btn {
+      width: 100%; background: none; border: 1.5px dashed rgba(109,76,65,.25);
+      border-radius: 9px; padding: 9px; font-size: .75rem; color: var(--brown);
+      cursor: pointer; font-weight: 600; margin-top: 6px;
+    }
+    .col-add-btn:hover { background: rgba(109,76,65,.05); }
+
+    .board-empty { text-align: center; padding: 22px 0 14px; font-size: .75rem; color: var(--muted); }
+
+    /* EMPTY */
+    .empty { text-align: center; padding: 52px 20px; color: var(--muted); }
+    .empty .ico { font-size: 2.8rem; display: block; margin-bottom: 12px; }
+    .empty p { font-size: .84rem; line-height: 1.7; }
+
+    /* FAB */
+    .fab {
+      position: fixed; bottom: 26px; right: 22px;
+      width: 58px; height: 58px;
+      background: linear-gradient(135deg, var(--purple-d), var(--purple));
+      border: none; border-radius: 50%; color: #fff; font-size: 2rem;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 18px rgba(125,60,110,.45); z-index: 200;
+    }
+    .fab:active { transform: scale(.92); }
+
+    /* MODAL */
+    .modal-bg {
+      position: fixed; inset: 0; background: rgba(0,0,0,.45);
+      z-index: 500; display: flex; align-items: flex-end; justify-content: center;
+      visibility: hidden; opacity: 0; transition: opacity .2s;
+      pointer-events: none;
+    }
+    .modal-bg.open { visibility: visible; opacity: 1; pointer-events: auto; }
+    .modal {
+      background: var(--card); border-radius: 22px 22px 0 0;
+      padding: 18px 20px 44px; width: 100%; max-width: 480px;
+      max-height: 92vh; overflow-y: auto;
+      transform: translateY(100%); transition: transform .25s cubic-bezier(.32,.72,0,1);
+      -webkit-overflow-scrolling: touch;
+    }
+    .modal-bg.open .modal { transform: translateY(0); }
+    .modal-handle { width: 40px; height: 4px; background: #ddd; border-radius: 2px; margin: 0 auto 18px; }
+    .modal-title { font-size: 1.05rem; font-weight: 800; color: var(--brown-d); margin-bottom: 18px; }
+
+    .fg { margin-bottom: 14px; }
+    .fl { display: block; font-size: .67rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; }
+    .fl-hint { font-weight: 500; text-transform: none; letter-spacing: 0; color: #9aa1aa; font-size: .65rem; margin-left: 6px; }
+    .fi {
+      width: 100%; padding: 11px 13px; border: 1.5px solid var(--border);
+      border-radius: 11px; font-size: .92rem; color: var(--text);
+      background: #fff; font-family: inherit;
+    }
+    .fi:focus { outline: none; border-color: var(--brown); }
+    .fi.ta { resize: none; height: 78px; line-height: 1.5; }
+
+    .btn-group { display: flex; gap: 6px; flex-wrap: wrap; }
+    .gbtn {
+      padding: 8px 12px; border: 1.5px solid var(--border); border-radius: 9px;
+      background: #fff; font-size: .77rem; font-weight: 600; color: var(--text); cursor: pointer;
+    }
+    .gbtn.on { border-color: var(--brown); background: var(--brown); color: #fff; }
+    .gbtn.st-nao.on  { border-color: #9e9e9e;       background: #9e9e9e;       }
+    .gbtn.st-fila.on { border-color: var(--red);    background: var(--red);    }
+    .gbtn.st-edit.on { border-color: var(--purple); background: var(--purple); }
+    .gbtn.st-pub.on  { border-color: var(--ok);     background: var(--ok);     }
+    .gbtn.pl.on      { border-color: var(--purple-d); background: var(--purple-d); }
+
+    .new-cat-row { display: flex; gap: 6px; margin-top: 8px; }
+    .new-cat-row .fi { padding: 8px 11px; font-size: .84rem; }
+    .btn-add-cat {
+      padding: 8px 14px; background: var(--purple-l); border: 1.5px solid var(--purple);
+      border-radius: 9px; color: var(--purple); font-size: .8rem; font-weight: 700;
+      cursor: pointer; white-space: nowrap; flex-shrink: 0;
+    }
+
+    .btn-save {
+      width: 100%; padding: 14px;
+      background: linear-gradient(135deg, var(--purple-d), var(--purple));
+      color: #fff; border: none; border-radius: 13px;
+      font-size: .97rem; font-weight: 700; cursor: pointer; margin-top: 6px;
+      box-shadow: 0 3px 12px rgba(125,60,110,.35);
+    }
+    .btn-del {
+      width: 100%; padding: 12px; background: none; color: #c62828;
+      border: 1.5px solid #ffcdd2; border-radius: 13px;
+      font-size: .88rem; font-weight: 600; cursor: pointer; margin-top: 8px;
+    }
+
+    /* TOAST */
+    .toast {
+      position: fixed; bottom: 94px; left: 50%;
+      transform: translateX(-50%) translateY(10px);
+      background: #222; color: #fff; padding: 9px 20px; border-radius: 22px;
+      font-size: .8rem; z-index: 999; opacity: 0; pointer-events: none;
+      transition: opacity .22s, transform .22s; white-space: nowrap;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+
+<div class="hdr">
+  <div>
+    <h1>Planejamento de Conteudo</h1>
+    <div class="hdr-sub" id="hdr-count">32 ideias • Todas plataformas</div>
+  </div>
+  <div class="hdr-right">
+    <a href="https://planejamentoconteudomakecarolnunes.netlify.app/hub.html" class="hub-btn">Hub</a>
+    <div class="view-toggle">
+      <button class="vbtn on" id="btn-list" onclick="setView(&#39;list&#39;)">Lista</button>
+      <button class="vbtn" id="btn-board" onclick="setView(&#39;board&#39;)">Board</button>
+    </div>
+  </div>
+</div>
+
+<div class="ptabs" id="ptabs"><button class="ptab ptab-all on" data-p="todos">Todos</button><button class="ptab" data-p="Instagram">Instagram</button><button class="ptab" data-p="TikTok">TikTok</button><button class="ptab ptab-add" id="ptab-add">+ Plataforma</button></div>
+
+<div class="stabs" id="stabs">
+  <button class="stab on" data-s="todos" onclick="setSF(this)">Todos</button>
+  <button class="stab" data-s="Nao Iniciado" onclick="setSF(this)">Nao Iniciado</button>
+  <button class="stab" data-s="Fila de Gravacao" onclick="setSF(this)">Fila de Grav.</button>
+  <button class="stab" data-s="Editando" onclick="setSF(this)">Editando</button>
+  <button class="stab" data-s="Publicado" onclick="setSF(this)">Publicado</button>
+</div>
+
+<div class="ctabs" id="ctabs"><button class="ctab on" data-c="todos">Todas</button><button class="ctab" data-c="Maquiagem Profissional">Maquiagem Profissional</button><button class="ctab" data-c="Cachos e Crespos">Cachos e Crespos</button><button class="ctab" data-c="Penteados">Penteados</button><button class="ctab" data-c="Noivas">Noivas</button><button class="ctab" data-c="Automaquiagem">Automaquiagem</button><button class="ctab" data-c="Vida e Lifestyle">Vida e Lifestyle</button><button class="ctab" data-c="Compras e Produtos">Compras e Produtos</button></div>
+<div class="chips" id="chips"><div class="chip"><div class="chip-lbl">Total</div><div class="chip-val">32</div></div><div class="chip"><div class="chip-lbl" style="color:#e53935">Gravacao</div><div class="chip-val" style="color:#e53935">4</div></div><div class="chip"><div class="chip-lbl" style="color:#7d3c6e">Editando</div><div class="chip-val" style="color:#7d3c6e">1</div></div><div class="chip"><div class="chip-lbl" style="color:#2d7d3a">Publicado</div><div class="chip-val" style="color:#2d7d3a">0</div></div></div>
+<div class="list-view" id="list-view"><div class="group-hdr"><span class="group-pill">Maquiagem Profissional</span><span class="group-count">12</span></div><div class="idea-card s-nao" data-id="mp3iw8n0m5w5"><div class="idea-meta"><span class="idea-fmt">Reels</span><span class="idea-plat">Instagram • TikTok</span></div><div class="idea-title">Vai receber uma maquiadora? Prepare-se com essas dicas</div><div class="idea-footer"><div class="status-pill" style="background:#f3f4f6;color:#6b7280"><span class="sdot" style="background:#9e9e9e"></span>Nao Iniciado</div><span class="idea-date">13/05</span></div></div><div class="idea-card s-nao" data-id="mp3ivk61xi48"><div class="idea-meta"><span class="idea-fmt">Reels</span><span class="idea-plat">Instagram</span></div><div class="idea-title">Sobre mim</div><div class="idea-footer"><div class="status-pill" style="background:#f3f4f6;color:#6b7280"><span class="sdot" style="background:#9e9e9e"></span>Nao Iniciado</div><span class="idea-date">13/05</span></div></div><div class="idea-card s-nao" data-id="mp3iszv24mlf"><div class="idea-meta"><span class="idea-fmt">Reels</span><span class="idea-plat">TikTok</span></div><div class="idea-title">POV: sou sua maquiadora e você agendou um horário comigo</div><div class="idea-footer"><div class="status-pill" style="background:#f3f4f6;color:#6b7280"><span class="sdot" style="background:#9e9e9e"></span>Nao Iniciado</div><span class="idea-date">13/05</span></div></div><div class="idea-card s-nao" data-id="mp3iq03mrd8o"><div class="idea-meta"><span class="idea-fmt">Reels</span><span class="idea-plat">Instagram • TikTok</span></div><div class="idea-title">No curvex, Yes curvex</div><div class="idea-footer"><div class="status-pill" style="background:#f3f4f6;color:#6b7280"><span class="sdot" style="background:#9e9e9e"></span>Nao Iniciado</div><span class="idea-date">13/05</span></div></div><div class="idea-card s-nao" data-id="mp3inr06c3lt"><div class="idea-meta"><span class="idea-fmt">Reels</span><span class="idea-plat">Instagram • TikTok</span></div><div class="idea-title">Maquiagem que começa assim, termina assim</div><div class="idea-footer"><div class="status-pill" style="background:#f3f4f6;color:#6b7280"><span class="sdot" style="background:#9e9e9e"></span>Nao Iniciado</div><span class="idea-date">13/05</span></div></div><div class="idea-card s-nao" data-id="mp3iltgmo3db"><div class="idea-meta"><span class="idea-fmt">Stories</span><span class="idea-plat">Instagram • TikTok</span></div><div class="idea-title">Produtos que as marcas poderiam lançar ao invés de gloss</div><div class="idea-footer"><div class="status-pill" style="background:#f3f4f6;color:#6b7280"><span class="sdot" style="background:#9e9e9e"></span>Nao Iniciado</div><span class="idea-date">13/05</span></div></div><div class="idea-card s-nao" data-id="mp3ilb1vq843"><div class="idea-meta"><span class="idea-fmt">Reels</span><span class="idea-plat">Instagram • TikTok</span></div><div class="idea-title">Coisas que a maioria das minhas clientes pede em atendimento</div><div class="idea-footer"><div class="status-pill" style="background:#f3f4f6;color:#6b7280"><span class="sdot" style="background:#9e9e9e"></span>Nao Iniciado</div><span class="idea-date">13/05</span></div></div><div class="idea-card s-nao" data-id="mp3iko3fc8n6"><div class="idea-meta"><span class="idea-fmt">Reels</span><span class="idea-plat">Instagram • TikTok</span></div><div class="idea-title">Guia pra você escolher sua referência de maquiagem</div><div class="idea-footer"><div class="status-pill" style="background:#f3f4f6;color:#6b7280"><span class="sdot" style="background:#9e9e9e"></span>Nao Iniciado</div><span class="idea-date">13/05</span></div></div><div class="idea-card s-nao" data-id="mp3ih7ldm1kz"><div class="idea-meta"><span class="idea-fmt">Reels</span><span class="idea-plat">Instagram • TikTok</span></div><div class="idea-title">Pq você faz os olhos primeiro?</div><div class="idea-footer"><div class="status-pill" style="background:#f3f4f6;color:#6b7280"><span class="sdot" style="background:#9e9e9e"></span>Nao Iniciado</div><span class="idea-date">13/05</span></div></div><div class="idea-card s-nao" data-id="mp3igs3ngk3m"><div class="idea-meta"><span class="idea-fmt">Reels</span><span class="idea-plat">Instagram • TikTok</span></div><div class="idea-title">Como eu faria essa maquiagem de 2019, hoje?</div><div class="idea-footer"><div class="status-pill" style="background:#f3f4f6;color:#6b7280"><span class="sdot" style="background:#9e9e9e"></span>Nao Iniciado</div><span class="idea-date">13/05</span></div></div><div class="idea-card s-nao" data-id="mp3igfdt4l4f"><div class="idea-meta"><span class="idea-fmt">Reels</span><span class="idea-plat">Instagram • TikTok</span></div><div class="idea-title">Reagindo as minhas makes de 2019</div><div class="idea-footer"><div class="status-pill" style="background:#f3f4f6;color:#6b7280"><span class="sdot" style="background:#9e9e9e"></span>Nao Iniciado</div><span class="idea-date">13/05</span></div></div><div class="idea-card s-edit" data-id="mp3ifhlcya5d"><div class="idea-meta"><span class="idea-fmt">Reels</span><span class="idea-plat">Instagram • TikTok</span></div><div class="idea-title">Eu não sigo tendências?</div><div class="idea-footer"><div class="status-pill" style="background:#f5edf3;color:#7d3c6e"><span class="sdot" style="background:#7d3c6e"></span>Editando</div><span class="idea-date">13/05</span></div></div><div class="group-hdr"><span class="group-pill">Cachos e Crespos</span><span class="group-count">2</span></div><div class="idea-card s-nao" data-id="mp3iz5lru4xi"><div class="idea-meta"><span class="idea-fmt">Reels</span><span class="idea-plat">Instagram • TikTok</span></div><div class="idea-title">Penteado cacheado também pode vir de uma inspiração lisa</div><div class="idea-footer"><div class="status-pill" style="background:#f3f4f6;color:#6b7280"><span class="sdot" style="background:#9e9e9e"></span>Nao Iniciado</div><span class="idea-date">13/05</span></div></div><div class="idea-card s-nao" data-id="mp3imjy22m6b"><div class="idea-meta"><span class="idea-fmt">Reels</span><span class="idea-plat">Instagram • TikTok</span></div><div class="idea-title">Cabelo cacheado não é elegante?</div><div class="idea-footer"><div class="status-pill" style="background:#f3f4f6;color:#6b7280"><span class="sdot" style="background:#9e9e9e"></span>Nao Iniciado</div><span class="idea-date">13/05</span></div></div><div class="group-hdr"><span class="group-pill">Penteados</span><span class="group-count">2</span></div><div class="idea-card s-nao" data-id="mp3j2aqrbmmw"><div class="idea-meta"><span class="idea-fmt">Reels</span><span class="idea-plat">Instagram • TikTok</span></div><div class="idea-title">Preparação do cabelo</div><div class="idea-notes">Recentemente, recebi esse feedback incrível:
+
+*(inserir o feedback)*
+
+Isso reforça algo que muitos ainda não sabem, por trás de cada penteado, existe uma preparação essencial. Não existe produto que garanta magicamente uma durabilidade sem uma técnica bem aplicada. Mesmo um ‘simples’ babyliss não vai durar sem não tiver a preparação adequada!
+
+E acredite: essa etapa de preparação pode levar até mais tempo do que a própria montagem do penteado. Ela varia de acordo com o tipo de cabelo e o resultado desejado, mas é fundamental para garantir a durabilidade e o alinhamento perfeito. Afinal, um penteado bem feito começa sempre com uma boa base!</div><div class="idea-footer"><div class="status-pill" style="background:#f3f4f6;color:#6b7280"><span class="sdot" style="background:#9e9e9e"></span>Nao Iniciado</div><span class="idea-date">13/05</span></div></div><div class="idea-card s-nao" data-id="mp3j1d98w167"><div class="idea-meta"><span class="idea-fmt">Reels</span><span class="idea-plat">Instagram</span></div><div class="idea-title">Eu nao vou escovar o seu cabelo para o penteado</div><div class="idea-notes">A textura do cabelo é essencial para garantir fixação e durabilidade no penteado. Escovar e alisar os fios pode dificultar a adesão dos produtos de estilização, enquanto trabalhar com a textura natural permite uma melhor fixação e segurança do penteado.
+
+Quando você escova e alisa os fios, eles ficam mais lisos e uniformes, o que pode dificultar a adesão dos produtos e comprometer a estrutura do penteado.</div><div class="idea-footer"><div class="status-pill" style="background:#f3f4f6;color:#6b7280"><span class="sdot" style="background:#9e9e9e"></span>Nao Iniciado</div><span class="idea-date">13/05</span></div></div><div class="group-hdr"><span class="group-pill">Noivas</span><span class="group-count">10</span></div><div class="idea-card s-nao" data-id="mp3j9gtvv8ve"><div class="idea-meta"><span class="idea-fmt">Reels</span><span class="idea-plat">Instagram • TikTok</span></div><div class="idea-title">Itens para levar no seu dia de noiva</div><div class="idea-footer"><div class="status-pill" style="background:#f3f4f6;color:#6b7280"><span class="sdot" style="background:#9e9e9e"></span>Nao Iniciado</div><span class="idea-date">13/05</span></div></div><div class="idea-card s-fila" data-id="mp3j90csiu57"><div class="idea-meta"><span class="idea-fmt">Reels</span><span class="idea-plat">Instagram • TikTok</span></div><div class="idea-title">Cronograma do dia da noiva</div><div class="idea-footer"><div class="status-pill" style="background:#ffebee;color:#c62828"><span class="sdot" style="background:#e53935"></span>Fila de Gravacao</div><span class="idea-date">13/05</span></div></div><div class="idea-card s-nao" data-id="mp3j64uic2xz"><div class="idea-meta"><span class="idea-fmt">Reels</span><span class="idea-plat">Instagram • TikTok</span></div><div class="idea-title">Como se preparar para a prévia de noiva</div><div class="idea-footer"><div class="status-pill" style="background:#f3f4f6;color:#6b7280"><span class="sdot" style="background:#9e9e9e"></span>Nao Iniciado</div><span class="idea-date">13/05</span></div></div><div class="idea-card s-nao" data-id="mp3j5m2d0nog"><div class="idea-meta"><span class="idea-fmt">Reels</span><span class="idea-plat">Instagram • TikTok</span></div><div class="idea-title">Detalhes da beleza da noiva</div><div class="idea-footer"><div class="status-pill" style="background:#f3f4f6;color:#6b7280"><span class="sdot" style="background:#9e9e9e"></span>Nao Iniciado</div><span class="idea-date">13/05</span></div></div><div class="idea-card s-fila" data-id="mp3j4ssmnx03"><div class="idea-meta"><span class="idea-fmt">Reels</span><span class="idea-plat">Instagram • TikTok</span></div><div class="idea-title">Benefícios contratar o retoque</div><div class="idea-footer"><div class="status-pill" style="background:#ffebee;color:#c62828"><span class="sdot" style="background:#e53935"></span>Fila de Gravacao</div><span class="idea-date">13/05</span></div></div><div class="idea-card s-nao" data-id="mp3j045d7bt5"><div class="idea-meta"><span class="idea-fmt">Reels</span><span class="idea-plat">Instagram • TikTok</span></div><div class="idea-title">O que toda noiva precisa saber antes de escolher o penteado</div><div class="idea-footer"><div class="status-pill" style="background:#f3f4f6;color:#6b7280"><span class="sdot" style="background:#9e9e9e"></span>Nao Iniciado</div><span class="idea-date">13/05</span></div></div><div class="idea-card s-nao" data-id="mp3ipcs48a64"><div class="idea-meta"><span class="idea-fmt">Reels</span><span class="idea-plat">Instagram • TikTok</span></div><div class="idea-title">Porque a prévia não é só "ver a maquiagem"?</div><div class="idea-footer"><div class="status-pill" style="background:#f3f4f6;color:#6b7280"><span class="sdot" style="background:#9e9e9e"></span>Nao Iniciado</div><span class="idea-date">13/05</span></div></div><div class="idea-card s-nao" data-id="mp3ip1cv5smw"><div class="idea-meta"><span class="idea-fmt">Reels</span><span class="idea-plat">Instagram • TikTok</span></div><div class="idea-title">Erro comum na prévia que pode te frustar no casamento</div><div class="idea-footer"><div class="status-pill" style="background:#f3f4f6;color:#6b7280"><span class="sdot" style="background:#9e9e9e"></span>Nao Iniciado</div><span class="idea-date">13/05</span></div></div><div class="idea-card s-nao" data-id="mp3ioqbzg9h2"><div class="idea-meta"><span class="idea-fmt">Reels</span><span class="idea-plat">Instagram • TikTok</span></div><div class="idea-title">3 coisas que ninguém te conta sobre a prévia de noivas</div><div class="idea-footer"><div class="status-pill" style="background:#f3f4f6;color:#6b7280"><span class="sdot" style="background:#9e9e9e"></span>Nao Iniciado</div><span class="idea-date">13/05</span></div></div><div class="idea-card s-fila" data-id="mp3imwyfkrb1"><div class="idea-meta"><span class="idea-fmt">Reels</span><span class="idea-plat">Instagram • TikTok</span></div><div class="idea-title">Hoje é seu casamento e esse é meu look</div><div class="idea-footer"><div class="status-pill" style="background:#ffebee;color:#c62828"><span class="sdot" style="background:#e53935"></span>Fila de Gravacao</div><span class="idea-date">13/05</span></div></div><div class="group-hdr"><span class="group-pill">Automaquiagem</span><span class="group-count">1</span></div><div class="idea-card s-fila" data-id="mp3iv3snfndg"><div class="idea-meta"><span class="idea-fmt">Feed</span><span class="idea-plat">Instagram • TikTok</span></div><div class="idea-title">A primeira cliente do dia sou eu</div><div class="idea-footer"><div class="status-pill" style="background:#ffebee;color:#c62828"><span class="sdot" style="background:#e53935"></span>Fila de Gravacao</div><span class="idea-date">13/05</span></div></div><div class="group-hdr"><span class="group-pill">Compras e Produtos</span><span class="group-count">5</span></div><div class="idea-card s-nao" data-id="mp3ipp1z45h4"><div class="idea-meta"><span class="idea-fmt">Stories</span><span class="idea-plat">TikTok</span></div><div class="idea-title">Dando uma olhadinha na sephora</div><div class="idea-footer"><div class="status-pill" style="background:#f3f4f6;color:#6b7280"><span class="sdot" style="background:#9e9e9e"></span>Nao Iniciado</div><span class="idea-date">13/05</span></div></div><div class="idea-card s-nao" data-id="mp3inywsw8q9"><div class="idea-meta"><span class="idea-fmt">Reels</span><span class="idea-plat">TikTok</span></div><div class="idea-title">Cílios que mais uso</div><div class="idea-footer"><div class="status-pill" style="background:#f3f4f6;color:#6b7280"><span class="sdot" style="background:#9e9e9e"></span>Nao Iniciado</div><span class="idea-date">13/05</span></div></div><div class="idea-card s-nao" data-id="mp3ik14plx30"><div class="idea-meta"><span class="idea-fmt">Reels</span><span class="idea-plat">Instagram • TikTok</span></div><div class="idea-title">Meus 5 produtos que não abro mão no atendimento</div><div class="idea-footer"><div class="status-pill" style="background:#f3f4f6;color:#6b7280"><span class="sdot" style="background:#9e9e9e"></span>Nao Iniciado</div><span class="idea-date">13/05</span></div></div><div class="idea-card s-nao" data-id="mp3if1ebha8k"><div class="idea-meta"><span class="idea-fmt">Feed</span><span class="idea-plat">Instagram • TikTok</span></div><div class="idea-title">Para as minhas clientes / Pra mim</div><div class="idea-footer"><div class="status-pill" style="background:#f3f4f6;color:#6b7280"><span class="sdot" style="background:#9e9e9e"></span>Nao Iniciado</div><span class="idea-date">13/05</span></div></div><div class="idea-card s-nao" data-id="mp3ie93knwto"><div class="idea-meta"><span class="idea-fmt">Feed</span><span class="idea-plat">TikTok</span></div><div class="idea-title">Outlet da Sephora por uma maquiadora</div><div class="idea-footer"><div class="status-pill" style="background:#f3f4f6;color:#6b7280"><span class="sdot" style="background:#9e9e9e"></span>Nao Iniciado</div><span class="idea-date">13/05</span></div></div></div>
+
+<div class="board-wrap" id="board-wrap">
+  <div class="board-nav">
+    <div>
+      <div class="board-nav-info" id="b-cat-name"></div>
+      <div class="board-nav-sub" id="b-cat-pos"></div>
+    </div>
+    <div class="board-arrows">
+      <button class="arr-btn" id="arr-prev" onclick="moveCol(-1)">‹</button>
+      <button class="arr-btn" id="arr-next" onclick="moveCol(1)">›</button>
+    </div>
+  </div>
+  <div class="board-col-view" id="board-col-view"></div>
+</div>
+
+<button class="fab" id="fab-btn">+</button>
+
+<div class="modal-bg" id="modal-bg">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="modal-title">Nova Ideia</div>
+
+    <div class="fg">
+      <label class="fl">Titulo *</label>
+      <input type="text" class="fi" id="f-title" placeholder="Ex: Make duradoura para o dia a dia...">
+    </div>
+    <div class="fg">
+      <label class="fl">Plataformas <span class="fl-hint">selecione uma ou mais</span></label>
+      <div class="btn-group" id="pl-btns"></div>
+    </div>
+    <div class="fg">
+      <label class="fl">Categoria</label>
+      <div class="btn-group" id="cat-btns"></div>
+      <div class="new-cat-row">
+        <input type="text" class="fi" id="new-cat-inp" placeholder="Nova categoria...">
+        <button class="btn-add-cat" id="btn-add-cat">+ Criar</button>
+      </div>
+    </div>
+    <div class="fg">
+      <label class="fl">Formato</label>
+      <div class="btn-group" id="fmt-btns">
+        <button class="gbtn on" data-v="Reels">Reels</button>
+        <button class="gbtn" data-v="Carrossel">Carrossel</button>
+        <button class="gbtn" data-v="Stories">Stories</button>
+        <button class="gbtn" data-v="Feed">Feed</button>
+      </div>
+    </div>
+    <div class="fg">
+      <label class="fl">Status</label>
+      <div class="btn-group" id="st-btns">
+        <button class="gbtn on st-nao" data-v="Nao Iniciado">Nao Iniciado</button>
+        <button class="gbtn st-fila" data-v="Fila de Gravacao">Fila de Grav.</button>
+        <button class="gbtn st-edit" data-v="Editando">Editando</button>
+        <button class="gbtn st-pub" data-v="Publicado">Publicado</button>
+      </div>
+    </div>
+    <div class="fg">
+      <label class="fl">Notas (opcional)</label>
+      <textarea class="fi ta" id="f-notes" placeholder="Roteiro, referencias, hashtags..."></textarea>
+    </div>
+
+    <button class="btn-save" id="btn-save">Salvar Ideia</button>
+    <button class="btn-del" id="btn-del" style="display:none">Excluir ideia</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+var CATS = [
+  'Maquiagem Profissional',
+  'Cachos e Crespos',
+  'Penteados',
+  'Noivas',
+  'Automaquiagem',
+  'Vida e Lifestyle',
+  'Compras e Produtos'
+];
+
+var ST = {
+  'Nao Iniciado':    { bg:'#f3f4f6', color:'#6b7280', dot:'#9e9e9e', cls:'s-nao'  },
+  'Fila de Gravacao':{ bg:'#ffebee', color:'#c62828', dot:'#e53935', cls:'s-fila' },
+  'Editando':        { bg:'#f5edf3', color:'#7d3c6e', dot:'#7d3c6e', cls:'s-edit' },
+  'Publicado':       { bg:'#e8f5e9', color:'#2d7d3a', dot:'#2d7d3a', cls:'s-pub'  }
+};
+
+var DEFAULT_PLATFORMS = ['Instagram', 'TikTok'];
+
+var ideas          = [];
+var customCats     = [];
+var customPlats    = [];
+var curView        = 'list';
+var curSF          = 'todos';
+var curCF          = 'todos';
+var curPlat        = 'todos';   // 'todos' | nome da plataforma
+var colIdx         = 0;
+var editId         = null;
+var fCat           = CATS[0];
+var fFmt           = 'Reels';
+var fSt            = 'Nao Iniciado';
+var fPlats         = ['Instagram'];  // array agora, multi-select
+
+function loadData() {
+  try { ideas       = JSON.parse(localStorage.getItem('mk_content_ideas')      || '[]'); } catch(e) { ideas = []; }
+  try { customCats  = JSON.parse(localStorage.getItem('mk_content_cats')       || '[]'); } catch(e) { customCats = []; }
+  try { customPlats = JSON.parse(localStorage.getItem('mk_content_platforms')  || '[]'); } catch(e) { customPlats = []; }
+  try { curPlat     = localStorage.getItem('mk_content_cur_platform') || 'todos'; } catch(e) { curPlat = 'todos'; }
+
+  // migracao: ideias antigas com .platform (string) -> .platforms (array)
+  for (var i=0; i<ideas.length; i++) {
+    if (!ideas[i].platforms || !ideas[i].platforms.length) {
+      ideas[i].platforms = [ ideas[i].platform || 'Instagram' ];
+      delete ideas[i].platform;
+    }
+  }
+
+  // garantir plataforma valida
+  if (curPlat !== 'todos' && allPlats().indexOf(curPlat) === -1) curPlat = 'todos';
+}
+function saveIdeas() { try { localStorage.setItem('mk_content_ideas', JSON.stringify(ideas)); } catch(e) {} }
+function saveCats()  { try { localStorage.setItem('mk_content_cats',  JSON.stringify(customCats)); } catch(e) {} }
+function savePlats() { try { localStorage.setItem('mk_content_platforms', JSON.stringify(customPlats)); } catch(e) {} }
+function saveCurPlat() { try { localStorage.setItem('mk_content_cur_platform', curPlat); } catch(e) {} }
+
+function allCats() {
+  var merged = CATS.slice();
+  for (var i = 0; i < customCats.length; i++) {
+    if (merged.indexOf(customCats[i]) === -1) merged.push(customCats[i]);
+  }
+  return merged;
+}
+
+function allPlats() {
+  var merged = DEFAULT_PLATFORMS.slice();
+  for (var i = 0; i < customPlats.length; i++) {
+    if (merged.indexOf(customPlats[i]) === -1) merged.push(customPlats[i]);
+  }
+  return merged;
+}
+
+function platsOf(idea) {
+  if (idea.platforms && idea.platforms.length) return idea.platforms;
+  if (idea.platform) return [idea.platform];
+  return ['Instagram'];
+}
+
+function ideaInCurPlat(idea) {
+  if (curPlat === 'todos') return true;
+  return platsOf(idea).indexOf(curPlat) !== -1;
+}
+
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+
+function fDate(iso) {
+  if (!iso) return '';
+  var d = new Date(iso);
+  return ('0'+d.getDate()).slice(-2) + '/' + ('0'+(d.getMonth()+1)).slice(-2);
+}
+
+function safe(s) {
+  return String(s||'')
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#39;');
+}
+
+/* SCROLL HORIZONTAL ─────────────────────────────────────── */
+/* converte rolagem vertical do mouse em horizontal nas faixas de abas (desktop) */
+function attachHorizWheel(el) {
+  if (!el || el._horizWheelAttached) return;
+  el._horizWheelAttached = true;
+  el.addEventListener('wheel', function(e) {
+    if (el.scrollWidth <= el.clientWidth) return;
+    var dy = e.deltaY;
+    var dx = e.deltaX;
+    // se ja eh scroll horizontal (trackpad), deixa default
+    if (Math.abs(dx) > Math.abs(dy)) return;
+    if (dy === 0) return;
+    e.preventDefault();
+    el.scrollLeft += dy;
+  }, { passive: false });
+
+  // arrastar com o mouse tambem (click + drag)
+  var isDown = false, startX = 0, startScroll = 0;
+  el.addEventListener('mousedown', function(e) {
+    // nao arrasta se clicou num botao
+    if (e.target.closest('button')) return;
+    isDown = true; startX = e.pageX; startScroll = el.scrollLeft;
+    el.style.cursor = 'grabbing';
+  });
+  document.addEventListener('mouseup', function() { isDown = false; if (el) el.style.cursor = ''; });
+  document.addEventListener('mousemove', function(e) {
+    if (!isDown) return;
+    el.scrollLeft = startScroll - (e.pageX - startX);
+  });
+}
+
+/* PLATFORM ─────────────────────────────────────────────── */
+function setPlatform(p) {
+  curPlat = p;
+  saveCurPlat();
+  colIdx = 0;
+  render();
+}
+
+function addPlatform() {
+  var name = prompt('Nome da nova plataforma:');
+  if (!name) return;
+  name = name.trim();
+  if (!name) return;
+  var plats = allPlats();
+  for (var i=0; i<plats.length; i++) {
+    if (plats[i].toLowerCase() === name.toLowerCase()) {
+      setPlatform(plats[i]);
+      showToast('Plataforma ja existia');
+      return;
+    }
+  }
+  customPlats.push(name);
+  savePlats();
+  setPlatform(name);
+  showToast('Plataforma criada!');
+}
+
+function removePlatform(p) {
+  if (DEFAULT_PLATFORMS.indexOf(p) !== -1) {
+    showToast('Nao da pra remover ' + p);
+    return;
+  }
+  var count = ideas.filter(function(i){ return platsOf(i).indexOf(p) !== -1; }).length;
+  var msg = 'Remover a plataforma "' + p + '"?';
+  if (count > 0) msg += '\n\n' + count + ' ideia(s) deixarao de pertencer a ela.';
+  if (!confirm(msg)) return;
+  for (var i=0; i<ideas.length; i++) {
+    var idx = platsOf(ideas[i]).indexOf(p);
+    if (idx !== -1) {
+      ideas[i].platforms = platsOf(ideas[i]).filter(function(x){ return x !== p; });
+      if (!ideas[i].platforms.length) ideas[i].platforms = ['Instagram'];
+    }
+  }
+  customPlats = customPlats.filter(function(x){ return x !== p; });
+  if (curPlat === p) curPlat = 'todos';
+  savePlats(); saveIdeas(); saveCurPlat();
+  render();
+  showToast('Plataforma removida');
+}
+
+function buildPlatTabs() {
+  var plats = allPlats();
+  var html = '<button class="ptab ptab-all'+(curPlat==='todos'?' on':'')+'" data-p="todos">Todos</button>';
+  for (var i=0; i<plats.length; i++) {
+    var p = plats[i];
+    var isCustom = DEFAULT_PLATFORMS.indexOf(p) === -1;
+    var delBtn = (isCustom && curPlat === p) ? '<span class="ptab-del" data-del="'+safe(p)+'">×</span>' : '';
+    html += '<button class="ptab'+(curPlat===p?' on':'')+'" data-p="'+safe(p)+'">'+safe(p)+delBtn+'</button>';
+  }
+  html += '<button class="ptab ptab-add" id="ptab-add">+ Plataforma</button>';
+  var el = document.getElementById('ptabs');
+  el.innerHTML = html;
+  attachHorizWheel(el);
+
+  var tabs = el.querySelectorAll('.ptab:not(.ptab-add)');
+  for (var j=0; j<tabs.length; j++) {
+    (function(tab){
+      tab.onclick = function(e) {
+        var del = e.target.getAttribute && e.target.getAttribute('data-del');
+        if (del) { e.stopPropagation(); removePlatform(del); return; }
+        setPlatform(tab.getAttribute('data-p'));
+      };
+    })(tabs[j]);
+  }
+  document.getElementById('ptab-add').onclick = addPlatform;
+}
+
+/* VIEW ─────────────────────────────────────────────────── */
+function setView(v) {
+  curView = v;
+  document.getElementById('btn-list').className  = 'vbtn' + (v==='list'  ? ' on' : '');
+  document.getElementById('btn-board').className = 'vbtn' + (v==='board' ? ' on' : '');
+  document.getElementById('ctabs').style.display    = v==='list' ? '' : 'none';
+  document.getElementById('chips').style.display    = v==='list' ? '' : 'none';
+  document.getElementById('list-view').style.display = v==='list' ? '' : 'none';
+  document.getElementById('board-wrap').className   = 'board-wrap' + (v==='board' ? ' active' : '');
+  if (v==='board') colIdx = 0;
+  render();
+}
+
+function setSF(btn) {
+  curSF = btn.getAttribute('data-s');
+  var tabs = document.querySelectorAll('.stab');
+  for (var i=0; i<tabs.length; i++) tabs[i].classList.toggle('on', tabs[i]===btn);
+  render();
+}
+
+function setCF(val) {
+  curCF = val;
+  var tabs = document.querySelectorAll('.ctab');
+  for (var i=0; i<tabs.length; i++) tabs[i].classList.toggle('on', tabs[i].getAttribute('data-c')===val);
+  render();
+}
+
+/* RENDER ───────────────────────────────────────────────── */
+function filtered() {
+  return ideas.filter(function(i) {
+    if (!ideaInCurPlat(i)) return false;
+    if (curSF !== 'todos' && i.status !== curSF) return false;
+    if (curCF !== 'todos' && i.category !== curCF) return false;
+    return true;
+  });
+}
+
+function render() {
+  buildPlatTabs();
+  buildCatTabs();
+  attachHorizWheel(document.getElementById('stabs'));
+
+  var platIdeas = ideas.filter(ideaInCurPlat);
+  var total = platIdeas.length;
+  var fila  = platIdeas.filter(function(i){return i.status==='Fila de Gravacao';}).length;
+  var edit  = platIdeas.filter(function(i){return i.status==='Editando';}).length;
+  var pub   = platIdeas.filter(function(i){return i.status==='Publicado';}).length;
+
+  var label = curPlat === 'todos' ? 'Todas plataformas' : curPlat;
+  document.getElementById('hdr-count').textContent = total + ' ideia' + (total!==1?'s':'') + ' • ' + label;
+
+  document.getElementById('chips').innerHTML = total ? (
+    '<div class="chip"><div class="chip-lbl">Total</div><div class="chip-val">'+total+'</div></div>'+
+    '<div class="chip"><div class="chip-lbl" style="color:#e53935">Gravacao</div><div class="chip-val" style="color:#e53935">'+fila+'</div></div>'+
+    '<div class="chip"><div class="chip-lbl" style="color:#7d3c6e">Editando</div><div class="chip-val" style="color:#7d3c6e">'+edit+'</div></div>'+
+    '<div class="chip"><div class="chip-lbl" style="color:#2d7d3a">Publicado</div><div class="chip-val" style="color:#2d7d3a">'+pub+'</div></div>'
+  ) : '';
+
+  if (curView==='list') renderList();
+  else renderBoard();
+}
+
+function buildCatTabs() {
+  var cats = allCats();
+  var html = '<button class="ctab'+(curCF==='todos'?' on':'')+'" data-c="todos">Todas</button>';
+  for (var i=0; i<cats.length; i++) {
+    html += '<button class="ctab'+(curCF===cats[i]?' on':'')+'" data-c="'+safe(cats[i])+'">'+safe(cats[i])+'</button>';
+  }
+  var el = document.getElementById('ctabs');
+  el.innerHTML = html;
+  attachHorizWheel(el);
+
+  var tabs = el.querySelectorAll('.ctab');
+  for (var j=0; j<tabs.length; j++) {
+    (function(tab){
+      tab.onclick = function(){ setCF(tab.getAttribute('data-c')); };
+    })(tabs[j]);
+  }
+}
+
+function renderList() {
+  var list = filtered();
+  var el = document.getElementById('list-view');
+  if (!list.length) {
+    var label = curPlat === 'todos' ? 'nenhuma plataforma' : safe(curPlat);
+    el.innerHTML = '<div class="empty"><span class="ico">💡</span><p>Nenhuma ideia em <b>'+label+'</b> ainda.<br>Toque no <b>+</b> para comecar!</p></div>';
+    return;
+  }
+  var cats = allCats();
+  var byC = {};
+  for (var i=0; i<list.length; i++) {
+    var c = list[i].category || cats[0];
+    if (!byC[c]) byC[c] = [];
+    byC[c].push(list[i]);
+  }
+  var order = cats.slice();
+  for (var k in byC) { if (order.indexOf(k)===-1) order.push(k); }
+
+  var html = '';
+  for (var ci=0; ci<order.length; ci++) {
+    var cat = order[ci];
+    if (!byC[cat]) continue;
+    html += '<div class="group-hdr"><span class="group-pill">'+safe(cat)+'</span><span class="group-count">'+byC[cat].length+'</span></div>';
+    for (var ii=0; ii<byC[cat].length; ii++) {
+      html += ideaCardHTML(byC[cat][ii]);
+    }
+  }
+  el.innerHTML = html;
+
+  var cards = el.querySelectorAll('.idea-card');
+  for (var ci2=0; ci2<cards.length; ci2++) {
+    (function(card){
+      card.onclick = function(){ openModal(card.getAttribute('data-id')); };
+    })(cards[ci2]);
+  }
+}
+
+function ideaCardHTML(idea) {
+  var sc = ST[idea.status] || ST['Nao Iniciado'];
+  var notes = idea.notes ? '<div class="idea-notes">'+safe(idea.notes)+'</div>' : '';
+  var plats = platsOf(idea);
+  var metaHTML = '<span class="idea-fmt">'+safe(idea.formato||'Reels')+'</span>';
+  // mostra plataforma quando "Todos" ou quando a ideia esta em mais de uma
+  if (curPlat === 'todos' || plats.length > 1) {
+    metaHTML += '<span class="idea-plat">'+plats.map(safe).join(' • ')+'</span>';
+  }
+  return '<div class="idea-card '+sc.cls+'" data-id="'+safe(idea.id)+'">' +
+    '<div class="idea-meta">'+metaHTML+'</div>' +
+    '<div class="idea-title">'+safe(idea.title)+'</div>' +
+    notes +
+    '<div class="idea-footer">' +
+      '<div class="status-pill" style="background:'+sc.bg+';color:'+sc.color+'">' +
+        '<span class="sdot" style="background:'+sc.dot+'"></span>'+safe(idea.status)+
+      '</div>' +
+      '<span class="idea-date">'+fDate(idea.createdAt)+'</span>' +
+    '</div></div>';
+}
+
+/* BOARD ────────────────────────────────────────────────── */
+function moveCol(dir) {
+  var cats = allCats();
+  colIdx = Math.max(0, Math.min(cats.length-1, colIdx+dir));
+  renderBoard();
+}
+
+function renderBoard() {
+  var cats = allCats();
+  colIdx = Math.min(colIdx, cats.length-1);
+  var cat = cats[colIdx];
+
+  var label = curPlat === 'todos' ? 'Todas plataformas' : curPlat;
+  document.getElementById('b-cat-name').textContent = cat;
+  document.getElementById('b-cat-pos').textContent  = (colIdx+1) + ' de ' + cats.length + ' • ' + label;
+  document.getElementById('arr-prev').disabled = colIdx===0;
+  document.getElementById('arr-next').disabled = colIdx>=cats.length-1;
+
+  var catIdeas = ideas.filter(function(i) {
+    if (!ideaInCurPlat(i)) return false;
+    if (curSF !== 'todos' && i.status !== curSF) return false;
+    return i.category === cat;
+  });
+
+  var html = '<div class="col-col-hdr"><span class="col-col-title">'+safe(cat)+'</span><span class="col-col-count">'+catIdeas.length+'</span></div>';
+
+  if (!catIdeas.length) {
+    html += '<div class="board-empty">Nenhuma ideia nesta categoria</div>';
+  } else {
+    for (var i=0; i<catIdeas.length; i++) {
+      var idea = catIdeas[i];
+      var sc = ST[idea.status] || ST['Nao Iniciado'];
+      var plats = platsOf(idea);
+      var platTag = (curPlat === 'todos' || plats.length > 1)
+        ? ' <span style="font-size:.55rem;color:var(--purple-d);background:var(--purple-l);padding:1px 6px;border-radius:7px;margin-left:5px;font-weight:700;">'+plats.map(safe).join('·')+'</span>'
+        : '';
+      html += '<div class="board-card" data-id="'+safe(idea.id)+'">' +
+        '<div class="board-card-title">'+safe(idea.title)+platTag+'</div>' +
+        '<div class="board-card-row">' +
+          '<span class="bstatus" style="background:'+sc.bg+';color:'+sc.color+'">'+safe(idea.status)+'</span>' +
+          '<span class="bfmt">'+safe(idea.formato||'Reels')+'</span>' +
+        '</div></div>';
+    }
+  }
+  html += '<button class="col-add-btn" id="col-add-btn">+ Nova ideia aqui</button>';
+
+  var el = document.getElementById('board-col-view');
+  el.innerHTML = html;
+
+  var cards = el.querySelectorAll('.board-card');
+  for (var ci=0; ci<cards.length; ci++) {
+    (function(card){
+      card.onclick = function(){ openModal(card.getAttribute('data-id')); };
+    })(cards[ci]);
+  }
+  document.getElementById('col-add-btn').onclick = function() {
+    fCat = cat;
+    openModal(null);
+  };
+}
+
+/* MODAL ────────────────────────────────────────────────── */
+function buildCatBtns() {
+  var cats = allCats();
+  var el = document.getElementById('cat-btns');
+  var html = '';
+  for (var i=0; i<cats.length; i++) {
+    html += '<button class="gbtn'+(fCat===cats[i]?' on':'')+'" data-v="'+safe(cats[i])+'">'+safe(cats[i])+'</button>';
+  }
+  el.innerHTML = html;
+  var btns = el.querySelectorAll('.gbtn');
+  for (var j=0; j<btns.length; j++) {
+    (function(btn){
+      btn.onclick = function() {
+        fCat = btn.getAttribute('data-v');
+        var all = document.querySelectorAll('#cat-btns .gbtn');
+        for(var k=0;k<all.length;k++) all[k].classList.toggle('on', all[k]===btn);
+      };
+    })(btns[j]);
+  }
+}
+
+function buildPlatBtns() {
+  var plats = allPlats();
+  var el = document.getElementById('pl-btns');
+  var html = '';
+  for (var i=0; i<plats.length; i++) {
+    var on = fPlats.indexOf(plats[i]) !== -1;
+    html += '<button type="button" class="gbtn pl'+(on?' on':'')+'" data-v="'+safe(plats[i])+'">'+safe(plats[i])+'</button>';
+  }
+  el.innerHTML = html;
+  var btns = el.querySelectorAll('.gbtn');
+  for (var j=0; j<btns.length; j++) {
+    (function(btn){
+      btn.onclick = function() {
+        var v = btn.getAttribute('data-v');
+        var idx = fPlats.indexOf(v);
+        if (idx === -1) {
+          fPlats.push(v);
+          btn.classList.add('on');
+        } else {
+          if (fPlats.length <= 1) {
+            showToast('Pelo menos uma plataforma!');
+            return;
+          }
+          fPlats.splice(idx, 1);
+          btn.classList.remove('on');
+        }
+      };
+    })(btns[j]);
+  }
+}
+
+function openModal(id) {
+  editId = id;
+  var idea = id ? ideas.filter(function(i){return i.id===id;})[0] : null;
+
+  document.getElementById('modal-title').textContent = idea ? 'Editar Ideia' : 'Nova Ideia';
+  document.getElementById('f-title').value = idea ? idea.title  : '';
+  document.getElementById('f-notes').value = idea ? (idea.notes||'') : '';
+  document.getElementById('new-cat-inp').value = '';
+  document.getElementById('btn-del').style.display = idea ? 'block' : 'none';
+
+  fCat   = idea ? (idea.category||CATS[0]) : CATS[0];
+  fFmt   = idea ? (idea.formato||'Reels')  : 'Reels';
+  fSt    = idea ? (idea.status||'Nao Iniciado') : 'Nao Iniciado';
+  if (idea) {
+    fPlats = platsOf(idea).slice();
+  } else {
+    // nova ideia: usa plataforma atual ou Instagram se for "Todos"
+    fPlats = (curPlat === 'todos') ? ['Instagram'] : [curPlat];
+  }
+
+  buildCatBtns();
+  buildPlatBtns();
+
+  var fmtBtns = document.querySelectorAll('#fmt-btns .gbtn');
+  for(var i=0;i<fmtBtns.length;i++) fmtBtns[i].classList.toggle('on', fmtBtns[i].getAttribute('data-v')===fFmt);
+
+  var stBtns = document.querySelectorAll('#st-btns .gbtn');
+  for(var j=0;j<stBtns.length;j++) stBtns[j].classList.toggle('on', stBtns[j].getAttribute('data-v')===fSt);
+
+  document.getElementById('modal-bg').classList.add('open');
+  setTimeout(function(){ document.getElementById('f-title').focus(); }, 320);
+}
+
+function closeModal() {
+  document.getElementById('modal-bg').classList.remove('open');
+}
+
+function saveIdea() {
+  var title = document.getElementById('f-title').value.trim();
+  if (!title) { showToast('Coloca um titulo!'); document.getElementById('f-title').focus(); return; }
+  if (!fPlats.length) { showToast('Escolhe pelo menos uma plataforma!'); return; }
+  var notes = document.getElementById('f-notes').value.trim();
+  if (editId) {
+    for(var i=0;i<ideas.length;i++) {
+      if(ideas[i].id===editId) {
+        ideas[i].title = title; ideas[i].category = fCat;
+        ideas[i].formato = fFmt; ideas[i].status = fSt; ideas[i].notes = notes;
+        ideas[i].platforms = fPlats.slice();
+        delete ideas[i].platform;
+        break;
+      }
+    }
+    showToast('Ideia atualizada!');
+  } else {
+    ideas.unshift({ id:uid(), title:title, category:fCat, formato:fFmt, status:fSt, notes:notes, platforms:fPlats.slice(), createdAt:new Date().toISOString() });
+    showToast('Ideia salva!');
+  }
+  saveIdeas(); closeModal(); render();
+}
+
+function deleteIdea() {
+  if (!editId) return;
+  if (!confirm('Excluir essa ideia?')) return;
+  ideas = ideas.filter(function(i){return i.id!==editId;});
+  saveIdeas(); closeModal(); render();
+  showToast('Ideia excluida');
+}
+
+function addCustomCat() {
+  var inp  = document.getElementById('new-cat-inp');
+  var name = inp.value.trim();
+  if (!name) { inp.focus(); return; }
+  var cats = allCats();
+  var lower = name.toLowerCase();
+  for(var i=0;i<cats.length;i++) {
+    if(cats[i].toLowerCase()===lower) { fCat=cats[i]; inp.value=''; buildCatBtns(); return; }
+  }
+  customCats.push(name);
+  saveCats();
+  fCat = name;
+  inp.value = '';
+  buildCatBtns();
+  showToast('Categoria criada!');
+}
+
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(function(){ t.classList.remove('show'); }, 2500);
+}
+
+/* EVENTOS ──────────────────────────────────────────────── */
+document.getElementById('fab-btn').onclick = function() { openModal(null); };
+document.getElementById('btn-save').onclick = saveIdea;
+document.getElementById('btn-del').onclick  = deleteIdea;
+document.getElementById('btn-add-cat').onclick = addCustomCat;
+
+document.getElementById('modal-bg').onclick = function(e) {
+  if (e.target === document.getElementById('modal-bg')) closeModal();
+};
+
+/* Botoes de formato */
+var fmtBtns = document.querySelectorAll('#fmt-btns .gbtn');
+for (var fi=0; fi<fmtBtns.length; fi++) {
+  (function(btn){
+    btn.onclick = function() {
+      fFmt = btn.getAttribute('data-v');
+      for(var k=0;k<fmtBtns.length;k++) fmtBtns[k].classList.toggle('on', fmtBtns[k]===btn);
+    };
+  })(fmtBtns[fi]);
+}
+
+/* Botoes de status */
+var stBtns = document.querySelectorAll('#st-btns .gbtn');
+for (var si=0; si<stBtns.length; si++) {
+  (function(btn){
+    btn.onclick = function() {
+      fSt = btn.getAttribute('data-v');
+      for(var k=0;k<stBtns.length;k++) stBtns[k].classList.toggle('on', stBtns[k]===btn);
+    };
+  })(stBtns[si]);
+}
+
+/* INIT ─────────────────────────────────────────────────── */
+loadData();
+render();
+</script>
+
+
+</body></html>

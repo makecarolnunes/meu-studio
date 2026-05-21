@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Mockups Desktop — Financeiro</title>
+<link rel="stylesheet" href="shared/css/tokens.css">
+<style>
+* { box-sizing:border-box; margin:0; padding:0; }
+body {
+  font-family: var(--font-sans);
+  background: #ece5de;
+  color: var(--text);
+  padding: 40px 24px 80px;
+}
+.intro {
+  max-width: 1200px; margin: 0 auto 32px;
+  text-align: center;
+}
+.intro h1 { font-size: 1.6rem; margin-bottom: 6px; color: var(--brand-dark); }
+.intro p  { font-size: .9rem; color: var(--text-muted); }
+.option {
+  max-width: 1200px; margin: 0 auto 56px;
+}
+.option-label {
+  font-size: 1.1rem; font-weight: 800; color: var(--brand-dark);
+  margin-bottom: 6px; padding-left: 4px;
+}
+.option-desc {
+  font-size: .85rem; color: var(--text-muted);
+  margin-bottom: 14px; padding-left: 4px;
+}
+
+/* ── SHELL — comum aos 3 ── */
+.shell {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  background: var(--bg);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 12px 40px rgba(56,25,11,.12);
+  min-height: 580px;
+}
+
+.sidebar {
+  background: linear-gradient(180deg, #fbf6f1, #f5ede5);
+  border-right: 1px solid var(--border);
+  padding: 70px 12px 20px;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.sb-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 11px 13px; border-radius: 10px;
+  font-size: .88rem; font-weight: 600; color: var(--text);
+  cursor: pointer;
+}
+.sb-item svg { width: 18px; height: 18px; flex-shrink: 0; }
+.sb-item.active {
+  background: linear-gradient(135deg, var(--brand-dark), var(--brand));
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(109,76,65,.28);
+}
+
+.header {
+  background: linear-gradient(135deg, var(--brand-dark), var(--brand));
+  color: #fff;
+  padding: 18px 28px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.header h1 { font-size: 1.2rem; font-weight: 700; }
+.header .sub { font-size: .78rem; opacity: .75; margin-top: 2px; }
+.header .right svg { width: 18px; height: 18px; opacity: .9; }
+
+.canvas { padding: 24px 28px 28px; }
+
+/* Tile / KPI */
+.kpi-strip {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+  margin-bottom: 18px;
+}
+.kpi {
+  background: #fff; border: 1px solid var(--border);
+  border-radius: 12px; padding: 14px 16px;
+  position: relative;
+}
+.kpi .label { font-size: .65rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .07em; }
+.kpi .val { font-size: 1.35rem; font-weight: 800; margin-top: 4px; }
+.kpi .sub { font-size: .7rem; color: var(--text-muted); margin-top: 2px; }
+.kpi.green .val { color: var(--success); }
+.kpi.red   .val { color: var(--danger); }
+.kpi.blue  .val { color: var(--info); }
+.kpi.rose  .val { color: var(--rose-dark); }
+
+.card {
+  background: #fff; border: 1px solid var(--border);
+  border-radius: 14px; padding: 18px 20px;
+}
+.card-title {
+  font-size: .7rem; font-weight: 800; color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: .08em;
+  margin-bottom: 12px;
+}
+
+/* ════ OPÇÃO A — DASHBOARD ════ */
+.opt-a .dash-grid {
+  display: grid; grid-template-columns: 1.4fr 1fr; gap: 14px;
+}
+.chart-mini {
+  height: 180px;
+  background: linear-gradient(180deg, #FAEEDA 0%, transparent 80%);
+  border-radius: 10px;
+  position: relative; overflow: hidden;
+}
+.chart-mini svg { width: 100%; height: 100%; display: block; }
+.activity-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: .82rem;
+}
+.activity-row:last-child { border-bottom: none; }
+.activity-row .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.activity-row .name { flex: 1; }
+.activity-row .val { font-weight: 700; color: var(--success); }
+.opt-a .noivas-mini {
+  margin-top: 14px;
+}
+.opt-a .noiva-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 0; border-bottom: 1px solid var(--border);
+}
+.opt-a .noiva-row:last-child { border-bottom: none; }
+.opt-a .noiva-row .gem-ico {
+  width: 30px; height: 30px; border-radius: 8px;
+  background: #FBEAF0; color: var(--rose-dark);
+  display: flex; align-items: center; justify-content: center;
+}
+.opt-a .noiva-row .gem-ico svg { width: 16px; height: 16px; }
+.opt-a .noiva-row .name { flex: 1; font-weight: 600; font-size: .85rem; }
+.opt-a .noiva-row .date-d { font-size: .72rem; color: var(--text-muted); margin-top: 2px; }
+.opt-a .noiva-row .bar {
+  width: 80px; height: 6px; background: #e8ddd8; border-radius: 4px;
+  overflow: hidden;
+}
+.opt-a .noiva-row .bar > span { display: block; height: 100%; background: var(--success); }
+.opt-a .noiva-row .pct { font-size: .75rem; font-weight: 700; color: var(--brand-dark); width: 36px; text-align: right; }
+
+/* ════ OPÇÃO B — MASTER-DETAIL ════ */
+.opt-b .split {
+  display: grid; grid-template-columns: 1.1fr 1fr; gap: 0;
+  border: 1px solid var(--border); border-radius: 12px; overflow: hidden;
+}
+.opt-b .list-col { background: #fff; padding: 18px; border-right: 1px solid var(--border); }
+.opt-b .detail-col { background: var(--surface-2); padding: 22px; }
+.opt-b .filters {
+  display: flex; gap: 6px; margin-bottom: 12px;
+  font-size: .72rem; font-weight: 600;
+}
+.opt-b .filters .chip {
+  padding: 5px 11px; border-radius: 14px;
+  border: 1px solid var(--border); background: #fff;
+  color: var(--text-muted);
+}
+.opt-b .filters .chip.on { background: var(--brand); color: #fff; border-color: var(--brand); }
+.opt-b .entry {
+  display: flex; align-items: center; gap: 10px;
+  padding: 11px 12px; border-radius: 10px;
+  border: 1px solid transparent;
+  cursor: pointer; margin-bottom: 5px;
+}
+.opt-b .entry:hover { background: var(--surface-2); }
+.opt-b .entry.selected {
+  background: var(--brand-soft); border-color: var(--brand);
+}
+.opt-b .entry .e-ico {
+  width: 30px; height: 30px; border-radius: 8px;
+  background: #FBEAF0; color: var(--rose-dark);
+  display: flex; align-items: center; justify-content: center;
+}
+.opt-b .entry .e-ico svg { width: 15px; height: 15px; }
+.opt-b .entry .e-name { flex: 1; font-size: .85rem; font-weight: 600; }
+.opt-b .entry .e-date { font-size: .68rem; color: var(--text-muted); margin-top: 1px; }
+.opt-b .entry .e-val { font-weight: 700; font-size: .9rem; color: var(--success); }
+.opt-b .entry.prev .e-val { color: var(--warning); }
+.opt-b .detail-col h3 { font-size: 1rem; margin-bottom: 14px; color: var(--brand-dark); }
+.opt-b .field { margin-bottom: 12px; }
+.opt-b .field label {
+  display: block; font-size: .65rem; font-weight: 700;
+  color: var(--text-muted); text-transform: uppercase; letter-spacing: .07em;
+  margin-bottom: 4px;
+}
+.opt-b .field input, .opt-b .field select {
+  width: 100%; padding: 9px 11px;
+  border: 1px solid var(--border); border-radius: 8px;
+  background: #fff; font-size: .85rem; font-family: inherit;
+}
+.opt-b .status-toggle {
+  display: flex; background: #f3f4f6;
+  border-radius: 9px; padding: 2px; gap: 0;
+}
+.opt-b .status-toggle button {
+  flex: 1; padding: 7px; border: none; background: transparent;
+  font-size: .75rem; font-weight: 600; border-radius: 7px; cursor: pointer;
+  color: var(--text-muted);
+}
+.opt-b .status-toggle button.on { background: var(--success); color: #fff; }
+.opt-b .actions { display: flex; gap: 8px; margin-top: 16px; }
+.opt-b .btn {
+  padding: 10px 18px; border-radius: 9px; border: none;
+  font-size: .85rem; font-weight: 700; cursor: pointer;
+}
+.opt-b .btn-pri { background: var(--brand); color: #fff; flex: 1; }
+.opt-b .btn-del { background: var(--danger-soft); color: var(--danger); }
+.opt-b .totals {
+  margin-top: 14px; padding-top: 14px;
+  border-top: 1px dashed var(--border);
+  font-size: .8rem; color: var(--text-muted);
+  display: flex; justify-content: space-between;
+}
+.opt-b .totals strong { color: var(--brand-dark); }
+
+/* ════ OPÇÃO C — KANBAN ════ */
+.opt-c .kanban {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+  align-items: start;
+}
+.opt-c .col {
+  background: var(--surface-2); border-radius: 12px;
+  padding: 12px; min-height: 380px;
+}
+.opt-c .col-hdr {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 4px 6px 10px; border-bottom: 1px solid var(--border);
+  margin-bottom: 10px;
+}
+.opt-c .col-hdr .title {
+  font-size: .68rem; font-weight: 800;
+  text-transform: uppercase; letter-spacing: .09em;
+}
+.opt-c .col-hdr .badge {
+  font-size: .65rem; font-weight: 800;
+  padding: 2px 8px; border-radius: 10px;
+}
+.opt-c .col.urgent  .badge { background: var(--danger-soft); color: var(--danger); }
+.opt-c .col.month   .badge { background: var(--warning-soft); color: var(--warning); }
+.opt-c .col.future  .badge { background: var(--info-soft); color: var(--info); }
+.opt-c .col.done    .badge { background: var(--success-soft); color: var(--success); }
+.opt-c .col.urgent  .title { color: var(--danger); }
+.opt-c .col.done    .title { color: var(--success); }
+
+.noiva-mini {
+  background: #fff; border: 1px solid var(--border);
+  border-radius: 10px; padding: 12px;
+  margin-bottom: 8px;
+}
+.noiva-mini .top {
+  display: flex; gap: 10px; align-items: flex-start;
+}
+.donut { width: 48px; height: 48px; flex-shrink: 0; }
+.donut svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.donut .bg { fill: none; stroke: #e8ddd8; stroke-width: 3.5; }
+.donut .pago { fill: none; stroke: var(--success); stroke-width: 3.5; stroke-linecap: butt; }
+.donut .prev { fill: none; stroke: #f9d5a7; stroke-width: 3.5; stroke-linecap: butt; }
+.donut .label {
+  position: relative; top: -34px; text-align: center;
+  font-size: .65rem; font-weight: 800; color: var(--brand-dark);
+}
+.noiva-mini .info { flex: 1; min-width: 0; }
+.noiva-mini .nome { font-weight: 700; font-size: .85rem; }
+.noiva-mini .data { font-size: .68rem; color: var(--text-muted); margin-top: 2px; }
+.noiva-mini .countdown {
+  display: inline-block; margin-top: 4px;
+  font-size: .65rem; font-weight: 800;
+  padding: 2px 7px; border-radius: 8px;
+}
+.noiva-mini.urgent .countdown { background: var(--danger-soft); color: var(--danger); }
+.noiva-mini.month  .countdown { background: var(--warning-soft); color: var(--warning); }
+.noiva-mini.future .countdown { background: var(--info-soft); color: var(--info); }
+.noiva-mini.done   .countdown { background: var(--success-soft); color: var(--success); }
+.noiva-mini.done   { opacity: .85; background: var(--surface-2); }
+
+/* Empty area for sidebar height match */
+.sb-bot { margin-top: auto; padding-top: 12px; border-top: 1px solid var(--border); }
+.sb-bot .sb-item { font-size: .82rem; color: var(--text-muted); padding: 8px 13px; }
+</style>
+</head>
+<body>
+
+<div class="intro">
+  <h1>Mockups Desktop — Financeiro</h1>
+  <p>Cada opção mostra o mesmo shell + sidebar, com ideias diferentes para a coluna de conteúdo. Escolha a direção que mais te agrada.</p>
+</div>
+
+<!-- ═══════════════ OPÇÃO A: DASHBOARD ═══════════════ -->
+<div class="option opt-a">
+  <div class="option-label">A · Dashboard como home + KPI strip</div>
+  <div class="option-desc">Visão executiva da grana. Tela inicial mostra os números importantes de relance, gráfico mensal e próximas noivas. Cada outra tela ganha um KPI strip no topo.</div>
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="sb-item active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+        Início
+      </div>
+      <div class="sb-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>Nova</div>
+      <div class="sb-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>Entradas</div>
+      <div class="sb-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>Saídas</div>
+      <div class="sb-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12l4 6-10 13L2 9z"/><path d="M11 3 8 9l4 13 4-13-3-6"/><path d="M2 9h20"/></svg>Noivas</div>
+      <div class="sb-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Resumo</div>
+      <div class="sb-bot">
+        <div class="sb-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/></svg>Configurações</div>
+      </div>
+    </aside>
+    <main>
+      <div class="header">
+        <div>
+          <h1>Olá, Carol</h1>
+          <div class="sub">maio · 2026 · seg-sex</div>
+        </div>
+        <div class="right">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/></svg>
+        </div>
+      </div>
+      <div class="canvas">
+        <div class="kpi-strip">
+          <div class="kpi green"><div class="label">Pago no mês</div><div class="val">R$ 4.200</div><div class="sub">+18% vs abril</div></div>
+          <div class="kpi red"><div class="label">Previsto</div><div class="val">R$ 1.800</div><div class="sub">3 lançamentos</div></div>
+          <div class="kpi blue"><div class="label">Lucro previsto</div><div class="val">R$ 2.350</div><div class="sub">margem 39%</div></div>
+          <div class="kpi rose"><div class="label">Próxima noiva</div><div class="val">Maria</div><div class="sub">15/06 · em 27 dias</div></div>
+        </div>
+        <div class="dash-grid">
+          <div class="card">
+            <div class="card-title">Faturamento mensal · 2026</div>
+            <div class="chart-mini">
+              <svg viewBox="0 0 400 160" preserveAspectRatio="none">
+                <path d="M 0,140 L 33,120 L 66,135 L 100,80 L 133,100 L 166,60 L 200,75 L 233,40 L 266,55 L 300,70 L 333,45 L 366,30 L 400,50"
+                      fill="none" stroke="var(--brand)" stroke-width="2.5"/>
+                <path d="M 0,140 L 33,120 L 66,135 L 100,80 L 133,100 L 166,60 L 200,75 L 233,40 L 266,55 L 300,70 L 333,45 L 366,30 L 400,50 L 400,160 L 0,160 Z"
+                      fill="var(--brand)" fill-opacity="0.12"/>
+                <path d="M 0,150 L 33,148 L 66,145 L 100,135 L 133,140 L 166,130 L 200,125 L 233,110 L 266,115 L 300,118 L 333,108 L 366,100 L 400,105"
+                      fill="none" stroke="var(--danger)" stroke-width="2" stroke-dasharray="3 3"/>
+                <text x="6" y="14" font-size="9" fill="var(--text-muted)">fat</text>
+                <text x="6" y="155" font-size="9" fill="var(--text-muted)">saídas</text>
+              </svg>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">Atividade recente</div>
+            <div class="activity-row"><span class="dot" style="background:var(--success)"></span><span class="name">Maria · sinal</span><span class="val">+R$ 800</span></div>
+            <div class="activity-row"><span class="dot" style="background:var(--success)"></span><span class="name">Joana · maquiagem</span><span class="val">+R$ 600</span></div>
+            <div class="activity-row"><span class="dot" style="background:var(--warning)"></span><span class="name">Carla · previsto</span><span class="val" style="color:var(--warning)">+R$ 1.500</span></div>
+            <div class="activity-row"><span class="dot" style="background:var(--danger)"></span><span class="name">Aluguel · saída</span><span class="val" style="color:var(--danger)">−R$ 1.200</span></div>
+            <div class="activity-row"><span class="dot" style="background:var(--success)"></span><span class="name">Ana · curso auto</span><span class="val">+R$ 200</span></div>
+          </div>
+        </div>
+        <div class="card noivas-mini" style="margin-top:14px">
+          <div class="card-title">Próximas noivas</div>
+          <div class="noiva-row">
+            <div class="gem-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12l4 6-10 13L2 9z"/><path d="M11 3 8 9l4 13 4-13-3-6"/><path d="M2 9h20"/></svg></div>
+            <div style="flex:1"><div class="name">Maria Silva</div><div class="date-d">15/06/2026 · em 27 dias</div></div>
+            <div class="bar"><span style="width:82%"></span></div>
+            <div class="pct">82%</div>
+          </div>
+          <div class="noiva-row">
+            <div class="gem-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12l4 6-10 13L2 9z"/><path d="M11 3 8 9l4 13 4-13-3-6"/><path d="M2 9h20"/></svg></div>
+            <div style="flex:1"><div class="name">Joana Pereira</div><div class="date-d">22/06/2026 · em 34 dias</div></div>
+            <div class="bar"><span style="width:60%"></span></div>
+            <div class="pct">60%</div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ═══════════════ OPÇÃO B: MASTER-DETAIL ═══════════════ -->
+<div class="option opt-b">
+  <div class="option-label">B · Master-detail + painel direito sticky</div>
+  <div class="option-desc">Lista à esquerda, detalhe/edição inline à direita. Clica numa entrada, edita ali mesmo, salva. Fim dos modais. Padrão Notion/Linear.</div>
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="sb-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>Início</div>
+      <div class="sb-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>Nova</div>
+      <div class="sb-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>Entradas</div>
+      <div class="sb-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>Saídas</div>
+      <div class="sb-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12l4 6-10 13L2 9z"/><path d="M11 3 8 9l4 13 4-13-3-6"/><path d="M2 9h20"/></svg>Noivas</div>
+      <div class="sb-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Resumo</div>
+    </aside>
+    <main>
+      <div class="header">
+        <div>
+          <h1>Entradas</h1>
+          <div class="sub">maio 2026 · 12 lançamentos</div>
+        </div>
+      </div>
+      <div class="canvas">
+        <div class="filters">
+          <span class="chip on">Todos</span>
+          <span class="chip">Realizado</span>
+          <span class="chip">Previsto</span>
+          <span class="chip">Sinal</span>
+          <span class="chip">Pagamento</span>
+        </div>
+        <div class="split">
+          <div class="list-col">
+            <div class="entry">
+              <div class="e-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12l4 6-10 13L2 9z"/><path d="M11 3 8 9l4 13 4-13-3-6"/><path d="M2 9h20"/></svg></div>
+              <div style="flex:1"><div class="e-name">Maria Silva</div><div class="e-date">12/05 · Sinal · PIX</div></div>
+              <div class="e-val">R$ 800</div>
+            </div>
+            <div class="entry">
+              <div class="e-ico" style="background:var(--green-soft);color:var(--success)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/></svg></div>
+              <div style="flex:1"><div class="e-name">Joana Pereira</div><div class="e-date">11/05 · Maquiagem · PIX</div></div>
+              <div class="e-val">R$ 600</div>
+            </div>
+            <div class="entry selected prev">
+              <div class="e-ico" style="background:var(--warning-soft);color:var(--warning)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+              <div style="flex:1"><div class="e-name">Carla Pereira</div><div class="e-date">15/05 · Sinal · Crédito · previsto</div></div>
+              <div class="e-val">R$ 1.500</div>
+            </div>
+            <div class="entry">
+              <div class="e-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12l4 6-10 13L2 9z"/><path d="M11 3 8 9l4 13 4-13-3-6"/><path d="M2 9h20"/></svg></div>
+              <div style="flex:1"><div class="e-name">Ana Costa</div><div class="e-date">09/05 · Curso · PIX</div></div>
+              <div class="e-val">R$ 200</div>
+            </div>
+            <div class="totals">
+              <span>4 entradas exibidas</span>
+              <span><strong>R$ 3.100</strong></span>
+            </div>
+          </div>
+          <div class="detail-col">
+            <h3>Detalhe da entrada</h3>
+            <div class="field"><label>Cliente</label><input value="Carla Pereira"></div>
+            <div class="field" style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <div><label>Data pagamento</label><input value="15/05/2026"></div>
+              <div><label>Valor</label><input value="R$ 1.500,00"></div>
+            </div>
+            <div class="field"><label>Tipo</label><select><option>Sinal</option><option>Pagamento</option><option>Parcela</option></select></div>
+            <div class="field"><label>Status</label>
+              <div class="status-toggle">
+                <button>Realizado</button>
+                <button class="on">Previsto</button>
+              </div>
+            </div>
+            <div class="actions">
+              <button class="btn btn-pri">Salvar alterações</button>
+              <button class="btn btn-del">Excluir</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ═══════════════ OPÇÃO C: KANBAN/PIPELINE ═══════════════ -->
+<div class="option opt-c">
+  <div class="option-label">C · Pipeline visual (Kanban) — só Noivas</div>
+  <div class="option-desc">Noivas em 4 colunas por estado: Esta semana / Este mês / Futuro / Realizadas. Cada card tem donut SVG mostrando % pago + previsto. Visualização de pipeline. Outras telas ficam no formato lista vertical.</div>
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="sb-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>Início</div>
+      <div class="sb-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>Nova</div>
+      <div class="sb-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/></svg>Entradas</div>
+      <div class="sb-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>Saídas</div>
+      <div class="sb-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12l4 6-10 13L2 9z"/><path d="M11 3 8 9l4 13 4-13-3-6"/><path d="M2 9h20"/></svg>Noivas</div>
+      <div class="sb-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Resumo</div>
+    </aside>
+    <main>
+      <div class="header">
+        <div>
+          <h1>Noivas — Pipeline</h1>
+          <div class="sub">17 contratos · R$ 32.500 sob gestão</div>
+        </div>
+      </div>
+      <div class="canvas">
+        <div class="kanban">
+          <!-- Col 1: Esta semana -->
+          <div class="col urgent">
+            <div class="col-hdr"><span class="title">Esta semana</span><span class="badge">2</span></div>
+            <div class="noiva-mini urgent">
+              <div class="top">
+                <div class="donut">
+                  <svg viewBox="0 0 36 36">
+                    <circle class="bg" cx="18" cy="18" r="15.91"/>
+                    <circle class="pago" cx="18" cy="18" r="15.91" stroke-dasharray="82 100"/>
+                  </svg>
+                  <div class="label">82%</div>
+                </div>
+                <div class="info">
+                  <div class="nome">Maria Silva</div>
+                  <div class="data">22/05/2026</div>
+                  <span class="countdown">em 3d</span>
+                </div>
+              </div>
+            </div>
+            <div class="noiva-mini urgent">
+              <div class="top">
+                <div class="donut">
+                  <svg viewBox="0 0 36 36">
+                    <circle class="bg" cx="18" cy="18" r="15.91"/>
+                    <circle class="pago" cx="18" cy="18" r="15.91" stroke-dasharray="95 100"/>
+                  </svg>
+                  <div class="label">95%</div>
+                </div>
+                <div class="info">
+                  <div class="nome">Renata Lima</div>
+                  <div class="data">25/05/2026</div>
+                  <span class="countdown">em 6d</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Col 2: Este mês -->
+          <div class="col month">
+            <div class="col-hdr"><span class="title">Este mês</span><span class="badge">3</span></div>
+            <div class="noiva-mini month">
+              <div class="top">
+                <div class="donut">
+                  <svg viewBox="0 0 36 36">
+                    <circle class="bg" cx="18" cy="18" r="15.91"/>
+                    <circle class="prev" cx="18" cy="18" r="15.91" stroke-dasharray="70 100" stroke-dashoffset="-40"/>
+                    <circle class="pago" cx="18" cy="18" r="15.91" stroke-dasharray="40 100"/>
+                  </svg>
+                  <div class="label">70%</div>
+                </div>
+                <div class="info">
+                  <div class="nome">Joana P.</div>
+                  <div class="data">12/06/2026</div>
+                  <span class="countdown">em 24d</span>
+                </div>
+              </div>
+            </div>
+            <div class="noiva-mini month">
+              <div class="top">
+                <div class="donut">
+                  <svg viewBox="0 0 36 36">
+                    <circle class="bg" cx="18" cy="18" r="15.91"/>
+                    <circle class="prev" cx="18" cy="18" r="15.91" stroke-dasharray="50 100" stroke-dashoffset="-25"/>
+                    <circle class="pago" cx="18" cy="18" r="15.91" stroke-dasharray="25 100"/>
+                  </svg>
+                  <div class="label">50%</div>
+                </div>
+                <div class="info">
+                  <div class="nome">Carla M.</div>
+                  <div class="data">20/06/2026</div>
+                  <span class="countdown">em 32d</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Col 3: Futuro -->
+          <div class="col future">
+            <div class="col-hdr"><span class="title">Futuro</span><span class="badge">4</span></div>
+            <div class="noiva-mini future">
+              <div class="top">
+                <div class="donut">
+                  <svg viewBox="0 0 36 36">
+                    <circle class="bg" cx="18" cy="18" r="15.91"/>
+                    <circle class="pago" cx="18" cy="18" r="15.91" stroke-dasharray="10 100"/>
+                  </svg>
+                  <div class="label">10%</div>
+                </div>
+                <div class="info">
+                  <div class="nome">Ana Costa</div>
+                  <div class="data">22/07/2026</div>
+                  <span class="countdown">jul</span>
+                </div>
+              </div>
+            </div>
+            <div class="noiva-mini future">
+              <div class="top">
+                <div class="donut">
+                  <svg viewBox="0 0 36 36">
+                    <circle class="bg" cx="18" cy="18" r="15.91"/>
+                    <circle class="pago" cx="18" cy="18" r="15.91" stroke-dasharray="5 100"/>
+                  </svg>
+                  <div class="label">5%</div>
+                </div>
+                <div class="info">
+                  <div class="nome">Maria T.</div>
+                  <div class="data">18/10/2026</div>
+                  <span class="countdown">out</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Col 4: Realizadas -->
+          <div class="col done">
+            <div class="col-hdr"><span class="title">Realizadas</span><span class="badge">8</span></div>
+            <div class="noiva-mini done">
+              <div class="top">
+                <div class="donut">
+                  <svg viewBox="0 0 36 36">
+                    <circle class="bg" cx="18" cy="18" r="15.91"/>
+                    <circle class="pago" cx="18" cy="18" r="15.91" stroke-dasharray="100 100"/>
+                  </svg>
+                  <div class="label">100%</div>
+                </div>
+                <div class="info">
+                  <div class="nome">Bia Souza</div>
+                  <div class="data">15/04/2026</div>
+                  <span class="countdown">quitada</span>
+                </div>
+              </div>
+            </div>
+            <div class="noiva-mini done">
+              <div class="top">
+                <div class="donut">
+                  <svg viewBox="0 0 36 36">
+                    <circle class="bg" cx="18" cy="18" r="15.91"/>
+                    <circle class="pago" cx="18" cy="18" r="15.91" stroke-dasharray="100 100"/>
+                  </svg>
+                  <div class="label">100%</div>
+                </div>
+                <div class="info">
+                  <div class="nome">Lia Alves</div>
+                  <div class="data">02/04/2026</div>
+                  <span class="countdown">quitada</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+</body>
+</html>

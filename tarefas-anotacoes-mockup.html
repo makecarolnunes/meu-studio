@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mockup — Tarefas + Anotações Desktop</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #f0ebe8;
+  color: #2C2420;
+  min-height: 100vh;
+}
+
+/* ── TOKENS ── */
+:root {
+  --brand:   #8B6B61;
+  --brand-d: #38190b;
+  --brand-l: rgba(139,107,97,0.12);
+  --ok:      #3B6D11; --ok-l: #EAF3DE;
+  --amber:   #BA7517; --amber-l: #FAEEDA;
+  --danger:  #C62828; --danger-l: #FCE7E7;
+  --blue:    #1565C0; --blue-l: #E3F2FD;
+  --muted:   #6F6660;
+  --border:  #E5DDD8;
+  --bg:      #FAF7F5;
+  --card:    #ffffff;
+  --text:    #2C2420;
+
+  --shell:    1120px;
+  --sidebar:  236px;
+}
+
+/* ── SECTION LABELS ── */
+.section-label {
+  text-align: center;
+  padding: 28px 0 10px;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--brand-d);
+  letter-spacing: -0.02em;
+}
+.section-sub {
+  text-align: center;
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin-bottom: 22px;
+}
+hr.divider {
+  border: none;
+  border-top: 2px dashed #d6ccc6;
+  margin: 40px 40px 20px;
+}
+
+/* ══════════════════════════════════════════════════════
+   MÓDULO TAREFAS
+══════════════════════════════════════════════════════ */
+.tar-shell {
+  max-width: var(--shell);
+  margin: 0 auto;
+  background: var(--card);
+  box-shadow: 0 8px 48px rgba(56,25,11,.12);
+  border-radius: 20px;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  min-height: 640px;
+}
+
+/* ── SIDEBAR TAREFAS ── */
+.tar-sidebar {
+  width: var(--sidebar);
+  flex-shrink: 0;
+  background: linear-gradient(160deg, #3d1e12 0%, #5a2e1e 60%, #8B6B61 100%);
+  display: flex;
+  flex-direction: column;
+  padding: 22px 16px 24px;
+  gap: 0;
+  overflow: hidden;
+}
+
+.tar-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 22px;
+  padding: 0 4px;
+}
+.tar-brand-icon {
+  width: 36px; height: 36px; border-radius: 10px;
+  background: rgba(255,255,255,.15);
+  display: flex; align-items: center; justify-content: center;
+}
+.tar-brand h2 {
+  font-size: 1rem; font-weight: 800; color: white; letter-spacing: -0.01em;
+}
+
+/* Progress ring + text */
+.tar-progress-wrap {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: rgba(255,255,255,.1);
+  border-radius: 14px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+}
+.progress-ring-svg { flex-shrink: 0; }
+.progress-ring-track { fill: none; stroke: rgba(255,255,255,.18); stroke-width: 5; }
+.progress-ring-fill {
+  fill: none; stroke: #F9C784; stroke-width: 5;
+  stroke-linecap: round;
+  stroke-dasharray: 100.5;
+  stroke-dashoffset: 35;
+  transform: rotate(-90deg);
+  transform-origin: 18px 18px;
+  transition: stroke-dashoffset 0.5s ease;
+}
+.progress-ring-pct {
+  font-size: .72rem; font-weight: 900;
+  fill: white;
+  text-anchor: middle;
+  dominant-baseline: middle;
+}
+.tar-prog-text { flex: 1; }
+.tar-prog-lbl { font-size: .72rem; color: rgba(255,255,255,.7); font-weight: 600; }
+.tar-prog-val { font-size: 1.1rem; font-weight: 900; color: white; margin-top: 2px; }
+
+/* Stat 2x2 */
+.tar-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+  margin-bottom: 18px;
+}
+.tar-stat {
+  background: rgba(255,255,255,.1);
+  border-radius: 11px;
+  padding: 9px 10px;
+  text-align: center;
+}
+.tar-stat-lbl { font-size: .6rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: rgba(255,255,255,.6); }
+.tar-stat-val { font-size: 1.2rem; font-weight: 900; color: white; display: block; margin-top: 2px; }
+.tar-stat-val.hoje  { color: #F9C784; }
+.tar-stat-val.feitas { color: #A3D977; }
+.tar-stat-val.atras  { color: #F48080; }
+
+/* Quick-add sidebar */
+.tar-quick {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255,255,255,.12);
+  border: 1px solid rgba(255,255,255,.2);
+  border-radius: 10px;
+  padding: 9px 12px;
+  margin-bottom: 16px;
+}
+.tar-quick input {
+  flex: 1; border: none; outline: none; background: transparent;
+  color: white; font-size: .83rem; font-family: inherit;
+}
+.tar-quick input::placeholder { color: rgba(255,255,255,.5); }
+.tar-quick-btn {
+  width: 24px; height: 24px; border-radius: 50%;
+  background: rgba(255,255,255,.22); border: none;
+  color: white; font-size: .9rem; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* Filtros sidebar */
+.tar-fil-lbl {
+  font-size: .64rem; font-weight: 800; text-transform: uppercase;
+  letter-spacing: .07em; color: rgba(255,255,255,.5);
+  padding: 0 4px; margin-bottom: 7px;
+}
+.tar-fil-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 12px; border-radius: 10px;
+  cursor: pointer; transition: background .15s;
+  margin-bottom: 3px;
+}
+.tar-fil-item:hover { background: rgba(255,255,255,.08); }
+.tar-fil-item.active { background: rgba(255,255,255,.18); }
+.tar-fil-dot {
+  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+}
+.tar-fil-name { font-size: .85rem; font-weight: 600; color: rgba(255,255,255,.88); flex: 1; }
+.tar-fil-cnt {
+  font-size: .72rem; font-weight: 800;
+  background: rgba(255,255,255,.18);
+  color: white;
+  padding: 2px 7px; border-radius: 10px;
+}
+.tar-fil-item.active .tar-fil-cnt { background: rgba(255,255,255,.3); }
+
+/* ── MAIN TAREFAS ── */
+.tar-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+.tar-toolbar {
+  padding: 16px 24px 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--card);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.tar-toolbar-title {
+  font-size: 1.05rem; font-weight: 800; color: var(--brand-d);
+}
+.tar-toolbar-sub {
+  font-size: .72rem; color: var(--muted); margin-top: 2px;
+}
+.tar-nova-btn {
+  display: flex; align-items: center; gap: 7px;
+  padding: 9px 16px; border-radius: 10px;
+  background: var(--brand-d); color: white;
+  border: none; font-size: .83rem; font-weight: 700;
+  cursor: pointer;
+}
+
+.tar-content {
+  flex: 1; overflow-y: auto;
+  padding: 16px 24px 32px;
+}
+
+/* Grupo */
+.grupo-hdr {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 8px; margin-top: 18px;
+}
+.grupo-hdr:first-child { margin-top: 0; }
+.grupo-pill {
+  border-radius: 8px; padding: 3px 10px;
+  font-size: .68rem; font-weight: 800;
+}
+.gp-atrasadas { background: var(--danger);  color: white; }
+.gp-hoje      { background: var(--amber);   color: white; }
+.gp-amanha    { background: var(--blue);    color: white; }
+.gp-semana    { background: var(--brand-d); color: white; }
+.gp-depois    { background: var(--border);  color: var(--muted); }
+.grupo-count  { font-size: .67rem; color: var(--muted); background: var(--border); padding: 2px 7px; border-radius: 10px; font-weight: 700; }
+.grupo-line   { flex: 1; height: .5px; background: var(--border); }
+
+/* Task card */
+.task-card {
+  background: var(--card);
+  border-radius: 11px;
+  padding: 11px 14px;
+  margin-bottom: 5px;
+  display: flex; align-items: center; gap: 12px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.05);
+  border: 1px solid var(--border);
+  border-left: 3.5px solid transparent;
+}
+.task-card.alta     { border-left-color: var(--danger); }
+.task-card.normal   { border-left-color: var(--border); }
+.task-card.atrasada { background: #fff9f9; }
+.task-card.hoje-c   { background: #fffbf5; }
+.task-card.feita    { opacity: .5; }
+
+.task-check {
+  width: 22px; height: 22px; border-radius: 50%;
+  border: 2px solid #D9CDC4; background: none;
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+}
+.task-check.done { background: var(--ok); border-color: var(--ok); }
+.task-body  { flex: 1; }
+.task-titulo { font-size: .88rem; font-weight: 600; color: var(--text); line-height: 1.35; }
+.task-titulo.riscado { text-decoration: line-through; color: var(--muted); }
+.task-meta { display: flex; align-items: center; gap: 6px; margin-top: 3px; flex-wrap: wrap; }
+.prazo-badge {
+  font-size: .65rem; font-weight: 700;
+  padding: 2px 7px; border-radius: 20px;
+}
+.pb-atrasada { background: var(--danger-l); color: var(--danger); }
+.pb-hoje     { background: var(--amber-l);  color: var(--amber);  }
+.pb-amanha   { background: var(--blue-l);   color: var(--blue);   }
+.pb-ok       { background: var(--brand-l);  color: var(--brand-d); }
+.prio-tag {
+  font-size: .6rem; font-weight: 800; padding: 2px 6px; border-radius: 20px;
+  background: var(--danger-l); color: var(--danger); text-transform: uppercase;
+}
+.task-edit-btn {
+  width: 28px; height: 28px; border-radius: 8px;
+  border: 1px solid var(--border); background: var(--bg);
+  color: var(--muted); display: flex; align-items: center; justify-content: center;
+  cursor: pointer; flex-shrink: 0;
+}
+
+
+/* ══════════════════════════════════════════════════════
+   MÓDULO ANOTAÇÕES — 3 COLUNAS
+══════════════════════════════════════════════════════ */
+.ano-shell {
+  max-width: 1160px;
+  margin: 0 auto;
+  background: var(--card);
+  box-shadow: 0 8px 48px rgba(56,25,11,.12);
+  border-radius: 20px;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  min-height: 680px;
+}
+
+/* Coluna 1: Cadernos */
+.ano-col-cadernos {
+  width: 220px;
+  flex-shrink: 0;
+  background: linear-gradient(160deg, #3d1e12 0%, #5a2e1e 60%, #8B6B61 100%);
+  display: flex;
+  flex-direction: column;
+  padding: 22px 14px 24px;
+}
+
+.ano-brand {
+  display: flex; align-items: center; gap: 9px;
+  margin-bottom: 18px; padding: 0 2px;
+}
+.ano-brand-icon {
+  width: 34px; height: 34px; border-radius: 9px;
+  background: rgba(255,255,255,.15);
+  display: flex; align-items: center; justify-content: center;
+}
+.ano-brand h2 {
+  font-size: .96rem; font-weight: 800; color: white; letter-spacing: -0.01em;
+}
+
+.ano-novo-btn {
+  display: flex; align-items: center; justify-content: center; gap: 7px;
+  padding: 9px 14px; border-radius: 10px;
+  background: rgba(255,255,255,.18); color: white;
+  border: 1px solid rgba(255,255,255,.25);
+  font-size: .8rem; font-weight: 700;
+  cursor: pointer; margin-bottom: 18px; font-family: inherit;
+}
+
+.ano-cad-lbl {
+  font-size: .62rem; font-weight: 800; text-transform: uppercase;
+  letter-spacing: .07em; color: rgba(255,255,255,.45);
+  padding: 0 4px; margin-bottom: 7px;
+}
+
+.ano-cad-item {
+  display: flex; align-items: center; gap: 9px;
+  padding: 9px 10px; border-radius: 10px;
+  cursor: pointer; margin-bottom: 2px;
+  transition: background .13s;
+}
+.ano-cad-item:hover { background: rgba(255,255,255,.09); }
+.ano-cad-item.active { background: rgba(255,255,255,.2); }
+.ano-cad-emoji-wrap {
+  width: 30px; height: 30px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem; flex-shrink: 0;
+}
+.ano-cad-info { flex: 1; min-width: 0; }
+.ano-cad-nome { font-size: .83rem; font-weight: 700; color: rgba(255,255,255,.9); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ano-cad-cnt  { font-size: .65rem; color: rgba(255,255,255,.5); margin-top: 1px; }
+
+.ano-tag-lbl {
+  font-size: .62rem; font-weight: 800; text-transform: uppercase;
+  letter-spacing: .07em; color: rgba(255,255,255,.45);
+  padding: 0 4px; margin: 16px 0 7px;
+}
+.ano-tag-pills { display: flex; flex-wrap: wrap; gap: 5px; }
+.ano-tag-pill {
+  padding: 4px 9px; border-radius: 20px;
+  font-size: .71rem; font-weight: 600;
+  background: rgba(255,255,255,.12); color: rgba(255,255,255,.8);
+  border: 1px solid rgba(255,255,255,.2); cursor: pointer;
+}
+.ano-tag-pill.active { background: rgba(255,255,255,.3); color: white; border-color: rgba(255,255,255,.4); }
+
+/* Coluna 2: Lista de notas */
+.ano-col-notas {
+  width: 300px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+}
+
+.ano-notas-hdr {
+  padding: 16px 14px 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--card);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.ano-notas-title {
+  font-size: .95rem; font-weight: 800; color: var(--brand-d);
+}
+.ano-notas-cnt { font-size: .72rem; color: var(--muted); background: var(--border); padding: 2px 8px; border-radius: 10px; font-weight: 700; }
+
+.ano-nota-search {
+  margin: 10px 12px;
+  display: flex; align-items: center; gap: 7px;
+  background: var(--card);
+  border: 1.5px solid var(--border);
+  border-radius: 9px;
+  padding: 7px 10px;
+}
+.ano-nota-search svg { color: var(--muted); flex-shrink: 0; }
+.ano-nota-search input {
+  flex: 1; border: none; outline: none; background: transparent;
+  font-size: .81rem; color: var(--text); font-family: inherit;
+}
+.ano-nota-search input::placeholder { color: var(--muted); }
+
+.ano-notas-list { flex: 1; overflow-y: auto; padding: 4px 10px 16px; }
+
+.nota-item {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-left: 3px solid rgba(163,104,68,.18);
+  border-radius: 11px;
+  padding: 11px 12px;
+  margin-bottom: 6px;
+  cursor: pointer;
+  transition: border-color .13s;
+}
+.nota-item:hover { border-color: #8B6B61; border-left-color: #8B6B61; }
+.nota-item.selected { border-color: var(--brand); border-left-color: var(--brand); background: #FBF5F2; }
+.nota-tags { display: flex; gap: 4px; margin-bottom: 5px; flex-wrap: wrap; }
+.nota-tag-chip {
+  font-size: .64rem; font-weight: 600; padding: 2px 7px; border-radius: 20px;
+  background: var(--brand-l); color: var(--brand-d);
+}
+.nota-item-title { font-size: .86rem; font-weight: 700; color: var(--text); margin-bottom: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nota-item-preview { font-size: .74rem; color: var(--muted); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 5px; }
+.nota-item-footer { display: flex; align-items: center; justify-content: space-between; }
+.nota-item-date { font-size: .67rem; color: var(--muted); }
+.nota-img-badge { display: flex; align-items: center; gap: 3px; font-size: .67rem; color: var(--muted); }
+
+/* Coluna 3: Editor */
+.ano-col-editor {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: var(--card);
+  min-width: 0;
+}
+
+.ano-editor-hdr {
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.ano-editor-actions { display: flex; align-items: center; gap: 8px; }
+.ano-editor-btn {
+  padding: 7px 14px; border-radius: 8px;
+  border: 1.5px solid var(--border); background: var(--bg);
+  font-size: .78rem; font-weight: 600; color: var(--muted);
+  cursor: pointer;
+}
+.ano-editor-btn.save {
+  background: var(--brand-d); color: white; border-color: var(--brand-d);
+}
+.ano-editor-btn.del {
+  color: var(--danger); border-color: #fdd; background: none;
+}
+
+.ano-editor-body {
+  flex: 1; overflow-y: auto;
+  display: flex; flex-direction: column;
+}
+
+.editor-titulo-inp {
+  width: 100%; padding: 18px 20px 14px;
+  border: none; border-bottom: 1px solid var(--border);
+  font-size: 1.15rem; font-weight: 700; color: var(--text);
+  background: var(--card); font-family: inherit; outline: none;
+}
+.editor-titulo-inp::placeholder { color: #ccc; font-weight: 500; }
+
+.editor-textarea {
+  width: 100%; padding: 16px 20px;
+  border: none;
+  font-size: .91rem; color: var(--text); line-height: 1.8;
+  background: var(--card); font-family: inherit; outline: none;
+  resize: none; min-height: 340px; flex: 1;
+  display: block;
+}
+.editor-textarea::placeholder { color: #ccc; }
+
+.editor-section-d {
+  padding: 14px 20px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.editor-section-lbl {
+  font-size: .65rem; font-weight: 800; text-transform: uppercase;
+  letter-spacing: .08em; color: var(--muted); margin-bottom: 10px;
+}
+.editor-tags-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.edit-tag {
+  display: flex; align-items: center; gap: 4px;
+  padding: 4px 9px; border-radius: 20px;
+  background: var(--brand-l); color: var(--brand-d);
+  font-size: .78rem; font-weight: 600;
+}
+.edit-tag-rm {
+  width: 16px; height: 16px; border-radius: 50%;
+  background: rgba(56,25,11,.12); border: none;
+  color: var(--brand-d); font-size: .8rem; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.tag-add-inline {
+  display: flex; align-items: center; gap: 5px;
+}
+.tag-add-inp-d {
+  padding: 4px 10px; border-radius: 20px;
+  border: 1.5px solid var(--border);
+  font-size: .78rem; background: var(--bg); color: var(--text);
+  font-family: inherit; outline: none; width: 130px;
+}
+.tag-add-inp-d:focus { border-color: var(--brand); }
+
+.imgs-grid-d {
+  display: flex; gap: 8px; flex-wrap: wrap;
+}
+.img-thumb-d {
+  width: 72px; height: 72px; border-radius: 9px;
+  object-fit: cover; border: 1px solid var(--border);
+}
+.btn-img-add-d {
+  width: 72px; height: 72px; border-radius: 9px;
+  border: 1.5px dashed var(--border);
+  background: none; color: var(--muted);
+  font-size: 1.3rem; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.btn-img-add-d:hover { border-color: var(--brand); color: var(--brand); }
+
+/* ── LAYOUT WRAPPER ── */
+.page-wrap { padding: 32px 40px 60px; }
+.modules-row { display: grid; gap: 32px; }
+
+
+/* ── COMMON ── */
+.badge-mob {
+  display: inline-block; padding: 3px 10px; border-radius: 20px;
+  background: var(--brand-l); color: var(--brand-d);
+  font-size: .72rem; font-weight: 700; margin-bottom: 4px;
+}
+</style>
+</head>
+<body>
+
+<div class="page-wrap">
+
+  <!-- ══ TAREFAS ══ -->
+  <p class="section-label">Módulo Tarefas — Desktop</p>
+  <p class="section-sub">Sidebar com progresso + stats + filtros + quick-add · Conteúdo com grupos de tarefas</p>
+
+  <div class="tar-shell">
+
+    <!-- Sidebar -->
+    <aside class="tar-sidebar">
+
+      <div class="tar-brand">
+        <div class="tar-brand-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        </div>
+        <h2>Tarefas</h2>
+      </div>
+
+      <!-- Progress ring -->
+      <div class="tar-progress-wrap">
+        <svg class="progress-ring-svg" width="36" height="36" viewBox="0 0 36 36">
+          <circle class="progress-ring-track" cx="18" cy="18" r="16"/>
+          <circle class="progress-ring-fill" cx="18" cy="18" r="16"/>
+          <text x="18" y="18" class="progress-ring-pct">65%</text>
+        </svg>
+        <div class="tar-prog-text">
+          <div class="tar-prog-lbl">Conclusão</div>
+          <div class="tar-prog-val">11 de 17</div>
+        </div>
+      </div>
+
+      <!-- Stats 2x2 -->
+      <div class="tar-stats">
+        <div class="tar-stat">
+          <div class="tar-stat-lbl">Pendentes</div>
+          <span class="tar-stat-val">6</span>
+        </div>
+        <div class="tar-stat">
+          <div class="tar-stat-lbl">Hoje</div>
+          <span class="tar-stat-val hoje">2</span>
+        </div>
+        <div class="tar-stat">
+          <div class="tar-stat-lbl">Atrasadas</div>
+          <span class="tar-stat-val atras">1</span>
+        </div>
+        <div class="tar-stat">
+          <div class="tar-stat-lbl">Feitas</div>
+          <span class="tar-stat-val feitas">11</span>
+        </div>
+      </div>
+
+      <!-- Quick-add -->
+      <div class="tar-quick">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.55)" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+        <input type="text" placeholder="Adicionar tarefa rápida..." readonly>
+        <button class="tar-quick-btn">↑</button>
+      </div>
+
+      <!-- Filtros -->
+      <div class="tar-fil-lbl">Filtrar por</div>
+
+      <div class="tar-fil-item active">
+        <div class="tar-fil-dot" style="background:#E57373;"></div>
+        <span class="tar-fil-name">Pendentes</span>
+        <span class="tar-fil-cnt">6</span>
+      </div>
+      <div class="tar-fil-item">
+        <div class="tar-fil-dot" style="background:#F9C784;"></div>
+        <span class="tar-fil-name">Hoje</span>
+        <span class="tar-fil-cnt">2</span>
+      </div>
+      <div class="tar-fil-item">
+        <div class="tar-fil-dot" style="background:#90CAF9;"></div>
+        <span class="tar-fil-name">Esta semana</span>
+        <span class="tar-fil-cnt">4</span>
+      </div>
+      <div class="tar-fil-item">
+        <div class="tar-fil-dot" style="background:#A5D6A7;"></div>
+        <span class="tar-fil-name">✓ Feitas</span>
+        <span class="tar-fil-cnt">11</span>
+      </div>
+
+    </aside>
+
+    <!-- Main -->
+    <div class="tar-main">
+
+      <div class="tar-toolbar">
+        <div>
+          <div class="tar-toolbar-title">Pendentes</div>
+          <div class="tar-toolbar-sub">6 tarefas · 1 atrasada</div>
+        </div>
+        <button class="tar-nova-btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Nova tarefa
+        </button>
+      </div>
+
+      <div class="tar-content">
+
+        <!-- Grupo: Atrasadas -->
+        <div class="grupo-hdr">
+          <span class="grupo-pill gp-atrasadas">Atrasadas</span>
+          <span class="grupo-count">1</span>
+          <div class="grupo-line"></div>
+        </div>
+
+        <div class="task-card alta atrasada">
+          <div class="task-check"></div>
+          <div class="task-body">
+            <div class="task-titulo">Responder orçamentos do Instagram</div>
+            <div class="task-meta">
+              <span class="prazo-badge pb-atrasada">sex 15/05</span>
+              <span class="prio-tag">Alta</span>
+            </div>
+          </div>
+          <button class="task-edit-btn">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </button>
+        </div>
+
+        <!-- Grupo: Hoje -->
+        <div class="grupo-hdr">
+          <span class="grupo-pill gp-hoje">Hoje</span>
+          <span class="grupo-count">2</span>
+          <div class="grupo-line"></div>
+        </div>
+
+        <div class="task-card normal hoje-c">
+          <div class="task-check"></div>
+          <div class="task-body">
+            <div class="task-titulo">Comprar batom nude para noiva</div>
+            <div class="task-meta">
+              <span class="prazo-badge pb-hoje">Hoje</span>
+            </div>
+          </div>
+          <button class="task-edit-btn">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </button>
+        </div>
+        <div class="task-card alta hoje-c">
+          <div class="task-check"></div>
+          <div class="task-body">
+            <div class="task-titulo">Enviar contrato da Marina Silva</div>
+            <div class="task-meta">
+              <span class="prazo-badge pb-hoje">Hoje</span>
+              <span class="prio-tag">Alta</span>
+            </div>
+          </div>
+          <button class="task-edit-btn">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </button>
+        </div>
+
+        <!-- Grupo: Amanhã -->
+        <div class="grupo-hdr">
+          <span class="grupo-pill gp-amanha">Amanhã</span>
+          <span class="grupo-count">1</span>
+          <div class="grupo-line"></div>
+        </div>
+
+        <div class="task-card normal">
+          <div class="task-check"></div>
+          <div class="task-body">
+            <div class="task-titulo">Confirmar agenda de junho</div>
+            <div class="task-meta">
+              <span class="prazo-badge pb-amanha">Amanhã</span>
+            </div>
+          </div>
+          <button class="task-edit-btn">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-09.5z"/></svg>
+          </button>
+        </div>
+
+        <!-- Grupo: Esta semana -->
+        <div class="grupo-hdr">
+          <span class="grupo-pill gp-semana">Esta semana</span>
+          <span class="grupo-count">2</span>
+          <div class="grupo-line"></div>
+        </div>
+
+        <div class="task-card normal">
+          <div class="task-check"></div>
+          <div class="task-body">
+            <div class="task-titulo">Organizar kit de produtos</div>
+            <div class="task-meta">
+              <span class="prazo-badge pb-ok">sex 23/05</span>
+            </div>
+          </div>
+          <button class="task-edit-btn">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </button>
+        </div>
+        <div class="task-card normal">
+          <div class="task-check"></div>
+          <div class="task-body">
+            <div class="task-titulo">Postar reels do casamento da Juliana</div>
+            <div class="task-meta">
+              <span class="prazo-badge pb-ok">sáb 24/05</span>
+            </div>
+          </div>
+          <button class="task-edit-btn">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+  </div><!-- /tar-shell -->
+
+
+  <hr class="divider">
+
+
+  <!-- ══ ANOTAÇÕES ══ -->
+  <p class="section-label">Módulo Anotações — Desktop (3 colunas)</p>
+  <p class="section-sub">Cadernos na sidebar · Lista de notas no centro · Editor inline à direita</p>
+
+  <div class="ano-shell">
+
+    <!-- Col 1: Cadernos -->
+    <div class="ano-col-cadernos">
+
+      <div class="ano-brand">
+        <div class="ano-brand-icon">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        </div>
+        <h2>Anotações</h2>
+      </div>
+
+      <button class="ano-novo-btn">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Novo caderno
+      </button>
+
+      <div class="ano-cad-lbl">Cadernos</div>
+
+      <div class="ano-cad-item active">
+        <div class="ano-cad-emoji-wrap" style="background:rgba(255,150,50,.2);">📸</div>
+        <div class="ano-cad-info">
+          <div class="ano-cad-nome">Fotografia</div>
+          <div class="ano-cad-cnt">4 notas</div>
+        </div>
+      </div>
+      <div class="ano-cad-item">
+        <div class="ano-cad-emoji-wrap" style="background:rgba(255,100,150,.2);">💄</div>
+        <div class="ano-cad-info">
+          <div class="ano-cad-nome">Maquiagem</div>
+          <div class="ano-cad-cnt">7 notas</div>
+        </div>
+      </div>
+      <div class="ano-cad-item">
+        <div class="ano-cad-emoji-wrap" style="background:rgba(100,200,150,.2);">💰</div>
+        <div class="ano-cad-info">
+          <div class="ano-cad-nome">Finanças</div>
+          <div class="ano-cad-cnt">2 notas</div>
+        </div>
+      </div>
+      <div class="ano-cad-item">
+        <div class="ano-cad-emoji-wrap" style="background:rgba(150,100,255,.2);">🌸</div>
+        <div class="ano-cad-info">
+          <div class="ano-cad-nome">Casamentos</div>
+          <div class="ano-cad-cnt">5 notas</div>
+        </div>
+      </div>
+      <div class="ano-cad-item">
+        <div class="ano-cad-emoji-wrap" style="background:rgba(80,150,230,.2);">✨</div>
+        <div class="ano-cad-info">
+          <div class="ano-cad-nome">Inspirações</div>
+          <div class="ano-cad-cnt">9 notas</div>
+        </div>
+      </div>
+
+      <div class="ano-tag-lbl">Tags</div>
+      <div class="ano-tag-pills">
+        <span class="ano-tag-pill active">iluminação</span>
+        <span class="ano-tag-pill">equipamento</span>
+        <span class="ano-tag-pill">dica</span>
+        <span class="ano-tag-pill">tutorial</span>
+      </div>
+
+    </div>
+
+    <!-- Col 2: Lista de notas -->
+    <div class="ano-col-notas">
+
+      <div class="ano-notas-hdr">
+        <span class="ano-notas-title">Fotografia</span>
+        <span class="ano-notas-cnt">4</span>
+      </div>
+
+      <div class="ano-nota-search">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" placeholder="Buscar nota..." readonly>
+      </div>
+
+      <div class="ano-notas-list">
+
+        <div class="nota-item selected">
+          <div class="nota-tags">
+            <span class="nota-tag-chip">iluminação</span>
+            <span class="nota-tag-chip">dica</span>
+          </div>
+          <div class="nota-item-title">Luz natural vs artificial</div>
+          <div class="nota-item-preview">Prefiro luz natural pela manhã. Quando usar flash: casamentos à noite, eventos internos...</div>
+          <div class="nota-item-footer">
+            <span class="nota-item-date">19/05/2026</span>
+            <span class="nota-img-badge">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              3
+            </span>
+          </div>
+        </div>
+
+        <div class="nota-item">
+          <div class="nota-tags">
+            <span class="nota-tag-chip">equipamento</span>
+          </div>
+          <div class="nota-item-title">Lista de equipamentos</div>
+          <div class="nota-item-preview">Ring light 18" · Softbox · Tripé ajustável · Câmera Sony ZV-E10 · Lente 35mm f/1.8</div>
+          <div class="nota-item-footer">
+            <span class="nota-item-date">12/05/2026</span>
+          </div>
+        </div>
+
+        <div class="nota-item">
+          <div class="nota-tags">
+            <span class="nota-tag-chip">tutorial</span>
+          </div>
+          <div class="nota-item-title">Edição rápida no Lightroom</div>
+          <div class="nota-item-preview">Preset que uso para noivas: temperatura 5500K, highlights -30, shadows +20...</div>
+          <div class="nota-item-footer">
+            <span class="nota-item-date">08/05/2026</span>
+            <span class="nota-img-badge">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              1
+            </span>
+          </div>
+        </div>
+
+        <div class="nota-item">
+          <div class="nota-tags">
+            <span class="nota-tag-chip">dica</span>
+          </div>
+          <div class="nota-item-title">Ângulos para retratos</div>
+          <div class="nota-item-preview">Levemente de cima para afinar o rosto. Evitar de baixo para não distorcer...</div>
+          <div class="nota-item-footer">
+            <span class="nota-item-date">02/05/2026</span>
+          </div>
+        </div>
+
+      </div><!-- /notas-list -->
+    </div>
+
+    <!-- Col 3: Editor -->
+    <div class="ano-col-editor">
+
+      <div class="ano-editor-hdr">
+        <div style="font-size:.78rem; color:var(--muted);">Última edição: 19/05/2026 às 14:32</div>
+        <div class="ano-editor-actions">
+          <button class="ano-editor-btn del">Excluir</button>
+          <button class="ano-editor-btn save">Salvar</button>
+        </div>
+      </div>
+
+      <div class="ano-editor-body">
+
+        <input class="editor-titulo-inp" type="text" value="Luz natural vs artificial" readonly>
+
+        <textarea class="editor-textarea" readonly>Prefiro luz natural pela manhã. Quando usar flash: casamentos à noite, eventos internos, dias nublados.
+
+Configurações para luz natural:
+- Janela lateral, cliente de perfil para criar volume
+- Evitar luz direta do sol (sombras duras)
+- Golden hour: 1h antes do pôr do sol = perfeito para externas
+
+Para flash externo:
+- Bounce no teto para suavizar
+- Difusor quando bounce não for possível
+
+Reflexores:
+- Prata para contraste
+- Ouro para pele dourada em externas</textarea>
+
+        <div class="editor-section-d" style="border-top:1px solid var(--border);">
+          <div class="editor-section-lbl">Tags</div>
+          <div class="editor-tags-row">
+            <span class="edit-tag">iluminação <button class="edit-tag-rm">×</button></span>
+            <span class="edit-tag">dica <button class="edit-tag-rm">×</button></span>
+            <div class="tag-add-inline">
+              <input class="tag-add-inp-d" type="text" placeholder="+ adicionar tag..." readonly>
+            </div>
+          </div>
+        </div>
+
+        <div class="editor-section-d">
+          <div class="editor-section-lbl">Imagens</div>
+          <div class="imgs-grid-d">
+            <div style="width:72px;height:72px;border-radius:9px;background:linear-gradient(135deg,#e8d5c4,#c8a882);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#8B6B61" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            </div>
+            <div style="width:72px;height:72px;border-radius:9px;background:linear-gradient(135deg,#d4e8da,#a8c8b2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3B6D11" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            </div>
+            <div style="width:72px;height:72px;border-radius:9px;background:linear-gradient(135deg,#c4d4e8,#82a8c8);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1565C0" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            </div>
+            <button class="btn-img-add-d">＋</button>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div><!-- /ano-shell -->
+
+</div><!-- /page-wrap -->
+
+</body>
+</html>

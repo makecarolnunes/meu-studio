@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Mockup Desktop — Orçamentos v2</title>
+<link rel="stylesheet" href="shared/css/tokens.css">
+<style>
+* { box-sizing:border-box; margin:0; padding:0; }
+body {
+  font-family: var(--font-sans);
+  background: linear-gradient(180deg, #efe7e0 0%, var(--surface-2) 100%);
+  color: var(--text);
+  min-height: 100vh;
+  padding: 40px 24px 80px;
+}
+.intro { max-width: 1180px; margin: 0 auto 24px; text-align: center; }
+.intro h1 { font-size: 1.4rem; margin-bottom: 6px; color: var(--brand-dark); }
+.intro p  { font-size: .85rem; color: var(--text-muted); }
+
+/* ── SHELL ───────────────────────────────────── */
+.shell {
+  max-width: 1180px; margin: 0 auto;
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  background: var(--bg);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 12px 40px rgba(56,25,11,.12);
+  min-height: 820px;
+}
+
+/* ── SIDEBAR ─────────────────────────────────── */
+.sidebar {
+  background: linear-gradient(180deg, #fbf6f1, #f5ede5);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  overflow-y: auto;
+}
+.sb-brand {
+  background: linear-gradient(135deg, var(--brand-dark), var(--brand));
+  color: #fff;
+  padding: 18px 20px 16px;
+  flex-shrink: 0;
+}
+.sb-brand .back {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: .72rem; color: rgba(255,255,255,.7);
+  background: none; border: none; cursor: pointer; padding: 0;
+  margin-bottom: 10px;
+}
+.sb-brand .back svg { width: 13px; height: 13px; }
+.sb-brand h2 { font-size: 1.2rem; font-weight: 700; }
+.sb-brand .sub { font-size: .72rem; opacity: .7; margin-top: 3px; }
+
+/* KPIs */
+.sb-kpis {
+  padding: 14px 14px 10px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.sb-kpis .kpi-lbl { font-size: .62rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 8px; }
+.kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+.kpi-box { background: #fff; border: 1px solid var(--border); border-radius: 10px; padding: 9px 12px; text-align: center; }
+.kpi-box .k-val { font-size: 1rem; font-weight: 800; line-height: 1.1; }
+.kpi-box .k-lbl { font-size: .59rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .06em; margin-top: 4px; }
+.kpi-box.ok   .k-val { color: var(--success); }
+.kpi-box.rose .k-val { color: var(--rose-dark); }
+.kpi-box.muted .k-val { color: var(--text-muted); }
+
+/* Sidebar sections */
+.sb-section {
+  padding: 12px 14px 8px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.sb-section:last-child { border-bottom: none; }
+.sb-section-lbl { font-size: .62rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 8px; }
+
+.btn-novo {
+  width: 100%; padding: 11px 16px;
+  background: var(--brand); color: #fff;
+  border: none; border-radius: 11px;
+  font-size: .88rem; font-weight: 700; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  box-shadow: 0 3px 10px rgba(109,76,65,.25);
+  transition: background .15s; font-family: inherit;
+}
+.btn-novo:hover { background: var(--brand-dark); }
+.btn-novo svg { width: 14px; height: 14px; }
+
+/* Filter items */
+.fil-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 11px; border-radius: 10px;
+  font-size: .86rem; font-weight: 600; color: var(--text);
+  cursor: pointer; margin-bottom: 2px;
+  transition: background .12s;
+  border: 1px solid transparent;
+}
+.fil-item:hover { background: rgba(255,255,255,.65); }
+.fil-item.active {
+  background: linear-gradient(135deg, var(--brand-dark), var(--brand));
+  color: #fff;
+  box-shadow: 0 3px 10px rgba(109,76,65,.22);
+}
+.fil-item.active .fil-count { background: rgba(255,255,255,.25); color: #fff; }
+.fil-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.fil-count {
+  margin-left: auto; font-size: .68rem; font-weight: 800;
+  background: var(--surface-2); color: var(--text-muted);
+  padding: 2px 7px; border-radius: 10px; flex-shrink: 0;
+}
+.fil-urgente .fil-count { background: var(--danger-soft); color: var(--danger); }
+.fil-icon { width: 16px; height: 16px; flex-shrink: 0; }
+.fil-icon svg { width: 16px; height: 16px; display: block; }
+
+/* ── MAIN ────────────────────────────────────── */
+.main { display: flex; flex-direction: column; min-height: 100%; }
+.header {
+  background: linear-gradient(135deg, var(--brand-dark), var(--brand));
+  color: #fff; padding: 18px 28px;
+  display: flex; align-items: center; justify-content: space-between;
+  flex-shrink: 0;
+}
+.header h1 { font-size: 1.25rem; font-weight: 700; }
+.header .sub { font-size: .78rem; opacity: .75; margin-top: 2px; }
+.gear { width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,.14); display: flex; align-items: center; justify-content: center; }
+.gear svg { width: 16px; height: 16px; }
+
+/* Controls bar (period + search) */
+.controls-bar {
+  background: #fff;
+  border-bottom: 1px solid var(--border);
+  padding: 12px 28px;
+  display: flex; align-items: center; gap: 14px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+/* Period selector */
+.period-group {
+  display: flex; align-items: center; gap: 8px;
+}
+.period-label { font-size: .72rem; font-weight: 700; color: var(--text-muted); white-space: nowrap; }
+.period-toggle {
+  display: flex; gap: 0;
+  background: var(--surface-2); border-radius: 20px; padding: 2px;
+}
+.period-btn {
+  padding: 5px 13px; border-radius: 18px; border: none;
+  font-size: .75rem; font-weight: 700; cursor: pointer;
+  background: transparent; color: var(--text-muted);
+  font-family: inherit; transition: all .15s; white-space: nowrap;
+}
+.period-btn.on { background: #fff; color: var(--brand-dark); box-shadow: 0 1px 4px rgba(56,25,11,.1); }
+.month-nav-inline {
+  display: flex; align-items: center; gap: 6px;
+}
+.month-arrow-sm {
+  background: #fff; border: 1px solid var(--border);
+  width: 26px; height: 26px; border-radius: 50%;
+  font-size: .95rem; color: var(--brand); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: border-color .15s; flex-shrink: 0;
+}
+.month-arrow-sm:hover { border-color: var(--brand); }
+.month-name-sm {
+  font-size: .82rem; font-weight: 700; color: var(--brand-dark);
+  letter-spacing: .08em; text-transform: uppercase;
+  min-width: 120px; text-align: center;
+}
+
+/* Search */
+.search-wrap {
+  flex: 1; min-width: 200px; max-width: 340px;
+  position: relative;
+}
+.search-wrap svg {
+  position: absolute; left: 10px; top: 50%;
+  transform: translateY(-50%);
+  width: 15px; height: 15px;
+  color: var(--text-muted); pointer-events: none;
+}
+.search-input {
+  width: 100%; padding: 8px 12px 8px 32px;
+  border: 1px solid var(--border); border-radius: 20px;
+  font-size: .82rem; font-family: inherit;
+  background: var(--surface-2); color: var(--text);
+  transition: border-color .15s, background .15s;
+}
+.search-input:focus { outline: none; border-color: var(--brand); background: #fff; }
+.search-input::placeholder { color: var(--text-subtle); }
+
+/* Follow-up alert */
+.fu-alert {
+  margin: 12px 28px 0;
+  background: #fff3e0; border: 1.5px solid #ff8f00;
+  border-radius: 10px; padding: 9px 14px;
+  font-size: .78rem; color: #7c3900; font-weight: 600;
+  display: flex; align-items: center; gap: 8px;
+}
+.fu-dot { width: 8px; height: 8px; border-radius: 50%; background: #e65100; flex-shrink: 0; }
+
+/* Cards */
+.cards-area { padding: 14px 28px 48px; flex: 1; }
+.sec-lbl {
+  font-size: .62rem; font-weight: 800; text-transform: uppercase;
+  color: var(--text-muted); letter-spacing: .08em;
+  margin: 0 0 10px;
+}
+.cards-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+/* ── ORC CARD ────────────────────────────────── */
+.orc-card {
+  background: #fff; border-radius: 13px;
+  padding: 13px 15px;
+  border-left: 3px solid var(--border);
+  border-top: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: box-shadow .15s, transform .1s;
+  display: flex; gap: 11px; align-items: flex-start;
+}
+.orc-card:hover { box-shadow: 0 4px 14px rgba(56,25,11,.08); transform: translateY(-1px); }
+.orc-card.st-fec  { border-left-color: var(--success); }
+.orc-card.st-neg  { border-left-color: #e65100; }
+.orc-card.st-novo { border-left-color: var(--info); }
+.orc-card.st-env  { border-left-color: var(--warning); }
+.orc-card.st-fuup { border-left-color: #e65100; animation: fuup 2s ease-in-out infinite; }
+@keyframes fuup {
+  0%,100% { box-shadow: -2px 0 10px rgba(230,81,0,.1); }
+  50%      { box-shadow: -2px 0 18px rgba(230,81,0,.3); }
+}
+
+/* Service avatar — substitui emojis */
+.svc-avatar {
+  width: 34px; height: 34px; border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; font-size: .72rem; font-weight: 800;
+  letter-spacing: -.02em;
+}
+/* Noiva: gem SVG com fundo rosé */
+.svc-noiva { background: #FBEAF0; color: var(--rose-dark); }
+.svc-noiva svg { width: 18px; height: 18px; display: block; }
+/* Maquiagem */
+.svc-maq { background: #F5EDF3; color: #a0007b; }
+/* Cabelo */
+.svc-cab { background: #EDE4FF; color: #6200ea; }
+/* Maq + Cabelo */
+.svc-maqcab { background: linear-gradient(135deg, #F5EDF3, #EDE4FF); color: #6200ea; }
+/* Curso */
+.svc-curso { background: var(--amber-soft); color: var(--amber-dark); }
+
+.orc-info { flex: 1; min-width: 0; }
+.orc-name {
+  font-size: .9rem; font-weight: 700;
+  display: flex; align-items: center; gap: 6px;
+}
+.orc-serv { font-size: .71rem; color: var(--text-muted); margin-top: 2px; }
+.orc-meta { font-size: .65rem; color: var(--text-muted); margin-top: 4px; }
+.orc-right { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; flex-shrink: 0; }
+.orc-val { font-size: .85rem; font-weight: 700; color: var(--brand-dark); }
+.badge {
+  font-size: .58rem; font-weight: 700; padding: 3px 8px;
+  border-radius: 20px; white-space: nowrap;
+  text-transform: uppercase; letter-spacing: .04em;
+}
+.b-novo { background: var(--info-soft);    color: var(--info); }
+.b-env  { background: var(--warning-soft); color: #7c4a00; }
+.b-neg  { background: #fff3e0;             color: #e65100; }
+.b-fec  { background: var(--success-soft); color: var(--success); }
+.b-perd { background: var(--danger-soft);  color: var(--danger); }
+.wa-btn {
+  width: 28px; height: 28px; border-radius: 8px;
+  background: #25D366; border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.wa-btn svg { width: 14px; height: 14px; fill: #fff; }
+</style>
+</head>
+<body>
+
+<div class="intro">
+  <h1>Mockup Desktop — Orçamentos v2</h1>
+  <p>Padrão "Todos os meses" · pesquisa por cliente · sem emojis (noiva destacada com ícone gem) · filtro por serviço no sidebar.</p>
+</div>
+
+<div class="shell">
+
+  <!-- ═══ SIDEBAR ═══ -->
+  <aside class="sidebar">
+    <div class="sb-brand">
+      <button class="back">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        Hub
+      </button>
+      <h2>Orçamentos</h2>
+      <div class="sub">CRM comercial</div>
+    </div>
+
+    <div class="sb-kpis">
+      <div class="kpi-lbl">Todos os meses</div>
+      <div class="kpi-grid">
+        <div class="kpi-box"><div class="k-val">23</div><div class="k-lbl">Total</div></div>
+        <div class="kpi-box ok"><div class="k-val">8</div><div class="k-lbl">Fechados</div></div>
+        <div class="kpi-box muted"><div class="k-val">35%</div><div class="k-lbl">Conversão</div></div>
+        <div class="kpi-box rose"><div class="k-val" style="font-size:.82rem">R$&nbsp;12.400</div><div class="k-lbl">Receita</div></div>
+      </div>
+    </div>
+
+    <!-- Novo Orçamento -->
+    <div class="sb-section">
+      <button class="btn-novo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Novo Orçamento
+      </button>
+    </div>
+
+    <!-- Filtro por status -->
+    <div class="sb-section">
+      <div class="sb-section-lbl">Status</div>
+      <div class="fil-item active">
+        <span class="fil-dot" style="background:var(--text-muted)"></span>
+        Todos
+        <span class="fil-count">23</span>
+      </div>
+      <div class="fil-item fil-urgente">
+        <span class="fil-dot" style="background:#e65100"></span>
+        Follow-up
+        <span class="fil-count" style="background:var(--danger-soft);color:var(--danger)">3</span>
+      </div>
+      <div class="fil-item">
+        <span class="fil-dot" style="background:var(--info)"></span>
+        Novos
+        <span class="fil-count">7</span>
+      </div>
+      <div class="fil-item">
+        <span class="fil-dot" style="background:#e65100"></span>
+        Negociando
+        <span class="fil-count">5</span>
+      </div>
+      <div class="fil-item">
+        <span class="fil-dot" style="background:var(--success)"></span>
+        Fechados
+        <span class="fil-count">8</span>
+      </div>
+      <div class="fil-item">
+        <span class="fil-dot" style="background:var(--danger)"></span>
+        Agenda pendente
+        <span class="fil-count" style="background:var(--danger-soft);color:var(--danger)">2</span>
+      </div>
+      <div class="fil-item">
+        <span class="fil-dot" style="background:var(--success)"></span>
+        Agenda confirmada
+        <span class="fil-count">6</span>
+      </div>
+    </div>
+
+    <!-- Filtro por serviço -->
+    <div class="sb-section">
+      <div class="sb-section-lbl">Serviço</div>
+      <div class="fil-item active">
+        <span class="fil-dot" style="background:var(--text-muted)"></span>
+        Todos os serviços
+        <span class="fil-count">23</span>
+      </div>
+      <div class="fil-item">
+        <span class="fil-dot" style="background:#a0007b"></span>
+        Maquiagem
+        <span class="fil-count">11</span>
+      </div>
+      <div class="fil-item">
+        <span class="fil-dot" style="background:#6200ea"></span>
+        Cabelo
+        <span class="fil-count">4</span>
+      </div>
+      <div class="fil-item">
+        <span class="fil-dot" style="background:#6200ea; opacity:.6"></span>
+        Maq + Cabelo
+        <span class="fil-count">3</span>
+      </div>
+      <div class="fil-item">
+        <!-- gem icon for noiva -->
+        <span class="fil-icon"><svg viewBox="0 0 24 24" fill="none" stroke="var(--rose-dark)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12l4 6-10 13L2 9z"/><path d="M11 3 8 9l4 13 4-13-3-6"/><path d="M2 9h20"/></svg></span>
+        Noiva
+        <span class="fil-count">4</span>
+      </div>
+      <div class="fil-item">
+        <span class="fil-dot" style="background:var(--warning)"></span>
+        Curso
+        <span class="fil-count">1</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ═══ MAIN ═══ -->
+  <main class="main">
+    <div class="header">
+      <div>
+        <h1>Orçamentos</h1>
+        <div class="sub">23 orçamentos · 8 fechados · todos os meses</div>
+      </div>
+      <div class="gear">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 0 1-4 0v-.1a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 0 1 0-4h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3h0a1.7 1.7 0 0 0 1-1.5V3a2 2 0 0 1 4 0v.1a1.7 1.7 0 0 0 1 1.5h0a1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8v0a1.7 1.7 0 0 0 1.5 1H21a2 2 0 0 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+      </div>
+    </div>
+
+    <!-- Controls: period toggle + search -->
+    <div class="controls-bar">
+      <div class="period-group">
+        <span class="period-label">Período:</span>
+        <div class="period-toggle">
+          <!-- "Todos" é o padrão ativo -->
+          <button class="period-btn on">Todos os meses</button>
+          <button class="period-btn">Por mês</button>
+        </div>
+        <!-- Month nav aparece quando "Por mês" está ativo (aqui como referência visual) -->
+        <div class="month-nav-inline" style="opacity:.4;pointer-events:none">
+          <button class="month-arrow-sm">‹</button>
+          <span class="month-name-sm">Mai · 2026</span>
+          <button class="month-arrow-sm">›</button>
+        </div>
+      </div>
+
+      <div class="search-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input class="search-input" type="text" placeholder="Pesquisar cliente...">
+      </div>
+    </div>
+
+    <!-- Follow-up alert -->
+    <div class="fu-alert">
+      <div class="fu-dot"></div>
+      3 orçamentos aguardam follow-up — clique para filtrar
+    </div>
+
+    <!-- Cards -->
+    <div class="cards-area">
+      <div class="sec-lbl">Todos os orçamentos · 23 · mais recentes primeiro</div>
+      <div class="cards-grid">
+
+        <!-- 19/05 — Novo Pedido, Maquiagem -->
+        <div class="orc-card st-novo">
+          <div class="svc-avatar svc-maq">M</div>
+          <div class="orc-info">
+            <div class="orc-name">Ana Costa</div>
+            <div class="orc-serv">Maquiagem em domicílio</div>
+            <div class="orc-meta">Recebido: 19/05 · Sem data definida</div>
+          </div>
+          <div class="orc-right">
+            <div class="orc-val">R$ 350</div>
+            <span class="badge b-novo">Novo Pedido</span>
+            <a class="wa-btn" href="#"><svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg></a>
+          </div>
+        </div>
+
+        <!-- 18/05 — Follow-up, Maquiagem -->
+        <div class="orc-card st-fuup">
+          <div class="svc-avatar svc-maq">M</div>
+          <div class="orc-info">
+            <div class="orc-name">Maria Silva</div>
+            <div class="orc-serv">Maquiagem no Studio</div>
+            <div class="orc-meta">Recebido: 18/05 · Follow-up vencido</div>
+          </div>
+          <div class="orc-right">
+            <div class="orc-val">R$ 350</div>
+            <span class="badge b-env">Enviado</span>
+            <a class="wa-btn" href="#"><svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg></a>
+          </div>
+        </div>
+
+        <!-- 16/05 — Negociando, Noiva (gem icon) -->
+        <div class="orc-card st-neg">
+          <div class="svc-avatar svc-noiva">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12l4 6-10 13L2 9z"/><path d="M11 3 8 9l4 13 4-13-3-6"/><path d="M2 9h20"/></svg>
+          </div>
+          <div class="orc-info">
+            <div class="orc-name">Carla Mendes</div>
+            <div class="orc-serv">Noiva · Maquiagem + Cabelo</div>
+            <div class="orc-meta">Recebido: 16/05 · Casamento out/2026</div>
+          </div>
+          <div class="orc-right">
+            <div class="orc-val">R$ 2.200</div>
+            <span class="badge b-neg">Negociando</span>
+            <a class="wa-btn" href="#"><svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg></a>
+          </div>
+        </div>
+
+        <!-- 14/05 — Enviado, Maquiagem -->
+        <div class="orc-card st-env">
+          <div class="svc-avatar svc-maq">M</div>
+          <div class="orc-info">
+            <div class="orc-name">Bia Ferreira</div>
+            <div class="orc-serv">Maquiagem no Studio</div>
+            <div class="orc-meta">Recebido: 14/05 · Follow-up: amanhã</div>
+          </div>
+          <div class="orc-right">
+            <div class="orc-val">R$ 300</div>
+            <span class="badge b-env">Enviado</span>
+            <a class="wa-btn" href="#"><svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg></a>
+          </div>
+        </div>
+
+        <!-- 10/05 — Fechado, Cabelo -->
+        <div class="orc-card st-fec">
+          <div class="svc-avatar svc-cab">C</div>
+          <div class="orc-info">
+            <div class="orc-name">Renata Lima</div>
+            <div class="orc-serv">Cabelo no Studio</div>
+            <div class="orc-meta">Recebido: 10/05 · Atend. 22/05 às 10h · Agenda ⚠️</div>
+          </div>
+          <div class="orc-right">
+            <div class="orc-val">R$ 200</div>
+            <span class="badge b-fec">Fechado</span>
+            <a class="wa-btn" href="#"><svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg></a>
+          </div>
+        </div>
+
+        <!-- 08/05 — Fechado, Noiva (gem icon) -->
+        <div class="orc-card st-fec">
+          <div class="svc-avatar svc-noiva">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12l4 6-10 13L2 9z"/><path d="M11 3 8 9l4 13 4-13-3-6"/><path d="M2 9h20"/></svg>
+          </div>
+          <div class="orc-info">
+            <div class="orc-name">Joana Pereira</div>
+            <div class="orc-serv">Noiva · Maquiagem + Cabelo</div>
+            <div class="orc-meta">Recebido: 08/05 · Casamento 15/06 · Agenda ✅</div>
+          </div>
+          <div class="orc-right">
+            <div class="orc-val">R$ 2.800</div>
+            <span class="badge b-fec">Fechado</span>
+            <a class="wa-btn" href="#"><svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg></a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+</div>
+</body>
+</html>

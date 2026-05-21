@@ -237,18 +237,10 @@
     <span style="font-size:0.72rem; color:var(--muted)" id="act-meta">—</span>
   </div>
 
-  <!-- WA Button -->
-  <div style="padding: 0 18px 10px;">
-    <button class="btn-wa" id="act-wa-btn" onclick="openWhatsApp()">
-      <span>💬</span> Abrir WhatsApp com mensagem pronta
-    </button>
-    <div style="font-size:0.69rem; color:var(--muted); margin-top:5px; text-align:center" id="act-wa-hint"></div>
-  </div>
-
   <!-- ★ FECHAR E AGENDAR TUDO ★ -->
   <div id="act-fech-btn-area" style="padding: 0 18px 12px;">
     <button class="btn-fechar" onclick="abrirFechamento()">
-      🚀 Fechar e Agendar Tudo
+      Fechar e Agendar Tudo
     </button>
     <div style="font-size:0.66rem; color:var(--muted); text-align:center; margin-top:5px; line-height:1.45;">
       Financeiro + Google Agenda + WhatsApp em um só passo
@@ -289,6 +281,15 @@
     <div class="form-group">
       <label class="form-label">Valor fechado (R$)</label>
       <input class="form-input" id="act-val-fechado" type="number" placeholder="0,00" step="0.01">
+    </div>
+  </div>
+
+  <!-- Proposta (apenas para Noivas) -->
+  <div id="act-proposta-section" style="padding: 10px 18px 0; display:none;">
+    <div class="form-group">
+      <label class="form-label">📄 Proposta enviada</label>
+      <div id="act-proposta-list" style="margin-bottom:10px"></div>
+      <button class="btn-add-slot" type="button" onclick="uploadActProposal()" style="margin-bottom:8px">+ Anexar Proposta</button>
     </div>
   </div>
 

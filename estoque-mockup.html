@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mockup — Estoque Desktop</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: linear-gradient(135deg, #f0ebe8, #e8e0db);
+  color: #2C2420; min-height: 100vh;
+  padding: 32px 40px 60px;
+}
+:root {
+  --brand: #8B6B61; --brand-d: #38190b; --brand-l: rgba(139,107,97,0.12);
+  --ok: #3B6D11; --ok-l: #EAF3DE;
+  --amber: #BA7517; --amber-l: #FAEEDA;
+  --danger: #C62828; --danger-l: #FCE7E7;
+  --blue: #1565C0; --blue-l: #E3F2FD;
+  --purple: #6A1B9A; --purple-l: #F3E5F5;
+  --muted: #6F6660; --border: #E5DDD8; --bg: #FAF7F5; --card: #fff; --text: #2C2420;
+}
+
+.section-label { text-align:center; padding:0 0 8px; font-size:1.1rem; font-weight:700; color:var(--brand-d); }
+.section-sub   { text-align:center; font-size:.77rem; color:var(--muted); margin-bottom:20px; }
+
+/* ── Shell ── */
+.shell {
+  max-width: 1160px; margin: 0 auto;
+  background: var(--card);
+  box-shadow: 0 8px 48px rgba(56,25,11,.12);
+  border-radius: 20px; overflow: hidden;
+  display: flex; min-height: 700px;
+}
+
+/* ── Sidebar ── */
+.sidebar {
+  width: 240px; flex-shrink: 0;
+  background: linear-gradient(160deg, #3d1e12 0%, #5a2e1e 55%, #8B6B61 100%);
+  display: flex; flex-direction: column;
+  padding: 22px 15px 28px;
+}
+
+.sb-brand { display:flex; align-items:center; gap:10px; margin-bottom:20px; padding:0 3px; }
+.sb-brand-icon { width:36px; height:36px; border-radius:10px; background:rgba(255,255,255,.15); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.sb-brand h2 { font-size:1rem; font-weight:800; color:white; letter-spacing:-.01em; }
+
+.sb-nova { display:flex; align-items:center; justify-content:center; gap:8px; padding:10px 14px; border-radius:11px; background:var(--brand-d); color:white; border:none; font-size:.83rem; font-weight:700; cursor:pointer; margin-bottom:18px; width:100%; box-shadow:0 3px 10px rgba(56,25,11,.3); }
+
+/* Search */
+.sb-search { display:flex; align-items:center; gap:7px; background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.2); border-radius:10px; padding:8px 11px; margin-bottom:18px; }
+.sb-search svg { flex-shrink:0; color:rgba(255,255,255,.55); }
+.sb-search input { flex:1; border:none; outline:none; background:transparent; color:white; font-size:.82rem; font-family:inherit; }
+.sb-search input::placeholder { color:rgba(255,255,255,.45); }
+
+/* Stats 2x2 */
+.sb-stats { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:18px; }
+.sb-stat { background:rgba(255,255,255,.1); border-radius:10px; padding:8px 9px; text-align:center; }
+.sb-stat-lbl { font-size:.58rem; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:rgba(255,255,255,.55); }
+.sb-stat-val { font-size:1.15rem; font-weight:900; color:white; display:block; margin-top:2px; }
+.sb-stat-val.c-repor   { color:#F48080; }
+.sb-stat-val.c-acabando{ color:#F9C784; }
+.sb-stat-val.c-wishlist{ color:#90CAF9; }
+.sb-stat-val.c-ok      { color:#A3D977; }
+
+/* Seção label */
+.sb-lbl { font-size:.62rem; font-weight:800; text-transform:uppercase; letter-spacing:.07em; color:rgba(255,255,255,.42); padding:0 3px; margin-bottom:7px; margin-top:14px; }
+
+/* Status filters */
+.sb-fil { display:flex; align-items:center; gap:9px; padding:8px 10px; border-radius:10px; cursor:pointer; margin-bottom:3px; border:none; background:transparent; width:100%; text-align:left; font-family:inherit; }
+.sb-fil:hover { background:rgba(255,255,255,.08); }
+.sb-fil.active { background:rgba(255,255,255,.18); }
+.sb-fil-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+.sb-fil-name { font-size:.83rem; font-weight:600; color:rgba(255,255,255,.88); flex:1; }
+.sb-fil-cnt { font-size:.71rem; font-weight:800; background:rgba(255,255,255,.18); color:white; padding:2px 7px; border-radius:10px; }
+.sb-fil.active .sb-fil-cnt { background:rgba(255,255,255,.32); }
+
+/* Category chips */
+.sb-cats { display:flex; flex-wrap:wrap; gap:5px; }
+.sb-cat { padding:4px 10px; border-radius:20px; font-size:.7rem; font-weight:600; cursor:pointer; background:rgba(255,255,255,.1); color:rgba(255,255,255,.75); border:1px solid rgba(255,255,255,.18); font-family:inherit; }
+.sb-cat.active { background:rgba(139,107,97,.5); color:white; border-color:rgba(139,107,97,.8); }
+
+/* ── Main ── */
+.main { flex:1; display:flex; flex-direction:column; background:var(--bg); min-width:0; }
+
+/* Toolbar */
+.toolbar { display:flex; align-items:center; justify-content:space-between; padding:14px 22px 12px; border-bottom:1px solid var(--border); background:var(--card); flex-shrink:0; }
+.toolbar-left { display:flex; align-items:center; gap:10px; }
+.toolbar-title { font-size:1.05rem; font-weight:800; color:var(--brand-d); }
+.toolbar-cnt { font-size:.72rem; color:var(--muted); background:var(--border); padding:2px 8px; border-radius:10px; font-weight:700; }
+.toolbar-nova { display:flex; align-items:center; gap:7px; padding:8px 16px; border-radius:10px; background:var(--brand-d); color:white; border:none; font-size:.82rem; font-weight:700; cursor:pointer; }
+
+/* Content 2 colunas */
+.content { flex:1; overflow-y:auto; padding:14px 20px 40px; display:grid; grid-template-columns:1fr 1fr; gap:10px; align-content:start; }
+
+/* ── Item card ── */
+.item-card {
+  background:var(--card); border-radius:12px; padding:12px 14px;
+  display:flex; align-items:center; gap:11px;
+  box-shadow:0 1px 4px rgba(0,0,0,.06);
+  border:1px solid var(--border);
+  cursor:pointer; transition:box-shadow .15s;
+}
+.item-card:hover { box-shadow:0 3px 12px rgba(0,0,0,.1); }
+.item-card.is-comprado { opacity:.5; }
+
+.item-check {
+  width:26px; height:26px; border-radius:50%;
+  border:2px solid #D9CDC4; background:none;
+  cursor:pointer; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center;
+}
+.item-check.checked { background:var(--ok); border-color:var(--ok); color:white; }
+
+.item-info { flex:1; min-width:0; }
+.item-nome { font-size:.9rem; font-weight:600; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.item-cat  { font-size:.69rem; color:var(--muted); margin-top:2px; display:flex; align-items:center; gap:6px; }
+.item-valor { font-size:.69rem; font-weight:700; color:var(--brand); }
+.item-obs  { font-size:.71rem; color:var(--muted); margin-top:3px; font-style:italic; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.sbadge { font-size:.67rem; font-weight:700; padding:3px 9px; border-radius:20px; white-space:nowrap; flex-shrink:0; }
+
+/* Comprados section */
+.comp-sec-hdr { display:flex; align-items:center; gap:8px; grid-column:1/-1; margin:8px 0 4px; }
+.comp-sec-line { flex:1; height:1px; background:var(--border); }
+.comp-sec-lbl { font-size:.69rem; font-weight:700; color:var(--ok); white-space:nowrap; display:flex; align-items:center; gap:5px; }
+.comp-sec-count { background:var(--ok-l); color:var(--ok); font-size:.65rem; font-weight:800; padding:1px 7px; border-radius:20px; }
+</style>
+</head>
+<body>
+
+<p class="section-label">Estoque — Desktop</p>
+<p class="section-sub">Sidebar com busca + stats + filtros de status + filtro de categoria · Cards em 2 colunas</p>
+
+<div class="shell">
+  <aside class="sidebar">
+
+    <div class="sb-brand">
+      <div class="sb-brand-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+      </div>
+      <h2>Estoque</h2>
+    </div>
+
+    <button class="sb-nova">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Novo Item
+    </button>
+
+    <!-- Busca -->
+    <div class="sb-search">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" placeholder="Buscar item...">
+    </div>
+
+    <!-- Stats -->
+    <div class="sb-stats">
+      <div class="sb-stat"><div class="sb-stat-lbl">Total</div><span class="sb-stat-val">28</span></div>
+      <div class="sb-stat"><div class="sb-stat-lbl">Repor</div><span class="sb-stat-val c-repor">4</span></div>
+      <div class="sb-stat"><div class="sb-stat-lbl">Acabando</div><span class="sb-stat-val c-acabando">6</span></div>
+      <div class="sb-stat"><div class="sb-stat-lbl">Wishlist</div><span class="sb-stat-val c-wishlist">5</span></div>
+    </div>
+
+    <!-- Status filters -->
+    <div class="sb-lbl">Status</div>
+    <button class="sb-fil active">
+      <div class="sb-fil-dot" style="background:#aaa"></div>
+      <span class="sb-fil-name">Todos</span>
+      <span class="sb-fil-cnt">28</span>
+    </button>
+    <button class="sb-fil">
+      <div class="sb-fil-dot" style="background:#C62828"></div>
+      <span class="sb-fil-name">Repor (zerado)</span>
+      <span class="sb-fil-cnt">4</span>
+    </button>
+    <button class="sb-fil">
+      <div class="sb-fil-dot" style="background:#BA7517"></div>
+      <span class="sb-fil-name">Acabando</span>
+      <span class="sb-fil-cnt">6</span>
+    </button>
+    <button class="sb-fil">
+      <div class="sb-fil-dot" style="background:#6A1B9A"></div>
+      <span class="sb-fil-name">Investir</span>
+      <span class="sb-fil-cnt">3</span>
+    </button>
+    <button class="sb-fil">
+      <div class="sb-fil-dot" style="background:#1565C0"></div>
+      <span class="sb-fil-name">Wishlist</span>
+      <span class="sb-fil-cnt">5</span>
+    </button>
+
+    <!-- Categoria chips -->
+    <div class="sb-lbl">Categoria</div>
+    <div class="sb-cats">
+      <button class="sb-cat active">Todas</button>
+      <button class="sb-cat">Maquiagem</button>
+      <button class="sb-cat">Cabelo</button>
+      <button class="sb-cat">Skin</button>
+      <button class="sb-cat">Equipamentos</button>
+      <button class="sb-cat">Consumíveis</button>
+      <button class="sb-cat">Outros</button>
+    </div>
+
+  </aside>
+
+  <div class="main">
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <span class="toolbar-title">Todos os itens</span>
+        <span class="toolbar-cnt">28 itens</span>
+      </div>
+      <button class="toolbar-nova">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Novo item
+      </button>
+    </div>
+
+    <div class="content">
+
+      <!-- Cards ativos -->
+      <div class="item-card">
+        <div class="item-check"></div>
+        <div class="item-info">
+          <div class="item-nome">Base MAC Studio Fix</div>
+          <div class="item-cat">Maquiagem <span class="item-valor">R$ 289,00</span></div>
+        </div>
+        <span class="sbadge" style="color:#C62828;background:#FCE7E7">Zerado</span>
+      </div>
+
+      <div class="item-card">
+        <div class="item-check"></div>
+        <div class="item-info">
+          <div class="item-nome">Primer NYX Pore Filler</div>
+          <div class="item-cat">Maquiagem <span class="item-valor">R$ 79,90</span></div>
+          <div class="item-obs">Comprar na Sephora ou Americanas</div>
+        </div>
+        <span class="sbadge" style="color:#BA7517;background:#FAEEDA">Acabando</span>
+      </div>
+
+      <div class="item-card">
+        <div class="item-check"></div>
+        <div class="item-info">
+          <div class="item-nome">Paleta de sombras Naked3</div>
+          <div class="item-cat">Maquiagem <span class="item-valor">R$ 320,00</span></div>
+        </div>
+        <span class="sbadge" style="color:#3B6D11;background:#EAF3DE">OK</span>
+      </div>
+
+      <div class="item-card">
+        <div class="item-check"></div>
+        <div class="item-info">
+          <div class="item-nome">Pincel kabuki grande</div>
+          <div class="item-cat">Equipamentos</div>
+          <div class="item-obs">Sigma ou Real Techniques</div>
+        </div>
+        <span class="sbadge" style="color:#C62828;background:#FCE7E7">Zerado</span>
+      </div>
+
+      <div class="item-card">
+        <div class="item-check"></div>
+        <div class="item-info">
+          <div class="item-nome">Setting spray MAC Fix+</div>
+          <div class="item-cat">Maquiagem <span class="item-valor">R$ 145,00</span></div>
+        </div>
+        <span class="sbadge" style="color:#BA7517;background:#FAEEDA">Acabando</span>
+      </div>
+
+      <div class="item-card">
+        <div class="item-check"></div>
+        <div class="item-info">
+          <div class="item-nome">Anel de luz 18" com tripé</div>
+          <div class="item-cat">Equipamentos <span class="item-valor">R$ 450,00</span></div>
+        </div>
+        <span class="sbadge" style="color:#6A1B9A;background:#F3E5F5">Investir</span>
+      </div>
+
+      <div class="item-card">
+        <div class="item-check"></div>
+        <div class="item-info">
+          <div class="item-nome">Rimel Diorshow Blackout</div>
+          <div class="item-cat">Maquiagem <span class="item-valor">R$ 198,00</span></div>
+        </div>
+        <span class="sbadge" style="color:#1565C0;background:#E3F2FD">Wishlist</span>
+      </div>
+
+      <div class="item-card">
+        <div class="item-check"></div>
+        <div class="item-info">
+          <div class="item-nome">Protetor solar Episol FPS50</div>
+          <div class="item-cat">Skin <span class="item-valor">R$ 68,00</span></div>
+        </div>
+        <span class="sbadge" style="color:#BA7517;background:#FAEEDA">Acabando</span>
+      </div>
+
+      <!-- Seção comprados -->
+      <div class="comp-sec-hdr">
+        <div class="comp-sec-line"></div>
+        <span class="comp-sec-lbl">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Comprados <span class="comp-sec-count">3</span>
+        </span>
+        <div class="comp-sec-line"></div>
+      </div>
+
+      <div class="item-card is-comprado">
+        <div class="item-check checked">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3.2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div class="item-info">
+          <div class="item-nome">Esponja beauty blender</div>
+          <div class="item-cat">Maquiagem <span class="item-valor">R$ 89,00</span></div>
+        </div>
+        <span class="sbadge" style="color:#C62828;background:#FCE7E7">Zerado</span>
+      </div>
+
+      <div class="item-card is-comprado">
+        <div class="item-check checked">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3.2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div class="item-info">
+          <div class="item-nome">Batom líquido nude Charlotte Tilbury</div>
+          <div class="item-cat">Maquiagem <span class="item-valor">R$ 210,00</span></div>
+        </div>
+        <span class="sbadge" style="color:#BA7517;background:#FAEEDA">Acabando</span>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

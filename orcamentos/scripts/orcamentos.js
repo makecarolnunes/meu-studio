@@ -59,6 +59,7 @@ let fechLocal         = 'studio';
 let fechSinalRecebido = true;
 let fechSinalManual   = false;
 let fechPropostas     = [];
+let actPropostas      = [];
 let lastFechamento    = null;
 
 const coworkDisponivel = (typeof window !== 'undefined' && typeof window.cowork !== 'undefined');
@@ -1208,6 +1209,7 @@ function openAction(id) {
 
   renderActGcalSection(e);
   renderActCompSection(String(id));
+  renderActPropostaSection(e);
   openPanel('panel-action');
 }
 
@@ -1247,6 +1249,11 @@ async function saveAction() {
   if (e.Status === 'Fechado' && vf) e.ValorFechado = vf;
   if (ve) e.ValorProp = ve;
 
+  // Salvar propostas se origem é Noiva
+  if (e.Origem === 'Noiva' && actPropostas.length > 0) {
+    e.Propostas = actPropostas;
+  }
+
   cacheEntries();
   closeAll();
   render();
@@ -1260,6 +1267,7 @@ async function saveAction() {
     ValorFechado:  e.ValorFechado,
     ValorProp:     e.ValorProp,
     Obs:           e.Obs,
+    Propostas:     e.Propostas,
   };
   const result = await postEntry({ action: 'update', id: e.ID, fields });
   if (!result.ok && result.error !== 'no-url') {
@@ -1915,6 +1923,65 @@ function renderActGcalSection(e) {
     if (btn) { btn.textContent = '📅 Adicionar ao Google Agenda'; btn.classList.remove('ok'); btn.disabled = false; }
     if (res) { res.className = 'gcal-status'; res.textContent = ''; }
   }
+}
+
+function renderActPropostaSection(e) {
+  const section = document.getElementById('act-proposta-section');
+  if (!section) return;
+
+  // Mostrar seção apenas para Noivas
+  const isNoiva = e.Origem === 'Noiva';
+  section.style.display = isNoiva ? 'block' : 'none';
+
+  if (!isNoiva) return;
+
+  // Carregar propostas do orçamento
+  actPropostas = (e.Propostas && Array.isArray(e.Propostas)) ? e.Propostas : [];
+  renderActPropostas();
+}
+
+function renderActPropostas() {
+  const list = document.getElementById('act-proposta-list');
+  if (!list) return;
+  if (actPropostas.length === 0) {
+    list.innerHTML = '<p style="font-size:0.75rem;color:var(--muted);margin:0 0 8px">Nenhuma proposta anexada</p>';
+  } else {
+    list.innerHTML = actPropostas.map(p => `
+      <div style="display:flex;align-items:center;gap:8px;padding:8px;background:#fafafa;border-radius:8px;margin-bottom:6px">
+        <span style="flex:1;font-size:0.85rem;color:var(--brown);word-break:break-word">${esc(p.nome)}</span>
+        <a href="${p.link}" target="_blank" rel="noopener" style="font-size:0.75rem;color:#1976d2;padding:4px 8px;border-radius:4px;background:#e3f2fd;text-decoration:none;white-space:nowrap">📄 Ver</a>
+        <button class="delbtn" style="width:24px;height:24px;flex-shrink:0" type="button" onclick="deleteActProposta('${p.fileId}')" title="Remover">${SVG.trash}</button>
+      </div>`).join('');
+  }
+}
+
+async function uploadActProposal() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'application/pdf,image/*';
+  input.onchange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    toast('Enviando proposta...');
+    try {
+      const b64 = await fileToBase64(file);
+      const result = await DB.storage.uploadComprovante(activeId, file, 'PROPOSTA', b64, file.type);
+      actPropostas.push({ fileId: result.fileId, link: result.link, nome: file.name, ts: Date.now() });
+      renderActPropostas();
+      toast('Proposta anexada!');
+    } catch(err) {
+      toast('Erro ao enviar: ' + err.message);
+    }
+  };
+  input.click();
+}
+
+function deleteActProposta(fileId) {
+  if (!confirm('Remover esta proposta?')) return;
+  actPropostas = actPropostas.filter(p => p.fileId !== fileId);
+  try { DB.storage.deleteComprovante(fileId); } catch(_) {}
+  renderActPropostas();
+  toast('Proposta removida');
 }
 
 async function adicionarAgendaDeAction() {
