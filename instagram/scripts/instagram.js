@@ -2110,7 +2110,7 @@
 '  "hook_sugerido": {\n' +
 '    "primeira_opcao": "hook pronto pra usar",\n' +
 '    "segunda_opcao": "alternativa",\n' +
-'    "principio": "o princípio do hook escolhido (ex: começa com cena, não 'oi gente')"\n' +
+'    "principio": "o princípio do hook escolhido (ex: começa com cena, não com saudação genérica)"\n' +
 '  },\n' +
 '  "cta_sugerido": {\n' +
 '    "texto": "CTA pronto",\n' +
