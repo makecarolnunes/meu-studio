@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-22 08:59 | main | docs: sync CLAUDE.md [auto] -->
+<!-- AUTO: 2026-05-22 09:27 | main | feat(sidebar+instagram): Instagram na sidebar, atalho Planejamento, a├º├Áes Enviar/Descartar -->
 
