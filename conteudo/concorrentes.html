@@ -692,48 +692,161 @@ function resetResult() {
   document.getElementById('bb-btn').classList.remove('loading');
 }
 
-// ── CAROL PROFILE ─────────────────────────────────────────────
-var CAROL_PROFILE =
-  'PERFIL DE CAROL (@makecarolnunes):\n' +
-  '- Maquiadora freelancer profissional\n' +
-  '- Nicho: Maquiagem para noivas, eventos e make artístico\n' +
-  '- Público: Noivas 25-40 anos e mulheres para eventos especiais\n' +
-  '- Posicionamento: Autoridade técnica + conexão humana. Elegante e acolhedora.\n' +
-  '- Estética da marca: café/terra/nude, premium acessível\n' +
-  '- Pilares: técnica, antes/depois, bastidores, relacionamento com noivas, automaquiagem\n' +
-  '- Objetivo no Instagram: autoridade + conexão + agendamentos/orçamentos';
+// ── BRAND BRAIN — CENTRO DE COMANDO ──────────────────────────
+// Extraído diretamente do manual da marca (estrategia/centro-de-comando.html)
+// Toda análise de concorrentes deve ser ancorada neste contexto real.
+var BRAND_BRAIN = [
+
+'═══ BRAND BRAIN DE CAROL NUNES (@makecarolnunes) ═══',
+'',
+'── DNA DA MARCA ──',
+'Essência: "Beleza que revela quem você já é." Carol não transforma — revela.',
+'Propósito: Fazer cada mulher se reconhecer no espelho, no dia mais especial ou no mais comum.',
+'Diferencial ÚNICO: 10 anos de publicidade + 7 de beleza. Pensamento estratégico + técnica refinada. Nenhuma concorrente no mercado de noivas/beleza tem essa combinação.',
+'Posicionamento: Premium acessível. Ticket noiva R$2.000. Caminho ao ultra-premium via autoridade digital e portfólio editorial crescente.',
+'Visão: Referência em RJ para noivas que querem ser elas mesmas + maior autoridade técnica em pele preta e cachos/crespos do estado.',
+'Promessa: "A maquiagem dura quanto a memória do dia. Você chega ao altar sendo você — só mais você."',
+'',
+'── DOIS PILARES QUE COEXISTEM ──',
+'PILAR I — Noivas Premium:',
+'  • Luxo emocional — presença total do making of ao altar (6-8h)',
+'  • Exclusividade de data (só a noiva naquele dia)',
+'  • Jornada completa: reunião → prévia → making of',
+'  • Produtos premium: Dior, NARS, MAC, Lancôme, Kryolan',
+'  • Sem surpresas — noiva sai da prévia com certeza do resultado',
+'',
+'PILAR II — Autoridade Técnica em Pele Preta e Cachos/Crespos:',
+'  • Especialização REAL em pele preta (não performática)',
+'  • Domínio técnico em cachos e crespos valorizados',
+'  • Educação para profissionais — cursos como evolução natural',
+'  • Representatividade com sofisticação editorial',
+'  • Técnica específica para melanina — subtom, base, acabamento',
+'  • Referência de mercado — não só uma opção',
+'',
+'REGRA DE COERÊNCIA: Se cobrir o assunto da foto (noiva ou pele preta) e ver só o tratamento visual, os dois devem parecer do mesmo lugar — paleta terra/nude, luz quente, sentimento.',
+'',
+'── PÚBLICOS (4 PERSONAS) ──',
+'Persona 1 — A Noiva Premium (28–38 anos):',
+'  Quer: se sentir ela mesma no dia mais importante. Durabilidade, atenção, tranquilidade.',
+'  Medo: não se reconhecer nas fotos. Maquiagem que borra. Profissional que não ouve.',
+'  Decide por: portfólio + feedbacks + sensação de confiança. Preço NÃO é filtro principal.',
+'',
+'Persona 2 — A Noiva Preta (25–38 anos):',
+'  Quer: profissional que entende seu tom, seus traços, respeita seus cachos.',
+'  Medo: pele "clareada". Desconfia de quem diz "atendo todo mundo". Quer especialização real.',
+'  Decide por: portfólio com peles pretas reais + recomendação de outras mulheres negras.',
+'',
+'Persona 3 — A Mulher Cacheada/Crespa (22–40 anos):',
+'  Quer: penteado que valorize sua textura. Maquiagem que harmonize com o natural.',
+'  Medo: sugestão de alisar. Penteados que não duram.',
+'  Decide por: Reels de processo com cachos reais + conteúdo educativo.',
+'',
+'Persona 4 — A Profissional em Formação (20–32 anos):',
+'  Quer: aprender com quem domina pele preta e cabelos texturizados.',
+'  Medo: errar com clientes. Falta de confiança.',
+'  Decide por: autoridade percebida + conteúdo técnico gratuito de qualidade.',
+'',
+'── ARQUÉTIPOS ──',
+'A Criadora (principal): técnica profunda, cria referência, portfólio editorial, composições intencionais.',
+'A Cuidadora (secundário): presente, acolhedora, ao lado da noiva nervosa, making of, WhatsApp.',
+'A Sábia (secundário): professora, explica o porquê, reels técnicos, futuros cursos.',
+'TENSÃO ARQUETÍPICA (força da marca): técnica sem frieza + cuidado sem ingenuidade + autoridade sem arrogância.',
+'',
+'── TOM DE VOZ ──',
+'Palavras da marca: revelar, realçar, presença, atemporal, se reconhecer, sua essência,',
+'  durabilidade, acolhimento, técnica, naturalidade, refinamento, exclusividade,',
+'  "inteiramente seu", "sem surpresas", "sem pressa".',
+'',
+'PALAVRAS PROIBIDAS: incrível, perfeito, arrasou, "que dream", "passando aqui pra",',
+'  conteudão, transformação, apagamos, "nova versão de você", "para todos", "qualquer tipo de pele".',
+'',
+'Tom certo no CTA noivas: "Me manda uma mensagem. Vamos conversar sobre o seu dia."',
+'Tom errado: "Últimas vagas! Link na bio!"',
+'Tom certo em stories: começa com a cena — "Ela chegou às 6h da manhã..."',
+'Tom errado: "Oi gente, passando rapidinho!"',
+'Tom certo em post técnico: "Subtom frio em pele negra: como identificar antes de escolher a base"',
+'Tom errado: "5 dicas de maquiagem para você arrasar"',
+'',
+'── PILARES EDITORIAIS DO FEED ──',
+'25% — Noivas (Emoção): making of, reel do dia, legenda narrativa — 1x/semana',
+'20% — Pele Preta (Portfólio): editorial, resultado final, processo técnico — 1x/semana',
+'15% — Cachos & Crespos: penteados, finalização, antes/depois — 3x/2 semanas',
+'15% — Técnica (Educacional): reel técnico, dica rápida, FAQ visual — 3x/2 semanas',
+'10% — Carol (Presença): bastidores, retrato, processo de trabalho — 2x/mês',
+'10% — Produtos & Bancada: flat lay, novidades — 2x/mês',
+'5%  — Social Beauty: produções sociais, festas — 1x/mês',
+'',
+'── FASE ATUAL DA MARCA ──',
+'O que funciona: bio clara + 3 posts fixados + pele preta editorial + 40k views/mês com 951 seguidores (taxa excepcional!) + legendas de noivas com emoção real.',
+'O que PRECISA EVOLUIR: feed sem ritmo visual, capas inconsistentes, bio ainda genérica (não comunica os 2 pilares), sem destaque de Cachos & Crespos, sem destaque de Feedbacks, sem pilar educacional ativo.',
+'Objetivo central AGORA: ativar os dois pilares de forma simultânea e construir o pilar educacional que levará aos cursos.',
+'',
+'── ESTÉTICA VISUAL ──',
+'Paleta: Café Escuro #4A2E1A, Caramelo #8B5E3C, Terra #C4956A, Nude #E8D5C0, Creme #F5EDE3.',
+'Proibido: preto puro, branco puro, rosa, azul, verde vibrante.',
+'Tipografia: Cormorant Garamond (títulos, elegante) + Jost Light (corpo) + Pinyon Script (destaque emocional).',
+'Fotografia: luz natural quente, bokeh suave, tons desaturados, pele preservada — NUNCA filtros prontos ou pele "plastificada".',
+
+].join('\n');
 
 // ── SYSTEM PROMPT ─────────────────────────────────────────────
 function buildSystemPrompt() {
-  return 'Você é um analista de inteligência competitiva especializado em Instagram e marketing de beleza. ' +
-    'Sua missão é analisar concorrentes de forma estratégica e gerar insights acionáveis para Carol se diferenciar.\n\n' +
-    CAROL_PROFILE + '\n\n' +
-    'PRINCÍPIOS:\n' +
-    '1. Seja objetiva e estratégica — não apenas descritiva\n' +
-    '2. Foque no que É ACIONÁVEL para Carol, não só no que o concorrente faz\n' +
-    '3. Identifique gaps reais: onde o concorrente deixa espaço que Carol pode ocupar\n' +
-    '4. NÃO sugira copiar — sugira se diferenciar com inteligência\n' +
-    '5. Compare sempre com o posicionamento de Carol\n\n' +
-    'FORMATO — use EXATAMENTE estes cabeçalhos:\n\n' +
-    '## POSICIONAMENTO\n' +
-    'Como esse perfil se posiciona no mercado de make/beleza. Proposta de valor aparente. Nível de preço percebido. Público que atende.\n\n' +
-    '## ESTRATÉGIA DE CONTEÚDO\n' +
-    'Formatos que usa (Reels, carrossel, stories). Temas recorrentes. Frequência aparente. Tom de voz. Como usa a legenda e CTA.\n\n' +
-    '## PONTOS FORTES\n' +
-    'O que esse perfil faz bem que gera engajamento ou conversão. Seja específica.\n\n' +
-    '## OPORTUNIDADES (gaps)\n' +
-    'O que falta nesse perfil que Carol pode oferecer. Onde há espaço em aberto no nicho deles.\n\n' +
-    '## O QUE APRENDER\n' +
-    'Elementos estratégicos (NÃO estéticos) que Carol pode adaptar com sua própria identidade.\n\n' +
-    '## O QUE NÃO COPIAR\n' +
-    'O que não faz sentido para o posicionamento de Carol. O que seria inautêntico ou redundante.\n\n' +
-    '## COMO SE DIFERENCIAR\n' +
-    'Estratégia concreta de diferenciação de Carol em relação a esse concorrente específico. Mínimo 3 ações práticas.\n\n' +
-    '## 3 IDEIAS INSPIRADAS\n' +
-    'Três ideias de conteúdo que Carol pode criar se inspirando NA LÓGICA (não no conteúdo) desse concorrente:\n' +
-    '**Ideia 1: [título]**\n**Conceito:** [o quê]\n**Por que funciona:** [mecanismo]\n**Diferencial:** [o que faz ser da Carol, não cópia]\n\n' +
-    '**Ideia 2: [título]**\n...\n\n**Ideia 3: [título]**\n...\n\n' +
-    'Responda em português brasileiro. Seja direta, estratégica e acionável.';
+  return [
+    'Você é um estrategista de marca e analista de inteligência competitiva especializado em Instagram e mercado de beleza premium.',
+    'Sua missão é analisar concorrentes de Carol Nunes e gerar inteligência estratégica profundamente contextualizada ao Brand Brain real dela.',
+    'NUNCA faça análise genérica de "maquiadora". Cada observação deve estar ancorada no posicionamento, nos dois pilares, nas personas, nos arquétipos e nos objetivos atuais de Carol.',
+    '',
+    BRAND_BRAIN,
+    '',
+    '═══ PRINCÍPIOS INEGOCIÁVEIS DA ANÁLISE ═══',
+    '1. Toda oportunidade identificada deve especificar QUAL dos dois pilares ela serve (Noivas Premium ou Autoridade Técnica).',
+    '2. Toda aprendizagem sugerida deve passar pelo filtro: "isso respeita a essência de revelar, não transformar?"',
+    '3. Tudo que Carol não deve copiar deve incluir O MOTIVO específico de desalinhamento com o Brand Brain.',
+    '4. A diferenciação deve explorar o diferencial único de Carol que nenhuma concorrente tem: background de publicidade + técnica.',
+    '5. As ideias práticas devem citar explicitamente qual pilar editorial do feed elas servem (%, frequência).',
+    '6. Considere sempre a FASE ATUAL da marca: pilar educacional ainda não ativo, feed sem ritmo, capas inconsistentes.',
+    '7. O tom das sugestões deve respeitar o tom de voz da marca — nunca sugerir linguagem com as palavras proibidas.',
+    '',
+    'FORMATO — use EXATAMENTE estes cabeçalhos:',
+    '',
+    '## POSICIONAMENTO',
+    'Como esse perfil se posiciona. Proposta de valor aparente. Público que serve. Compare explicitamente com o posicionamento premium acessível de Carol e os dois pilares.',
+    '',
+    '## ESTRATÉGIA DE CONTEÚDO',
+    'Formatos, temas, frequência, tom de voz. Identifique quais dos pilares editoriais de Carol esse concorrente também cobre (e como) e quais ele ignora.',
+    '',
+    '## PONTOS FORTES',
+    'O que ele faz bem — mas sempre com a pergunta: "isso é força RELATIVA A CAROL ou força que Carol já tem ou não precisa?"',
+    '',
+    '## OPORTUNIDADES (gaps)',
+    'Especificar: para qual PILAR (I-Noivas ou II-Autoridade Técnica) e qual PERSONA (1-Noiva Premium, 2-Noiva Preta, 3-Cacheada/Crespa, 4-Profissional) essa oportunidade é mais relevante.',
+    '',
+    '## O QUE APRENDER',
+    'Elementos estratégicos (lógica, não estética) que Carol pode adaptar sem perder identidade. Cada item deve mencionar como passar pelo filtro do Brand Brain de Carol.',
+    '',
+    '## O QUE NÃO COPIAR',
+    'Para cada item: qual elemento do Brand Brain de Carol seria violado (tom de voz proibido? estética? arquétipo errado? persona incompatível? pilar não prioritário?).',
+    '',
+    '## COMO SE DIFERENCIAR',
+    'Mínimo 3 ações concretas, cada uma ancorada em: (a) qual elemento do Brand Brain ela ativa, (b) qual persona ela serve, (c) como o diferencial único de Carol (publicidade+beleza) pode ser usado.',
+    '',
+    '## 3 IDEIAS INSPIRADAS',
+    'Três ideias de conteúdo para Carol, inspiradas NA LÓGICA desse concorrente — mas 100% alinhadas ao Brand Brain:',
+    '**Ideia 1: [título]**',
+    '**Pilar editorial:** [qual dos 7 pilares do feed + % e frequência]',
+    '**Conceito:** [o quê e como gravar/criar]',
+    '**Por que funciona:** [mecanismo psicológico ou de algoritmo]',
+    '**Linguagem sugerida:** [exemplo de frase ou abertura no tom de voz de Carol]',
+    '**Diferencial Carol:** [o que faz ser da Carol — não cópia]',
+    '',
+    '**Ideia 2: [título]**',
+    '...',
+    '',
+    '**Ideia 3: [título]**',
+    '...',
+    '',
+    'Responda em português brasileiro. Seja direta, específica e estratégica. Cada parágrafo deve provar que você leu o Brand Brain de Carol.',
+  ].join('\n');
 }
 
 function buildUserMessage() {
