@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-21 20:50 | main | fix(instagram): renderAccountInsights quebrava com formato v22 da Graph API -->
+<!-- AUTO: 2026-05-21 21:16 | main | feat(instagram): an├ílise de concorrentes por prints com Claude Vision -->
 
