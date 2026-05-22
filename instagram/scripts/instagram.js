@@ -3637,11 +3637,21 @@ assetBlock +
     toast('Ideia descartada');
   };
 
+  // ── DEEP LINK via ?tab= ────────────────────────────────────
+  // Permite entrar direto na tab Validador ou abrir modal Concorrentes
+  // Usado pelos cards do hub: instagram/?tab=validador e instagram/?tab=concorrentes
+  function handleDeepLink() {
+    var tab = new URLSearchParams(window.location.search).get('tab');
+    if (tab === 'validador')    { switchTab('validador');    window.scrollTo(0,0); }
+    if (tab === 'concorrentes') { openCompetitorsModal(); }
+  }
+
   // ── BOOT ──────────────────────────────────────────────────
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', checkAuth);
+    document.addEventListener('DOMContentLoaded', function() { checkAuth(); setTimeout(handleDeepLink, 600); });
   } else {
     checkAuth();
+    setTimeout(handleDeepLink, 600);
   }
 
 })();

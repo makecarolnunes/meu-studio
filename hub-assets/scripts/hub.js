@@ -102,10 +102,26 @@
         '<path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>' +
         '<line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>' +
       '</svg>',
-    brain:
+    radar:
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
-        '<path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.46 2.5 2.5 0 0 1-1.07-4.8A3 3 0 0 1 4 11a3 3 0 0 1 2-2.83V8a2 2 0 0 1 1.78-2"/>' +
-        '<path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.46 2.5 2.5 0 0 0 1.07-4.8A3 3 0 0 0 20 11a3 3 0 0 0-2-2.83V8a2 2 0 0 0-1.78-2"/>' +
+        '<path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/>' +
+        '<path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"/>' +
+        '<line x1="12" y1="2" x2="12" y2="6"/>' +
+        '<line x1="12" y1="18" x2="12" y2="22"/>' +
+        '<line x1="2" y1="12" x2="6" y2="12"/>' +
+        '<line x1="18" y1="12" x2="22" y2="12"/>' +
+      '</svg>',
+    validador:
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+        '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>' +
+        '<polyline points="22 4 12 14.01 9 11.01"/>' +
+      '</svg>',
+    concorrentes:
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+        '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>' +
+        '<circle cx="9" cy="7" r="4"/>' +
+        '<line x1="23" y1="11" x2="17" y2="11"/>' +
+        '<line x1="20" y1="8" x2="20" y2="14"/>' +
       '</svg>',
     arrow:
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
@@ -178,11 +194,27 @@
     var contDesc = (cont && cont.descricao) ? cont.descricao : 'Planejamento de posts e ideias';
 
     var CREATIVE = [
-      { key: 'conteudo',  nome: contNome,       desc: contDesc,                                          url: contUrl,                     cls: 'card-cont'  },
-      { key: 'brain',     nome: 'Brand Brain',  desc: 'Análise estratégica de Reels para o seu nicho',   url: 'conteudo/brand-brain.html', cls: 'card-brain' },
-      { key: 'instagram', nome: 'Instagram',    desc: 'Dashboard, métricas e relatórios semanais',       url: 'instagram/',                cls: 'card-insta' },
+      { key: 'conteudo',  nome: 'Planejamento de Conteúdo', desc: 'Ideias, calendário e fila de gravação',               url: contUrl,                       cls: 'card-cont'     },
+      { key: 'instagram', nome: 'Instagram',                desc: 'Dashboard, métricas e análise de performance',        url: 'instagram/',                  cls: 'card-insta'    },
+      { key: 'validador', nome: 'Validador de Conteúdo',    desc: 'Valide antes de postar — feedback estratégico IA',    url: 'instagram/?tab=validador',    cls: 'card-val'      },
+      { key: 'radar',     nome: 'Radar',                    desc: 'Decodifique referências e adapte para o seu nicho',   url: 'conteudo/brand-brain.html',   cls: 'card-radar'    },
     ];
     document.getElementById('creative-section').innerHTML = CREATIVE.map(function(c) {
+      return '<a href="' + esc(c.url) + '" class="sys-card ' + c.cls + '">' +
+        '<div class="sys-icon-wrap">' + iconSvg(c.key) + '</div>' +
+        '<div class="sys-name">' + esc(c.nome) + '</div>' +
+        '<div class="sys-desc">' + esc(c.desc) + '</div>' +
+        '<div class="sys-arrow">' + iconSvg('arrow') + '</div>' +
+      '</a>';
+    }).join('');
+  }
+
+  // ── Estratégia ──
+  function buildEstrategia() {
+    var ESTRATEGIA = [
+      { key: 'concorrentes', nome: 'Concorrentes', desc: 'Monitore, analise e extraia estratégias da concorrência', url: 'instagram/?tab=concorrentes', cls: 'card-concorrentes' },
+    ];
+    document.getElementById('estrategia-section').innerHTML = ESTRATEGIA.map(function(c) {
       return '<a href="' + esc(c.url) + '" class="sys-card ' + c.cls + '">' +
         '<div class="sys-icon-wrap">' + iconSvg(c.key) + '</div>' +
         '<div class="sys-name">' + esc(c.nome) + '</div>' +
@@ -320,6 +352,7 @@
     buildCards(FALLBACK);
     buildOrganizacao();
     buildGestao();
+    buildEstrategia();
   }
 
   // ── Data ──

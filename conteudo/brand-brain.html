@@ -4,13 +4,29 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <title>Brand Brain · Meu Studio</title>
+  <title>Radar · Meu Studio</title>
   <link rel="stylesheet" href="../shared/css/tokens.css">
   <link rel="stylesheet" href="../shared/css/base.css">
   <style>
     body {
       max-width: 480px; margin: 0 auto; overflow-x: hidden;
       -webkit-overflow-scrolling: touch;
+    }
+
+    /* ── CONTENT TYPE SELECTOR ── */
+    .bb-type-row { display: flex; gap: 6px; flex-wrap: wrap; }
+    .bb-type-btn {
+      padding: 7px 14px; border-radius: 20px;
+      border: 1.5px solid var(--border); background: var(--surface);
+      font-size: .73rem; font-weight: 700; cursor: pointer;
+      color: var(--text-muted); transition: all .15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .bb-type-btn.on {
+      background: var(--brand-dark); border-color: var(--brand-dark); color: #fff;
+    }
+    .bb-type-hint {
+      font-size: .71rem; color: var(--text-subtle); margin-top: 6px; line-height: 1.5;
     }
 
     /* ── HEADER ── */
@@ -501,8 +517,8 @@
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
     </button>
     <div class="hdr-center">
-      <h1>Brand Brain</h1>
-      <div class="hdr-sub">Análise Estratégica de Reels</div>
+      <h1>Radar</h1>
+      <div class="hdr-sub">Decodifique referências de conteúdo</div>
     </div>
     <button class="hdr-action" onclick="openKeyModal()" title="Configurar chave Claude" aria-label="Configurar API">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12.22 2h-.44a2 2 0 00-2 2v.18a2 2 0 01-1 1.73l-.43.25a2 2 0 01-2 0l-.15-.08a2 2 0 00-2.73.73l-.22.38a2 2 0 00.73 2.73l.15.1a2 2 0 011 1.72v.51a2 2 0 01-1 1.74l-.15.09a2 2 0 00-.73 2.73l.22.38a2 2 0 002.73.73l.15-.08a2 2 0 012 0l.43.25a2 2 0 011 1.73V20a2 2 0 002 2h.44a2 2 0 002-2v-.18a2 2 0 011-1.73l.43-.25a2 2 0 012 0l.15.08a2 2 0 002.73-.73l.22-.39a2 2 0 00-.73-2.73l-.15-.08a2 2 0 01-1-1.74v-.5a2 2 0 011-1.74l.15-.09a2 2 0 00.73-2.73l-.22-.38a2 2 0 00-2.73-.73l-.15.08a2 2 0 01-2 0l-.43-.25a2 2 0 01-1-1.73V4a2 2 0 00-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -519,8 +535,8 @@
       <div class="bb-left-title">
         <div class="bb-left-title-icon">🧠</div>
         <div class="bb-left-title-text">
-          <div class="bb-left-title-name">Brand Brain</div>
-          <div class="bb-left-title-sub">Estrategista de Conteúdo IA</div>
+          <div class="bb-left-title-name">Radar</div>
+          <div class="bb-left-title-sub">Decodifique referências de conteúdo</div>
         </div>
       </div>
 
@@ -529,24 +545,37 @@
 
         <!-- Mobile-only intro card -->
         <div class="bb-intro">
-          <div class="bb-intro-emoji">🧠</div>
-          <div class="bb-intro-title">Estrategista de Conteúdo IA</div>
-          <div class="bb-intro-sub">Cole a legenda e descreva o que viu em um Reels — receba análise estratégica completa adaptada ao seu nicho de maquiagem.</div>
+          <div class="bb-intro-emoji">📡</div>
+          <div class="bb-intro-title">Radar de Referências</div>
+          <div class="bb-intro-sub">Escolha o tipo de conteúdo, cole a legenda e descreva o que viu — receba análise estratégica adaptada ao seu nicho.</div>
         </div>
 
         <div class="bb-card">
-          <label class="bb-label">Link do Reels <span class="bb-hint">— para referência</span></label>
+          <label class="bb-label">Tipo de conteúdo <span class="bb-hint">— o que você vai analisar</span></label>
+          <div class="bb-type-row" id="bb-type-row">
+            <button class="bb-type-btn on" data-v="Reels">Reels</button>
+            <button class="bb-type-btn" data-v="Post Imagem">Post Imagem</button>
+            <button class="bb-type-btn" data-v="Carrossel">Carrossel</button>
+            <button class="bb-type-btn" data-v="Stories">Stories</button>
+            <button class="bb-type-btn" data-v="Destaque">Destaque</button>
+            <button class="bb-type-btn" data-v="Perfil Completo">Perfil Completo</button>
+          </div>
+          <div class="bb-type-hint" id="bb-type-hint">Análise de roteiro, hook, ritmo e CTA adaptados para vídeo curto.</div>
+        </div>
+
+        <div class="bb-card">
+          <label class="bb-label">Link <span class="bb-hint">— para referência</span></label>
           <input type="url" class="bb-input" id="bb-url" placeholder="https://www.instagram.com/reel/...">
         </div>
 
         <div class="bb-card">
           <label class="bb-label">Legenda / Caption <span class="bb-hint">— copie direto do Instagram</span></label>
           <textarea class="bb-textarea" id="bb-caption" rows="5"
-            placeholder="Cole aqui a legenda completa do Reels (texto + hashtags). Quanto mais contexto, mais precisa a análise."></textarea>
+            placeholder="Cole aqui a legenda completa do post (texto + hashtags). Quanto mais contexto, mais precisa a análise."></textarea>
         </div>
 
-        <div class="bb-card">
-          <label class="bb-label">Formato <span class="bb-hint">— selecione um ou mais</span></label>
+        <div class="bb-card" id="bb-format-card">
+          <label class="bb-label">Sub-formato <span class="bb-hint">— selecione um ou mais</span></label>
           <div class="bb-tags" id="bb-format-tags">
             <button class="bb-tag" data-v="Tutorial">Tutorial</button>
             <button class="bb-tag" data-v="POV">POV</button>
@@ -583,9 +612,9 @@
 
       <!-- EMPTY STATE (desktop only, visible by default) -->
       <div class="bb-empty" id="bb-empty">
-        <div class="bb-empty-brain">🧠</div>
+        <div class="bb-empty-brain">📡</div>
         <div class="bb-empty-title">Sua análise aparece aqui</div>
-        <div class="bb-empty-sub">Preencha o formulário ao lado com o link, legenda e o que você observou no Reels. Clique em <strong>Analisar com IA</strong>.</div>
+        <div class="bb-empty-sub">Escolha o tipo de conteúdo, preencha o formulário ao lado e clique em <strong>Analisar com IA</strong>.</div>
         <div class="bb-empty-grid">
           <div class="bb-empty-chip"><div class="bb-empty-chip-icon">🎬</div><div class="bb-empty-chip-label">Diagnóstico</div></div>
           <div class="bb-empty-chip"><div class="bb-empty-chip-icon">⚡</div><div class="bb-empty-chip-label">Por que funciona</div></div>
@@ -710,6 +739,7 @@
 
 var selectedFormats = [];
 var lastAnalysisText = '';
+var selectedContentType = 'Reels';
 
 function isDesktop() { return window.innerWidth >= 768; }
 
@@ -739,6 +769,42 @@ function saveKey() {
   closeKeyModal();
   toast('Chave salva!');
 }
+
+// ── CONTENT TYPE SELECTOR ────────────────────────────────────
+var TYPE_META = {
+  'Reels':          { hint: 'Análise de roteiro, hook, ritmo e CTA adaptados para vídeo curto.', showFormat: true,  obsPlaceholder: 'Ex: começa com pergunta polêmica, cortes rápidos, usa trending sound, mostra antes/depois...' },
+  'Post Imagem':    { hint: 'Análise de composição visual, texto sobreposto, legenda e impacto da primeira impressão.', showFormat: false, obsPlaceholder: 'Ex: foto em close, paleta quente, texto em negrito no centro, fundo desfocado...' },
+  'Carrossel':      { hint: 'Análise de estrutura de slides: capa, sequência, gatilho de arraste e slide final.', showFormat: false, obsPlaceholder: 'Ex: capa com lista, cada slide com 1 dica, último slide tem CTA de salvar...' },
+  'Stories':        { hint: 'Análise de sequência, stickers, interatividade e retenção de visualizações.', showFormat: true,  obsPlaceholder: 'Ex: sequência de 5 stories, enquete no 2º, texto grande centralizado, música de fundo...' },
+  'Destaque':       { hint: 'Análise de curadoria: identidade visual, hierarquia de temas e função estratégica.', showFormat: false, obsPlaceholder: 'Ex: 6 destaques com capas iguais, temas: Noivas, FAQ, Antes e Depois, Bastidor...' },
+  'Perfil Completo':{ hint: 'Análise macro do perfil: bio, grade, mix de formatos, posicionamento e proposta de valor.', showFormat: false, obsPlaceholder: 'Ex: bio direta com CTA, grade alternada entre reels e fotos, 80% de conteúdo técnico...' },
+};
+
+document.querySelectorAll('.bb-type-btn').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.bb-type-btn').forEach(function(b) { b.classList.remove('on'); });
+    btn.classList.add('on');
+    selectedContentType = btn.dataset.v;
+    var meta = TYPE_META[selectedContentType] || TYPE_META['Reels'];
+    document.getElementById('bb-type-hint').textContent = meta.hint;
+    // Show/hide format card
+    var fc = document.getElementById('bb-format-card');
+    if (fc) fc.style.display = meta.showFormat ? '' : 'none';
+    // Update obs placeholder
+    var obsEl = document.getElementById('bb-obs');
+    if (obsEl) obsEl.placeholder = meta.obsPlaceholder;
+    // Update URL placeholder
+    var urlEl = document.getElementById('bb-url');
+    if (urlEl) {
+      var ph = selectedContentType === 'Perfil Completo'
+        ? 'https://www.instagram.com/perfil...'
+        : selectedContentType === 'Destaque'
+        ? 'https://www.instagram.com/perfil/... (link do perfil)'
+        : 'https://www.instagram.com/p/... ou /reel/...';
+      urlEl.placeholder = ph;
+    }
+  });
+});
 
 // ── FORMAT TAGS ───────────────────────────────────────────────
 document.querySelectorAll('.bb-tag').forEach(function(btn) {
@@ -790,39 +856,90 @@ var CAROL_PROFILE = [
   '- Evita: Conteúdo genérico de beleza sem conexão com maquiagem, humor forçado, trends vazios, comparações negativas',
 ].join('\n');
 
-// ── PROMPTS ───────────────────────────────────────────────────
+// ── PROMPTS POR TIPO DE CONTEÚDO ──────────────────────────────
+var PROMPT_CONFIGS = {
+  'Reels': {
+    sections:
+      '## DIAGNÓSTICO DO REELS\nTipo, formato, nicho original, público-alvo, contexto de performance.\n\n' +
+      '## POR QUE FUNCIONA\nMecanismos reais de engajamento. Por que as pessoas param no scroll, assistem até o fim, interagem. Gatilhos psicológicos específicos.\n\n' +
+      '## ESTRUTURA DO ROTEIRO\n**Hook (0-3s)**, **Desenvolvimento**, **CTA/Encerramento**. Identifique o padrão de roteiro.\n\n' +
+      '## GATILHOS E EMOÇÕES\nGatilhos ativados: curiosidade, identificação, admiração, medo de perder, prova social, aspiração, urgência, pertencimento. Para cada um, explique como foi ativado.\n\n' +
+      '## ADAPTAÇÃO PARA O MEU PERFIL\nComo Carol aplica ESSA LÓGICA no nicho de maquiagem/noivas. O que funciona direto, o que precisa ser ajustado.\n\n' +
+      '## 3 IDEIAS PRÁTICAS\nTrês ideias concretas. Para cada uma:\n**Ideia N: [título]**\n**Hook:** [abertura exata — 3s]\n**Estrutura:** [passo a passo]\n**CTA:** [call to action]\n**Como gravar:** [orientação técnica]\n\n' +
+      '## O QUE EVITAR\nArmadilhas ao adaptar esse formato ao nicho de maquiagem/noivas.',
+    userLabel: 'Analise este Reels do Instagram'
+  },
+  'Stories': {
+    sections:
+      '## DIAGNÓSTICO DOS STORIES\nEstrutura da sequência, tom, duração, elementos interativos.\n\n' +
+      '## POR QUE PRENDE A ATENÇÃO\nPor que as pessoas continuam assistindo. Mecanismos de retenção entre um story e outro.\n\n' +
+      '## ESTRUTURA DA SEQUÊNCIA\nComo foi organizada: abertura, desenvolvimento, clímax, encerramento. Quantos stories, em qual posição está o gancho.\n\n' +
+      '## GATILHOS E EMOÇÕES\nGatilhos emocionais e de comportamento usados na sequência.\n\n' +
+      '## ADAPTAÇÃO PARA O MEU PERFIL\nComo Carol aplica essa estrutura de stories no nicho de maquiagem/noivas.\n\n' +
+      '## 3 IDEIAS PRÁTICAS\nTrês sequências de stories para Carol. Para cada uma:\n**Ideia N: [título]**\n**Abertura:** [primeiro story]\n**Sequência:** [desenvolvimento]\n**Encerramento:** [CTA ou swipe up]\n**Dica de gravação:** [orientação]\n\n' +
+      '## O QUE EVITAR\nErros comuns ao adaptar esse estilo de stories para maquiagem/noivas.',
+    userLabel: 'Analise estes Stories do Instagram'
+  },
+  'Post Imagem': {
+    sections:
+      '## DIAGNÓSTICO VISUAL\nTipo de imagem, composição, paleta, texto sobreposto, estilo visual.\n\n' +
+      '## POR QUE PARA NO SCROLL\nO que na imagem faz a pessoa parar e olhar. Elementos visuais de alto impacto.\n\n' +
+      '## COMPOSIÇÃO E LEGENDA\nAnálise da imagem: enquadramento, luz, cores, hierarquia visual. Análise da legenda: hook textual, tom, CTA.\n\n' +
+      '## GATILHOS E EMOÇÕES\nGatilhos ativados pela combinação visual + texto.\n\n' +
+      '## ADAPTAÇÃO PARA O MEU PERFIL\nComo Carol replica essa lógica visual e textual no nicho de maquiagem/noivas.\n\n' +
+      '## 3 IDEIAS PRÁTICAS\nTrês posts imagem para Carol. Para cada uma:\n**Ideia N: [título]**\n**Conceito visual:** [como montar a foto]\n**Texto na imagem:** [se houver]\n**Legenda:** [estrutura sugerida]\n**CTA:** [call to action]\n\n' +
+      '## O QUE EVITAR\nErros ao adaptar esse estilo visual para o nicho de maquiagem/noivas.',
+    userLabel: 'Analise este Post Imagem do Instagram'
+  },
+  'Carrossel': {
+    sections:
+      '## DIAGNÓSTICO DO CARROSSEL\nQuantidade de slides, tema, tipo (educativo, lista, storytelling, before/after).\n\n' +
+      '## POR QUE ARRASTA\nO que faz a pessoa continuar passando os slides. Gatilho de curiosidade, promessa da capa.\n\n' +
+      '## ESTRUTURA DE SLIDES\nAnálise de cada parte: **Capa** (gancho), **Slides do meio** (desenvolvimento e valor), **Slide final** (CTA, save, compartilhar). Padrão visual.\n\n' +
+      '## GATILHOS E EMOÇÕES\nGatilhos usados para maximizar saves e compartilhamentos.\n\n' +
+      '## ADAPTAÇÃO PARA O MEU PERFIL\nComo Carol aplica esse formato de carrossel no nicho de maquiagem/noivas.\n\n' +
+      '## 3 IDEIAS PRÁTICAS\nTrês carrosseis para Carol. Para cada um:\n**Ideia N: [título]**\n**Capa:** [texto e visual]\n**Estrutura:** [o que vai em cada slide]\n**Último slide:** [CTA e motivação para salvar]\n**Dica de design:** [orientação visual]\n\n' +
+      '## O QUE EVITAR\nErros comuns ao fazer carrosseis no nicho de maquiagem/noivas.',
+    userLabel: 'Analise este Carrossel do Instagram'
+  },
+  'Destaque': {
+    sections:
+      '## DIAGNÓSTICO DO DESTAQUE\nQuantidade, temas, consistência visual das capas, estratégia aparente.\n\n' +
+      '## POR QUE FUNCIONA\nO papel estratégico dos destaques no perfil. Por que esse conjunto atrai o visitante a ficar.\n\n' +
+      '## CURADORIA E IDENTIDADE\nComo os temas foram escolhidos. Hierarquia (o que aparece primeiro). Coerência visual das capas.\n\n' +
+      '## FUNÇÃO ESTRATÉGICA\nQual história os destaques contam juntos. Como funcionam como vitrine do negócio ou serviço.\n\n' +
+      '## ADAPTAÇÃO PARA O MEU PERFIL\nComo Carol estrutura os destaques para maquiagem/noivas — quais temas, qual ordem, qual visual.\n\n' +
+      '## 3 IDEIAS PRÁTICAS\nTrês sugestões de organização de destaques para Carol:\n**Proposta N: [nome]**\n**Temas sugeridos:** [lista]\n**Ordem:** [qual vem primeiro]\n**Capas:** [estilo visual recomendado]\n\n' +
+      '## O QUE EVITAR\nErros comuns nos destaques de maquiadoras/criadores de beleza.',
+    userLabel: 'Analise os Destaques deste perfil do Instagram'
+  },
+  'Perfil Completo': {
+    sections:
+      '## DIAGNÓSTICO DO PERFIL\nNicho, posicionamento aparente, público-alvo, volume de conteúdo, frequência.\n\n' +
+      '## POSICIONAMENTO E PROPOSTA DE VALOR\nComo o perfil se posiciona. Qual é a promessa implícita para quem chega. O que diferencia.\n\n' +
+      '## GRADE E IDENTIDADE VISUAL\nEstrutura da grade: padrão de cores, variedade de formatos, consistência visual, primeiros 9 posts.\n\n' +
+      '## MIX DE CONTEÚDO\nDistribuição entre formatos (Reels, carrosseis, fotos). Pilares temáticos identificados. Frequência.\n\n' +
+      '## O QUE APRENDER\nOs 3-5 elementos mais estratégicos desse perfil que Carol pode usar como aprendizado — não copiar.\n\n' +
+      '## 3 APLICAÇÕES PRÁTICAS\nTrês mudanças ou adições que Carol pode fazer inspirada nesse perfil:\n**Aplicação N: [o quê]**\n**Por que funciona:** [mecanismo]\n**Como implementar:** [passo a passo]\n\n' +
+      '## O QUE EVITAR\nO que não faz sentido copiar dado o posicionamento e nicho da Carol.',
+    userLabel: 'Analise este Perfil Completo do Instagram'
+  },
+};
+
 function buildSystemPrompt() {
-  return 'Você é um estrategista sênior de conteúdo para Instagram, especializado em Reels e psicologia do comportamento de audiência. Sua missão é dissecar conteúdos de sucesso e transformar os insights em estratégias práticas e personalizadas.\n\n' +
+  var cfg = PROMPT_CONFIGS[selectedContentType] || PROMPT_CONFIGS['Reels'];
+  return 'Você é um estrategista sênior de conteúdo para Instagram, especializado em comportamento de audiência e psicologia de engajamento. Sua missão é dissecar conteúdos de sucesso e transformar os insights em estratégias práticas e personalizadas.\n\n' +
     CAROL_PROFILE + '\n\n' +
     'PRINCÍPIOS DA ANÁLISE:\n' +
-    '1. NÃO reproduza roteiro literal nem copie falas exatas\n' +
+    '1. NÃO reproduza roteiro literal nem copie falas ou elementos exatos\n' +
     '2. Foque no MECANISMO e na LÓGICA, não no conteúdo superficial\n' +
     '3. Adapte SEMPRE ao contexto, nicho e posicionamento de Carol\n' +
-    '4. Seja específica e prática — nada de conselhos genéricos como "seja autêntica"\n' +
+    '4. Seja específica e prática — nada de conselhos genéricos\n' +
     '5. Explique o PORQUÊ de cada elemento funcionar (psicologia, comportamento)\n' +
-    '6. Identifique padrões reutilizáveis em série (não só para um post)\n' +
-    '7. Considere o algoritmo do Instagram: saves, compartilhamentos, tempo de retenção\n\n' +
+    '6. Identifique padrões reutilizáveis em série\n' +
+    '7. Considere o algoritmo do Instagram: saves, compartilhamentos, retenção\n\n' +
     'FORMATO DE RESPOSTA — use EXATAMENTE estes cabeçalhos:\n\n' +
-    '## DIAGNÓSTICO DO REELS\n' +
-    'Tipo de conteúdo, formato, nicho original, público-alvo do criador, contexto de performance.\n\n' +
-    '## POR QUE FUNCIONA\n' +
-    'Os mecanismos reais de engajamento. Por que as pessoas param no scroll, assistem até o fim, interagem. Gatilhos psicológicos específicos. Seja analítica e técnica.\n\n' +
-    '## ESTRUTURA DO ROTEIRO\n' +
-    'Destrinche em 3 partes: **Hook (0-3s)**, **Desenvolvimento**, **CTA/Encerramento**. Identifique o padrão de roteiro.\n\n' +
-    '## GATILHOS E EMOÇÕES\n' +
-    'Liste os gatilhos ativados: curiosidade, identificação, admiração, medo de perder, prova social, aspiração, urgência, pertencimento etc. Para cada um, explique como foi ativado.\n\n' +
-    '## ADAPTAÇÃO PARA O MEU PERFIL\n' +
-    'Como Carol aplica ESSA LÓGICA (não o conteúdo) no nicho de maquiagem/noivas. O que funciona direto, o que precisa ser ajustado, qual pilar de conteúdo ativa.\n\n' +
-    '## 3 IDEIAS PRÁTICAS\n' +
-    'Três ideias concretas. Para cada uma use EXATAMENTE este formato:\n\n' +
-    '**Ideia 1: [título criativo da ideia]**\n' +
-    '**Hook:** [frase ou modelo exato de abertura — primeiros 3 segundos]\n' +
-    '**Estrutura:** [passo a passo do roteiro]\n' +
-    '**CTA:** [call to action final específico]\n' +
-    '**Como gravar:** [orientação visual e técnica prática]\n\n' +
-    '**Ideia 2: [título]**\n...\n\n**Ideia 3: [título]**\n...\n\n' +
-    '## O QUE EVITAR\n' +
-    'Armadilhas ao adaptar esse formato ao nicho de maquiagem/noivas. O que seria desalinhado com o posicionamento de Carol.\n\n' +
+    cfg.sections + '\n\n' +
     'Responda em português brasileiro. Seja direta, específica e estratégica.';
 }
 
@@ -831,26 +948,37 @@ function buildUserMessage() {
   var caption = (document.getElementById('bb-caption').value || '').trim();
   var obs     = (document.getElementById('bb-obs').value || '').trim();
   var fmts    = selectedFormats.slice();
+  var cfg     = PROMPT_CONFIGS[selectedContentType] || PROMPT_CONFIGS['Reels'];
 
-  var msg = 'Analise este Reels do Instagram:\n\n';
+  var msg = cfg.userLabel + ':\n\n';
+  msg += '**Tipo:** ' + selectedContentType + '\n\n';
   if (url)         msg += '**Link:** ' + url + '\n\n';
-  if (fmts.length) msg += '**Formato observado:** ' + fmts.join(', ') + '\n\n';
-  if (caption)     msg += '**Legenda/Caption completo:**\n' + caption + '\n\n';
-  if (obs)         msg += '**O que observei no vídeo:**\n' + obs + '\n\n';
-  if (!caption && !obs) msg += '_(Apenas link e formato disponíveis — analise com base nessas informações)_\n\n';
+  if (fmts.length) msg += '**Sub-formato:** ' + fmts.join(', ') + '\n\n';
+  if (caption)     msg += '**Legenda/Caption:**\n' + caption + '\n\n';
+  if (obs)         msg += '**O que observei:**\n' + obs + '\n\n';
+  if (!caption && !obs) msg += '_(Apenas link e tipo disponíveis — analise com base nessas informações)_\n\n';
   msg += 'Siga exatamente a estrutura solicitada.';
   return msg;
 }
 
 // ── PARSE SECTIONS ────────────────────────────────────────────
 var SECTION_DEFS = [
-  { pattern: /diagnóstico/i,              title: 'Diagnóstico do Reels',         icon: '🎬', bg: '#E8F0FE' },
-  { pattern: /por que funciona/i,         title: 'Por que Funciona',             icon: '⚡', bg: '#FFF8E1' },
-  { pattern: /estrutura.*roteiro/i,       title: 'Estrutura do Roteiro',         icon: '📋', bg: '#F3E5F5' },
-  { pattern: /gatilhos/i,                 title: 'Gatilhos e Emoções',           icon: '🎯', bg: '#FCE4EC' },
-  { pattern: /adaptação/i,               title: 'Adaptação para o Meu Perfil',  icon: '✨', bg: '#E8F5E9' },
-  { pattern: /3 ideias|ideias práticas/i, title: '3 Ideias Práticas',            icon: '💡', bg: '#FFF3E0' },
-  { pattern: /o que evitar/i,             title: 'O que Evitar',                 icon: '⚠️', bg: '#FBE9E7' },
+  // Diagnóstico (todos os tipos)
+  { pattern: /diagnóstico/i,                   icon: '🎬', bg: '#E8F0FE' },
+  // Por que funciona / Para no scroll / Prende atenção / Arrasta
+  { pattern: /por que funciona|para no scroll|prende a aten|arrasta/i, icon: '⚡', bg: '#FFF8E1' },
+  // Estrutura (roteiro, sequência, slides, curadoria, grade)
+  { pattern: /estrutura|sequência|slides|curadoria|grade e ident/i,    icon: '📋', bg: '#F3E5F5' },
+  // Gatilhos e emoções
+  { pattern: /gatilhos/i,                      icon: '🎯', bg: '#FCE4EC' },
+  // Composição, posicionamento, função estratégica, mix de conteúdo, o que aprender
+  { pattern: /composição|posicionamento|função estrat|mix de conte|o que aprender/i, icon: '🔍', bg: '#EDE9FE' },
+  // Adaptação para o meu perfil
+  { pattern: /adaptação/i,                    icon: '✨', bg: '#E8F5E9' },
+  // 3 Ideias / Aplicações
+  { pattern: /3 ideias|ideias práticas|3 aplica/i, icon: '💡', bg: '#FFF3E0' },
+  // O que evitar
+  { pattern: /o que evitar/i,                  icon: '⚠️', bg: '#FBE9E7' },
 ];
 
 function parseSections(text) {
@@ -952,7 +1080,7 @@ function toggleSection(el) { el.classList.toggle('open'); }
 
 // ── BUILD META HTML ───────────────────────────────────────────
 function buildMetaHtml(url) {
-  var h = '<div class="result-meta-label">Análise Brand Brain</div>';
+  var h = '<div class="result-meta-label">Radar · ' + esc(selectedContentType) + '</div>';
   if (url) h += '<div class="result-meta-url">🔗 ' + esc(url) + '</div>';
   if (selectedFormats.length) {
     h += '<div class="result-meta-tags">' +
@@ -1044,7 +1172,7 @@ function saveAsIdea() {
   var m = lastAnalysisText.match(/\*\*Ideia\s*1:\s*(.+?)\*\*/);
   var ideaTitle = m ? m[1] : '';
   var title = ideaTitle ? 'Brand Brain: ' + ideaTitle : 'Brand Brain — Análise de Reels';
-  var notes = '🧠 Análise Brand Brain\n';
+  var notes = '📡 Radar — ' + selectedContentType + '\n';
   if (url) notes += 'Reels: ' + url + '\n';
   if (selectedFormats.length) notes += 'Formato: ' + selectedFormats.join(', ') + '\n';
   notes += '\n' + lastAnalysisText;
