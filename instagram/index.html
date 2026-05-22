@@ -309,6 +309,20 @@
             <textarea class="input" id="val-visual" rows="3" placeholder="ex: Close de pele negra com luz lateral, fundo off-white, expressão serena..."></textarea>
           </div>
 
+          <div class="form-row">
+            <label class="form-label">📷 Imagem do post <span class="t-caption">(opcional — IA analisa design, composição, estética, hierarquia)</span></label>
+            <div id="val-image-wrap" class="val-image-wrap">
+              <label class="btn btn-outline btn-sm val-image-upload">
+                + Adicionar imagem
+                <input type="file" accept="image/*" id="val-image-input" style="display:none" onchange="setValidatorImage(this.files); this.value=null">
+              </label>
+              <div id="val-image-preview" class="val-image-preview" style="display:none">
+                <img id="val-image-thumb" alt="preview do post">
+                <button class="val-image-rm" onclick="clearValidatorImage()" title="Remover">×</button>
+              </div>
+            </div>
+          </div>
+
           <button class="btn btn-primary" id="btn-validate" onclick="validatePost()" style="width:100%;margin-top:14px">✨ Validar com IA</button>
           <div id="validate-status" class="ai-status"></div>
         </section>

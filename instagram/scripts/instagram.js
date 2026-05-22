@@ -2148,8 +2148,9 @@
     '</div>';
   }
 
-  function renderPautaHTML(p) {
-    return '<div class="pauta-item">' +
+  function renderPautaHTML(p, idx) {
+    var safeIdx = typeof idx === 'number' ? idx : 0;
+    return '<div class="pauta-item" data-pauta-idx="' + safeIdx + '">' +
       '<div class="pauta-head">' +
         '<div class="pauta-title">' + esc(p.titulo || '') + '</div>' +
         (typeof p.score_estrategico_0_10 === 'number' ? '<div class="pauta-score">' + p.score_estrategico_0_10 + '/10</div>' : '') +
@@ -2162,8 +2163,90 @@
       '</div>' +
       (p.justificativa ? '<div class="pauta-just">' + esc(p.justificativa) + '</div>' : '') +
       (p.estrutura && p.estrutura.length ? '<div class="pauta-est"><div class="t-label">Estrutura</div><ul>' + p.estrutura.map(function(s) { return '<li>' + esc(s) + '</li>'; }).join('') + '</ul></div>' : '') +
+      '<div class="pauta-actions">' +
+        '<button class="btn btn-primary btn-sm" onclick="sendPautaToContent(' + safeIdx + ', this)">📅 Enviar para Planejamento</button>' +
+      '</div>' +
     '</div>';
   }
+
+  function pilarToCategory(pilar) {
+    if (!pilar) return 'Maquiagem Profissional';
+    var p = pilar.toLowerCase();
+    if (p.indexOf('noiva') !== -1) return 'Noivas';
+    if (p.indexOf('autoridade') !== -1 || p.indexOf('técnic') !== -1 || p.indexOf('tecnic') !== -1) return 'Maquiagem Profissional';
+    if (p.indexOf('cacho') !== -1 || p.indexOf('cresp') !== -1) return 'Cachos e Crespos';
+    if (p.indexOf('penteado') !== -1) return 'Penteados';
+    if (p.indexOf('automaqui') !== -1) return 'Automaquiagem';
+    if (p.indexOf('lifestyle') !== -1 || p.indexOf('vida') !== -1) return 'Vida e Lifestyle';
+    if (p.indexOf('produto') !== -1 || p.indexOf('compra') !== -1) return 'Compras e Produtos';
+    return 'Maquiagem Profissional';
+  }
+
+  window.sendPautaToContent = function(idx, btn) {
+    var a = (state.analysis || loadStoredAnalysis() || {}).data;
+    if (!a || !a.pautas_proxima_semana || !a.pautas_proxima_semana[idx]) {
+      toast('Pauta não encontrada', true);
+      return;
+    }
+    var p = a.pautas_proxima_semana[idx];
+    var category = pilarToCategory(p.pilar);
+    var formato = p.formato || 'Reels';
+
+    var notesLines = [];
+    if (p.justificativa) notesLines.push('💡 ' + p.justificativa);
+    if (typeof p.score_estrategico_0_10 === 'number') notesLines.push('Score estratégico: ' + p.score_estrategico_0_10 + '/10');
+    if (p.persona_alvo && p.persona_alvo.length) notesLines.push('Persona-alvo: ' + p.persona_alvo.join(', '));
+    if (p.arquetipo_dominante) notesLines.push('Arquétipo: ' + p.arquetipo_dominante);
+    if (p.estrutura && p.estrutura.length) {
+      notesLines.push('');
+      notesLines.push('Estrutura sugerida:');
+      p.estrutura.forEach(function(s, i) { notesLines.push((i + 1) + '. ' + s); });
+    }
+    notesLines.push('');
+    notesLines.push('— Gerado pelo Insights IA do Instagram');
+
+    var uid = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    var idea = {
+      id: uid,
+      title: p.titulo || 'Pauta sem título',
+      categories: [category],
+      formatos: [formato],
+      status: 'Nao Iniciado',
+      notes: notesLines.join('\n'),
+      platforms: ['Instagram'],
+      scheduledDate: '',
+      createdAt: new Date().toISOString()
+    };
+
+    try {
+      var raw = localStorage.getItem('mk_content_ideas');
+      var ideas = raw ? JSON.parse(raw) : [];
+      if (!Array.isArray(ideas)) ideas = [];
+      // dedup por título: se já existe pauta com mesmo título, não duplica
+      if (ideas.some(function(i) { return i.title === idea.title; })) {
+        toast('Já existe uma ideia com esse título no Planejamento', true);
+        return;
+      }
+      ideas.unshift(idea);
+      localStorage.setItem('mk_content_ideas', JSON.stringify(ideas));
+
+      // Sync Supabase (best-effort)
+      if (window.DB && DB.conteudo && typeof DB.conteudo.upsert === 'function') {
+        DB.conteudo.upsert(idea).catch(function(e) { console.warn('[ig] supabase upsert falhou:', e); });
+      }
+
+      if (btn) {
+        btn.textContent = '✓ Enviado';
+        btn.disabled = true;
+        btn.classList.remove('btn-primary');
+        btn.classList.add('btn-secondary');
+      }
+      toast('Pauta enviada — abra o Planejamento');
+    } catch (e) {
+      console.error('[ig] erro enviando pauta', e);
+      toast('Erro: ' + e.message, true);
+    }
+  };
 
   window.copyBio = function() {
     var a = (state.analysis || loadStoredAnalysis() || {}).data;
@@ -2309,7 +2392,39 @@
     });
   };
 
-  function buildValidatorPrompt(briefing, visual) {
+  // Imagem opcional do validador (mantida em memória até o validatePost rodar)
+  var VALIDATOR_IMAGE = null; // { dataUrl, mediaType, base64 }
+
+  window.setValidatorImage = async function(files) {
+    if (!files || !files.length) return;
+    try {
+      var raw = await fileToDataURL(files[0]);
+      var compressed = await compressImage(raw, 1280);
+      var m = compressed.match(/^data:(image\/[a-zA-Z+]+);base64,(.+)$/);
+      if (!m) {
+        toast('Formato de imagem não suportado', true);
+        return;
+      }
+      VALIDATOR_IMAGE = { dataUrl: compressed, mediaType: m[1], base64: m[2] };
+      var thumb = document.getElementById('val-image-thumb');
+      var preview = document.getElementById('val-image-preview');
+      if (thumb) thumb.src = compressed;
+      if (preview) preview.style.display = 'block';
+    } catch (e) {
+      console.warn('[ig] erro carregando imagem do validador', e);
+      toast('Erro ao carregar imagem', true);
+    }
+  };
+
+  window.clearValidatorImage = function() {
+    VALIDATOR_IMAGE = null;
+    var preview = document.getElementById('val-image-preview');
+    var thumb = document.getElementById('val-image-thumb');
+    if (preview) preview.style.display = 'none';
+    if (thumb) thumb.src = '';
+  };
+
+  function buildValidatorPrompt(briefing, visual, hasImage) {
     var sections = [
       brandToText(),
       dataToText().split('### Insights da conta')[0],  // só perfil + posts (sem insights, mais conciso)
@@ -2324,7 +2439,8 @@
 '**Pilar pretendido:** ' + VAL_STATE.pilar + (VAL_STATE.pilar === 'auto' ? ' (você identifica)' : '') + '\n' +
 '**Objetivo:** ' + VAL_STATE.objetivo + (VAL_STATE.objetivo === 'auto' ? ' (você sugere)' : '') + '\n\n' +
 '**Briefing / ideia:**\n' + briefing + '\n\n' +
-(visual ? '**Descrição visual:**\n' + visual + '\n\n' : '') +
+(visual ? '**Descrição visual (texto):**\n' + visual + '\n\n' : '') +
+(hasImage ? '**IMAGEM ANEXADA:** Há uma imagem real do post anexada nesta mensagem. ANALISE-A com profundidade: design, composição, estética, branding, legibilidade, expressão, enquadramento, hierarquia visual, paleta, coerência com posicionamento Premium/Brand Brain da Carol (paleta café/terra/nude, arquétipos Criadora/Cuidadora/Sábia). Use o campo `analise_visual` do JSON.\n\n' : '') +
 '## OUTPUT — JSON ESTRUTURADO\n\n' +
 'Retorne SOMENTE JSON válido (sem markdown ```json```, sem prefácio, nada antes ou depois). Estrutura:\n\n' +
 '```json\n{\n' +
@@ -2373,6 +2489,18 @@
 '  "melhorias_visuais": [\n' +
 '    { "elemento": "luz|enquadramento|composição|tratamento|fundo", "diretriz": "recomendação específica" }\n' +
 '  ],\n' +
+(hasImage ?
+'  "analise_visual": {\n' +
+'    "score_0_10": 0,\n' +
+'    "leitura_geral": "1 parágrafo sobre a primeira impressão visual",\n' +
+'    "design_composicao": "regra dos terços, balanço, espaço negativo, ponto focal",\n' +
+'    "estetica_branding": "coerência com paleta café/terra/nude da Carol, tipografia, mood",\n' +
+'    "legibilidade": "se houver texto na imagem, avalie hierarquia/contraste/tamanho",\n' +
+'    "expressao_enquadramento": "linguagem corporal, olhar, framing",\n' +
+'    "pontos_fortes_visuais": ["3-5 bullets do que está funcionando"],\n' +
+'    "pontos_fracos_visuais": ["3-5 bullets do que pode melhorar"],\n' +
+'    "ajustes_imediatos": ["2-4 mudanças concretas e acionáveis"]\n' +
+'  },\n' : '') +
 '  "potencial_performance": {\n' +
 '    "alcance": "alto|medio|baixo",\n' +
 '    "engajamento": "alto|medio|baixo",\n' +
@@ -2517,9 +2645,22 @@
     if (resultEl) resultEl.innerHTML = '';
 
     try {
-      var prompt = buildValidatorPrompt(briefing, visual);
-      console.log('[ig] validator prompt size:', prompt.length);
-      var result = await callClaude(prompt);
+      var hasImage = !!VALIDATOR_IMAGE;
+      var prompt = buildValidatorPrompt(briefing, visual, hasImage);
+      console.log('[ig] validator prompt size:', prompt.length, '· imagem:', hasImage);
+
+      var callPayload;
+      if (hasImage) {
+        callPayload = [
+          { type: 'image', source: { type: 'base64', media_type: VALIDATOR_IMAGE.mediaType, data: VALIDATOR_IMAGE.base64 } },
+          { type: 'text', text: prompt }
+        ];
+        if (statusEl) statusEl.innerHTML = '<div class="spinner-sm"></div> Analisando imagem + briefing com Claude Vision...';
+      } else {
+        callPayload = prompt;
+      }
+
+      var result = await callClaude(callPayload);
       var validation = {
         id: String(Date.now()),
         generatedAt: Date.now(),
@@ -2528,7 +2669,8 @@
           visual: visual,
           formato: VAL_STATE.formato,
           pilar: VAL_STATE.pilar,
-          objetivo: VAL_STATE.objetivo
+          objetivo: VAL_STATE.objetivo,
+          imageDataUrl: hasImage ? VALIDATOR_IMAGE.dataUrl : null
         },
         result: result.parsed,
         usage: result.usage
@@ -2616,6 +2758,35 @@
             ab.pontos_fracos.map(function(s) { return '<li>' + esc(s) + '</li>'; }).join('') +
             '</ul></div>' : '') +
         '</div>' +
+      '</div>';
+    }
+
+    // Análise visual (só quando imagem foi enviada)
+    if (r.analise_visual) {
+      var av = r.analise_visual;
+      html += '<div class="analysis-block val-visual-block">' +
+        '<div class="analysis-h">🎨 Análise visual · ' + (av.score_0_10 || 0) + '/10</div>' +
+        (av.leitura_geral ? '<div class="diag-text">' + esc(av.leitura_geral) + '</div>' : '') +
+        '<div class="val-visual-grid">' +
+          (av.design_composicao ? '<div class="val-visual-tile"><div class="val-visual-tile-h">📐 Design & composição</div><div>' + esc(av.design_composicao) + '</div></div>' : '') +
+          (av.estetica_branding ? '<div class="val-visual-tile"><div class="val-visual-tile-h">🎨 Estética & branding</div><div>' + esc(av.estetica_branding) + '</div></div>' : '') +
+          (av.legibilidade ? '<div class="val-visual-tile"><div class="val-visual-tile-h">🔠 Legibilidade</div><div>' + esc(av.legibilidade) + '</div></div>' : '') +
+          (av.expressao_enquadramento ? '<div class="val-visual-tile"><div class="val-visual-tile-h">👁 Expressão & enquadramento</div><div>' + esc(av.expressao_enquadramento) + '</div></div>' : '') +
+        '</div>' +
+        '<div class="val-cols">' +
+          (av.pontos_fortes_visuais && av.pontos_fortes_visuais.length ?
+            '<div class="aud-col aud-col-good"><div class="aud-col-h">✓ Pontos fortes visuais</div><ul>' +
+            av.pontos_fortes_visuais.map(function(s) { return '<li>' + esc(s) + '</li>'; }).join('') +
+            '</ul></div>' : '') +
+          (av.pontos_fracos_visuais && av.pontos_fracos_visuais.length ?
+            '<div class="aud-col aud-col-bad"><div class="aud-col-h">⚠ Pontos fracos visuais</div><ul>' +
+            av.pontos_fracos_visuais.map(function(s) { return '<li>' + esc(s) + '</li>'; }).join('') +
+            '</ul></div>' : '') +
+        '</div>' +
+        (av.ajustes_imediatos && av.ajustes_imediatos.length ?
+          '<div class="val-visual-fixes"><div class="t-label">🔧 Ajustes imediatos</div><ul>' +
+          av.ajustes_imediatos.map(function(s) { return '<li>' + esc(s) + '</li>'; }).join('') +
+          '</ul></div>' : '') +
       '</div>';
     }
 
