@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-22 10:09 | main | feat(quick-notes): captura r├ípida de ideias + inbox no planejamento -->
+<!-- AUTO: 2026-05-22 13:39 | main | fix(instagram): adiciona period=lifetime nas chamadas de demografia -->
 
