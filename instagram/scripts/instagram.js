@@ -2397,6 +2397,7 @@
   var VALIDATOR_ASSETS = { kind: null, images: [], video: null };
   var MAX_VAL_IMAGES = 10;
   var VIDEO_FRAME_COUNT = 10;
+  var VIDEO_FRAME_COUNT_MOBILE = 6;
 
   function valAssetsHasContent() {
     if (VALIDATOR_ASSETS.kind === 'images') return VALIDATOR_ASSETS.images.length > 0;
@@ -2444,15 +2445,22 @@
       VALIDATOR_ASSETS.images = [];
       VALIDATOR_ASSETS.kind = null;
     }
+    if (VALIDATOR_ASSETS.video && VALIDATOR_ASSETS.video.objectUrl) {
+      URL.revokeObjectURL(VALIDATOR_ASSETS.video.objectUrl);
+    }
     var file = files[0];
     var hintEl = document.getElementById('val-assets-hint');
     if (hintEl) hintEl.textContent = 'Processando vídeo... extraindo frames para análise.';
     try {
-      var dataUrl = await fileToDataURL(file);
-      var extraction = await extractVideoFrames(dataUrl, VIDEO_FRAME_COUNT);
+      // createObjectURL é instantâneo — não lê o arquivo inteiro em memória
+      var objectUrl = URL.createObjectURL(file);
+      var isMobile = window.innerWidth < 700;
+      var frameCount = isMobile ? VIDEO_FRAME_COUNT_MOBILE : VIDEO_FRAME_COUNT;
+      var maxDim = isMobile ? 480 : 720;
+      var extraction = await extractVideoFrames(objectUrl, frameCount, maxDim);
       VALIDATOR_ASSETS.kind = 'video';
       VALIDATOR_ASSETS.video = {
-        dataUrl: dataUrl,
+        objectUrl: objectUrl,
         name: file.name || 'reel.mp4',
         durationSec: extraction.durationSec,
         frames: extraction.frames
@@ -2465,13 +2473,14 @@
     }
   };
 
-  function extractVideoFrames(videoDataUrl, count) {
+  function extractVideoFrames(videoSrc, count, maxDim) {
+    maxDim = maxDim || 720;
     return new Promise(function(resolve, reject) {
       var video = document.createElement('video');
-      video.preload = 'auto';
+      video.preload = 'metadata';
       video.muted = true;
       video.playsInline = true;
-      video.src = videoDataUrl;
+      video.src = videoSrc;
       video.onerror = function() { reject(new Error('Não consegui ler o vídeo')); };
       video.onloadedmetadata = function() {
         var dur = isFinite(video.duration) ? video.duration : 0;
@@ -2492,7 +2501,6 @@
         var frames = [];
         var idx = 0;
         var canvas = document.createElement('canvas');
-        var maxDim = 720;
         function nextFrame() {
           if (idx >= times.length) { resolve({ durationSec: dur, frames: frames }); return; }
           video.currentTime = times[idx];
@@ -2537,6 +2545,9 @@
   };
 
   window.clearValidatorAssets = function() {
+    if (VALIDATOR_ASSETS.video && VALIDATOR_ASSETS.video.objectUrl) {
+      URL.revokeObjectURL(VALIDATOR_ASSETS.video.objectUrl);
+    }
     VALIDATOR_ASSETS = { kind: null, images: [], video: null };
     renderValidatorAssets();
   };
@@ -2583,7 +2594,7 @@
               '<div class="val-video-meta">' + v.durationSec.toFixed(1) + 's · ' + v.frames.length + ' frames extraídos para análise</div>' +
             '</div>' +
           '</div>' +
-          '<video class="val-video-preview" src="' + v.dataUrl + '" controls playsinline muted></video>' +
+          '<video class="val-video-preview" src="' + v.objectUrl + '" controls playsinline muted></video>' +
           '<div class="val-frames-strip">' +
             v.frames.map(function(f, i) {
               return '<div class="val-frame">' +
