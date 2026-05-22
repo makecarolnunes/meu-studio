@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-22 14:24 | main | fix(instagram): elimina leitura base64 do v├¡deo no validador mobile -->
+<!-- AUTO: 2026-05-22 15:15 | main | fix(conteudo): aumenta textarea de notas no modal (mobile + desktop) -->
 
