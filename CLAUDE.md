@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-22 13:39 | main | fix(instagram): adiciona period=lifetime nas chamadas de demografia -->
+<!-- AUTO: 2026-05-22 14:24 | main | fix(instagram): elimina leitura base64 do v├¡deo no validador mobile -->
 
