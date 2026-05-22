@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-22 08:59 | main | feat(instagram): validador aceita carrossel + reel com an├ílise por imagem/frame -->
+<!-- AUTO: 2026-05-22 08:59 | main | docs: sync CLAUDE.md [auto] -->
 
