@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-22 15:15 | main | fix(conteudo): aumenta textarea de notas no modal (mobile + desktop) -->
+<!-- AUTO: 2026-05-22 16:14 | main | feat(brand-brain): adiciona m├│dulo de an├ílise estrat├®gica de Reels com IA -->
 
