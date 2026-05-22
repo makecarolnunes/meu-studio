@@ -555,11 +555,11 @@
   async function fetchAudienceInsights() {
     // v22+ usa follower_demographics com breakdown
     var requests = [
-      { metric: 'follower_demographics', params: '&metric_type=total_value&timeframe=this_month&breakdown=age' },
-      { metric: 'follower_demographics', params: '&metric_type=total_value&timeframe=this_month&breakdown=gender' },
-      { metric: 'follower_demographics', params: '&metric_type=total_value&timeframe=this_month&breakdown=city' },
-      { metric: 'follower_demographics', params: '&metric_type=total_value&timeframe=this_month&breakdown=country' },
-      { metric: 'engaged_audience_demographics', params: '&metric_type=total_value&timeframe=this_month&breakdown=age' },
+      { metric: 'follower_demographics', params: '&period=lifetime&metric_type=total_value&timeframe=this_month&breakdown=age' },
+      { metric: 'follower_demographics', params: '&period=lifetime&metric_type=total_value&timeframe=this_month&breakdown=gender' },
+      { metric: 'follower_demographics', params: '&period=lifetime&metric_type=total_value&timeframe=this_month&breakdown=city' },
+      { metric: 'follower_demographics', params: '&period=lifetime&metric_type=total_value&timeframe=this_month&breakdown=country' },
+      { metric: 'engaged_audience_demographics', params: '&period=lifetime&metric_type=total_value&timeframe=this_month&breakdown=age' },
       // Fallback antigo
       { metric: 'audience_gender_age', params: '&period=lifetime' },
       { metric: 'audience_city', params: '&period=lifetime' },
