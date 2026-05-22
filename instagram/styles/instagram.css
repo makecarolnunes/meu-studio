@@ -10,6 +10,30 @@
   flex-wrap: wrap;
 }
 
+/* ── Validador: barra de decisão (enviar / descartar) ── */
+.val-decision {
+  margin: 14px 0 18px;
+  padding: 14px 16px;
+  background: linear-gradient(180deg, #faf3e9, #fff);
+  border: 1px solid #ead8bc;
+  border-radius: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+}
+.val-decision-q {
+  font-weight: 600;
+  font-size: var(--text-sm);
+  color: #6b4a1c;
+}
+.val-decision-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 /* ── Validador: upload de mídia (multi-imagem + vídeo) ── */
 .val-assets-uploader {
   display: flex;
@@ -611,6 +635,21 @@ body {
 .ig-hdr-right {
   display: flex;
   gap: 6px;
+  align-items: center;
+}
+.ig-planning-link {
+  width: auto;
+  padding: 0 10px;
+  gap: 6px;
+  text-decoration: none;
+  background: rgba(255,255,255,0.18);
+  font-weight: 600;
+  font-size: var(--text-xs);
+}
+.ig-planning-link:hover { background: rgba(255,255,255,0.28); }
+.ig-planning-label { display: none; }
+@media (min-width: 560px) {
+  .ig-planning-label { display: inline; }
 }
 
 /* ── MAIN ──────────────────────────────────────────────────── */

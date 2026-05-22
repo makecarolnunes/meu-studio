@@ -23,6 +23,7 @@
     ['anotacoes',   '/anotacoes'],
     ['tarefas',     '/tarefas'],
     ['estoque',     '/estoque'],
+    ['instagram',   '/instagram'],
   ];
   for (var _i = 0; _i < _mapa.length; _i++) {
     if (_p.indexOf(_mapa[_i][1]) !== -1) {
@@ -46,19 +47,22 @@
     menu: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>',
     back: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>',
     out:  '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>',
+    ig:   '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>',
   };
 
   // ── Módulos ──────────────────────────────────────────────
+  // Ordem solicitada: Orçamento → Financeiro → Anotações → Tarefas → Instagram → Conteúdo → Estoque → Agendamentos
   var MODS = [
     { id: 'hub',         label: 'Início',       path: '',                                icon: IC.home },
-    { id: 'financeiro',  label: 'Financeiro',   path: 'financeiro/',                     icon: IC.fin  },
     { id: 'orcamentos',  label: 'Orçamentos',   path: 'orcamentos/orcamentos_novo.html', icon: IC.doc  },
-    { id: 'clientes',    label: 'Clientes',     path: 'clientes/',                       icon: IC.usr  },
-    { id: 'confirmacao', label: 'Agendamentos', path: 'confirmacao/',                    icon: IC.cal  },
-    { id: 'conteudo',    label: 'Conteúdo',     path: 'conteudo/',                       icon: IC.cam  },
+    { id: 'financeiro',  label: 'Financeiro',   path: 'financeiro/',                     icon: IC.fin  },
     { id: 'anotacoes',   label: 'Anotações',    path: 'anotacoes/',                      icon: IC.note },
     { id: 'tarefas',     label: 'Tarefas',      path: 'tarefas/',                        icon: IC.task },
-    { id: 'estoque',     label: 'Estoque',       path: 'estoque/',                        icon: IC.box  },
+    { id: 'instagram',   label: 'Instagram',    path: 'instagram/',                      icon: IC.ig   },
+    { id: 'conteudo',    label: 'Conteúdo',     path: 'conteudo/',                       icon: IC.cam  },
+    { id: 'estoque',     label: 'Estoque',      path: 'estoque/',                        icon: IC.box  },
+    { id: 'confirmacao', label: 'Agendamentos', path: 'confirmacao/',                    icon: IC.cal  },
+    { id: 'clientes',    label: 'Clientes',     path: 'clientes/',                       icon: IC.usr  },
   ];
 
   // ── CSS ──────────────────────────────────────────────────

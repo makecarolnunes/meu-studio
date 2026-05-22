@@ -2765,7 +2765,7 @@ assetBlock +
     // Renderiza resultado salvo
     if (latest.result) {
       if (latest.inputs && latest.inputs.assets) latest.result.__inputAssets = latest.inputs.assets;
-      renderValidatorResult(latest.result, latest.generatedAt);
+      renderValidatorResult(latest.result, latest.generatedAt, latest.id);
     }
     renderValidationHistory();
   }
@@ -2810,7 +2810,7 @@ assetBlock +
     }
     if (v.result) {
       if (v.inputs && v.inputs.assets) v.result.__inputAssets = v.inputs.assets;
-      renderValidatorResult(v.result, v.generatedAt);
+      renderValidatorResult(v.result, v.generatedAt, v.id);
     }
     toast('Validação carregada');
   };
@@ -2924,7 +2924,7 @@ assetBlock +
       hist.unshift(validation);
       saveValidations(hist);
       pushValidationToSupabase(validation);
-      renderValidatorResult(result.parsed, validation.generatedAt);
+      renderValidatorResult(result.parsed, validation.generatedAt, validation.id);
       renderValidationHistory();
       if (statusEl) statusEl.innerHTML = '<span class="t-caption">✓ Análise salva · ' + (result.usage ? fmtNum(result.usage.input_tokens) + ' → ' + fmtNum(result.usage.output_tokens) + ' tokens' : '') + '</span>';
     } catch (err) {
@@ -2936,7 +2936,7 @@ assetBlock +
     }
   };
 
-  function renderValidatorResult(r, generatedAt) {
+  function renderValidatorResult(r, generatedAt, validationId) {
     var el = document.getElementById('validate-result');
     if (!el) return;
 
@@ -2949,6 +2949,20 @@ assetBlock +
     var html = '';
     if (generatedAt) {
       html += '<div class="val-meta">💾 Salva ' + humanAgo(new Date(generatedAt)) + ' · análise persistida no navegador</div>';
+    }
+
+    // Barra de decisão: enviar para planejamento ou descartar
+    if (validationId) {
+      var sentMark = isValidationSent(validationId);
+      html += '<div class="val-decision" id="val-decision-' + esc(validationId) + '">' +
+        '<div class="val-decision-q">Gostou da ideia?</div>' +
+        '<div class="val-decision-actions">' +
+          (sentMark
+            ? '<button class="btn btn-secondary" disabled>✓ Enviado ao Planejamento</button>'
+            : '<button class="btn btn-primary" onclick="sendValidationToContent(\'' + esc(validationId) + '\', this)">📅 Enviar para Planejamento</button>') +
+          '<button class="btn btn-ghost" onclick="discardValidation(\'' + esc(validationId) + '\')">🗑 Descartar</button>' +
+        '</div>' +
+      '</div>';
     }
 
     html += '<div class="val-hero ' + verCls + '">' +
@@ -3441,6 +3455,175 @@ assetBlock +
 
   window.copyText = function(t) {
     navigator.clipboard.writeText(t).then(function() { toast('Copiado'); });
+  };
+
+  // ── Validador: enviar para Planejamento / Descartar ───────
+  function isValidationSent(id) {
+    var list = loadValidations();
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].id === id) return !!list[i].sentToPlanning;
+    }
+    return false;
+  }
+
+  function markValidationSent(id, idea) {
+    var list = loadValidations();
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].id === id) {
+        list[i].sentToPlanning = true;
+        list[i].planningIdeaId = idea && idea.id ? idea.id : null;
+        list[i].sentAt = Date.now();
+        saveValidations(list);
+        pushValidationToSupabase(list[i]);
+        break;
+      }
+    }
+  }
+
+  function buildPlanningTitle(v) {
+    var brief = (v.inputs && v.inputs.briefing) || '';
+    if (!brief) return 'Pauta sem título';
+    var firstLine = brief.split('\n')[0].trim();
+    if (firstLine.length > 80) firstLine = firstLine.slice(0, 80) + '...';
+    return firstLine || 'Pauta sem título';
+  }
+
+  function formatoToPlatform(fmt) {
+    if (!fmt) return 'Reels';
+    var f = String(fmt).toLowerCase();
+    if (f.indexOf('reel') !== -1) return 'Reels';
+    if (f.indexOf('carrossel') !== -1) return 'Carrossel';
+    if (f.indexOf('foto') !== -1) return 'Foto';
+    if (f.indexOf('story') !== -1) return 'Story';
+    return 'Reels';
+  }
+
+  function validationToPlanningNotes(v) {
+    var r = v.result || {};
+    var lines = [];
+    if (r.veredito) lines.push('Veredito IA: ' + r.veredito + (r.score_geral != null ? ' · ' + r.score_geral + '/10' : ''));
+    if (r.veredito_resumo) lines.push(r.veredito_resumo);
+    lines.push('');
+    if (v.inputs && v.inputs.briefing) {
+      lines.push('— Briefing original —');
+      lines.push(v.inputs.briefing);
+      lines.push('');
+    }
+    if (r.hook_sugerido && r.hook_sugerido.primeira_opcao) {
+      lines.push('🎣 Hook: ' + r.hook_sugerido.primeira_opcao);
+    }
+    if (r.cta_sugerido && r.cta_sugerido.texto) {
+      lines.push('💬 CTA: ' + r.cta_sugerido.texto);
+    }
+    if (r.titulo_capa && r.titulo_capa.texto) {
+      lines.push('🖼️ Título capa: ' + r.titulo_capa.texto);
+    }
+    if (r.legenda_sugerida) {
+      lines.push('');
+      lines.push('— Legenda sugerida —');
+      lines.push(r.legenda_sugerida);
+    }
+    // Carrossel
+    if (r.analise_carrossel) {
+      var ac = r.analise_carrossel;
+      lines.push('');
+      lines.push('— Carrossel —');
+      if (ac.melhor_capa && ac.melhor_capa.razao) lines.push('Capa: ' + ac.melhor_capa.razao);
+      if (ac.ordem_sugerida && ac.ordem_sugerida.length) lines.push('Ordem sugerida: ' + ac.ordem_sugerida.join(' → '));
+      if (ac.ordem_sugerida_justificativa) lines.push('↳ ' + ac.ordem_sugerida_justificativa);
+    }
+    // Reel
+    if (r.analise_reel) {
+      var ar = r.analise_reel;
+      lines.push('');
+      lines.push('— Reel —');
+      if (ar.hook_3s && ar.hook_3s.leitura) lines.push('Hook 3s: ' + ar.hook_3s.leitura);
+      if (ar.retencao && ar.retencao.potencial) lines.push('Retenção prevista: ' + ar.retencao.potencial);
+      if (ar.thumb_capa_recomendada && ar.thumb_capa_recomendada.razao) lines.push('Capa recomendada: ' + ar.thumb_capa_recomendada.razao);
+    }
+    lines.push('');
+    lines.push('— Validado pelo Validador de Post do Instagram');
+    return lines.join('\n');
+  }
+
+  window.sendValidationToContent = function(id, btn) {
+    var list = loadValidations();
+    var v = null;
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].id === id) { v = list[i]; break; }
+    }
+    if (!v) { toast('Validação não encontrada', true); return; }
+    if (v.sentToPlanning) { toast('Já foi enviada ao Planejamento'); return; }
+
+    var pilar = (v.result && v.result.pilar_identificado && v.result.pilar_identificado.pilar) ||
+                (v.inputs && v.inputs.pilar) || '';
+    var category = pilarToCategory(pilar);
+    var formatoBase = (v.result && v.result.formato_ideal && v.result.formato_ideal.sugerido) ||
+                      (v.inputs && v.inputs.formato) || 'Reels';
+    var formato = formatoToPlatform(formatoBase);
+
+    var uid = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    var idea = {
+      id: uid,
+      title: buildPlanningTitle(v),
+      categories: [category],
+      formatos: [formato],
+      status: 'Nao Iniciado',
+      notes: validationToPlanningNotes(v),
+      platforms: ['Instagram'],
+      scheduledDate: '',
+      createdAt: new Date().toISOString()
+    };
+
+    try {
+      var raw = localStorage.getItem('mk_content_ideas');
+      var ideas = raw ? JSON.parse(raw) : [];
+      if (!Array.isArray(ideas)) ideas = [];
+      if (ideas.some(function(it) { return it.title === idea.title; })) {
+        toast('Já existe uma ideia com esse título no Planejamento', true);
+        return;
+      }
+      ideas.unshift(idea);
+      localStorage.setItem('mk_content_ideas', JSON.stringify(ideas));
+
+      if (window.DB && DB.conteudo && typeof DB.conteudo.upsert === 'function') {
+        DB.conteudo.upsert(idea).catch(function(e) { console.warn('[ig] supabase upsert falhou:', e); });
+      }
+
+      markValidationSent(id, idea);
+
+      if (btn) {
+        btn.textContent = '✓ Enviado ao Planejamento';
+        btn.disabled = true;
+        btn.classList.remove('btn-primary');
+        btn.classList.add('btn-secondary');
+      }
+      toast('Enviada para Planejamento ✓');
+    } catch (e) {
+      console.error('[ig] erro enviando validação ao planejamento', e);
+      toast('Erro: ' + e.message, true);
+    }
+  };
+
+  window.discardValidation = function(id) {
+    if (!confirm('Descartar essa ideia? A análise será removida do histórico.')) return;
+    var list = loadValidations();
+    var idx = -1;
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].id === id) { idx = i; break; }
+    }
+    if (idx === -1) { toast('Validação não encontrada', true); return; }
+    list.splice(idx, 1);
+    saveValidations(list);
+    if (window.DB && DB.instagram && DB.instagram.validations && !window._SB_ERROR) {
+      DB.instagram.validations.remove(id).catch(function(e) {
+        console.warn('[ig] supabase remove validation falhou:', e);
+      });
+    }
+    var resultEl = document.getElementById('validate-result');
+    if (resultEl) resultEl.innerHTML = '';
+    renderValidationHistory();
+    toast('Ideia descartada');
   };
 
   // ── BOOT ──────────────────────────────────────────────────
