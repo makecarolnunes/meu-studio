@@ -378,7 +378,8 @@
     .card-cont       { --accent: var(--amber);      --icon-bg: var(--amber-l); }
     .card-radar      { --accent: #7C3AED;           --icon-bg: #EDE9FE; }
     .card-val        { --accent: #0D9488;           --icon-bg: #CCFBF1; }
-    .card-concorrentes { --accent: #1E40AF;         --icon-bg: #DBEAFE; }
+    .card-concorrentes { --accent: var(--brand);     --icon-bg: var(--brown-soft); }
+    .card-cdc          { --accent: var(--brand-dark); --icon-bg: #EDD9C8; }
 
     /* Widget de tarefas logo abaixo da seção Organização */
     #todo-section { margin-top: 10px; }

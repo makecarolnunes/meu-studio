@@ -123,6 +123,10 @@
         '<line x1="23" y1="11" x2="17" y2="11"/>' +
         '<line x1="20" y1="8" x2="20" y2="14"/>' +
       '</svg>',
+    cdc:
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+        '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>' +
+      '</svg>',
     arrow:
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
         '<path d="M5 12h14M13 6l6 6-6 6"/>' +
@@ -226,7 +230,8 @@
   // ── Estratégia ──
   function buildEstrategia() {
     var ESTRATEGIA = [
-      { key: 'concorrentes', nome: 'Concorrentes', desc: 'Analise concorrentes e extraia estratégias com IA', url: 'conteudo/concorrentes.html', cls: 'card-concorrentes' },
+      { key: 'concorrentes', nome: 'Concorrentes',      desc: 'Analise concorrentes e extraia estratégias com IA',       url: 'conteudo/concorrentes.html',          cls: 'card-concorrentes' },
+      { key: 'cdc',          nome: 'Centro de Comando', desc: 'Manual da marca — DNA, posicionamento e pilares estratégicos', url: 'estrategia/centro-de-comando.html', cls: 'card-cdc'         },
     ];
     document.getElementById('estrategia-section').innerHTML = ESTRATEGIA.map(function(c) {
       return '<a href="' + esc(c.url) + '" class="sys-card ' + c.cls + '">' +

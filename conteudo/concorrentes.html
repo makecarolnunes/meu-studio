@@ -9,10 +9,10 @@
   <link rel="stylesheet" href="../shared/css/base.css">
   <style>
     :root {
-      --accent:      #1E40AF;
-      --accent-dark: #1e3a8a;
-      --accent-soft: #DBEAFE;
-      --accent-mid:  #3B82F6;
+      --accent:      var(--brand);
+      --accent-dark: var(--brand-dark);
+      --accent-soft: var(--brand-soft);
+      --accent-mid:  var(--brand);
     }
 
     body {
@@ -196,7 +196,7 @@
 
     /* Diferenciação cards */
     .diff-card {
-      background: var(--accent-soft); border: 1.5px solid #BFDBFE;
+      background: var(--accent-soft); border: 1.5px solid var(--border-strong);
       border-radius: 12px; padding: 13px 14px; margin-bottom: 10px;
     }
     .diff-card:last-child { margin-bottom: 0; }
@@ -751,14 +751,14 @@ function buildUserMessage() {
 
 // ── PARSE SECTIONS ────────────────────────────────────────────
 var SECTION_DEFS = [
-  { pattern: /posicionamento/i,          icon: '📍', bg: '#DBEAFE' },
-  { pattern: /estratégia de conteúdo/i,  icon: '📊', bg: '#EDE9FE' },
-  { pattern: /pontos fortes/i,           icon: '💪', bg: '#D1FAE5' },
+  { pattern: /posicionamento/i,          icon: '📍', bg: '#FAF3EE' },
+  { pattern: /estratégia de conteúdo/i,  icon: '📊', bg: '#F5EFEA' },
+  { pattern: /pontos fortes/i,           icon: '💪', bg: '#EAF3DE' },
   { pattern: /oportunidades/i,           icon: '🔓', bg: '#FEF9C3' },
   { pattern: /o que aprender/i,          icon: '📚', bg: '#FFF7ED' },
-  { pattern: /o que não copiar/i,        icon: '✋', bg: '#FEE2E2' },
-  { pattern: /como se diferenciar/i,     icon: '🏆', bg: '#F0FDF4' },
-  { pattern: /3 ideias inspiradas/i,     icon: '💡', bg: '#FFF3E0' },
+  { pattern: /o que não copiar/i,        icon: '✋', bg: '#FCE7E7' },
+  { pattern: /como se diferenciar/i,     icon: '🏆', bg: '#EAF3DE' },
+  { pattern: /3 ideias inspiradas/i,     icon: '💡', bg: '#FAEEDA' },
 ];
 
 function parseSections(text) {
@@ -776,7 +776,7 @@ function parseSections(text) {
     if (!def) def = { icon: '📌', bg: 'var(--surface-2)' };
     sections.push({ title: header, icon: def.icon, bg: def.bg, content: content });
   });
-  if (!sections.length) sections.push({ title: 'Análise', icon: '🎯', bg: '#DBEAFE', content: text });
+  if (!sections.length) sections.push({ title: 'Análise', icon: '🎯', bg: 'var(--brand-soft)', content: text });
   return sections;
 }
 
