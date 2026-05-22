@@ -194,12 +194,26 @@
     var contDesc = (cont && cont.descricao) ? cont.descricao : 'Planejamento de posts e ideias';
 
     var CREATIVE = [
-      { key: 'conteudo',  nome: 'Planejamento de Conteúdo', desc: 'Ideias, calendário e fila de gravação',               url: contUrl,                       cls: 'card-cont'     },
-      { key: 'instagram', nome: 'Instagram',                desc: 'Dashboard, métricas e análise de performance',        url: 'instagram/',                  cls: 'card-insta'    },
-      { key: 'validador', nome: 'Validador de Conteúdo',    desc: 'Valide antes de postar — feedback estratégico IA',    url: 'instagram/?tab=validador',    cls: 'card-val'      },
-      { key: 'radar',     nome: 'Radar',                    desc: 'Decodifique referências e adapte para o seu nicho',   url: 'conteudo/brand-brain.html',   cls: 'card-radar'    },
+      { key: 'conteudo',  nome: 'Planejamento de Conteúdo', desc: 'Ideias, calendário e fila de gravação',             url: contUrl,                      cls: 'card-cont'  },
+      { key: 'validador', nome: 'Validador de Conteúdo',    desc: 'Valide antes de postar — feedback estratégico IA',  url: 'instagram/?tab=validador',   cls: 'card-val'   },
+      { key: 'radar',     nome: 'Radar',                    desc: 'Decodifique referências e adapte para o seu nicho', url: 'conteudo/brand-brain.html',  cls: 'card-radar' },
     ];
     document.getElementById('creative-section').innerHTML = CREATIVE.map(function(c) {
+      return '<a href="' + esc(c.url) + '" class="sys-card ' + c.cls + '">' +
+        '<div class="sys-icon-wrap">' + iconSvg(c.key) + '</div>' +
+        '<div class="sys-name">' + esc(c.nome) + '</div>' +
+        '<div class="sys-desc">' + esc(c.desc) + '</div>' +
+        '<div class="sys-arrow">' + iconSvg('arrow') + '</div>' +
+      '</a>';
+    }).join('');
+  }
+
+  // ── Redes Sociais ──
+  function buildSocial() {
+    var SOCIAL = [
+      { key: 'instagram', nome: 'Instagram', desc: 'Dashboard, métricas e análise de performance', url: 'instagram/', cls: 'card-insta' },
+    ];
+    document.getElementById('social-section').innerHTML = SOCIAL.map(function(c) {
       return '<a href="' + esc(c.url) + '" class="sys-card ' + c.cls + '">' +
         '<div class="sys-icon-wrap">' + iconSvg(c.key) + '</div>' +
         '<div class="sys-name">' + esc(c.nome) + '</div>' +
@@ -212,7 +226,7 @@
   // ── Estratégia ──
   function buildEstrategia() {
     var ESTRATEGIA = [
-      { key: 'concorrentes', nome: 'Concorrentes', desc: 'Monitore, analise e extraia estratégias da concorrência', url: 'instagram/?tab=concorrentes', cls: 'card-concorrentes' },
+      { key: 'concorrentes', nome: 'Concorrentes', desc: 'Analise concorrentes e extraia estratégias com IA', url: 'conteudo/concorrentes.html', cls: 'card-concorrentes' },
     ];
     document.getElementById('estrategia-section').innerHTML = ESTRATEGIA.map(function(c) {
       return '<a href="' + esc(c.url) + '" class="sys-card ' + c.cls + '">' +
@@ -352,6 +366,7 @@
     buildCards(FALLBACK);
     buildOrganizacao();
     buildGestao();
+    buildSocial();
     buildEstrategia();
   }
 

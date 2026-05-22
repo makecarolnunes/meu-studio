@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Concorrentes · Meu Studio</title>
+  <link rel="stylesheet" href="../shared/css/tokens.css">
+  <link rel="stylesheet" href="../shared/css/base.css">
+  <style>
+    :root {
+      --accent:      #1E40AF;
+      --accent-dark: #1e3a8a;
+      --accent-soft: #DBEAFE;
+      --accent-mid:  #3B82F6;
+    }
+
+    body {
+      max-width: 480px; margin: 0 auto; overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* ── HEADER ── */
+    .hdr {
+      background: linear-gradient(135deg, var(--accent-dark), var(--accent));
+      color: #fff; padding: 10px 14px; position: sticky; top: 0; z-index: 100;
+      display: grid; grid-template-columns: 44px 1fr 44px; align-items: center; gap: 8px;
+    }
+    .hdr-center { text-align: center; }
+    .hdr h1 { font-size: 1rem; font-weight: 700; }
+    .hdr-sub { font-size: .68rem; opacity: .7; margin-top: 1px; }
+    .hdr-back, .hdr-action {
+      width: 34px; height: 34px; border-radius: 50%; border: none;
+      background: rgba(255,255,255,.13); color: rgba(255,255,255,.88);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: background .15s; padding: 0;
+    }
+    .hdr-back:active, .hdr-action:active { background: rgba(255,255,255,.28); }
+
+    /* ── MOBILE LAYOUT ── */
+    .bb-left-panel, .bb-right-panel { display: block; }
+    .bb-content { padding: 14px 13px 100px; }
+    .bb-left-title { display: none; }
+
+    /* ── CARDS ── */
+    .bb-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 14px; margin-bottom: 10px; }
+    .bb-label {
+      display: block; font-size: .7rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .07em;
+      color: var(--text-muted); margin-bottom: 8px;
+    }
+    .bb-hint { font-size: .67rem; font-weight: 400; text-transform: none; letter-spacing: 0; color: var(--text-subtle); }
+
+    .bb-input {
+      width: 100%; padding: 11px 13px; background: var(--bg);
+      color: var(--text); border: 1.5px solid var(--border); border-radius: 9px;
+      font-family: inherit; font-size: .84rem; -webkit-appearance: none;
+      transition: border-color .15s;
+    }
+    .bb-input::placeholder { color: var(--text-subtle); }
+    .bb-input:focus { outline: none; border-color: var(--accent); }
+
+    .bb-textarea {
+      width: 100%; padding: 11px 13px; background: var(--bg);
+      color: var(--text); border: 1.5px solid var(--border); border-radius: 9px;
+      font-family: inherit; font-size: .84rem; resize: vertical;
+      min-height: 90px; line-height: 1.55; -webkit-appearance: none;
+      transition: border-color .15s;
+    }
+    .bb-textarea::placeholder { color: var(--text-subtle); }
+    .bb-textarea:focus { outline: none; border-color: var(--accent); }
+
+    /* ── COMPETITOR LIST ── */
+    .comp-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+    .comp-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px; border-radius: 10px;
+      border: 1.5px solid var(--border); background: var(--surface);
+      cursor: pointer; transition: all .15s; -webkit-tap-highlight-color: transparent;
+    }
+    .comp-item:hover { border-color: var(--accent-mid); background: var(--accent-soft); }
+    .comp-item.active { border-color: var(--accent); background: var(--accent-soft); }
+    .comp-avatar {
+      width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0;
+      background: linear-gradient(135deg, var(--accent-dark), var(--accent-mid));
+      display: flex; align-items: center; justify-content: center;
+      font-size: .8rem; font-weight: 700; color: #fff;
+    }
+    .comp-info { flex: 1; min-width: 0; }
+    .comp-handle { font-size: .85rem; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .comp-meta { font-size: .69rem; color: var(--text-muted); margin-top: 1px; }
+    .comp-del {
+      width: 26px; height: 26px; border-radius: 50%; border: none; background: none;
+      color: var(--text-subtle); cursor: pointer; display: flex; align-items: center;
+      justify-content: center; font-size: .9rem; transition: all .15s;
+      flex-shrink: 0; padding: 0;
+    }
+    .comp-del:hover { background: var(--danger-soft); color: var(--danger); }
+
+    .comp-add-row { display: flex; gap: 8px; margin-top: 4px; }
+    .comp-add-input {
+      flex: 1; padding: 10px 12px; background: var(--bg);
+      border: 1.5px solid var(--border); border-radius: 9px;
+      font-family: inherit; font-size: .83rem; color: var(--text); -webkit-appearance: none;
+    }
+    .comp-add-input::placeholder { color: var(--text-subtle); }
+    .comp-add-input:focus { outline: none; border-color: var(--accent); }
+    .comp-add-btn {
+      padding: 10px 14px; background: var(--accent); color: #fff;
+      border: none; border-radius: 9px; font-family: inherit;
+      font-size: .82rem; font-weight: 700; cursor: pointer; white-space: nowrap;
+      transition: background .15s;
+    }
+    .comp-add-btn:hover { background: var(--accent-dark); }
+
+    /* ── ANALYZE BUTTON ── */
+    .bb-btn {
+      width: 100%; padding: 15px;
+      background: linear-gradient(135deg, var(--accent-dark), var(--accent));
+      color: #fff; border: none; border-radius: 12px;
+      font-family: inherit; font-size: .92rem; font-weight: 700;
+      cursor: pointer; transition: opacity .2s, transform .12s;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      margin-top: 4px;
+    }
+    .bb-btn:active { transform: translateY(1px); }
+    .bb-btn:disabled { opacity: .55; cursor: not-allowed; }
+    .bb-btn-spinner {
+      width: 16px; height: 16px; border: 2px solid rgba(255,255,255,.4);
+      border-top-color: #fff; border-radius: 50%;
+      animation: spin .7s linear infinite; display: none;
+    }
+    .bb-btn.loading .bb-btn-spinner { display: block; }
+    .bb-btn.loading .bb-btn-icon { display: none; }
+
+    /* ── LOADING ── */
+    .bb-loading { display: none; text-align: center; padding: 48px 20px; }
+    .bb-loading.show { display: block; }
+    .bb-spinner {
+      width: 38px; height: 38px; border: 3px solid var(--accent-soft);
+      border-top-color: var(--accent); border-radius: 50%;
+      animation: spin .75s linear infinite; margin: 0 auto 16px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .bb-loading-title { font-size: .9rem; font-weight: 700; color: var(--accent-dark); margin-bottom: 6px; }
+    .bb-loading-sub { font-size: .76rem; color: var(--text-muted); line-height: 1.6; }
+    .bb-loading-steps { margin-top: 18px; display: flex; flex-direction: column; gap: 6px; }
+    .bb-loading-step {
+      font-size: .73rem; color: var(--text-subtle); opacity: 0;
+      animation: fadeStep .4s ease forwards;
+    }
+    .bb-loading-step:nth-child(1) { animation-delay: .3s; }
+    .bb-loading-step:nth-child(2) { animation-delay: 1.2s; }
+    .bb-loading-step:nth-child(3) { animation-delay: 2.4s; }
+    .bb-loading-step:nth-child(4) { animation-delay: 3.8s; }
+    @keyframes fadeStep { to { opacity: 1; } }
+
+    /* ── EMPTY STATE ── */
+    .bb-empty { display: none; }
+
+    /* ── RESULT ── */
+    #bb-result { display: none; }
+    #bb-result.show { display: block; }
+
+    .result-meta {
+      background: linear-gradient(135deg, var(--accent-dark), var(--accent));
+      color: #fff; border-radius: 14px; padding: 14px 16px; margin-bottom: 12px;
+    }
+    .result-meta-label { font-size: .65rem; font-weight: 700; opacity: .7; text-transform: uppercase; letter-spacing: .09em; margin-bottom: 3px; }
+    .result-meta-handle { font-size: 1.1rem; font-weight: 700; margin-bottom: 2px; }
+    .result-meta-date { font-size: .72rem; opacity: .7; }
+
+    .result-section { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; margin-bottom: 9px; }
+    .rs-header {
+      display: flex; align-items: center; gap: 10px;
+      padding: 13px 14px; cursor: pointer; -webkit-tap-highlight-color: transparent;
+      border-bottom: 1px solid transparent; transition: background .15s;
+    }
+    .rs-header:active { background: var(--surface-2); }
+    .result-section.open .rs-header { border-bottom-color: var(--border); }
+    .rs-icon { width: 32px; height: 32px; border-radius: 9px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 1rem; }
+    .rs-title { font-size: .86rem; font-weight: 700; flex: 1; color: var(--text); }
+    .rs-arrow { font-size: .7rem; color: var(--text-muted); transition: transform .2s; }
+    .result-section.open .rs-arrow { transform: rotate(180deg); }
+    .rs-body { display: none; padding: 14px 15px; font-size: .82rem; line-height: 1.68; color: var(--text); }
+    .result-section.open .rs-body { display: block; }
+
+    /* Markdown */
+    .rs-body strong { font-weight: 700; color: var(--accent-dark); }
+    .rs-body em { font-style: italic; color: var(--text-muted); }
+    .rs-body h3 { font-size: .84rem; font-weight: 700; color: var(--accent-dark); margin: 12px 0 5px; }
+    .rs-body ul { margin: 6px 0 10px 18px; }
+    .rs-body li { margin-bottom: 5px; }
+    .rs-body p { margin-bottom: 8px; }
+    .rs-body p:last-child { margin-bottom: 0; }
+
+    /* Diferenciação cards */
+    .diff-card {
+      background: var(--accent-soft); border: 1.5px solid #BFDBFE;
+      border-radius: 12px; padding: 13px 14px; margin-bottom: 10px;
+    }
+    .diff-card:last-child { margin-bottom: 0; }
+    .diff-num { font-size: .62rem; font-weight: 700; text-transform: uppercase; letter-spacing: .09em; color: var(--accent); margin-bottom: 5px; }
+    .diff-title { font-size: .9rem; font-weight: 700; color: var(--accent-dark); margin-bottom: 8px; line-height: 1.35; }
+    .diff-field { margin-bottom: 7px; }
+    .diff-field:last-child { margin-bottom: 0; }
+    .diff-field-label { font-size: .63rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--accent); margin-bottom: 3px; }
+    .diff-field-val { font-size: .82rem; color: var(--text); line-height: 1.55; }
+
+    /* Alerta items */
+    .alert-item {
+      display: flex; gap: 9px; align-items: flex-start;
+      padding: 9px 12px; background: var(--warning-soft);
+      border-radius: 9px; margin-bottom: 7px; font-size: .81rem;
+    }
+    .alert-item:last-child { margin-bottom: 0; }
+    .alert-icon { color: var(--warning); flex-shrink: 0; margin-top: 1px; font-weight: 700; }
+
+    /* Action buttons */
+    .result-actions { display: flex; gap: 8px; margin-bottom: 80px; }
+    .action-btn {
+      flex: 1; padding: 13px 10px; border-radius: 12px; border: 1.5px solid var(--border);
+      background: var(--surface); color: var(--text-muted);
+      font-family: inherit; font-size: .78rem; font-weight: 600;
+      cursor: pointer; display: flex; flex-direction: column;
+      align-items: center; gap: 4px; -webkit-tap-highlight-color: transparent;
+      transition: background .15s;
+    }
+    .action-btn:hover { background: var(--surface-2); }
+    .action-btn-icon { font-size: 1.1rem; }
+    .action-btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .action-btn-primary:hover { background: var(--accent-dark); border-color: var(--accent-dark); }
+
+    /* ── TOAST ── */
+    .toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(10px);
+      background: var(--accent-dark); color: #fff; padding: 10px 22px;
+      border-radius: 24px; font-size: .8rem; font-weight: 600;
+      z-index: 1200; opacity: 0; pointer-events: none;
+      transition: opacity .25s, transform .25s;
+      white-space: nowrap; max-width: 88vw; text-align: center;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* ── KEY MODAL ── */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,.48);
+      z-index: 500; display: none; align-items: flex-end; justify-content: center;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal-box {
+      background: var(--surface); width: 100%; max-width: 480px;
+      border-radius: 20px 20px 0 0; padding: 22px 16px 36px;
+    }
+    .modal-handle { width: 40px; height: 4px; background: var(--border); border-radius: 4px; margin: 0 auto 18px; }
+    .modal-title { font-size: .95rem; font-weight: 700; margin-bottom: 6px; color: var(--text); }
+    .modal-sub { font-size: .77rem; color: var(--text-muted); margin-bottom: 16px; line-height: 1.5; }
+    .modal-input {
+      width: 100%; padding: 12px 14px; border: 1.5px solid var(--border);
+      border-radius: 10px; font-family: inherit; font-size: .84rem;
+      margin-bottom: 12px; background: var(--bg); color: var(--text); -webkit-appearance: none;
+    }
+    .modal-input:focus { outline: none; border-color: var(--accent); }
+    .modal-save {
+      width: 100%; padding: 14px; background: var(--accent); color: #fff;
+      border: none; border-radius: 11px; font-family: inherit;
+      font-size: .9rem; font-weight: 700; cursor: pointer; margin-bottom: 8px;
+    }
+    .modal-cancel {
+      width: 100%; padding: 11px; background: none; color: var(--text-muted);
+      border: none; font-family: inherit; font-size: .84rem; cursor: pointer;
+    }
+
+    /* ════════════════════════════════════════════════════════════
+       DESKTOP — two-column layout (≥768px)
+       ════════════════════════════════════════════════════════════ */
+    @media (min-width: 768px) {
+      body { max-width: none; }
+
+      .hdr { max-width: none; padding: 12px 36px; grid-template-columns: 48px 1fr 48px; }
+      .hdr h1 { font-size: 1.1rem; }
+      .hdr-sub { font-size: .73rem; }
+      .hdr-back, .hdr-action { width: 38px; height: 38px; }
+
+      .bb-content {
+        display: grid; grid-template-columns: 360px 1fr;
+        max-width: 1280px; margin: 0 auto; padding: 0;
+        min-height: calc(100vh - 54px); align-items: start;
+      }
+
+      .bb-left-panel {
+        position: sticky; top: 54px; height: calc(100vh - 54px);
+        overflow-y: auto; padding: 22px 20px 40px;
+        border-right: 1px solid var(--border); background: var(--surface);
+        scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent;
+      }
+      .bb-left-panel::-webkit-scrollbar { width: 4px; }
+      .bb-left-panel::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
+
+      #bb-form { display: block !important; }
+
+      .bb-left-title {
+        display: flex; align-items: center; gap: 10px;
+        margin-bottom: 18px; padding-bottom: 16px;
+        border-bottom: 1px solid var(--border);
+      }
+      .bb-left-title-icon {
+        width: 38px; height: 38px; border-radius: 10px;
+        background: linear-gradient(135deg, var(--accent-dark), var(--accent));
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.2rem; flex-shrink: 0;
+      }
+      .bb-left-title-text { flex: 1; }
+      .bb-left-title-name { font-size: .95rem; font-weight: 700; color: var(--text); }
+      .bb-left-title-sub { font-size: .72rem; color: var(--text-muted); margin-top: 1px; }
+
+      .bb-card { border-radius: 10px; padding: 12px; margin-bottom: 8px; }
+      .bb-textarea { min-height: 80px; }
+      .bb-btn { padding: 13px; font-size: .87rem; border-radius: 10px; margin-top: 6px; }
+
+      .bb-right-panel {
+        padding: 24px 32px 60px; background: var(--bg);
+        min-height: calc(100vh - 54px); overflow-y: auto;
+      }
+
+      .bb-loading { padding: 80px 24px; }
+
+      .bb-empty {
+        display: flex; flex-direction: column;
+        align-items: center; text-align: center; padding: 64px 24px 40px;
+      }
+      .bb-empty-icon { font-size: 3.5rem; line-height: 1; margin-bottom: 16px; }
+      .bb-empty-title { font-size: 1.2rem; font-weight: 700; color: var(--accent-dark); margin-bottom: 8px; }
+      .bb-empty-sub { font-size: .83rem; color: var(--text-muted); line-height: 1.6; max-width: 340px; margin-bottom: 32px; }
+      .bb-empty-grid {
+        display: grid; grid-template-columns: repeat(4, 1fr);
+        gap: 10px; width: 100%; max-width: 560px; margin-bottom: 20px;
+      }
+      .bb-empty-chip { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 8px; text-align: center; }
+      .bb-empty-chip-icon { font-size: 1.3rem; margin-bottom: 5px; }
+      .bb-empty-chip-label { font-size: .67rem; font-weight: 600; color: var(--text-muted); line-height: 1.3; }
+      .bb-empty-tip { font-size: .75rem; color: var(--text-subtle); max-width: 380px; background: var(--surface-2); border-radius: 10px; padding: 12px 16px; line-height: 1.6; border: 1px solid var(--border); }
+      .bb-empty-tip strong { color: var(--accent-dark); }
+
+      /* Top bar de resultado no desktop */
+      .result-top-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+      .result-top-bar .result-meta { flex: 1; margin-bottom: 0; }
+      .result-top-actions { display: flex; gap: 8px; flex-shrink: 0; }
+      .result-top-btn {
+        padding: 10px 16px; border-radius: 9px; border: 1.5px solid var(--border);
+        background: var(--surface); color: var(--text-muted);
+        font-family: inherit; font-size: .78rem; font-weight: 600;
+        cursor: pointer; display: flex; align-items: center; gap: 6px;
+        white-space: nowrap; transition: background .15s;
+      }
+      .result-top-btn:hover { background: var(--surface-2); border-color: var(--border-strong); }
+      .result-top-btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+      .result-top-btn-primary:hover { background: var(--accent-dark); border-color: var(--accent-dark); }
+      .result-actions { display: none; }
+
+      .result-section { border-radius: 12px; margin-bottom: 8px; }
+      .rs-body { padding: 14px 16px; font-size: .84rem; }
+
+      /* Diferenciação 3-col */
+      .result-section.open .rs-body.body-diff {
+        display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding: 14px;
+      }
+      .result-section.open .rs-body.body-diff .diff-card { margin-bottom: 0; }
+
+      .modal-box { border-radius: 16px; max-width: 440px; margin: auto; }
+      .modal-overlay { align-items: center; }
+    }
+
+    @media (min-width: 1100px) {
+      .bb-content { grid-template-columns: 400px 1fr; }
+      .bb-right-panel { padding: 28px 44px 60px; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="bb-app">
+
+  <!-- HEADER -->
+  <div class="hdr">
+    <button class="hdr-back" onclick="history.back()" aria-label="Voltar">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <div class="hdr-center">
+      <h1>Concorrentes</h1>
+      <div class="hdr-sub">Inteligência estratégica competitiva</div>
+    </div>
+    <button class="hdr-action" onclick="openKeyModal()" title="Configurar chave Claude" aria-label="Configurar API">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12.22 2h-.44a2 2 0 00-2 2v.18a2 2 0 01-1 1.73l-.43.25a2 2 0 01-2 0l-.15-.08a2 2 0 00-2.73.73l-.22.38a2 2 0 00.73 2.73l.15.1a2 2 0 011 1.72v.51a2 2 0 01-1 1.74l-.15.09a2 2 0 00-.73 2.73l.22.38a2 2 0 002.73.73l.15-.08a2 2 0 012 0l.43.25a2 2 0 011 1.73V20a2 2 0 002 2h.44a2 2 0 002-2v-.18a2 2 0 011-1.73l.43-.25a2 2 0 012 0l.15.08a2 2 0 002.73-.73l.22-.39a2 2 0 00-.73-2.73l-.15-.08a2 2 0 01-1-1.74v-.5a2 2 0 011-1.74l.15-.09a2 2 0 00.73-2.73l-.22-.38a2 2 0 00-2.73-.73l-.15.08a2 2 0 01-2 0l-.43-.25a2 2 0 01-1-1.73V4a2 2 0 00-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+    </button>
+  </div>
+
+  <div class="bb-content">
+
+    <!-- ── LEFT PANEL ── -->
+    <div class="bb-left-panel">
+
+      <div class="bb-left-title">
+        <div class="bb-left-title-icon">🎯</div>
+        <div class="bb-left-title-text">
+          <div class="bb-left-title-name">Concorrentes</div>
+          <div class="bb-left-title-sub">Inteligência estratégica competitiva</div>
+        </div>
+      </div>
+
+      <div id="bb-form">
+
+        <!-- Lista de concorrentes -->
+        <div class="bb-card">
+          <label class="bb-label">Concorrentes salvos</label>
+          <div class="comp-list" id="comp-list"></div>
+          <div class="comp-add-row">
+            <input type="text" class="comp-add-input" id="comp-add-input"
+              placeholder="@handle ou nome..." onkeydown="if(event.key==='Enter') addCompetitor()">
+            <button class="comp-add-btn" onclick="addCompetitor()">+ Adicionar</button>
+          </div>
+        </div>
+
+        <!-- Concorrente selecionado -->
+        <div class="bb-card" id="selected-card" style="display:none">
+          <label class="bb-label" id="selected-label">Analisando: @—</label>
+          <div style="font-size:.75rem;color:var(--text-muted);margin-bottom:10px;line-height:1.5" id="selected-hint">
+            Descreva o que você vê no perfil desse concorrente para uma análise mais precisa.
+          </div>
+
+          <label class="bb-label" style="margin-top:0">Observações <span class="bb-hint">— o que você nota no perfil</span></label>
+          <textarea class="bb-textarea" id="comp-obs" rows="4"
+            placeholder="Ex: posta 3x por semana, foco em make para noivas, feed beige e editorial, muito Reels de transformação, legenda curta com CTA para agendar..."></textarea>
+
+          <label class="bb-label" style="margin-top:12px">Exemplos de caption <span class="bb-hint">— opcional</span></label>
+          <textarea class="bb-textarea" id="comp-captions" rows="3"
+            placeholder="Cole aqui 1-3 legendas que você viu no perfil desse concorrente..."></textarea>
+        </div>
+
+        <button class="bb-btn" id="bb-btn" onclick="analyzeCompetitor()">
+          <svg class="bb-btn-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <div class="bb-btn-spinner"></div>
+          Analisar com IA
+        </button>
+
+      </div>
+    </div>
+
+    <!-- ── RIGHT PANEL ── -->
+    <div class="bb-right-panel">
+
+      <!-- EMPTY STATE -->
+      <div class="bb-empty" id="bb-empty">
+        <div class="bb-empty-icon">🎯</div>
+        <div class="bb-empty-title">Selecione um concorrente</div>
+        <div class="bb-empty-sub">Escolha um perfil da lista ao lado, adicione observações e clique em <strong>Analisar com IA</strong>.</div>
+        <div class="bb-empty-grid">
+          <div class="bb-empty-chip"><div class="bb-empty-chip-icon">📍</div><div class="bb-empty-chip-label">Posicionamento</div></div>
+          <div class="bb-empty-chip"><div class="bb-empty-chip-icon">📊</div><div class="bb-empty-chip-label">Estratégia de Conteúdo</div></div>
+          <div class="bb-empty-chip"><div class="bb-empty-chip-icon">💪</div><div class="bb-empty-chip-label">Pontos Fortes</div></div>
+          <div class="bb-empty-chip"><div class="bb-empty-chip-icon">🔓</div><div class="bb-empty-chip-label">Oportunidades</div></div>
+          <div class="bb-empty-chip"><div class="bb-empty-chip-icon">📚</div><div class="bb-empty-chip-label">O que Aprender</div></div>
+          <div class="bb-empty-chip"><div class="bb-empty-chip-icon">✋</div><div class="bb-empty-chip-label">O que NÃO Copiar</div></div>
+          <div class="bb-empty-chip"><div class="bb-empty-chip-icon">🏆</div><div class="bb-empty-chip-label">Como Se Diferenciar</div></div>
+          <div class="bb-empty-chip"><div class="bb-empty-chip-icon">💡</div><div class="bb-empty-chip-label">Ideias Inspiradas</div></div>
+        </div>
+        <div class="bb-empty-tip">
+          <strong>Dica:</strong> Quanto mais você descrever (frequência de post, temas, estética, estilo de legenda), mais precisa e estratégica será a análise.
+        </div>
+      </div>
+
+      <!-- LOADING -->
+      <div class="bb-loading" id="bb-loading">
+        <div class="bb-spinner"></div>
+        <div class="bb-loading-title">Analisando o concorrente...</div>
+        <div class="bb-loading-sub">Gerando inteligência estratégica</div>
+        <div class="bb-loading-steps">
+          <div class="bb-loading-step">📍 Mapeando posicionamento e nicho...</div>
+          <div class="bb-loading-step">📊 Identificando estratégia de conteúdo...</div>
+          <div class="bb-loading-step">🔓 Detectando gaps e oportunidades...</div>
+          <div class="bb-loading-step">🏆 Gerando estratégia de diferenciação...</div>
+        </div>
+      </div>
+
+      <!-- RESULT -->
+      <div id="bb-result">
+        <div class="result-top-bar" id="result-top-bar" style="display:none">
+          <div class="result-meta" id="result-meta-desk" style="flex:1;margin-bottom:0"></div>
+          <div class="result-top-actions">
+            <button class="result-top-btn" onclick="resetResult()">↩ Nova análise</button>
+            <button class="result-top-btn" onclick="copyAll()">📋 Copiar</button>
+            <button class="result-top-btn result-top-btn-primary" onclick="saveAnalysis()">💾 Salvar</button>
+          </div>
+        </div>
+
+        <div class="result-meta" id="result-meta"></div>
+        <div id="result-sections"></div>
+
+        <div class="result-actions">
+          <button class="action-btn" onclick="resetResult()">
+            <span class="action-btn-icon">↩</span>Nova análise
+          </button>
+          <button class="action-btn" onclick="copyAll()">
+            <span class="action-btn-icon">📋</span>Copiar
+          </button>
+          <button class="action-btn action-btn-primary" onclick="saveAnalysis()">
+            <span class="action-btn-icon">💾</span>Salvar
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="toast" id="bb-toast"></div>
+
+  <!-- KEY MODAL -->
+  <div class="modal-overlay" id="key-modal">
+    <div class="modal-box">
+      <div class="modal-handle"></div>
+      <div class="modal-title">Chave da API Claude</div>
+      <div class="modal-sub">Necessária para análises com IA. Salva apenas neste dispositivo.</div>
+      <input type="password" class="modal-input" id="key-input" placeholder="sk-ant-...">
+      <button class="modal-save" onclick="saveKey()">Salvar chave</button>
+      <button class="modal-cancel" onclick="closeKeyModal()">Cancelar</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+// Concorrentes — Inteligência Estratégica Competitiva
+// ══════════════════════════════════════════════════════════════
+
+var STORAGE_KEY    = 'mk_concorrentes_v2';
+var competitors    = [];
+var activeId       = null;
+var lastAnalysis   = '';
+
+var DEFAULT_COMPETITORS = [
+  'makecomgaby', 'juliatorresmakeup', 'cinthiaprado',
+  'nathmatosmakeup', 'carolzimmaromakeup', 'thaisbenites', 'anasamakeup'
+];
+
+function isDesktop() { return window.innerWidth >= 768; }
+
+// ── PERSISTÊNCIA ──────────────────────────────────────────────
+function loadCompetitors() {
+  try { competitors = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch(e) { competitors = []; }
+  if (!competitors.length) {
+    competitors = DEFAULT_COMPETITORS.map(function(h) {
+      return { id: 'c_' + h, handle: h, obs: '', captions: '', analise: '', analisadoEm: '' };
+    });
+    saveCompetitors();
+  }
+}
+function saveCompetitors() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(competitors));
+}
+function findById(id) { return competitors.find(function(c) { return c.id === id; }); }
+
+// ── TOAST ─────────────────────────────────────────────────────
+function toast(msg, dur) {
+  dur = dur || 2800;
+  var t = document.getElementById('bb-toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(function() { t.classList.remove('show'); }, dur);
+}
+
+// ── KEY MODAL ─────────────────────────────────────────────────
+function openKeyModal() {
+  var inp = document.getElementById('key-input');
+  inp.value = localStorage.getItem('mk_claude_key') || '';
+  document.getElementById('key-modal').classList.add('show');
+  setTimeout(function() { inp.focus(); }, 120);
+}
+function closeKeyModal() { document.getElementById('key-modal').classList.remove('show'); }
+function saveKey() {
+  var k = (document.getElementById('key-input').value || '').trim();
+  if (!k) { toast('Cole sua chave sk-ant-...'); return; }
+  localStorage.setItem('mk_claude_key', k);
+  closeKeyModal(); toast('Chave salva!');
+}
+
+// ── RENDER COMPETITOR LIST ────────────────────────────────────
+function renderList() {
+  var el = document.getElementById('comp-list');
+  if (!competitors.length) {
+    el.innerHTML = '<div style="font-size:.77rem;color:var(--text-subtle);text-align:center;padding:8px 0">Nenhum concorrente cadastrado</div>';
+    return;
+  }
+  el.innerHTML = competitors.map(function(c) {
+    var initial = (c.handle || '?')[0].toUpperCase();
+    var hasAnalise = !!c.analisadoEm;
+    var meta = hasAnalise
+      ? 'Analisado ' + relTime(c.analisadoEm)
+      : 'Sem análise ainda';
+    var cls = 'comp-item' + (c.id === activeId ? ' active' : '');
+    return '<div class="' + cls + '" onclick="selectCompetitor(\'' + esc(c.id) + '\')">' +
+      '<div class="comp-avatar">' + esc(initial) + '</div>' +
+      '<div class="comp-info">' +
+        '<div class="comp-handle">@' + esc(c.handle) + '</div>' +
+        '<div class="comp-meta">' + esc(meta) + '</div>' +
+      '</div>' +
+      '<button class="comp-del" onclick="event.stopPropagation();removeCompetitor(\'' + esc(c.id) + '\')" title="Remover">×</button>' +
+    '</div>';
+  }).join('');
+}
+
+// ── SELECT COMPETITOR ─────────────────────────────────────────
+function selectCompetitor(id) {
+  activeId = id;
+  var c = findById(id);
+  if (!c) return;
+
+  // Update form
+  document.getElementById('selected-label').textContent = 'Analisando: @' + c.handle;
+  document.getElementById('comp-obs').value = c.obs || '';
+  document.getElementById('comp-captions').value = c.captions || '';
+  document.getElementById('selected-card').style.display = '';
+
+  renderList();
+
+  // On desktop: if has previous analysis, show it; else show empty
+  if (isDesktop() && c.analise) {
+    renderResult(c.analise, c.handle, c.analisadoEm);
+  } else if (isDesktop()) {
+    document.getElementById('bb-result').classList.remove('show');
+    document.getElementById('bb-result').style.display = 'none';
+    document.getElementById('bb-loading').classList.remove('show');
+    document.getElementById('bb-empty').style.display = '';
+  }
+}
+
+// ── ADD COMPETITOR ────────────────────────────────────────────
+function addCompetitor() {
+  var inp = document.getElementById('comp-add-input');
+  var raw = (inp.value || '').trim().replace(/^@/, '').toLowerCase();
+  if (!raw) { toast('Digite um handle para adicionar'); return; }
+  if (competitors.find(function(c) { return c.handle === raw; })) {
+    toast('@' + raw + ' já está na lista'); inp.value = ''; return;
+  }
+  var c = { id: 'c_' + Date.now(), handle: raw, obs: '', captions: '', analise: '', analisadoEm: '' };
+  competitors.unshift(c);
+  saveCompetitors();
+  inp.value = '';
+  renderList();
+  selectCompetitor(c.id);
+  toast('@' + raw + ' adicionado!');
+}
+
+// ── REMOVE COMPETITOR ─────────────────────────────────────────
+function removeCompetitor(id) {
+  competitors = competitors.filter(function(c) { return c.id !== id; });
+  saveCompetitors();
+  if (activeId === id) {
+    activeId = null;
+    document.getElementById('selected-card').style.display = 'none';
+    if (isDesktop()) {
+      document.getElementById('bb-result').classList.remove('show');
+      document.getElementById('bb-result').style.display = 'none';
+      document.getElementById('bb-empty').style.display = '';
+    }
+  }
+  renderList();
+}
+
+function relTime(iso) {
+  if (!iso) return '';
+  var diff = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+  if (diff < 60)    return 'agora';
+  if (diff < 3600)  return Math.floor(diff / 60) + 'min atrás';
+  if (diff < 86400) return Math.floor(diff / 3600) + 'h atrás';
+  return Math.floor(diff / 86400) + 'd atrás';
+}
+
+// ── RESET ─────────────────────────────────────────────────────
+function resetResult() {
+  if (!isDesktop()) {
+    document.getElementById('bb-form').style.display = '';
+  }
+  document.getElementById('bb-result').classList.remove('show');
+  document.getElementById('bb-result').style.display = 'none';
+  document.getElementById('bb-loading').classList.remove('show');
+  if (isDesktop()) {
+    document.getElementById('bb-empty').style.display = '';
+    document.getElementById('result-top-bar').style.display = 'none';
+  }
+  document.getElementById('bb-btn').disabled = false;
+  document.getElementById('bb-btn').classList.remove('loading');
+}
+
+// ── CAROL PROFILE ─────────────────────────────────────────────
+var CAROL_PROFILE =
+  'PERFIL DE CAROL (@makecarolnunes):\n' +
+  '- Maquiadora freelancer profissional\n' +
+  '- Nicho: Maquiagem para noivas, eventos e make artístico\n' +
+  '- Público: Noivas 25-40 anos e mulheres para eventos especiais\n' +
+  '- Posicionamento: Autoridade técnica + conexão humana. Elegante e acolhedora.\n' +
+  '- Estética da marca: café/terra/nude, premium acessível\n' +
+  '- Pilares: técnica, antes/depois, bastidores, relacionamento com noivas, automaquiagem\n' +
+  '- Objetivo no Instagram: autoridade + conexão + agendamentos/orçamentos';
+
+// ── SYSTEM PROMPT ─────────────────────────────────────────────
+function buildSystemPrompt() {
+  return 'Você é um analista de inteligência competitiva especializado em Instagram e marketing de beleza. ' +
+    'Sua missão é analisar concorrentes de forma estratégica e gerar insights acionáveis para Carol se diferenciar.\n\n' +
+    CAROL_PROFILE + '\n\n' +
+    'PRINCÍPIOS:\n' +
+    '1. Seja objetiva e estratégica — não apenas descritiva\n' +
+    '2. Foque no que É ACIONÁVEL para Carol, não só no que o concorrente faz\n' +
+    '3. Identifique gaps reais: onde o concorrente deixa espaço que Carol pode ocupar\n' +
+    '4. NÃO sugira copiar — sugira se diferenciar com inteligência\n' +
+    '5. Compare sempre com o posicionamento de Carol\n\n' +
+    'FORMATO — use EXATAMENTE estes cabeçalhos:\n\n' +
+    '## POSICIONAMENTO\n' +
+    'Como esse perfil se posiciona no mercado de make/beleza. Proposta de valor aparente. Nível de preço percebido. Público que atende.\n\n' +
+    '## ESTRATÉGIA DE CONTEÚDO\n' +
+    'Formatos que usa (Reels, carrossel, stories). Temas recorrentes. Frequência aparente. Tom de voz. Como usa a legenda e CTA.\n\n' +
+    '## PONTOS FORTES\n' +
+    'O que esse perfil faz bem que gera engajamento ou conversão. Seja específica.\n\n' +
+    '## OPORTUNIDADES (gaps)\n' +
+    'O que falta nesse perfil que Carol pode oferecer. Onde há espaço em aberto no nicho deles.\n\n' +
+    '## O QUE APRENDER\n' +
+    'Elementos estratégicos (NÃO estéticos) que Carol pode adaptar com sua própria identidade.\n\n' +
+    '## O QUE NÃO COPIAR\n' +
+    'O que não faz sentido para o posicionamento de Carol. O que seria inautêntico ou redundante.\n\n' +
+    '## COMO SE DIFERENCIAR\n' +
+    'Estratégia concreta de diferenciação de Carol em relação a esse concorrente específico. Mínimo 3 ações práticas.\n\n' +
+    '## 3 IDEIAS INSPIRADAS\n' +
+    'Três ideias de conteúdo que Carol pode criar se inspirando NA LÓGICA (não no conteúdo) desse concorrente:\n' +
+    '**Ideia 1: [título]**\n**Conceito:** [o quê]\n**Por que funciona:** [mecanismo]\n**Diferencial:** [o que faz ser da Carol, não cópia]\n\n' +
+    '**Ideia 2: [título]**\n...\n\n**Ideia 3: [título]**\n...\n\n' +
+    'Responda em português brasileiro. Seja direta, estratégica e acionável.';
+}
+
+function buildUserMessage() {
+  var c = findById(activeId);
+  if (!c) return '';
+  var obs      = (document.getElementById('comp-obs').value || '').trim();
+  var captions = (document.getElementById('comp-captions').value || '').trim();
+  var msg = 'Analise o concorrente @' + c.handle + ':\n\n';
+  if (obs)      msg += '**Observações do perfil:**\n' + obs + '\n\n';
+  if (captions) msg += '**Exemplos de caption:**\n' + captions + '\n\n';
+  if (!obs && !captions) msg += '_(Apenas o handle foi fornecido — faça análise estratégica com base no que você conhece desse perfil e do nicho de maquiagem para noivas)_\n\n';
+  msg += 'Gere a análise estratégica completa seguindo a estrutura solicitada.';
+  return msg;
+}
+
+// ── PARSE SECTIONS ────────────────────────────────────────────
+var SECTION_DEFS = [
+  { pattern: /posicionamento/i,          icon: '📍', bg: '#DBEAFE' },
+  { pattern: /estratégia de conteúdo/i,  icon: '📊', bg: '#EDE9FE' },
+  { pattern: /pontos fortes/i,           icon: '💪', bg: '#D1FAE5' },
+  { pattern: /oportunidades/i,           icon: '🔓', bg: '#FEF9C3' },
+  { pattern: /o que aprender/i,          icon: '📚', bg: '#FFF7ED' },
+  { pattern: /o que não copiar/i,        icon: '✋', bg: '#FEE2E2' },
+  { pattern: /como se diferenciar/i,     icon: '🏆', bg: '#F0FDF4' },
+  { pattern: /3 ideias inspiradas/i,     icon: '💡', bg: '#FFF3E0' },
+];
+
+function parseSections(text) {
+  var sections = [];
+  var parts = text.split(/\n(?=## )/);
+  parts.forEach(function(part) {
+    var m = part.match(/^## (.+?)\n([\s\S]*)/);
+    if (!m) return;
+    var header  = m[1].trim();
+    var content = m[2].trim();
+    var def = null;
+    for (var i = 0; i < SECTION_DEFS.length; i++) {
+      if (SECTION_DEFS[i].pattern.test(header)) { def = SECTION_DEFS[i]; break; }
+    }
+    if (!def) def = { icon: '📌', bg: 'var(--surface-2)' };
+    sections.push({ title: header, icon: def.icon, bg: def.bg, content: content });
+  });
+  if (!sections.length) sections.push({ title: 'Análise', icon: '🎯', bg: '#DBEAFE', content: text });
+  return sections;
+}
+
+// ── RENDER MARKDOWN ───────────────────────────────────────────
+function renderMd(text) {
+  text = text.trim();
+  text = text.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+  text = text.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
+  text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  text = text.replace(/\*([^*\n]+?)\*/g, '<em>$1</em>');
+  text = text.replace(/((?:^|\n)[ \t]*[-•] .+)+/g, function(block) {
+    var items = block.trim().split(/\n[ \t]*[-•] /);
+    items[0] = items[0].replace(/^[ \t]*[-•] /, '');
+    return '<ul>' + items.map(function(s) { return '<li>' + s.trim() + '</li>'; }).join('') + '</ul>';
+  });
+  var paras = text.split(/\n\n/);
+  text = paras.map(function(p) {
+    p = p.trim();
+    if (!p) return '';
+    if (/^<[hul]/.test(p)) return p;
+    return '<p>' + p.replace(/\n/g, '<br>') + '</p>';
+  }).filter(Boolean).join('\n');
+  return text;
+}
+
+// ── RENDER IDEAS ──────────────────────────────────────────────
+function renderIdeas(content) {
+  var FIELDS = [
+    { key: 'Conceito',        label: 'Conceito' },
+    { key: 'Por que funciona',label: 'Por que funciona' },
+    { key: 'Diferencial',     label: 'Diferencial da Carol' },
+  ];
+  var blocks = content.split(/\n(?=\*\*Ideia\s*\d)/);
+  var html = '';
+  blocks.forEach(function(block, idx) {
+    block = block.trim();
+    if (!block) return;
+    if (/^\*\*Ideia\s*\d/.test(block) || idx === 0) {
+      html += '<div class="diff-card">';
+      var titleM = block.match(/^\*\*Ideia\s*(\d+):\s*(.+?)\*\*/);
+      if (titleM) {
+        html += '<div class="diff-num">Ideia ' + titleM[1] + '</div>';
+        html += '<div class="diff-title">' + esc(titleM[2]) + '</div>';
+        block = block.replace(/^\*\*Ideia\s*\d+:\s*.+?\*\*\s*\n?/, '');
+      }
+      FIELDS.forEach(function(f) {
+        var re = new RegExp('\\*\\*' + f.key + ':\\*\\*\\s*([\\s\\S]*?)(?=\\n\\*\\*|$)', 'i');
+        var fm = block.match(re);
+        if (fm) {
+          html += '<div class="diff-field"><div class="diff-field-label">' + f.label + '</div>';
+          html += '<div class="diff-field-val">' + renderMd(fm[1].trim()) + '</div></div>';
+          block = block.replace(fm[0], '');
+        }
+      });
+      var rest = block.trim();
+      if (rest) html += renderMd(rest);
+      html += '</div>';
+    } else {
+      html += renderMd(block);
+    }
+  });
+  return html || renderMd(content);
+}
+
+function toggleSection(el) { el.classList.toggle('open'); }
+
+// ── RENDER RESULT ─────────────────────────────────────────────
+function renderResult(text, handle, date) {
+  lastAnalysis = text;
+  var desk = isDesktop();
+  var now  = date || new Date().toISOString();
+
+  var metaHtml =
+    '<div class="result-meta-label">Análise Estratégica</div>' +
+    '<div class="result-meta-handle">@' + esc(handle) + '</div>' +
+    '<div class="result-meta-date">' + new Date(now).toLocaleDateString('pt-BR', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' }) + '</div>';
+
+  if (desk) {
+    document.getElementById('result-meta-desk').innerHTML = metaHtml;
+    document.getElementById('result-top-bar').style.display = 'flex';
+    document.getElementById('result-meta').style.display = 'none';
+  } else {
+    document.getElementById('result-meta').innerHTML = metaHtml;
+    document.getElementById('result-meta').style.display = '';
+    document.getElementById('result-top-bar').style.display = 'none';
+  }
+
+  var sections = parseSections(text);
+  var container = document.getElementById('result-sections');
+  container.innerHTML = '';
+
+  sections.forEach(function(sec, i) {
+    var isIdeas = /ideias inspiradas/i.test(sec.title);
+    var bodyHtml = isIdeas ? renderIdeas(sec.content) : renderMd(sec.content);
+    var openDefault = desk ? i < 4 : i === 0;
+
+    var el = document.createElement('div');
+    el.className = 'result-section' + (openDefault ? ' open' : '');
+    el.innerHTML =
+      '<div class="rs-header" onclick="toggleSection(this.parentElement)">' +
+        '<div class="rs-icon" style="background:' + sec.bg + '">' + sec.icon + '</div>' +
+        '<div class="rs-title">' + esc(sec.title) + '</div>' +
+        '<div class="rs-arrow">▼</div>' +
+      '</div>' +
+      '<div class="rs-body' + (isIdeas ? ' body-diff' : '') + '">' + bodyHtml + '</div>';
+    container.appendChild(el);
+  });
+
+  document.getElementById('bb-loading').classList.remove('show');
+  if (!desk) document.getElementById('bb-form').style.display = 'none';
+  document.getElementById('bb-empty').style.display = 'none';
+
+  var resultEl = document.getElementById('bb-result');
+  resultEl.style.display = 'block';
+  resultEl.classList.add('show');
+  if (!desk) window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function esc(s) {
+  return String(s || '')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── COPY / SAVE ───────────────────────────────────────────────
+function copyAll() {
+  if (!lastAnalysis) { toast('Nenhuma análise para copiar'); return; }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(lastAnalysis)
+      .then(function() { toast('Análise copiada!'); })
+      .catch(function() { toast('Selecione e copie manualmente'); });
+  }
+}
+
+function saveAnalysis() {
+  if (!lastAnalysis || !activeId) { toast('Nenhuma análise para salvar'); return; }
+  var c = findById(activeId);
+  if (!c) return;
+  c.obs      = (document.getElementById('comp-obs').value || '').trim();
+  c.captions = (document.getElementById('comp-captions').value || '').trim();
+  c.analise  = lastAnalysis;
+  c.analisadoEm = new Date().toISOString();
+  saveCompetitors();
+  renderList();
+  toast('Análise salva para @' + c.handle);
+}
+
+// ── MAIN ANALYZE ──────────────────────────────────────────────
+async function analyzeCompetitor() {
+  var apiKey = localStorage.getItem('mk_claude_key') || '';
+  if (!apiKey) { openKeyModal(); toast('Configure sua chave Claude primeiro'); return; }
+  if (!activeId) { toast('Selecione um concorrente primeiro'); return; }
+
+  var c = findById(activeId);
+  if (!c) return;
+
+  // Save obs before analyzing
+  c.obs      = (document.getElementById('comp-obs').value || '').trim();
+  c.captions = (document.getElementById('comp-captions').value || '').trim();
+  saveCompetitors();
+
+  var btn = document.getElementById('bb-btn');
+  btn.disabled = true;
+  btn.classList.add('loading');
+
+  document.getElementById('bb-empty').style.display = 'none';
+  document.getElementById('bb-result').classList.remove('show');
+  document.getElementById('bb-result').style.display = 'none';
+  document.getElementById('bb-loading').classList.add('show');
+  if (!isDesktop()) document.getElementById('bb-form').style.display = 'none';
+
+  try {
+    var res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 4096,
+        system: buildSystemPrompt(),
+        messages: [{ role: 'user', content: buildUserMessage() }]
+      })
+    });
+
+    if (!res.ok) {
+      var err = await res.json().catch(function() { return { error: { message: res.statusText } }; });
+      throw new Error((err && err.error && err.error.message) || res.statusText);
+    }
+
+    var data = await res.json();
+    var text = (data.content && data.content[0] && data.content[0].text) || '';
+    if (!text) throw new Error('Resposta vazia da API');
+
+    // Auto-save
+    c.analise     = text;
+    c.analisadoEm = new Date().toISOString();
+    saveCompetitors();
+    renderList();
+
+    renderResult(text, c.handle, c.analisadoEm);
+  } catch (err) {
+    document.getElementById('bb-loading').classList.remove('show');
+    if (!isDesktop()) document.getElementById('bb-form').style.display = '';
+    if (isDesktop()) document.getElementById('bb-empty').style.display = '';
+    toast('Erro: ' + err.message, 4500);
+  } finally {
+    btn.disabled = false;
+    btn.classList.remove('loading');
+  }
+}
+
+// ── INIT ──────────────────────────────────────────────────────
+document.getElementById('key-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeKeyModal();
+});
+document.getElementById('key-input').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') saveKey();
+});
+
+loadCompetitors();
+renderList();
+
+// On desktop, show empty state by default
+if (isDesktop()) {
+  document.getElementById('bb-empty').style.display = '';
+}
+
+if (!localStorage.getItem('mk_claude_key')) {
+  setTimeout(function() {
+    toast('Configure sua chave Claude (⚙️) para usar as análises', 4000);
+  }, 800);
+}
+</script>
+
+<script src="../shared/js/sidebar.js"></script>
+</body>
+</html>
