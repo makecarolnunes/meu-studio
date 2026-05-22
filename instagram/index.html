@@ -219,8 +219,6 @@
           </div>
           <div class="ai-actions">
             <button class="btn btn-primary" id="btn-generate" onclick="generateAnalysis()">🧠 Gerar análise</button>
-            <button class="btn btn-outline btn-sm" onclick="openManualModal()">✍️ Inputs manuais</button>
-            <button class="btn btn-outline btn-sm" onclick="openCompetitorsModal()">🎯 Concorrentes</button>
           </div>
           <div id="analysis-status" class="ai-status"></div>
         </section>
@@ -403,56 +401,6 @@
       <button class="btn btn-primary" onclick="saveTokenModal()">Salvar</button>
     </div>
     <div class="modal-foot" id="token-current"></div>
-  </div>
-</div>
-
-<!-- COMPETITORS MODAL -->
-<div class="modal-bg" id="competitors-modal-bg" onclick="if(event.target===this)closeCompetitorsModal()">
-  <div class="modal-box modal-large">
-    <div class="modal-title">Concorrentes</div>
-    <p class="modal-desc">Dados estruturados pra alimentar a análise comparativa.</p>
-    <div id="competitors-list"></div>
-    <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="closeCompetitorsModal()">Cancelar</button>
-      <button class="btn btn-primary" onclick="saveCompetitors()">Salvar</button>
-    </div>
-  </div>
-</div>
-
-<!-- MANUAL INPUTS MODAL -->
-<div class="modal-bg" id="manual-modal-bg" onclick="if(event.target===this)closeManualModal()">
-  <div class="modal-box modal-large">
-    <div class="modal-title">Inputs manuais da semana</div>
-    <p class="modal-desc">Pegue esses números no app: <strong>Perfil → Menu → Insights → Conteúdo / Atividade</strong>. Use % aproximadas.</p>
-
-    <div class="manual-section">
-      <div class="t-label">Origem do tráfego (%)</div>
-      <div class="manual-grid">
-        <label>Explorar<input type="number" id="m-explorar" min="0" max="100"></label>
-        <label>Reels<input type="number" id="m-reels" min="0" max="100"></label>
-        <label>Compartilhamento<input type="number" id="m-compart" min="0" max="100"></label>
-        <label>Perfil/Search<input type="number" id="m-perfil" min="0" max="100"></label>
-        <label>Outros<input type="number" id="m-outros" min="0" max="100"></label>
-      </div>
-    </div>
-
-    <div class="manual-section">
-      <div class="t-label">Top 3 Reels por retenção média</div>
-      <div class="manual-reels">
-        <div><label>Reel 1 — link<input type="text" id="m-reel1-link" placeholder="https://www.instagram.com/reel/..."></label><label>Retenção média<input type="text" id="m-reel1-ret" placeholder="ex: 65%"></label></div>
-        <div><label>Reel 2 — link<input type="text" id="m-reel2-link"></label><label>Retenção média<input type="text" id="m-reel2-ret"></label></div>
-        <div><label>Reel 3 — link<input type="text" id="m-reel3-link"></label><label>Retenção média<input type="text" id="m-reel3-ret"></label></div>
-      </div>
-    </div>
-
-    <div class="manual-section">
-      <label class="comp-fullw">Observações da semana<textarea id="m-obs" rows="3" placeholder="O que chamou atenção? Tema viralizou? Mudou algo?"></textarea></label>
-    </div>
-
-    <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="closeManualModal()">Cancelar</button>
-      <button class="btn btn-primary" onclick="saveManual()">Salvar</button>
-    </div>
   </div>
 </div>
 

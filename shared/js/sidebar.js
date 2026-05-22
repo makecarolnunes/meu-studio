@@ -10,26 +10,32 @@
 
   // ── Detecção de módulo ativa ──────────────────────────────
   var _p = window.location.pathname;
+  var _qs = window.location.search;
 
   var ACTIVE = 'hub';
   var BASE   = './';
 
-  var _mapa = [
-    ['financeiro',  '/financeiro'],
-    ['orcamentos',  '/orcamentos'],
-    ['clientes',    '/clientes'],
-    ['confirmacao', '/confirmacao'],
-    ['conteudo',    '/conteudo'],
-    ['anotacoes',   '/anotacoes'],
-    ['tarefas',     '/tarefas'],
-    ['estoque',     '/estoque'],
-    ['instagram',   '/instagram'],
-  ];
-  for (var _i = 0; _i < _mapa.length; _i++) {
-    if (_p.indexOf(_mapa[_i][1]) !== -1) {
-      ACTIVE = _mapa[_i][0];
-      BASE   = '../';
-      break;
+  if      (_p.indexOf('/conteudo/brand-brain')  !== -1) { ACTIVE = 'radar';        BASE = '../'; }
+  else if (_p.indexOf('/conteudo/concorrentes') !== -1) { ACTIVE = 'concorrentes'; BASE = '../'; }
+  else if (_p.indexOf('/estrategia')            !== -1) { ACTIVE = 'cdc';          BASE = '../'; }
+  else if (_p.indexOf('/instagram')             !== -1) { BASE = '../'; ACTIVE = _qs.indexOf('tab=validador') !== -1 ? 'validador' : 'instagram'; }
+  else {
+    var _mapa = [
+      ['financeiro',  '/financeiro'],
+      ['orcamentos',  '/orcamentos'],
+      ['clientes',    '/clientes'],
+      ['confirmacao', '/confirmacao'],
+      ['conteudo',    '/conteudo'],
+      ['anotacoes',   '/anotacoes'],
+      ['tarefas',     '/tarefas'],
+      ['estoque',     '/estoque'],
+    ];
+    for (var _i = 0; _i < _mapa.length; _i++) {
+      if (_p.indexOf(_mapa[_i][1]) !== -1) {
+        ACTIVE = _mapa[_i][0];
+        BASE   = '../';
+        break;
+      }
     }
   }
 
@@ -48,21 +54,34 @@
     back: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>',
     out:  '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>',
     ig:   '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>',
+    radar:  '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/></svg>',
+    check:  '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
+    comp:   '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="23" y1="11" x2="17" y2="11"/><line x1="20" y1="8" x2="20" y2="14"/></svg>',
+    cdc:    '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
   };
 
-  // ── Módulos ──────────────────────────────────────────────
-  // Ordem solicitada: Orçamento → Financeiro → Anotações → Tarefas → Instagram → Conteúdo → Estoque → Agendamentos
+  // ── Módulos — ordem do Hub ────────────────────────────────
   var MODS = [
-    { id: 'hub',         label: 'Início',       path: '',                                icon: IC.home },
-    { id: 'orcamentos',  label: 'Orçamentos',   path: 'orcamentos/orcamentos_novo.html', icon: IC.doc  },
-    { id: 'financeiro',  label: 'Financeiro',   path: 'financeiro/',                     icon: IC.fin  },
-    { id: 'anotacoes',   label: 'Anotações',    path: 'anotacoes/',                      icon: IC.note },
-    { id: 'tarefas',     label: 'Tarefas',      path: 'tarefas/',                        icon: IC.task },
-    { id: 'instagram',   label: 'Instagram',    path: 'instagram/',                      icon: IC.ig   },
-    { id: 'conteudo',    label: 'Conteúdo',     path: 'conteudo/',                       icon: IC.cam  },
-    { id: 'estoque',     label: 'Estoque',      path: 'estoque/',                        icon: IC.box  },
-    { id: 'confirmacao', label: 'Agendamentos', path: 'confirmacao/',                    icon: IC.cal  },
-    { id: 'clientes',    label: 'Clientes',     path: 'clientes/',                       icon: IC.usr  },
+    { id: 'hub',          label: 'Início',             path: '',                                   icon: IC.home  },
+    // Operacional
+    { id: 'orcamentos',   label: 'Orçamentos',         path: 'orcamentos/orcamentos_novo.html',    icon: IC.doc   },
+    { id: 'financeiro',   label: 'Financeiro',         path: 'financeiro/',                        icon: IC.fin   },
+    { id: 'clientes',     label: 'Clientes',           path: 'clientes/',                          icon: IC.usr   },
+    // Conteúdo
+    { id: 'conteudo',     label: 'Conteúdo',           path: 'conteudo/',                          icon: IC.cam   },
+    { id: 'validador',    label: 'Validador',          path: 'instagram/?tab=validador',           icon: IC.check },
+    { id: 'radar',        label: 'Radar',              path: 'conteudo/brand-brain.html',          icon: IC.radar },
+    // Social
+    { id: 'instagram',    label: 'Instagram',          path: 'instagram/',                         icon: IC.ig    },
+    // Estratégia
+    { id: 'concorrentes', label: 'Concorrentes',       path: 'conteudo/concorrentes.html',         icon: IC.comp  },
+    { id: 'cdc',          label: 'Centro de Comando',  path: 'estrategia/centro-de-comando.html',  icon: IC.cdc   },
+    // Organização
+    { id: 'tarefas',      label: 'Tarefas',            path: 'tarefas/',                           icon: IC.task  },
+    { id: 'anotacoes',    label: 'Anotações',          path: 'anotacoes/',                         icon: IC.note  },
+    // Gestão
+    { id: 'estoque',      label: 'Estoque',            path: 'estoque/',                           icon: IC.box   },
+    { id: 'confirmacao',  label: 'Agendamentos',       path: 'confirmacao/',                       icon: IC.cal   },
   ];
 
   // ── CSS ──────────────────────────────────────────────────
