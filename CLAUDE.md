@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-22 16:48 | main | feat(hub): reorganiza se├º├úo Conte├║do e cria se├º├úo Estrat├®gia -->
+<!-- AUTO: 2026-05-22 18:37 | main | feat: cria m├│dulo Concorrentes standalone + reorganiza hub -->
 
