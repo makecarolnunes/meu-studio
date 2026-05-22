@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-22 18:52 | main | feat(concorrentes): integra Brand Brain real do CDC no sistema de an├ílise -->
+<!-- AUTO: 2026-05-22 19:15 | main | feat(ux): sidebar completa + quick note concorrentes + limpa insights IA -->
 
