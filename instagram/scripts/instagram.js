@@ -1165,7 +1165,7 @@
     if (!COMPETITORS.length) {
       // Inicializa com a lista padrão
       COMPETITORS = DEFAULT_COMPETITORS.map(function(h) {
-        return { handle: h, posicionamento: '', especialidade: '', estetica: '', posts: [], comentariosTipicos: '', relacionamento: '' };
+        return { handle: h, observacoes: '', prints: [], analise: null };
       });
     }
     renderCompetitorsList();
@@ -1180,60 +1180,86 @@
     var list = document.getElementById('competitors-list');
     if (!list) return;
     list.innerHTML = COMPETITORS.map(function(c, idx) {
+      var hasAnalysis = c.analise && typeof c.analise === 'object';
+      var summary;
+      if (hasAnalysis) {
+        summary = (c.analise.posicionamento || '—') + ' · ' + (c.analise.especialidade || 'sem especialidade') +
+          ' · analisado em ' + (c.analise.analisadoEm ? new Date(c.analise.analisadoEm).toLocaleDateString('pt-BR') : '—');
+      } else {
+        summary = 'sem análise · adicione prints e gere';
+      }
       return '<div class="comp-item">' +
         '<div class="comp-head">' +
           '<strong>@' + esc(c.handle) + '</strong>' +
-          '<button class="comp-toggle" onclick="toggleCompetitor(' + idx + ')">' + (c._open ? 'Fechar' : 'Editar') + '</button>' +
+          '<button class="comp-toggle" onclick="toggleCompetitor(' + idx + ')">' + (c._open ? 'Fechar' : 'Abrir') + '</button>' +
           '<button class="comp-remove" onclick="removeCompetitor(' + idx + ')">×</button>' +
         '</div>' +
-        (c._open ? renderCompetitorEdit(c, idx) : '<div class="comp-summary">' +
-          (c.posicionamento ? esc(c.posicionamento) + ' · ' : '') +
-          (c.posts && c.posts.length ? c.posts.length + ' posts coletados' : 'sem posts coletados') +
-        '</div>') +
+        (c._open ? renderCompetitorEdit(c, idx) : '<div class="comp-summary">' + esc(summary) + '</div>') +
       '</div>';
     }).join('') +
     '<button class="btn btn-secondary" onclick="addCompetitor()" style="width:100%;margin-top:8px">+ Adicionar concorrente</button>';
   }
 
   function renderCompetitorEdit(c, idx) {
-    var postsHTML = (c.posts || []).map(function(p, pi) {
-      return '<div class="comp-post">' +
-        '<div class="comp-post-head">Post ' + (pi + 1) + ' <button class="comp-post-rm" onclick="removeCompPost(' + idx + ',' + pi + ')">×</button></div>' +
-        '<div class="comp-post-grid">' +
-          '<label>Tipo<select onchange="updCompPost(' + idx + ',' + pi + ',\'tipo\',this.value)">' +
-            ['', 'Reel', 'Foto', 'Carrossel', 'Vídeo'].map(function(t) {
-              return '<option value="' + t + '"' + (p.tipo === t ? ' selected' : '') + '>' + (t || '—') + '</option>';
-            }).join('') +
-          '</select></label>' +
-          '<label>Likes<input type="number" value="' + (p.likes || '') + '" onchange="updCompPost(' + idx + ',' + pi + ',\'likes\',this.value)"></label>' +
-          '<label>Coment.<input type="number" value="' + (p.comentarios || '') + '" onchange="updCompPost(' + idx + ',' + pi + ',\'comentarios\',this.value)"></label>' +
-        '</div>' +
-        '<label class="comp-fullw">Tema<input type="text" value="' + esc(p.tema || '') + '" onchange="updCompPost(' + idx + ',' + pi + ',\'tema\',this.value)" placeholder="ex: tutorial sombra esfumada"></label>' +
-        '<label class="comp-fullw">Legenda (resumo)<textarea onchange="updCompPost(' + idx + ',' + pi + ',\'legenda\',this.value)" rows="2" placeholder="cole a legenda ou resuma">' + esc(p.legenda || '') + '</textarea></label>' +
-      '</div>';
-    }).join('');
+    var prints = c.prints || [];
+    var analise = c.analise || null;
+
+    var printsHTML = prints.length
+      ? '<div class="comp-prints-grid">' + prints.map(function(p, pi) {
+          return '<div class="comp-print-thumb">' +
+            '<img src="' + p.dataUrl + '" alt="print ' + (pi + 1) + '">' +
+            '<button class="comp-print-rm" onclick="removeCompPrint(' + idx + ',' + pi + ')" title="Remover">×</button>' +
+          '</div>';
+        }).join('') + '</div>'
+      : '<div class="comp-prints-empty">Nenhum print ainda. Adicione 3-8 imagens: grid do perfil, prints de posts, stories destaque, bio.</div>';
+
+    var analiseHTML = analise ? renderCompAnalise(analise) : '';
+
+    var statusId = 'comp-status-' + idx;
 
     return '<div class="comp-edit">' +
-      '<label>Posicionamento percebido<select onchange="updComp(' + idx + ',\'posicionamento\',this.value)">' +
-        ['', 'Premium', 'Mid', 'Acessível'].map(function(o) {
-          return '<option value="' + o + '"' + (c.posicionamento === o ? ' selected' : '') + '>' + (o || '—') + '</option>';
-        }).join('') +
-      '</select></label>' +
-      '<label>Especialidade declarada<input type="text" value="' + esc(c.especialidade || '') + '" onchange="updComp(' + idx + ',\'especialidade\',this.value)" placeholder="ex: noiva, pele preta..."></label>' +
-      '<label>Estética visual<select onchange="updComp(' + idx + ',\'estetica\',this.value)">' +
-        ['', 'Editorial', 'Casual', 'Mista'].map(function(o) {
-          return '<option value="' + o + '"' + (c.estetica === o ? ' selected' : '') + '>' + (o || '—') + '</option>';
-        }).join('') +
-      '</select></label>' +
-      '<div class="comp-posts-wrap"><strong>Posts recentes</strong>' + postsHTML +
-        '<button class="btn btn-ghost btn-sm" onclick="addCompPost(' + idx + ')">+ Adicionar post</button>' +
+      '<div class="comp-section">' +
+        '<div class="comp-section-head">📷 Prints (' + prints.length + ')</div>' +
+        printsHTML +
+        '<div class="comp-actions">' +
+          '<label class="btn btn-outline btn-sm comp-upload-btn">' +
+            '+ Adicionar prints' +
+            '<input type="file" accept="image/*" multiple style="display:none" onchange="addCompPrints(' + idx + ', this.files); this.value=null">' +
+          '</label>' +
+          (prints.length ? '<button class="btn btn-primary btn-sm" onclick="analyzeCompetitorPrints(' + idx + ')">🧠 Analisar com IA</button>' : '') +
+        '</div>' +
+        '<div id="' + statusId + '" class="comp-status"></div>' +
       '</div>' +
-      '<label>Comentários típicos (3 exemplos)<textarea onchange="updComp(' + idx + ',\'comentariosTipicos\',this.value)" rows="3" placeholder="cole 3 exemplos de comentários que ela recebe">' + esc(c.comentariosTipicos || '') + '</textarea></label>' +
-      '<label>Relacionamento com seguidores<select onchange="updComp(' + idx + ',\'relacionamento\',this.value)">' +
-        ['', 'Distante', 'Próxima', 'Mentora', 'Amiga'].map(function(o) {
-          return '<option value="' + o + '"' + (c.relacionamento === o ? ' selected' : '') + '>' + (o || '—') + '</option>';
-        }).join('') +
-      '</select></label>' +
+      (analise ? '<div class="comp-section"><div class="comp-section-head">🎯 Análise IA</div>' + analiseHTML + '</div>' : '') +
+      '<div class="comp-section">' +
+        '<div class="comp-section-head">✍️ Observação manual</div>' +
+        '<textarea class="comp-obs" onchange="updComp(' + idx + ',\'observacoes\',this.value)" rows="3" placeholder="Qualquer detalhe que o print não captura (ex: mora em SP, tem curso pago, parceira frequente da Dior...)">' + esc(c.observacoes || '') + '</textarea>' +
+      '</div>' +
+    '</div>';
+  }
+
+  function renderCompAnalise(a) {
+    function tags(arr) {
+      if (!arr || !arr.length) return '<span class="comp-empty">—</span>';
+      return arr.map(function(t) { return '<span class="comp-tag">' + esc(String(t)) + '</span>'; }).join('');
+    }
+    function bullets(arr) {
+      if (!arr || !arr.length) return '<div class="comp-empty">—</div>';
+      return '<ul class="comp-bullets">' + arr.map(function(t) { return '<li>' + esc(String(t)) + '</li>'; }).join('') + '</ul>';
+    }
+    var pos = a.posicionamento ? '<span class="comp-badge pos-' + esc((a.posicionamento || '').toLowerCase()) + '">' + esc(a.posicionamento) + '</span>' : '';
+    return '<div class="comp-analise">' +
+      '<div class="comp-analise-row"><span class="comp-k">Posicionamento</span><span>' + pos + '</span></div>' +
+      '<div class="comp-analise-row"><span class="comp-k">Especialidade</span><span>' + esc(a.especialidade || '—') + '</span></div>' +
+      '<div class="comp-analise-row"><span class="comp-k">Estética</span><span>' + esc(a.estetica || '—') + '</span></div>' +
+      (a.paleta ? '<div class="comp-analise-row"><span class="comp-k">Paleta</span><span>' + esc(a.paleta) + '</span></div>' : '') +
+      (a.tipografia ? '<div class="comp-analise-row"><span class="comp-k">Tipografia</span><span>' + esc(a.tipografia) + '</span></div>' : '') +
+      (a.qualidadeProducao ? '<div class="comp-analise-row"><span class="comp-k">Qualidade</span><span>' + esc(a.qualidadeProducao) + '</span></div>' : '') +
+      '<div class="comp-analise-block"><div class="comp-k">Padrões de conteúdo</div>' + bullets(a.padroesConteudo) + '</div>' +
+      '<div class="comp-analise-block"><div class="comp-k">Temas recorrentes</div><div class="comp-tags">' + tags(a.temasRecorrentes) + '</div></div>' +
+      '<div class="comp-analise-block"><div class="comp-k">Sinais de engajamento</div>' + bullets(a.sinaisEngajamento) + '</div>' +
+      '<div class="comp-analise-block"><div class="comp-k">Diferencial vs. Carol</div>' + bullets(a.diferencialVsCarol) + '</div>' +
+      (a.observacoesIA ? '<div class="comp-analise-block"><div class="comp-k">Observações da IA</div><div class="comp-note">' + esc(a.observacoesIA) + '</div></div>' : '') +
     '</div>';
   }
 
@@ -1253,7 +1279,7 @@
     if (!handle) return;
     handle = handle.replace(/^@/, '').trim();
     if (!handle) return;
-    COMPETITORS.push({ handle: handle, posicionamento: '', especialidade: '', estetica: '', posts: [], comentariosTipicos: '', relacionamento: '', _open: true });
+    COMPETITORS.push({ handle: handle, observacoes: '', prints: [], analise: null, _open: true });
     renderCompetitorsList();
   };
 
@@ -1261,27 +1287,127 @@
     COMPETITORS[idx][field] = value;
   };
 
-  window.addCompPost = function(idx) {
-    if (!COMPETITORS[idx].posts) COMPETITORS[idx].posts = [];
-    COMPETITORS[idx].posts.push({ tipo: '', likes: '', comentarios: '', tema: '', legenda: '' });
+  function fileToDataURL(file) {
+    return new Promise(function(resolve, reject) {
+      var r = new FileReader();
+      r.onload = function() { resolve(r.result); };
+      r.onerror = function() { reject(r.error); };
+      r.readAsDataURL(file);
+    });
+  }
+
+  // Redimensiona imagem se > maxDim e converte pra JPEG ~0.85 pra reduzir payload
+  function compressImage(dataUrl, maxDim) {
+    return new Promise(function(resolve) {
+      var img = new Image();
+      img.onload = function() {
+        var w = img.width, h = img.height;
+        var scale = Math.min(1, maxDim / Math.max(w, h));
+        var cw = Math.round(w * scale), ch = Math.round(h * scale);
+        var canvas = document.createElement('canvas');
+        canvas.width = cw; canvas.height = ch;
+        var ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, cw, ch);
+        resolve(canvas.toDataURL('image/jpeg', 0.85));
+      };
+      img.onerror = function() { resolve(dataUrl); };
+      img.src = dataUrl;
+    });
+  }
+
+  window.addCompPrints = async function(idx, files) {
+    if (!files || !files.length) return;
+    if (!COMPETITORS[idx].prints) COMPETITORS[idx].prints = [];
+    var arr = Array.prototype.slice.call(files);
+    for (var i = 0; i < arr.length; i++) {
+      try {
+        var raw = await fileToDataURL(arr[i]);
+        var compressed = await compressImage(raw, 1280);
+        COMPETITORS[idx].prints.push({ dataUrl: compressed, name: arr[i].name });
+      } catch (e) {
+        console.warn('[ig] falha carregando print', arr[i].name, e);
+      }
+    }
+    renderCompetitorsList();
+    // reabre o card que estava aberto
+    if (!COMPETITORS[idx]._open) { COMPETITORS[idx]._open = true; renderCompetitorsList(); }
+  };
+
+  window.removeCompPrint = function(idx, pi) {
+    COMPETITORS[idx].prints.splice(pi, 1);
     renderCompetitorsList();
   };
 
-  window.removeCompPost = function(idx, pi) {
-    COMPETITORS[idx].posts.splice(pi, 1);
-    renderCompetitorsList();
-  };
+  window.analyzeCompetitorPrints = async function(idx) {
+    var c = COMPETITORS[idx];
+    if (!c || !c.prints || !c.prints.length) {
+      toast('Adicione prints primeiro', true);
+      return;
+    }
+    if (!getClaudeKey()) {
+      toast('Configure sua chave Claude primeiro', true);
+      openClaudeKeyModal();
+      return;
+    }
 
-  window.updCompPost = function(idx, pi, field, value) {
-    COMPETITORS[idx].posts[pi][field] = value;
+    var statusEl = document.getElementById('comp-status-' + idx);
+    if (statusEl) statusEl.innerHTML = '<div class="spinner-sm"></div> Analisando ' + c.prints.length + ' prints com Claude Vision...';
+
+    try {
+      var content = [];
+      c.prints.forEach(function(p) {
+        var m = p.dataUrl.match(/^data:(image\/[a-zA-Z+]+);base64,(.+)$/);
+        if (!m) return;
+        content.push({
+          type: 'image',
+          source: { type: 'base64', media_type: m[1], data: m[2] }
+        });
+      });
+
+      var prompt = 'Você é uma estrategista de marca analisando prints do Instagram da concorrente @' + c.handle + ' (mercado de maquiagem profissional brasileira).\n\n' +
+        'Analise CUIDADOSAMENTE os ' + c.prints.length + ' prints acima (grid de perfil, posts, stories, bio) e devolva APENAS um JSON válido, sem cercas markdown, com esta estrutura exata:\n\n' +
+        '{\n' +
+        '  "posicionamento": "Premium" | "Mid" | "Acessível",\n' +
+        '  "especialidade": "string curta (ex: noiva clássica, pele preta, madrinha, social...)",\n' +
+        '  "estetica": "Editorial" | "Casual" | "Mista",\n' +
+        '  "paleta": "descrição da paleta de cores predominante (ex: tons terrosos quentes, nude + dourado)",\n' +
+        '  "tipografia": "descrição de fontes/tratamento de texto se visível (ex: serif clássica em capas, manuscrita em destaques)",\n' +
+        '  "qualidadeProducao": "Alta" | "Média" | "Baixa" + breve justificativa em 1 frase",\n' +
+        '  "padroesConteudo": ["3-6 bullets sobre tipos de post, formatos, frequência aparente, estrutura de capas"],\n' +
+        '  "temasRecorrentes": ["3-7 tags curtas com temas, ex: tutorial-olho, antes-depois, bastidores"],\n' +
+        '  "sinaisEngajamento": ["3-5 bullets sobre likes/comentários visíveis, comentários típicos, tipo de seguidor"],\n' +
+        '  "diferencialVsCarol": ["3-5 bullets do que ela faz diferente da Carol (Carol = maquiadora noiva clássica brasileira, estética café/terra/nude, arquétipos Criadora/Cuidadora/Sábia, premium acessível)"],\n' +
+        '  "observacoesIA": "1 parágrafo curto (3-5 frases) com insight estratégico sobre o que Carol pode aprender/evitar dessa concorrente"\n' +
+        '}\n\n' +
+        'IMPORTANTE: Responda APENAS o JSON, sem texto antes ou depois, sem cercas markdown.';
+
+      content.push({ type: 'text', text: prompt });
+
+      var result = await callClaude(content);
+      var analise = result.parsed;
+      analise.analisadoEm = Date.now();
+      COMPETITORS[idx].analise = analise;
+
+      if (statusEl) statusEl.innerHTML = '<span style="color:var(--green,#2d8a4f)">✓ Análise concluída</span>';
+      renderCompetitorsList();
+      // mantém aberto
+      COMPETITORS[idx]._open = true;
+      renderCompetitorsList();
+    } catch (e) {
+      console.error('[ig] erro analisando concorrente', e);
+      if (statusEl) statusEl.innerHTML = '<span style="color:var(--red,#c44)">✗ ' + esc(e.message) + '</span>';
+      toast('Erro: ' + e.message, true);
+    }
   };
 
   window.saveCompetitors = function() {
-    // Limpa flags internas antes de salvar
+    // Limpa flags internas e prints (apenas resultado da análise persiste)
     var clean = COMPETITORS.map(function(c) {
-      var copy = Object.assign({}, c);
-      delete copy._open;
-      return copy;
+      return {
+        handle: c.handle,
+        observacoes: c.observacoes || '',
+        analise: c.analise || null
+      };
     });
     localStorage.setItem(COMPETITORS_KEY, JSON.stringify(clean));
     pushStateToSupabase('competitors', clean);
@@ -1492,25 +1618,37 @@
   function competitorsToText() {
     if (!COMPETITORS || !COMPETITORS.length) return '';
     var withData = COMPETITORS.filter(function(c) {
-      return (c.posicionamento || c.especialidade || c.estetica || (c.posts && c.posts.length) || c.comentariosTipicos);
+      return (c.analise && typeof c.analise === 'object') || c.observacoes;
     });
-    if (!withData.length) return '## CONCORRENTES\nNenhum concorrente preenchido. Análise comparativa indisponível.';
+    if (!withData.length) return '## CONCORRENTES\nNenhum concorrente analisado ainda. Adicione prints e gere análise no modal Concorrentes.';
 
-    var lines = ['## CONCORRENTES (' + withData.length + ' com dados)\n'];
+    var lines = ['## CONCORRENTES (' + withData.length + ' com análise)\n'];
     withData.forEach(function(c) {
       lines.push('### @' + c.handle);
-      if (c.posicionamento) lines.push('- Posicionamento: ' + c.posicionamento);
-      if (c.especialidade) lines.push('- Especialidade declarada: ' + c.especialidade);
-      if (c.estetica) lines.push('- Estética: ' + c.estetica);
-      if (c.relacionamento) lines.push('- Relacionamento com seguidores: ' + c.relacionamento);
-      if (c.comentariosTipicos) lines.push('- Comentários típicos: ' + c.comentariosTipicos);
-      if (c.posts && c.posts.length) {
-        lines.push('- Posts recentes coletados:');
-        c.posts.forEach(function(p, pi) {
-          lines.push('  ' + (pi + 1) + '. ' + (p.tipo || '?') + ' | ' + (p.likes || '?') + 'l ' + (p.comentarios || '?') + 'c | tema: ' + (p.tema || '?'));
-          if (p.legenda) lines.push('     Legenda: ' + p.legenda.slice(0, 200));
-        });
+      var a = c.analise || {};
+      if (a.posicionamento) lines.push('- Posicionamento: ' + a.posicionamento);
+      if (a.especialidade) lines.push('- Especialidade: ' + a.especialidade);
+      if (a.estetica) lines.push('- Estética: ' + a.estetica);
+      if (a.paleta) lines.push('- Paleta: ' + a.paleta);
+      if (a.tipografia) lines.push('- Tipografia: ' + a.tipografia);
+      if (a.qualidadeProducao) lines.push('- Qualidade de produção: ' + a.qualidadeProducao);
+      if (a.padroesConteudo && a.padroesConteudo.length) {
+        lines.push('- Padrões de conteúdo:');
+        a.padroesConteudo.forEach(function(p) { lines.push('  • ' + p); });
       }
+      if (a.temasRecorrentes && a.temasRecorrentes.length) {
+        lines.push('- Temas recorrentes: ' + a.temasRecorrentes.join(', '));
+      }
+      if (a.sinaisEngajamento && a.sinaisEngajamento.length) {
+        lines.push('- Sinais de engajamento:');
+        a.sinaisEngajamento.forEach(function(p) { lines.push('  • ' + p); });
+      }
+      if (a.diferencialVsCarol && a.diferencialVsCarol.length) {
+        lines.push('- Diferencial vs. Carol:');
+        a.diferencialVsCarol.forEach(function(p) { lines.push('  • ' + p); });
+      }
+      if (a.observacoesIA) lines.push('- Insight IA: ' + a.observacoesIA);
+      if (c.observacoes) lines.push('- Observação manual da Carol: ' + c.observacoes);
       lines.push('');
     });
     return lines.join('\n');
@@ -1605,9 +1743,12 @@
     return data + task;
   }
 
-  async function callClaude(prompt) {
+  async function callClaude(promptOrContent) {
     var key = getClaudeKey();
     if (!key) throw new Error('Chave Claude não configurada. Clica no botão de chave 🔑 pra configurar.');
+
+    // promptOrContent pode ser string (texto puro) ou array de content blocks (texto + imagens)
+    var content = typeof promptOrContent === 'string' ? promptOrContent : promptOrContent;
 
     var res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -1620,7 +1761,7 @@
       body: JSON.stringify({
         model: 'claude-sonnet-4-5-20250929',
         max_tokens: 16000,
-        messages: [{ role: 'user', content: prompt }]
+        messages: [{ role: 'user', content: content }]
       })
     });
 
