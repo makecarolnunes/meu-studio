@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-22 18:37 | main | feat: cria m├│dulo Concorrentes standalone + reorganiza hub -->
+<!-- AUTO: 2026-05-22 18:47 | main | feat(estrategia): adiciona Centro de Comando + ajusta cores Concorrentes -->
 
