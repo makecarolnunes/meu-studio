@@ -175,7 +175,7 @@
     .fl-hint { font-weight:500; text-transform:none; letter-spacing:0; color:#9aa1aa; font-size:.65rem; margin-left:6px; }
     .fi { width:100%; padding:11px 13px; border:1.5px solid var(--border); border-radius:11px; font-size:.92rem; color:var(--text); background:#fff; font-family:inherit; }
     .fi:focus { outline:none; border-color:var(--brown); }
-    .fi.ta { resize:none; height:78px; line-height:1.5; }
+    .fi.ta { resize:vertical; min-height:140px; max-height:340px; line-height:1.6; }
     .btn-group { display:flex; gap:6px; flex-wrap:wrap; }
     .gbtn { padding:8px 12px; border:1.5px solid var(--border); border-radius:9px; background:#fff; font-size:.77rem; font-weight:600; color:var(--text); cursor:pointer; }
     .gbtn.on { border-color:var(--brown); background:var(--brown); color:#fff; }
