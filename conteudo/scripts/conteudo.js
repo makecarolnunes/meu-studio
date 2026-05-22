@@ -21,6 +21,7 @@ var DOW = ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
 /* ============================================================
    STATE
    ============================================================ */
+var QN_KEY='mk_quick_notes';
 var ideas=[], customCats=[], customPlats=[];
 var curView='list', curSF='todos', curCF=[], curPlat='todos';
 var curSort='date'; // 'date' | 'category' | 'status' | 'scheduled'
@@ -89,6 +90,112 @@ function migrate(){
   }
 }
 function validateCurPlat(){ if(curPlat!=='todos'&&allPlats().indexOf(curPlat)===-1) curPlat='todos'; }
+
+/* ============================================================
+   QUICK NOTES / INBOX
+   ============================================================ */
+function readQuickNotes(){
+  try{ return JSON.parse(localStorage.getItem(QN_KEY)||'[]'); }catch(e){ return []; }
+}
+function saveQuickNotes(notes){
+  try{ localStorage.setItem(QN_KEY,JSON.stringify(notes)); }catch(e){}
+}
+function inboxNotes(){
+  return readQuickNotes().filter(function(n){ return !n.promoted; });
+}
+function updateInboxBadges(){
+  var n=inboxNotes().length;
+  var txt=n>0?String(n):'';
+  ['inbox-badge-mob','inbox-badge-desk','inbox-badge-sb'].forEach(function(id){
+    var el=document.getElementById(id); if(el) el.textContent=txt;
+  });
+  // destaca botão inbox na sidebar desktop se tiver notas
+  var sb=document.getElementById('d-sb-inbox-btn');
+  if(sb) sb.classList.toggle('has-notes',n>0);
+}
+function discardNote(id){
+  var notes=readQuickNotes();
+  for(var i=0;i<notes.length;i++){
+    if(notes[i].id===id){ notes[i].promoted=true; break; }
+  }
+  saveQuickNotes(notes);
+  // refresh widget badge se disponível
+  if(window.QuickNotes) QuickNotes.refresh();
+  updateInboxBadges();
+  renderInbox();
+}
+function promoteToIdeia(id){
+  var notes=readQuickNotes();
+  var note=null;
+  for(var i=0;i<notes.length;i++) if(notes[i].id===id){ note=notes[i]; break; }
+  if(!note) return;
+  // Abre modal pré-preenchido com texto da nota
+  openModal(null);
+  document.getElementById('f-notes').value=note.text;
+  // Tenta inferir título: primeira linha até 60 chars
+  var firstLine=note.text.split('\n')[0].slice(0,60);
+  document.getElementById('f-title').value=firstLine;
+  document.getElementById('f-title').focus();
+  document.getElementById('f-title').select();
+  // Marca nota como promovida imediatamente
+  note.promoted=true;
+  saveQuickNotes(notes);
+  if(window.QuickNotes) QuickNotes.refresh();
+  updateInboxBadges();
+  renderInbox();
+}
+function fmtNoteDate(iso){
+  if(!iso) return '';
+  var d=new Date(iso);
+  var diff=Math.floor((Date.now()-d.getTime())/1000);
+  if(diff<60) return 'agora';
+  if(diff<3600) return Math.floor(diff/60)+'min atrás';
+  if(diff<86400) return Math.floor(diff/3600)+'h atrás';
+  if(diff<172800) return 'ontem';
+  return ('0'+d.getDate()).slice(-2)+'/'+('0'+(d.getMonth()+1)).slice(-2);
+}
+function srcLabel(src){
+  var map={'instagram':'📸 Instagram','conteudo':'📋 Conteúdo'};
+  return map[src]||'';
+}
+function renderInbox(){
+  var el=document.getElementById('inbox-view'); if(!el) return;
+  var notes=inboxNotes();
+  updateInboxBadges();
+  if(!notes.length){
+    el.innerHTML='<div class="inbox-empty">'+
+      '<div class="inbox-empty-icon">✍️</div>'+
+      '<div class="inbox-empty-title">Nenhuma quick note</div>'+
+      '<div class="inbox-empty-sub">Capture ideias rápidas no módulo do Instagram usando o botão flutuante roxo. Elas aparecem aqui prontas para virar pauta.</div>'+
+      '</div>';
+    return;
+  }
+  var html='<div class="inbox-header">'+
+    '<div class="inbox-header-title">Inbox de Ideias</div>'+
+    '<div class="inbox-header-sub">'+notes.length+' nota'+(notes.length!==1?'s':'')+' aguardando</div>'+
+    '</div>'+
+    '<div class="inbox-list">';
+  for(var i=0;i<notes.length;i++){
+    var n=notes[i];
+    var src=srcLabel(n.source);
+    html+='<div class="inbox-card" data-id="'+safe(n.id)+'">'+
+      '<div class="inbox-card-top">'+
+        (src?'<span class="inbox-src-badge">'+src+'</span>':'')+
+        '<span class="inbox-date">'+fmtNoteDate(n.createdAt)+'</span>'+
+      '</div>'+
+      '<div class="inbox-card-text">'+safe(n.text)+'</div>'+
+      '<div class="inbox-card-actions">'+
+        '<button class="inbox-btn-promote" onclick="promoteToIdeia(\''+safe(n.id)+'\')">'+
+          '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>'+
+          'Transformar em Pauta'+
+        '</button>'+
+        '<button class="inbox-btn-discard" onclick="discardNote(\''+safe(n.id)+'\')">Descartar</button>'+
+      '</div>'+
+    '</div>';
+  }
+  html+='</div>';
+  el.innerHTML=html;
+}
 
 /* ============================================================
    LOAD DATA
@@ -204,6 +311,7 @@ function setView(v){
   document.getElementById('btn-list').className ='vbtn'+(v==='list'?' on':'');
   document.getElementById('btn-board').className='vbtn'+(v==='board'?' on':'');
   document.getElementById('btn-cal').className  ='vbtn'+(v==='cal'?' on':'');
+  document.getElementById('btn-inbox').className='vbtn'+(v==='inbox'?' on':'');
   // Desktop toolbar toggle
   document.querySelectorAll('.d-vbtn').forEach(function(b){ b.classList.toggle('on', b.dataset.v===v); });
   // Sort controls só na lista
@@ -218,8 +326,11 @@ function setView(v){
   if(dboard) dboard.style.display=(v==='board'&&isDesktop())?'flex':'none';
   document.getElementById('board-wrap').className   ='board-wrap'+((v==='board'&&!isDesktop())?' active':'');
   document.getElementById('cal-wrap').className     ='cal-wrap'+(v==='cal'?' active':'');
+  // Inbox
+  var inboxEl=document.getElementById('inbox-view');
+  if(inboxEl){ inboxEl.style.display=(v==='inbox')?'':'none'; if(v==='inbox') renderInbox(); }
   if(v==='board') colIdx=0;
-  render();
+  if(v!=='inbox') render();
 }
 function setSF(btn){ curSF=btn.getAttribute('data-s'); var tabs=document.querySelectorAll('.stab'); for(var i=0;i<tabs.length;i++) tabs[i].classList.toggle('on',tabs[i]===btn); render(); }
 
@@ -816,3 +927,9 @@ for(var si=0;si<stBtns.length;si++){(function(btn){btn.onclick=function(){
    INIT
    ============================================================ */
 loadData();
+updateInboxBadges();
+
+// Atualiza badge do inbox quando storage muda (ex: nota salva no Instagram)
+window.addEventListener('storage', function(e){
+  if(e.key===QN_KEY){ updateInboxBadges(); if(curView==='inbox') renderInbox(); }
+});

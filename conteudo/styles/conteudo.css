@@ -450,3 +450,190 @@
   .day-modal { border-radius: 20px; max-width: 480px; }
   .day-bg.open .day-modal { transform: translateY(0); }
 }
+
+/* ============================================================
+   INBOX DE IDEIAS (Quick Notes)
+   ============================================================ */
+
+/* Badge nos tabs de view */
+.inbox-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #e91e63;
+  color: #fff;
+  border-radius: 9px;
+  font-size: 9px;
+  font-weight: 700;
+  min-width: 15px;
+  height: 15px;
+  padding: 0 3px;
+  margin-left: 4px;
+  line-height: 1;
+  vertical-align: middle;
+}
+.inbox-badge:empty { display: none; }
+
+/* Botão Inbox na sidebar desktop */
+.d-sb-inbox-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 9px 14px;
+  margin: 4px 0 12px;
+  background: #f3e5f5;
+  color: #7b1fa2;
+  border: 1.5px solid #e1bee7;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s, border-color .15s;
+}
+.d-sb-inbox-btn:hover,
+.d-sb-inbox-btn.has-notes { background: #ede0f6; border-color: #ce93d8; }
+.inbox-badge-sb {
+  background: #e91e63;
+  color: #fff;
+  border-radius: 9px;
+  font-size: 9px;
+  font-weight: 700;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 3px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+}
+.inbox-badge-sb:empty { display: none; }
+
+/* View container */
+.inbox-view {
+  padding: 16px 16px 100px;
+}
+
+/* Header */
+.inbox-header {
+  margin-bottom: 16px;
+}
+.inbox-header-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1a1a2e;
+}
+.inbox-header-sub {
+  font-size: 12px;
+  color: #888;
+  margin-top: 2px;
+}
+
+/* Lista */
+.inbox-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Card de nota */
+.inbox-card {
+  background: #fff;
+  border: 1.5px solid #f0e6f6;
+  border-radius: 14px;
+  padding: 13px 14px;
+  box-shadow: 0 1px 6px rgba(0,0,0,.05);
+  transition: border-color .15s;
+}
+.inbox-card:hover { border-color: #ce93d8; }
+
+.inbox-card-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.inbox-src-badge {
+  font-size: 11px;
+  color: #9c27b0;
+  background: #f3e5f5;
+  border-radius: 6px;
+  padding: 2px 7px;
+  font-weight: 600;
+}
+.inbox-date {
+  font-size: 11px;
+  color: #bbb;
+  margin-left: auto;
+}
+.inbox-card-text {
+  font-size: 13px;
+  color: #333;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin-bottom: 12px;
+}
+.inbox-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.inbox-btn-promote {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: #9c27b0;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 7px 13px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s;
+  flex: 1;
+  justify-content: center;
+}
+.inbox-btn-promote:hover { background: #7b1fa2; }
+.inbox-btn-discard {
+  background: none;
+  color: #aaa;
+  border: 1.5px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 7px 11px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: color .15s, border-color .15s;
+}
+.inbox-btn-discard:hover { color: #e91e63; border-color: #e91e63; }
+
+/* Empty state */
+.inbox-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 48px 24px;
+  gap: 8px;
+}
+.inbox-empty-icon { font-size: 40px; }
+.inbox-empty-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #555;
+}
+.inbox-empty-sub {
+  font-size: 13px;
+  color: #aaa;
+  line-height: 1.5;
+  max-width: 280px;
+}
+
+/* Desktop: inbox view com margem adequada */
+@media (min-width: 700px) {
+  .inbox-view { padding: 24px 32px 80px; max-width: 620px; }
+  .inbox-list { gap: 12px; }
+  .inbox-card { padding: 16px 18px; }
+  .inbox-card-text { font-size: 14px; }
+}
