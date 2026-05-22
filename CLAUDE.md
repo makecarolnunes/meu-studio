@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-22 18:47 | main | feat(estrategia): adiciona Centro de Comando + ajusta cores Concorrentes -->
+<!-- AUTO: 2026-05-22 18:52 | main | feat(concorrentes): integra Brand Brain real do CDC no sistema de an├ílise -->
 
