@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-21 21:16 | main | feat(instagram): an├ílise de concorrentes por prints com Claude Vision -->
+<!-- AUTO: 2026-05-22 00:48 | main | feat(instagram): enviar pauta p/ planejamento + an├ílise visual no validador -->
 
