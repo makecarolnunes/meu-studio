@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-22 16:14 | main | feat(brand-brain): adiciona m├│dulo de an├ílise estrat├®gica de Reels com IA -->
+<!-- AUTO: 2026-05-22 16:48 | main | feat(hub): reorganiza se├º├úo Conte├║do e cria se├º├úo Estrat├®gia -->
 
