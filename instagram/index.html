@@ -310,17 +310,21 @@
           </div>
 
           <div class="form-row">
-            <label class="form-label">📷 Imagem do post <span class="t-caption">(opcional — IA analisa design, composição, estética, hierarquia)</span></label>
-            <div id="val-image-wrap" class="val-image-wrap">
-              <label class="btn btn-outline btn-sm val-image-upload">
-                + Adicionar imagem
-                <input type="file" accept="image/*" id="val-image-input" style="display:none" onchange="setValidatorImage(this.files); this.value=null">
+            <label class="form-label">📷 Mídia do post <span class="t-caption">(opcional — fotos do carrossel na ordem que vai postar, ou um vídeo de reel)</span></label>
+            <div class="val-assets-uploader">
+              <label class="btn btn-outline btn-sm val-asset-add">
+                + Imagens (até 10)
+                <input type="file" accept="image/*" multiple id="val-image-input" style="display:none" onchange="addValidatorImages(this.files); this.value=null">
               </label>
-              <div id="val-image-preview" class="val-image-preview" style="display:none">
-                <img id="val-image-thumb" alt="preview do post">
-                <button class="val-image-rm" onclick="clearValidatorImage()" title="Remover">×</button>
-              </div>
+              <label class="btn btn-outline btn-sm val-asset-add">
+                + Vídeo / Reel
+                <input type="file" accept="video/*" id="val-video-input" style="display:none" onchange="setValidatorVideo(this.files); this.value=null">
+              </label>
+              <button class="btn btn-ghost btn-sm" id="val-assets-clear" onclick="clearValidatorAssets()" style="display:none">🗑 Limpar</button>
             </div>
+            <div id="val-assets-hint" class="t-caption val-assets-hint">Adicione fotos na ORDEM exata do carrossel. A 1ª imagem será analisada como capa.</div>
+            <div id="val-assets-grid" class="val-assets-grid"></div>
+            <div id="val-video-wrap" class="val-video-wrap" style="display:none"></div>
           </div>
 
           <button class="btn btn-primary" id="btn-validate" onclick="validatePost()" style="width:100%;margin-top:14px">✨ Validar com IA</button>

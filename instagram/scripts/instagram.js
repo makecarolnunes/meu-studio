@@ -2392,45 +2392,244 @@
     });
   };
 
-  // Imagem opcional do validador (mantida em memória até o validatePost rodar)
-  var VALIDATOR_IMAGE = null; // { dataUrl, mediaType, base64 }
+  // Assets do validador — carrossel de imagens OU vídeo (mutuamente exclusivos)
+  // VALIDATOR_ASSETS.kind: 'images' | 'video' | null
+  var VALIDATOR_ASSETS = { kind: null, images: [], video: null };
+  var MAX_VAL_IMAGES = 10;
+  var VIDEO_FRAME_COUNT = 10;
 
-  window.setValidatorImage = async function(files) {
+  function valAssetsHasContent() {
+    if (VALIDATOR_ASSETS.kind === 'images') return VALIDATOR_ASSETS.images.length > 0;
+    if (VALIDATOR_ASSETS.kind === 'video') return !!VALIDATOR_ASSETS.video;
+    return false;
+  }
+
+  window.addValidatorImages = async function(files) {
     if (!files || !files.length) return;
-    try {
-      var raw = await fileToDataURL(files[0]);
-      var compressed = await compressImage(raw, 1280);
-      var m = compressed.match(/^data:(image\/[a-zA-Z+]+);base64,(.+)$/);
-      if (!m) {
-        toast('Formato de imagem não suportado', true);
-        return;
+    if (VALIDATOR_ASSETS.kind === 'video') {
+      if (!confirm('Já existe um vídeo carregado. Substituir por imagens?')) return;
+      VALIDATOR_ASSETS.video = null;
+      VALIDATOR_ASSETS.kind = null;
+    }
+    VALIDATOR_ASSETS.kind = 'images';
+    var arr = Array.prototype.slice.call(files);
+    var room = MAX_VAL_IMAGES - VALIDATOR_ASSETS.images.length;
+    if (arr.length > room) {
+      toast('Máximo ' + MAX_VAL_IMAGES + ' imagens. Adicionando as primeiras ' + room + '.', true);
+      arr = arr.slice(0, room);
+    }
+    for (var i = 0; i < arr.length; i++) {
+      try {
+        var raw = await fileToDataURL(arr[i]);
+        var compressed = await compressImage(raw, 1280);
+        var m = compressed.match(/^data:(image\/[a-zA-Z+]+);base64,(.+)$/);
+        if (!m) continue;
+        VALIDATOR_ASSETS.images.push({
+          dataUrl: compressed,
+          mediaType: m[1],
+          base64: m[2],
+          name: arr[i].name || ('imagem-' + (VALIDATOR_ASSETS.images.length + 1))
+        });
+      } catch (e) {
+        console.warn('[ig] erro carregando imagem do validador', e);
       }
-      VALIDATOR_IMAGE = { dataUrl: compressed, mediaType: m[1], base64: m[2] };
-      var thumb = document.getElementById('val-image-thumb');
-      var preview = document.getElementById('val-image-preview');
-      if (thumb) thumb.src = compressed;
-      if (preview) preview.style.display = 'block';
+    }
+    renderValidatorAssets();
+  };
+
+  window.setValidatorVideo = async function(files) {
+    if (!files || !files.length) return;
+    if (VALIDATOR_ASSETS.kind === 'images' && VALIDATOR_ASSETS.images.length) {
+      if (!confirm('Já existem imagens carregadas. Substituir por vídeo?')) return;
+      VALIDATOR_ASSETS.images = [];
+      VALIDATOR_ASSETS.kind = null;
+    }
+    var file = files[0];
+    var hintEl = document.getElementById('val-assets-hint');
+    if (hintEl) hintEl.textContent = 'Processando vídeo... extraindo frames para análise.';
+    try {
+      var dataUrl = await fileToDataURL(file);
+      var extraction = await extractVideoFrames(dataUrl, VIDEO_FRAME_COUNT);
+      VALIDATOR_ASSETS.kind = 'video';
+      VALIDATOR_ASSETS.video = {
+        dataUrl: dataUrl,
+        name: file.name || 'reel.mp4',
+        durationSec: extraction.durationSec,
+        frames: extraction.frames
+      };
+      renderValidatorAssets();
     } catch (e) {
-      console.warn('[ig] erro carregando imagem do validador', e);
-      toast('Erro ao carregar imagem', true);
+      console.warn('[ig] erro processando vídeo', e);
+      toast('Erro processando vídeo: ' + e.message, true);
+      if (hintEl) hintEl.textContent = 'Erro ao processar vídeo. Tente outro arquivo.';
     }
   };
 
-  window.clearValidatorImage = function() {
-    VALIDATOR_IMAGE = null;
-    var preview = document.getElementById('val-image-preview');
-    var thumb = document.getElementById('val-image-thumb');
-    if (preview) preview.style.display = 'none';
-    if (thumb) thumb.src = '';
+  function extractVideoFrames(videoDataUrl, count) {
+    return new Promise(function(resolve, reject) {
+      var video = document.createElement('video');
+      video.preload = 'auto';
+      video.muted = true;
+      video.playsInline = true;
+      video.src = videoDataUrl;
+      video.onerror = function() { reject(new Error('Não consegui ler o vídeo')); };
+      video.onloadedmetadata = function() {
+        var dur = isFinite(video.duration) ? video.duration : 0;
+        if (!dur || dur < 0.1) { reject(new Error('Vídeo sem duração válida')); return; }
+        var hookSlice = Math.min(3, dur);
+        var hookFrames = Math.min(4, Math.max(2, Math.round(count * 0.35)));
+        var bodyFrames = Math.max(1, count - hookFrames);
+        var times = [];
+        for (var i = 0; i < hookFrames; i++) {
+          times.push((hookSlice * (i + 0.5)) / hookFrames);
+        }
+        if (dur > hookSlice + 0.2) {
+          for (var j = 0; j < bodyFrames; j++) {
+            var t = hookSlice + ((dur - hookSlice) * (j + 0.5)) / bodyFrames;
+            times.push(Math.min(dur - 0.05, t));
+          }
+        }
+        var frames = [];
+        var idx = 0;
+        var canvas = document.createElement('canvas');
+        var maxDim = 720;
+        function nextFrame() {
+          if (idx >= times.length) { resolve({ durationSec: dur, frames: frames }); return; }
+          video.currentTime = times[idx];
+        }
+        video.onseeked = function() {
+          var vw = video.videoWidth, vh = video.videoHeight;
+          if (!vw || !vh) { idx++; nextFrame(); return; }
+          var scale = Math.min(1, maxDim / Math.max(vw, vh));
+          canvas.width = Math.round(vw * scale);
+          canvas.height = Math.round(vh * scale);
+          var ctx = canvas.getContext('2d');
+          try { ctx.drawImage(video, 0, 0, canvas.width, canvas.height); }
+          catch (e) { idx++; nextFrame(); return; }
+          var url = canvas.toDataURL('image/jpeg', 0.82);
+          var m = url.match(/^data:(image\/[a-zA-Z+]+);base64,(.+)$/);
+          if (m) {
+            frames.push({
+              dataUrl: url, mediaType: m[1], base64: m[2],
+              tSec: Math.round(times[idx] * 10) / 10
+            });
+          }
+          idx++;
+          nextFrame();
+        };
+        nextFrame();
+      };
+    });
+  }
+
+  window.moveValidatorImage = function(idx, dir) {
+    var arr = VALIDATOR_ASSETS.images;
+    var ni = idx + dir;
+    if (ni < 0 || ni >= arr.length) return;
+    var tmp = arr[idx]; arr[idx] = arr[ni]; arr[ni] = tmp;
+    renderValidatorAssets();
   };
 
-  function buildValidatorPrompt(briefing, visual, hasImage) {
+  window.removeValidatorImage = function(idx) {
+    VALIDATOR_ASSETS.images.splice(idx, 1);
+    if (!VALIDATOR_ASSETS.images.length) VALIDATOR_ASSETS.kind = null;
+    renderValidatorAssets();
+  };
+
+  window.clearValidatorAssets = function() {
+    VALIDATOR_ASSETS = { kind: null, images: [], video: null };
+    renderValidatorAssets();
+  };
+
+  function renderValidatorAssets() {
+    var grid = document.getElementById('val-assets-grid');
+    var vwrap = document.getElementById('val-video-wrap');
+    var clearBtn = document.getElementById('val-assets-clear');
+    var hint = document.getElementById('val-assets-hint');
+    if (!grid || !vwrap) return;
+
+    if (VALIDATOR_ASSETS.kind === 'images' && VALIDATOR_ASSETS.images.length) {
+      vwrap.style.display = 'none';
+      vwrap.innerHTML = '';
+      var n = VALIDATOR_ASSETS.images.length;
+      grid.innerHTML = VALIDATOR_ASSETS.images.map(function(img, i) {
+        var isCover = i === 0;
+        return '<div class="val-asset-card' + (isCover ? ' val-asset-cover' : '') + '">' +
+          '<div class="val-asset-thumb"><img src="' + img.dataUrl + '" alt=""></div>' +
+          '<div class="val-asset-meta">' +
+            '<div class="val-asset-pos">' + (i + 1) + '/' + n + (isCover ? ' · CAPA' : '') + '</div>' +
+            '<div class="val-asset-name" title="' + esc(img.name) + '">' + esc(img.name) + '</div>' +
+          '</div>' +
+          '<div class="val-asset-actions">' +
+            (i > 0 ? '<button class="val-asset-btn" onclick="moveValidatorImage(' + i + ',-1)" title="Mover para esquerda">←</button>' : '<span class="val-asset-btn ghost">←</span>') +
+            (i < n - 1 ? '<button class="val-asset-btn" onclick="moveValidatorImage(' + i + ',1)" title="Mover para direita">→</button>' : '<span class="val-asset-btn ghost">→</span>') +
+            '<button class="val-asset-btn val-asset-rm" onclick="removeValidatorImage(' + i + ')" title="Remover">×</button>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+      if (hint) hint.textContent = n === 1
+        ? 'Foto única — a IA analisa como capa/post unitário.'
+        : 'Carrossel com ' + n + ' imagens · ordem atual será avaliada e podem ser sugeridas mudanças.';
+    } else if (VALIDATOR_ASSETS.kind === 'video' && VALIDATOR_ASSETS.video) {
+      grid.innerHTML = '';
+      var v = VALIDATOR_ASSETS.video;
+      vwrap.style.display = 'block';
+      vwrap.innerHTML =
+        '<div class="val-video-card">' +
+          '<div class="val-video-head">' +
+            '<div class="val-video-icon">🎬</div>' +
+            '<div class="val-video-info">' +
+              '<div class="val-video-name">' + esc(v.name) + '</div>' +
+              '<div class="val-video-meta">' + v.durationSec.toFixed(1) + 's · ' + v.frames.length + ' frames extraídos para análise</div>' +
+            '</div>' +
+          '</div>' +
+          '<video class="val-video-preview" src="' + v.dataUrl + '" controls playsinline muted></video>' +
+          '<div class="val-frames-strip">' +
+            v.frames.map(function(f, i) {
+              return '<div class="val-frame">' +
+                '<img src="' + f.dataUrl + '" alt="frame ' + i + '">' +
+                '<div class="val-frame-t">' + f.tSec.toFixed(1) + 's</div>' +
+              '</div>';
+            }).join('') +
+          '</div>' +
+        '</div>';
+      if (hint) hint.textContent = 'Reel · capa = frame 1. Hook = primeiros 3s. IA vai analisar ritmo, retenção e cortes.';
+    } else {
+      grid.innerHTML = '';
+      vwrap.style.display = 'none';
+      vwrap.innerHTML = '';
+      if (hint) hint.textContent = 'Adicione fotos na ORDEM exata do carrossel ou um vídeo de reel.';
+    }
+    if (clearBtn) clearBtn.style.display = valAssetsHasContent() ? '' : 'none';
+  }
+
+  // assetKind: 'images' | 'video' | null; assetMeta: { n?, duration? }
+  function buildValidatorPrompt(briefing, visual, assetKind, assetMeta) {
     var sections = [
       brandToText(),
-      dataToText().split('### Insights da conta')[0],  // só perfil + posts (sem insights, mais conciso)
+      dataToText().split('### Insights da conta')[0],
     ].filter(Boolean);
 
     var ctx = sections.join('\n\n---\n\n');
+
+    var assetBlock = '';
+    if (assetKind === 'images') {
+      var n = assetMeta.n || 0;
+      assetBlock = '**MÍDIA ANEXADA — CARROSSEL DE ' + n + ' IMAGEM(NS):**\n' +
+        'As ' + n + ' imagens anexadas estão na ORDEM ATUAL planejada pela Carol.\n' +
+        '- Imagem 1 = capa atual (primeira a aparecer no feed)\n' +
+        '- Imagens 2-' + n + ' = sequência do carrossel (swipe-through)\n' +
+        'Analise CADA imagem individualmente E o conjunto como narrativa. Preencha `analise_carrossel` no JSON.\n\n';
+    } else if (assetKind === 'video') {
+      var dur = assetMeta.duration || 0;
+      var fc = assetMeta.frameCount || 0;
+      assetBlock = '**MÍDIA ANEXADA — VÍDEO/REEL (' + dur.toFixed(1) + 's):**\n' +
+        fc + ' frames foram extraídos do vídeo em ordem cronológica:\n' +
+        '- Os primeiros ~4 frames cobrem os PRIMEIROS 3 SEGUNDOS (HOOK — crítico para retenção)\n' +
+        '- Os demais frames são espaçados pelo resto do vídeo (body)\n' +
+        '- Frame 1 = capa/thumb atual do Reel\n' +
+        'Analise hook, ritmo, cortes, enquadramento, iluminação, expressão, energia, clareza, CTA visual, legendas, estética, autoralidade (genérico vs autoral), autoridade vs venda. Preencha `analise_reel` no JSON.\n\n';
+    }
 
     var task = '\n\n---\n\n## TAREFA — VALIDAÇÃO DE POST PRÉ-PUBLICAÇÃO\n\n' +
 'Você é estrategista de marca + diretor criativo + social media premium + analista de comportamento + especialista em posicionamento. Atue como consultor que valida cada post antes de a Carol publicar.\n\n' +
@@ -2440,87 +2639,93 @@
 '**Objetivo:** ' + VAL_STATE.objetivo + (VAL_STATE.objetivo === 'auto' ? ' (você sugere)' : '') + '\n\n' +
 '**Briefing / ideia:**\n' + briefing + '\n\n' +
 (visual ? '**Descrição visual (texto):**\n' + visual + '\n\n' : '') +
-(hasImage ? '**IMAGEM ANEXADA:** Há uma imagem real do post anexada nesta mensagem. ANALISE-A com profundidade: design, composição, estética, branding, legibilidade, expressão, enquadramento, hierarquia visual, paleta, coerência com posicionamento Premium/Brand Brain da Carol (paleta café/terra/nude, arquétipos Criadora/Cuidadora/Sábia). Use o campo `analise_visual` do JSON.\n\n' : '') +
+assetBlock +
 '## OUTPUT — JSON ESTRUTURADO\n\n' +
-'Retorne SOMENTE JSON válido (sem markdown ```json```, sem prefácio, nada antes ou depois). Estrutura:\n\n' +
+'Retorne SOMENTE JSON válido (sem markdown ```json```, sem prefácio). Use APENAS os blocos relevantes ao tipo de mídia anexada (carrossel → `analise_carrossel`; vídeo → `analise_reel`; imagem única → `analise_visual`; sem mídia → omita todos os 3 blocos visuais). Estrutura:\n\n' +
 '```json\n{\n' +
 '  "score_geral": 0,\n' +
 '  "veredito": "PUBLICAR|AJUSTAR|REPENSAR",\n' +
 '  "veredito_resumo": "1 frase justificando o veredito",\n' +
-'  "pilar_identificado": {\n' +
-'    "pilar": "Noivas Premium|Autoridade Técnica|Cachos & Crespos|Carol-Presença|Produtos|Social Beauty",\n' +
-'    "justificativa": "por que esse pilar"\n' +
-'  },\n' +
-'  "alinhamento_brand_brain": {\n' +
-'    "score_0_10": 0,\n' +
-'    "pontos_fortes": ["alinha com X do Brand Brain", "..."],\n' +
-'    "pontos_fracos": ["usa palavra proibida Y", "..."]\n' +
-'  },\n' +
-'  "persona_atrai": {\n' +
-'    "principal": "P1 Noiva Premium|P2 Noiva Preta|P3 Cacheada/Crespa|P4 Profissional em Formação",\n' +
-'    "secundaria": "...",\n' +
-'    "justificativa": "por que essas personas"\n' +
-'  },\n' +
+'  "pilar_identificado": { "pilar": "Noivas Premium|Autoridade Técnica|Cachos & Crespos|Carol-Presença|Produtos|Social Beauty", "justificativa": "por que esse pilar" },\n' +
+'  "alinhamento_brand_brain": { "score_0_10": 0, "pontos_fortes": ["..."], "pontos_fracos": ["..."] },\n' +
+'  "persona_atrai": { "principal": "P1|P2|P3|P4", "secundaria": "...", "justificativa": "..." },\n' +
 '  "arquetipo_ativado": "Criadora|Cuidadora|Sábia",\n' +
-'  "formato_ideal": {\n' +
-'    "sugerido": "Reel|Carrossel|Foto|Story|Storytelling|Bastidores|Autoridade|Conversão",\n' +
-'    "justificativa": "por que esse formato considerando objetivo + Brand Brain + performance recente"\n' +
-'  },\n' +
-'  "problemas_identificados": [\n' +
-'    { "categoria": "Tom|Visual|Posicionamento|Estrutura", "problema": "descrição específica", "gravidade": "alta|media|baixa" }\n' +
-'  ],\n' +
-'  "melhorias_sugeridas": [\n' +
-'    { "antes": "trecho original", "depois": "trecho melhorado", "porque": "razão" }\n' +
-'  ],\n' +
-'  "hook_sugerido": {\n' +
-'    "primeira_opcao": "hook pronto pra usar",\n' +
-'    "segunda_opcao": "alternativa",\n' +
-'    "principio": "o princípio do hook escolhido (ex: começa com cena, não com saudação genérica)"\n' +
-'  },\n' +
-'  "cta_sugerido": {\n' +
-'    "texto": "CTA pronto",\n' +
-'    "justificativa": "por que esse CTA"\n' +
-'  },\n' +
-'  "legenda_sugerida": "Legenda completa pronta pra copiar e colar, no tom da marca, multilinha com \\n",\n' +
-'  "titulo_capa": {\n' +
-'    "texto": "máximo 3 palavras pra capa do Reel/Carrossel",\n' +
-'    "fonte_recomendada": "Cormorant Garamond Bold Italic"\n' +
-'  },\n' +
-'  "melhorias_visuais": [\n' +
-'    { "elemento": "luz|enquadramento|composição|tratamento|fundo", "diretriz": "recomendação específica" }\n' +
-'  ],\n' +
-(hasImage ?
-'  "analise_visual": {\n' +
+'  "formato_ideal": { "sugerido": "Reel|Carrossel|Foto|Story|Storytelling|Bastidores|Autoridade|Conversão", "justificativa": "..." },\n' +
+'  "problemas_identificados": [ { "categoria": "Tom|Visual|Posicionamento|Estrutura", "problema": "...", "gravidade": "alta|media|baixa" } ],\n' +
+'  "melhorias_sugeridas": [ { "antes": "...", "depois": "...", "porque": "..." } ],\n' +
+'  "hook_sugerido": { "primeira_opcao": "...", "segunda_opcao": "...", "principio": "..." },\n' +
+'  "cta_sugerido": { "texto": "...", "justificativa": "..." },\n' +
+'  "legenda_sugerida": "Legenda completa multilinha com \\n",\n' +
+'  "titulo_capa": { "texto": "máx 3 palavras", "fonte_recomendada": "Cormorant Garamond Bold Italic" },\n' +
+'  "melhorias_visuais": [ { "elemento": "luz|enquadramento|composição|tratamento|fundo", "diretriz": "..." } ],\n' +
+(assetKind === 'images' ?
+'  "analise_carrossel": {\n' +
 '    "score_0_10": 0,\n' +
-'    "leitura_geral": "1 parágrafo sobre a primeira impressão visual",\n' +
-'    "design_composicao": "regra dos terços, balanço, espaço negativo, ponto focal",\n' +
-'    "estetica_branding": "coerência com paleta café/terra/nude da Carol, tipografia, mood",\n' +
-'    "legibilidade": "se houver texto na imagem, avalie hierarquia/contraste/tamanho",\n' +
-'    "expressao_enquadramento": "linguagem corporal, olhar, framing",\n' +
-'    "pontos_fortes_visuais": ["3-5 bullets do que está funcionando"],\n' +
-'    "pontos_fracos_visuais": ["3-5 bullets do que pode melhorar"],\n' +
-'    "ajustes_imediatos": ["2-4 mudanças concretas e acionáveis"]\n' +
+'    "leitura_geral": "1 parágrafo sobre a narrativa do carrossel como um todo",\n' +
+'    "ordem_atual_avaliacao": "a ordem atual funciona ou prejudica? por quê?",\n' +
+'    "coerencia_visual": "coerência entre as imagens (paleta, tratamento, mood, tipografia)",\n' +
+'    "ritmo_narrativa": "tem ritmo? abre, desenvolve, fecha? ou é um loop visual sem progressão?",\n' +
+'    "equilibrio_estetica_info_impacto": "está equilibrado ou pesa demais em info/estética/impacto?",\n' +
+'    "excesso_informacao": false,\n' +
+'    "repeticao_visual": false,\n' +
+'    "imagens": [\n' +
+'      { "posicao": 1, "papel": "capa|hook|desenvolvimento|prova|cta|fechamento", "forca": "alta|media|baixa", "para_scroll": "alto|medio|baixo", "fortalece_post": true, "leitura": "1-2 frases sobre essa imagem", "ajuste_sugerido": "ou null se ok" }\n' +
+'    ],\n' +
+'    "melhor_capa": { "posicao_atual": 1, "razao": "por que essa funciona como capa OU por que outra funcionaria melhor" },\n' +
+'    "ordem_sugerida": [1, 3, 2, 4],\n' +
+'    "ordem_sugerida_justificativa": "por que essa nova ordem",\n' +
+'    "imagens_para_remover": [ { "posicao": 0, "motivo": "..." } ],\n' +
+'    "imagens_para_substituir": [ { "posicao": 0, "motivo": "...", "sugestao_substituicao": "tipo de imagem que entraria no lugar" } ],\n' +
+'    "imagens_que_fortalecem": [1],\n' +
+'    "imagens_que_enfraquecem": [3],\n' +
+'    "pontos_fortes_globais": ["..."],\n' +
+'    "pontos_fracos_globais": ["..."],\n' +
+'    "ajustes_imediatos": ["..."]\n' +
 '  },\n' : '') +
-'  "potencial_performance": {\n' +
-'    "alcance": "alto|medio|baixo",\n' +
-'    "engajamento": "alto|medio|baixo",\n' +
-'    "conversao": "alto|medio|baixo",\n' +
-'    "salvamento": "alto|medio|baixo",\n' +
-'    "justificativa": "cruzando com performance recente do feed da Carol"\n' +
-'  },\n' +
-'  "vs_feed_recente": {\n' +
-'    "repetitivo": false,\n' +
-'    "diversidade": "complementa pilar X subaproveitado | repete o que ela já fez 3x",\n' +
-'    "posts_relacionados": ["P1", "P5"],\n' +
-'    "proximo_passo_sugerido": "post seguinte que conecta com este"\n' +
-'  }\n' +
+(assetKind === 'video' ?
+'  "analise_reel": {\n' +
+'    "score_0_10": 0,\n' +
+'    "leitura_geral": "1 parágrafo sobre o reel como um todo",\n' +
+'    "hook_3s": { "score_0_10": 0, "leitura": "o que acontece nos primeiros 3s? prende? gera curiosidade?", "ajustes": ["..."] },\n' +
+'    "retencao": { "potencial": "alto|medio|baixo", "pontos_queda_previstos": [ { "momento_aprox_seg": 5, "motivo": "..." } ], "justificativa": "..." },\n' +
+'    "ritmo": "rápido|equilibrado|arrastado — análise dos cortes e densidade de informação",\n' +
+'    "cortes_dinamica": "cortes secos? cortes longos? variação de planos? estática?",\n' +
+'    "enquadramento": "fechado/aberto, regra dos terços, profundidade, framing",\n' +
+'    "iluminacao": "natural|estúdio|mista — qualidade, sombras, temperatura, coerência com Premium",\n' +
+'    "expressao": "expressão facial, olhar, linguagem corporal, energia transmitida",\n' +
+'    "energia": "alta|média|baixa — combina com objetivo?",\n' +
+'    "clareza_mensagem": "mensagem clara em 1 frase? ou confusa?",\n' +
+'    "estetica_geral": "alinha com paleta café/terra/nude e premium? mood?",\n' +
+'    "consistencia_posicionamento": "alinha com posicionamento Premium da Carol? algo destoa?",\n' +
+'    "autoralidade": "autoral|genérico — soa como Carol ou parecido com qualquer maquiadora?",\n' +
+'    "tom_predominante": "autoridade|conexão|venda-excessiva|misto — qual predomina?",\n' +
+'    "potencial_compartilhamento": "alto|medio|baixo + por quê",\n' +
+'    "potencial_viralizacao": "alto|medio|baixo + por quê",\n' +
+'    "cta_visual": "tem CTA visual/falado claro? sugestão se faltar",\n' +
+'    "legendas_textos_tela": "se houver, hierarquia/timing/contraste/erros",\n' +
+'    "timing_informacao": "info distribuída bem ao longo? ou empilhada no início/fim?",\n' +
+'    "momentos_fortes": [ { "tempo_aprox_seg": 7, "razao": "...", "potencial_corte_curto": true } ],\n' +
+'    "trechos_virariam_cortes": [ { "tempo_aprox_seg": 12, "ideia_corte": "frase ou cena destacável que vira reel de 6s" } ],\n' +
+'    "sugestoes_melhorias": ["..."],\n' +
+'    "thumb_capa_atual": "leitura do frame 1 (capa atual)",\n' +
+'    "thumb_capa_recomendada": { "frame_aprox_seg": 4, "razao": "esse momento funciona melhor como capa porque..." },\n' +
+'    "texto_capa_sugerido": ["3 opções de texto curto pra capa, máx 3-4 palavras cada"],\n' +
+'    "comparativo_reels_passados": "cruzando com top reels recentes da Carol, esse se parece com quais? que padrões dos top reels ele reproduz ou ignora?",\n' +
+'    "padroes_top_reels": ["padrões recorrentes detectados nos posts de melhor performance"],\n' +
+'    "ajustes_imediatos": ["3-5 mudanças concretas"]\n' +
+'  },\n' : '') +
+(assetKind === null ? '' :
+'  "analise_visual": { "score_0_10": 0, "leitura_geral": "1 parágrafo", "design_composicao": "...", "estetica_branding": "...", "legibilidade": "...", "expressao_enquadramento": "...", "pontos_fortes_visuais": ["..."], "pontos_fracos_visuais": ["..."], "ajustes_imediatos": ["..."] },\n') +
+'  "potencial_performance": { "alcance": "alto|medio|baixo", "engajamento": "alto|medio|baixo", "conversao": "alto|medio|baixo", "salvamento": "alto|medio|baixo", "justificativa": "cruzando com performance recente" },\n' +
+'  "vs_feed_recente": { "repetitivo": false, "diversidade": "...", "posts_relacionados": ["..."], "proximo_passo_sugerido": "..." }\n' +
 '}\n```\n\n' +
 '## REGRAS\n\n' +
 '- Use Brand Brain como lente principal. Avalie posicionamento, tom, palavras da marca/proibidas.\n' +
-'- Seja específico. Cite trechos exatos do briefing quando apontar problemas.\n' +
-'- Sugestões devem soar como a Carol — usar palavras da marca, evitar palavras proibidas.\n' +
-'- Português brasileiro, tom direto e profissional.\n' +
-'- Retorne SOMENTE o JSON.';
+'- Seja específico. Cite trechos exatos do briefing e momentos exatos do vídeo/imagens quando apontar problemas.\n' +
+'- Para carrossel: avalie ordem, capa, scroll-stoppers, coerência, ritmo, e sugira reordenação concreta.\n' +
+'- Para reel: cruze ritmo + hook + retenção + tom + autoralidade. Indique momentos mais fortes por segundo aproximado.\n' +
+'- Cruze TUDO com o feed recente, top posts e Brand Brain — todas as análises devem dialogar entre si.\n' +
+'- Português brasileiro, tom direto e profissional. Retorne SOMENTE o JSON.';
 
     return ctx + task;
   }
@@ -2559,6 +2764,7 @@
     }
     // Renderiza resultado salvo
     if (latest.result) {
+      if (latest.inputs && latest.inputs.assets) latest.result.__inputAssets = latest.inputs.assets;
       renderValidatorResult(latest.result, latest.generatedAt);
     }
     renderValidationHistory();
@@ -2602,7 +2808,10 @@
       if (v.inputs.pilar) setValPilar(v.inputs.pilar);
       if (v.inputs.objetivo) setValObj(v.inputs.objetivo);
     }
-    if (v.result) renderValidatorResult(v.result, v.generatedAt);
+    if (v.result) {
+      if (v.inputs && v.inputs.assets) v.result.__inputAssets = v.inputs.assets;
+      renderValidatorResult(v.result, v.generatedAt);
+    }
     toast('Validação carregada');
   };
 
@@ -2645,22 +2854,57 @@
     if (resultEl) resultEl.innerHTML = '';
 
     try {
-      var hasImage = !!VALIDATOR_IMAGE;
-      var prompt = buildValidatorPrompt(briefing, visual, hasImage);
-      console.log('[ig] validator prompt size:', prompt.length, '· imagem:', hasImage);
+      var assetKind = VALIDATOR_ASSETS.kind;
+      var assetMeta = {};
+      var visionBlocks = [];
+
+      if (assetKind === 'images') {
+        assetMeta.n = VALIDATOR_ASSETS.images.length;
+        VALIDATOR_ASSETS.images.forEach(function(img, i) {
+          visionBlocks.push({ type: 'text', text: 'IMAGEM ' + (i + 1) + '/' + assetMeta.n + (i === 0 ? ' (CAPA)' : '') + ':' });
+          visionBlocks.push({ type: 'image', source: { type: 'base64', media_type: img.mediaType, data: img.base64 } });
+        });
+      } else if (assetKind === 'video') {
+        var vid = VALIDATOR_ASSETS.video;
+        assetMeta.duration = vid.durationSec;
+        assetMeta.frameCount = vid.frames.length;
+        vid.frames.forEach(function(f, i) {
+          var label = 'FRAME ' + (i + 1) + '/' + vid.frames.length + ' @ ' + f.tSec.toFixed(1) + 's' +
+            (i === 0 ? ' (CAPA/THUMB ATUAL)' : (f.tSec <= 3 ? ' (HOOK)' : ''));
+          visionBlocks.push({ type: 'text', text: label + ':' });
+          visionBlocks.push({ type: 'image', source: { type: 'base64', media_type: f.mediaType, data: f.base64 } });
+        });
+      }
+
+      var prompt = buildValidatorPrompt(briefing, visual, assetKind, assetMeta);
+      console.log('[ig] validator prompt size:', prompt.length, '· mídia:', assetKind, assetMeta);
 
       var callPayload;
-      if (hasImage) {
-        callPayload = [
-          { type: 'image', source: { type: 'base64', media_type: VALIDATOR_IMAGE.mediaType, data: VALIDATOR_IMAGE.base64 } },
-          { type: 'text', text: prompt }
-        ];
-        if (statusEl) statusEl.innerHTML = '<div class="spinner-sm"></div> Analisando imagem + briefing com Claude Vision...';
+      if (visionBlocks.length) {
+        callPayload = visionBlocks.concat([{ type: 'text', text: prompt }]);
+        if (statusEl) {
+          statusEl.innerHTML = '<div class="spinner-sm"></div> Analisando ' +
+            (assetKind === 'images' ? assetMeta.n + ' imagens do carrossel' : assetMeta.frameCount + ' frames do reel') +
+            ' + briefing com Claude Vision...';
+        }
       } else {
         callPayload = prompt;
       }
 
       var result = await callClaude(callPayload);
+
+      var inputAssets = null;
+      if (assetKind === 'images') {
+        inputAssets = { kind: 'images', images: VALIDATOR_ASSETS.images.map(function(im) { return { dataUrl: im.dataUrl, name: im.name }; }) };
+      } else if (assetKind === 'video') {
+        inputAssets = {
+          kind: 'video',
+          name: VALIDATOR_ASSETS.video.name,
+          durationSec: VALIDATOR_ASSETS.video.durationSec,
+          frames: VALIDATOR_ASSETS.video.frames.map(function(f) { return { dataUrl: f.dataUrl, tSec: f.tSec }; })
+        };
+      }
+
       var validation = {
         id: String(Date.now()),
         generatedAt: Date.now(),
@@ -2670,7 +2914,7 @@
           formato: VAL_STATE.formato,
           pilar: VAL_STATE.pilar,
           objetivo: VAL_STATE.objetivo,
-          imageDataUrl: hasImage ? VALIDATOR_IMAGE.dataUrl : null
+          assets: inputAssets
         },
         result: result.parsed,
         usage: result.usage
@@ -2761,7 +3005,276 @@
       '</div>';
     }
 
-    // Análise visual (só quando imagem foi enviada)
+    // Análise de carrossel (múltiplas imagens)
+    if (r.analise_carrossel) {
+      var ac = r.analise_carrossel;
+      var carouselImgs = (generatedAt && r.__inputAssets && r.__inputAssets.kind === 'images')
+        ? r.__inputAssets.images
+        : (VALIDATOR_ASSETS.kind === 'images' ? VALIDATOR_ASSETS.images : []);
+      html += '<div class="analysis-block val-carousel-block">' +
+        '<div class="analysis-h">🖼️ Análise do carrossel · ' + (ac.score_0_10 || 0) + '/10</div>' +
+        (ac.leitura_geral ? '<div class="diag-text">' + esc(ac.leitura_geral) + '</div>' : '') +
+        '<div class="val-carousel-meta-grid">' +
+          (ac.ordem_atual_avaliacao ? '<div class="val-meta-tile"><div class="val-meta-h">📐 Ordem atual</div><div>' + esc(ac.ordem_atual_avaliacao) + '</div></div>' : '') +
+          (ac.coerencia_visual ? '<div class="val-meta-tile"><div class="val-meta-h">🎨 Coerência visual</div><div>' + esc(ac.coerencia_visual) + '</div></div>' : '') +
+          (ac.ritmo_narrativa ? '<div class="val-meta-tile"><div class="val-meta-h">🎵 Ritmo & narrativa</div><div>' + esc(ac.ritmo_narrativa) + '</div></div>' : '') +
+          (ac.equilibrio_estetica_info_impacto ? '<div class="val-meta-tile"><div class="val-meta-h">⚖️ Equilíbrio</div><div>' + esc(ac.equilibrio_estetica_info_impacto) + '</div></div>' : '') +
+        '</div>' +
+        '<div class="val-flag-row">' +
+          '<span class="val-flag ' + (ac.excesso_informacao ? 'flag-bad' : 'flag-good') + '">' + (ac.excesso_informacao ? '⚠ Excesso de informação' : '✓ Densidade ok') + '</span>' +
+          '<span class="val-flag ' + (ac.repeticao_visual ? 'flag-bad' : 'flag-good') + '">' + (ac.repeticao_visual ? '⚠ Repetição visual' : '✓ Sem repetição') + '</span>' +
+        '</div>';
+
+      // Análise por imagem individual
+      if (ac.imagens && ac.imagens.length) {
+        html += '<div class="val-imgs-analysis">' +
+          ac.imagens.map(function(ai) {
+            var pos = ai.posicao;
+            var thumb = (carouselImgs && carouselImgs[pos - 1]) ? carouselImgs[pos - 1].dataUrl : null;
+            var forcaCls = ai.forca === 'alta' ? 'pot-high' : ai.forca === 'media' ? 'pot-med' : 'pot-low';
+            var scrollCls = ai.para_scroll === 'alto' ? 'pot-high' : ai.para_scroll === 'medio' ? 'pot-med' : 'pot-low';
+            return '<div class="val-img-row ' + (ai.fortalece_post === false ? 'val-img-weak' : '') + '">' +
+              '<div class="val-img-pos">#' + pos + '</div>' +
+              (thumb ? '<div class="val-img-thumb"><img src="' + thumb + '" alt=""></div>' : '<div class="val-img-thumb val-img-thumb-empty"></div>') +
+              '<div class="val-img-body">' +
+                '<div class="val-img-tags">' +
+                  (ai.papel ? '<span class="ev-tag">' + esc(ai.papel) + '</span>' : '') +
+                  '<span class="pot-pill ' + forcaCls + '"><span class="pot-label">força</span><span class="pot-value">' + esc(ai.forca || '—') + '</span></span>' +
+                  '<span class="pot-pill ' + scrollCls + '"><span class="pot-label">para scroll</span><span class="pot-value">' + esc(ai.para_scroll || '—') + '</span></span>' +
+                  (ai.fortalece_post === false ? '<span class="val-flag flag-bad">⚠ Enfraquece</span>' : '<span class="val-flag flag-good">✓ Fortalece</span>') +
+                '</div>' +
+                (ai.leitura ? '<div class="val-img-read">' + esc(ai.leitura) + '</div>' : '') +
+                (ai.ajuste_sugerido ? '<div class="val-img-fix">🔧 ' + esc(ai.ajuste_sugerido) + '</div>' : '') +
+              '</div>' +
+            '</div>';
+          }).join('') +
+        '</div>';
+      }
+
+      // Melhor capa
+      if (ac.melhor_capa) {
+        var mc = ac.melhor_capa;
+        var mcThumb = (carouselImgs && carouselImgs[(mc.posicao_atual || 1) - 1]) ? carouselImgs[(mc.posicao_atual || 1) - 1].dataUrl : null;
+        html += '<div class="val-cover-suggest">' +
+          '<div class="val-cover-h">🏆 Capa recomendada</div>' +
+          '<div class="val-cover-row">' +
+            (mcThumb ? '<div class="val-cover-thumb"><img src="' + mcThumb + '" alt=""><span class="val-cover-badge">Imagem #' + (mc.posicao_atual || 1) + '</span></div>' : '') +
+            '<div class="val-cover-reason">' + esc(mc.razao || '') + '</div>' +
+          '</div>' +
+        '</div>';
+      }
+
+      // Ordem sugerida
+      if (ac.ordem_sugerida && ac.ordem_sugerida.length) {
+        html += '<div class="val-order-suggest">' +
+          '<div class="val-order-h">🔀 Ordem sugerida</div>' +
+          '<div class="val-order-sequence">' +
+            ac.ordem_sugerida.map(function(pos, i) {
+              var t = (carouselImgs && carouselImgs[pos - 1]) ? carouselImgs[pos - 1].dataUrl : null;
+              return '<div class="val-order-item">' +
+                (t ? '<div class="val-order-thumb"><img src="' + t + '" alt=""></div>' : '<div class="val-order-thumb val-img-thumb-empty"></div>') +
+                '<div class="val-order-label">' + (i + 1) + ' · era #' + pos + '</div>' +
+              '</div>' +
+              (i < ac.ordem_sugerida.length - 1 ? '<div class="val-order-arrow">→</div>' : '');
+            }).join('') +
+          '</div>' +
+          (ac.ordem_sugerida_justificativa ? '<div class="val-order-why">↳ ' + esc(ac.ordem_sugerida_justificativa) + '</div>' : '') +
+        '</div>';
+      }
+
+      // Remover / Substituir
+      if ((ac.imagens_para_remover && ac.imagens_para_remover.length) || (ac.imagens_para_substituir && ac.imagens_para_substituir.length)) {
+        html += '<div class="val-cols">';
+        if (ac.imagens_para_remover && ac.imagens_para_remover.length) {
+          html += '<div class="aud-col aud-col-bad"><div class="aud-col-h">🗑 Remover</div><ul>' +
+            ac.imagens_para_remover.map(function(it) { return '<li>#' + it.posicao + ' — ' + esc(it.motivo || '') + '</li>'; }).join('') +
+          '</ul></div>';
+        }
+        if (ac.imagens_para_substituir && ac.imagens_para_substituir.length) {
+          html += '<div class="aud-col aud-col-med"><div class="aud-col-h">🔁 Substituir</div><ul>' +
+            ac.imagens_para_substituir.map(function(it) {
+              return '<li>#' + it.posicao + ' — ' + esc(it.motivo || '') + (it.sugestao_substituicao ? '<br><em>↳ ' + esc(it.sugestao_substituicao) + '</em>' : '') + '</li>';
+            }).join('') +
+          '</ul></div>';
+        }
+        html += '</div>';
+      }
+
+      // Fortalecem / Enfraquecem (resumo)
+      if ((ac.imagens_que_fortalecem && ac.imagens_que_fortalecem.length) || (ac.imagens_que_enfraquecem && ac.imagens_que_enfraquecem.length)) {
+        html += '<div class="val-flag-row">' +
+          (ac.imagens_que_fortalecem && ac.imagens_que_fortalecem.length ? '<span class="val-flag flag-good">✓ Fortalecem: ' + ac.imagens_que_fortalecem.map(function(p) { return '#' + p; }).join(', ') + '</span>' : '') +
+          (ac.imagens_que_enfraquecem && ac.imagens_que_enfraquecem.length ? '<span class="val-flag flag-bad">⚠ Enfraquecem: ' + ac.imagens_que_enfraquecem.map(function(p) { return '#' + p; }).join(', ') + '</span>' : '') +
+        '</div>';
+      }
+
+      html += '<div class="val-cols">' +
+        (ac.pontos_fortes_globais && ac.pontos_fortes_globais.length ?
+          '<div class="aud-col aud-col-good"><div class="aud-col-h">✓ Pontos fortes</div><ul>' +
+          ac.pontos_fortes_globais.map(function(s) { return '<li>' + esc(s) + '</li>'; }).join('') + '</ul></div>' : '') +
+        (ac.pontos_fracos_globais && ac.pontos_fracos_globais.length ?
+          '<div class="aud-col aud-col-bad"><div class="aud-col-h">⚠ Pontos fracos</div><ul>' +
+          ac.pontos_fracos_globais.map(function(s) { return '<li>' + esc(s) + '</li>'; }).join('') + '</ul></div>' : '') +
+      '</div>';
+
+      if (ac.ajustes_imediatos && ac.ajustes_imediatos.length) {
+        html += '<div class="val-visual-fixes"><div class="t-label">🔧 Ajustes imediatos</div><ul>' +
+          ac.ajustes_imediatos.map(function(s) { return '<li>' + esc(s) + '</li>'; }).join('') +
+        '</ul></div>';
+      }
+      html += '</div>';
+    }
+
+    // Análise de Reel/Vídeo
+    if (r.analise_reel) {
+      var ar = r.analise_reel;
+      var reelFrames = (generatedAt && r.__inputAssets && r.__inputAssets.kind === 'video')
+        ? r.__inputAssets.frames
+        : (VALIDATOR_ASSETS.kind === 'video' ? VALIDATOR_ASSETS.video.frames : []);
+      html += '<div class="analysis-block val-reel-block">' +
+        '<div class="analysis-h">🎬 Análise do Reel · ' + (ar.score_0_10 || 0) + '/10</div>' +
+        (ar.leitura_geral ? '<div class="diag-text">' + esc(ar.leitura_geral) + '</div>' : '');
+
+      // Hook
+      if (ar.hook_3s) {
+        var hk = ar.hook_3s;
+        html += '<div class="val-reel-section">' +
+          '<div class="val-reel-h">🎣 Hook (primeiros 3s) · ' + (hk.score_0_10 || 0) + '/10</div>' +
+          (hk.leitura ? '<div class="diag-text">' + esc(hk.leitura) + '</div>' : '') +
+          (hk.ajustes && hk.ajustes.length ? '<ul>' + hk.ajustes.map(function(s) { return '<li>' + esc(s) + '</li>'; }).join('') + '</ul>' : '') +
+        '</div>';
+      }
+
+      // Retenção + queda
+      if (ar.retencao) {
+        var ret = ar.retencao;
+        var retCls = ret.potencial === 'alto' ? 'pot-high' : ret.potencial === 'medio' ? 'pot-med' : 'pot-low';
+        html += '<div class="val-reel-section">' +
+          '<div class="val-reel-h">📈 Retenção</div>' +
+          '<div class="pot-pill ' + retCls + '" style="display:inline-flex"><span class="pot-label">potencial</span><span class="pot-value">' + esc(ret.potencial || '—') + '</span></div>' +
+          (ret.justificativa ? '<div class="diag-text" style="margin-top:8px">' + esc(ret.justificativa) + '</div>' : '') +
+          (ret.pontos_queda_previstos && ret.pontos_queda_previstos.length ?
+            '<div class="val-retention-drops"><div class="t-label">⚠ Possíveis quedas</div>' +
+            ret.pontos_queda_previstos.map(function(d) {
+              return '<div class="val-drop-row"><span class="val-drop-t">' + (d.momento_aprox_seg != null ? d.momento_aprox_seg + 's' : '—') + '</span><span class="val-drop-r">' + esc(d.motivo || '') + '</span></div>';
+            }).join('') +
+            '</div>' : '') +
+        '</div>';
+      }
+
+      // Grid de leitura técnica
+      var techPairs = [
+        ['🎵 Ritmo', ar.ritmo],
+        ['✂️ Cortes & dinâmica', ar.cortes_dinamica],
+        ['🎞️ Enquadramento', ar.enquadramento],
+        ['💡 Iluminação', ar.iluminacao],
+        ['😊 Expressão', ar.expressao],
+        ['⚡ Energia', ar.energia],
+        ['💬 Clareza da mensagem', ar.clareza_mensagem],
+        ['🎨 Estética geral', ar.estetica_geral],
+        ['🧬 Consistência posicionamento', ar.consistencia_posicionamento],
+        ['🖋️ Autoralidade', ar.autoralidade],
+        ['🎚️ Tom predominante', ar.tom_predominante],
+        ['📲 Compartilhamento', ar.potencial_compartilhamento],
+        ['🚀 Viralização', ar.potencial_viralizacao],
+        ['📣 CTA visual', ar.cta_visual],
+        ['🔠 Legendas/texto em tela', ar.legendas_textos_tela],
+        ['⏱️ Timing das informações', ar.timing_informacao]
+      ].filter(function(p) { return p[1]; });
+      if (techPairs.length) {
+        html += '<div class="val-reel-tech-grid">' +
+          techPairs.map(function(p) {
+            return '<div class="val-meta-tile"><div class="val-meta-h">' + p[0] + '</div><div>' + esc(p[1]) + '</div></div>';
+          }).join('') +
+        '</div>';
+      }
+
+      // Momentos fortes
+      if (ar.momentos_fortes && ar.momentos_fortes.length) {
+        html += '<div class="val-reel-section">' +
+          '<div class="val-reel-h">⭐ Momentos mais fortes</div>' +
+          '<div class="val-moments">' +
+          ar.momentos_fortes.map(function(m) {
+            var nearestFrame = nearestFrameByTime(reelFrames, m.tempo_aprox_seg);
+            return '<div class="val-moment-card">' +
+              (nearestFrame ? '<div class="val-moment-thumb"><img src="' + nearestFrame.dataUrl + '" alt=""><span class="val-moment-t">' + (m.tempo_aprox_seg != null ? m.tempo_aprox_seg + 's' : '—') + '</span></div>' : '<div class="val-moment-thumb val-img-thumb-empty"><span class="val-moment-t">' + (m.tempo_aprox_seg != null ? m.tempo_aprox_seg + 's' : '—') + '</span></div>') +
+              '<div class="val-moment-body">' +
+                '<div>' + esc(m.razao || '') + '</div>' +
+                (m.potencial_corte_curto ? '<div class="val-moment-tag">✂️ Vira corte curto</div>' : '') +
+              '</div>' +
+            '</div>';
+          }).join('') +
+          '</div>' +
+        '</div>';
+      }
+
+      // Trechos que viram cortes
+      if (ar.trechos_virariam_cortes && ar.trechos_virariam_cortes.length) {
+        html += '<div class="val-reel-section">' +
+          '<div class="val-reel-h">✂️ Trechos que virariam cortes</div>' +
+          ar.trechos_virariam_cortes.map(function(t) {
+            return '<div class="val-cut-row"><span class="val-cut-t">' + (t.tempo_aprox_seg != null ? t.tempo_aprox_seg + 's' : '—') + '</span><span class="val-cut-i">' + esc(t.ideia_corte || '') + '</span></div>';
+          }).join('') +
+        '</div>';
+      }
+
+      // Capa do Reel
+      if (ar.thumb_capa_atual || ar.thumb_capa_recomendada || (ar.texto_capa_sugerido && ar.texto_capa_sugerido.length)) {
+        html += '<div class="val-reel-section val-reel-cover">' +
+          '<div class="val-reel-h">🖼️ Capa do Reel</div>' +
+          '<div class="val-reel-cover-grid">';
+        var atualFrame = reelFrames && reelFrames[0] ? reelFrames[0] : null;
+        if (ar.thumb_capa_atual) {
+          html += '<div class="val-cover-tile">' +
+            (atualFrame ? '<div class="val-cover-thumb"><img src="' + atualFrame.dataUrl + '" alt=""><span class="val-cover-badge">Atual · ' + atualFrame.tSec.toFixed(1) + 's</span></div>' : '') +
+            '<div class="val-cover-reason">' + esc(ar.thumb_capa_atual) + '</div>' +
+          '</div>';
+        }
+        if (ar.thumb_capa_recomendada) {
+          var rec = ar.thumb_capa_recomendada;
+          var recFrame = nearestFrameByTime(reelFrames, rec.frame_aprox_seg);
+          html += '<div class="val-cover-tile val-cover-tile-best">' +
+            (recFrame ? '<div class="val-cover-thumb"><img src="' + recFrame.dataUrl + '" alt=""><span class="val-cover-badge val-cover-badge-best">★ Recomendada · ' + (rec.frame_aprox_seg != null ? rec.frame_aprox_seg + 's' : '—') + '</span></div>' : '') +
+            '<div class="val-cover-reason">' + esc(rec.razao || '') + '</div>' +
+          '</div>';
+        }
+        html += '</div>';
+        if (ar.texto_capa_sugerido && ar.texto_capa_sugerido.length) {
+          html += '<div class="val-cover-texts"><div class="t-label">Textos de capa sugeridos</div>' +
+            ar.texto_capa_sugerido.map(function(t) {
+              return '<div class="val-cover-text-opt"><span>' + esc(t) + '</span><button class="btn btn-ghost btn-sm" onclick="copyText(' + JSON.stringify(t) + ')">📋</button></div>';
+            }).join('') +
+          '</div>';
+        }
+        html += '</div>';
+      }
+
+      // Comparativo + padrões
+      if (ar.comparativo_reels_passados || (ar.padroes_top_reels && ar.padroes_top_reels.length)) {
+        html += '<div class="val-reel-section">' +
+          '<div class="val-reel-h">📊 vs. Reels que performaram</div>' +
+          (ar.comparativo_reels_passados ? '<div class="diag-text">' + esc(ar.comparativo_reels_passados) + '</div>' : '') +
+          (ar.padroes_top_reels && ar.padroes_top_reels.length ?
+            '<ul>' + ar.padroes_top_reels.map(function(s) { return '<li>' + esc(s) + '</li>'; }).join('') + '</ul>' : '') +
+        '</div>';
+      }
+
+      // Sugestões + ajustes
+      if (ar.sugestoes_melhorias && ar.sugestoes_melhorias.length) {
+        html += '<div class="val-reel-section">' +
+          '<div class="val-reel-h">💡 Melhorias sugeridas</div>' +
+          '<ul>' + ar.sugestoes_melhorias.map(function(s) { return '<li>' + esc(s) + '</li>'; }).join('') + '</ul>' +
+        '</div>';
+      }
+      if (ar.ajustes_imediatos && ar.ajustes_imediatos.length) {
+        html += '<div class="val-visual-fixes"><div class="t-label">🔧 Ajustes imediatos</div><ul>' +
+          ar.ajustes_imediatos.map(function(s) { return '<li>' + esc(s) + '</li>'; }).join('') +
+        '</ul></div>';
+      }
+      html += '</div>';
+    }
+
+    // Análise visual (imagem única — mantém comportamento legado)
     if (r.analise_visual) {
       var av = r.analise_visual;
       html += '<div class="analysis-block val-visual-block">' +
@@ -2905,6 +3418,16 @@
 
     el.innerHTML = html;
     el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function nearestFrameByTime(frames, tSec) {
+    if (!frames || !frames.length || tSec == null) return null;
+    var best = frames[0], bestDiff = Math.abs((best.tSec || 0) - tSec);
+    for (var i = 1; i < frames.length; i++) {
+      var d = Math.abs((frames[i].tSec || 0) - tSec);
+      if (d < bestDiff) { best = frames[i]; bestDiff = d; }
+    }
+    return best;
   }
 
   function renderPotentialPill(label, value) {
