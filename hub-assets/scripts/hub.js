@@ -102,6 +102,11 @@
         '<path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>' +
         '<line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>' +
       '</svg>',
+    brain:
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+        '<path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.46 2.5 2.5 0 0 1-1.07-4.8A3 3 0 0 1 4 11a3 3 0 0 1 2-2.83V8a2 2 0 0 1 1.78-2"/>' +
+        '<path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.46 2.5 2.5 0 0 0 1.07-4.8A3 3 0 0 0 20 11a3 3 0 0 0-2-2.83V8a2 2 0 0 0-1.78-2"/>' +
+      '</svg>',
     arrow:
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
         '<path d="M5 12h14M13 6l6 6-6 6"/>' +
@@ -173,8 +178,9 @@
     var contDesc = (cont && cont.descricao) ? cont.descricao : 'Planejamento de posts e ideias';
 
     var CREATIVE = [
-      { key: 'conteudo',  nome: contNome,    desc: contDesc,                                    url: contUrl,      cls: 'card-cont'  },
-      { key: 'instagram', nome: 'Instagram', desc: 'Dashboard, métricas e relatórios semanais', url: 'instagram/', cls: 'card-insta' },
+      { key: 'conteudo',  nome: contNome,       desc: contDesc,                                          url: contUrl,                     cls: 'card-cont'  },
+      { key: 'brain',     nome: 'Brand Brain',  desc: 'Análise estratégica de Reels para o seu nicho',   url: 'conteudo/brand-brain.html', cls: 'card-brain' },
+      { key: 'instagram', nome: 'Instagram',    desc: 'Dashboard, métricas e relatórios semanais',       url: 'instagram/',                cls: 'card-insta' },
     ];
     document.getElementById('creative-section').innerHTML = CREATIVE.map(function(c) {
       return '<a href="' + esc(c.url) + '" class="sys-card ' + c.cls + '">' +

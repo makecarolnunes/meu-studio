@@ -376,6 +376,7 @@
     .card-tarefas    { --accent: var(--amber-d);   --icon-bg: #F5DFA0; }
     .card-anotacoes  { --accent: #a36844;           --icon-bg: #EDD9C8; }
     .card-cont       { --accent: var(--amber);      --icon-bg: var(--amber-l); }
+    .card-brain      { --accent: #7C3AED;           --icon-bg: #EDE9FE; }
 
     /* Widget de tarefas logo abaixo da seção Organização */
     #todo-section { margin-top: 10px; }

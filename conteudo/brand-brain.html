@@ -1,0 +1,1219 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Brand Brain · Meu Studio</title>
+  <link rel="stylesheet" href="../shared/css/tokens.css">
+  <link rel="stylesheet" href="../shared/css/base.css">
+  <style>
+    body {
+      max-width: 480px; margin: 0 auto; overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* ── HEADER ── */
+    .hdr {
+      background: linear-gradient(135deg, var(--brand-dark), var(--brand));
+      color: #fff; padding: 10px 14px; position: sticky; top: 0; z-index: 100;
+      display: grid; grid-template-columns: 44px 1fr 44px; align-items: center; gap: 8px;
+    }
+    .hdr-center { text-align: center; }
+    .hdr h1 { font-size: 1rem; font-weight: 700; }
+    .hdr-sub { font-size: .68rem; opacity: .7; margin-top: 1px; }
+    .hdr-back, .hdr-action {
+      width: 34px; height: 34px; border-radius: 50%; border: none;
+      background: rgba(255,255,255,.13); color: rgba(255,255,255,.88);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: background .15s; padding: 0;
+    }
+    .hdr-back:active, .hdr-action:active { background: rgba(255,255,255,.28); }
+
+    /* ── MOBILE LAYOUT ── */
+    .bb-left-panel, .bb-right-panel { display: block; }
+    .bb-content { padding: 14px 13px 100px; }
+
+    /* ── DESKTOP LEFT-TITLE (hidden on mobile) ── */
+    .bb-left-title { display: none; }
+
+    /* ── INTRO ── */
+    .bb-intro {
+      background: linear-gradient(135deg, var(--mauve-soft), var(--surface-2));
+      border: 1px solid var(--border); border-radius: 16px;
+      padding: 18px 16px; margin-bottom: 14px; text-align: center;
+    }
+    .bb-intro-emoji { font-size: 2.2rem; line-height: 1; margin-bottom: 8px; }
+    .bb-intro-title { font-size: .97rem; font-weight: 700; color: var(--brand-dark); margin-bottom: 5px; }
+    .bb-intro-sub { font-size: .75rem; color: var(--text-muted); line-height: 1.55; }
+
+    /* ── CARDS ── */
+    .bb-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 14px; margin-bottom: 10px; }
+
+    .bb-label {
+      display: block; font-size: .7rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .07em;
+      color: var(--text-muted); margin-bottom: 8px;
+    }
+    .bb-hint { font-size: .67rem; font-weight: 400; text-transform: none; letter-spacing: 0; color: var(--text-subtle); }
+
+    .bb-input {
+      width: 100%; padding: 11px 13px; background: var(--bg);
+      color: var(--text); border: 1.5px solid var(--border); border-radius: 9px;
+      font-family: inherit; font-size: .84rem; -webkit-appearance: none;
+      transition: border-color .15s;
+    }
+    .bb-input::placeholder { color: var(--text-subtle); }
+    .bb-input:focus { outline: none; border-color: var(--brand); }
+
+    .bb-textarea {
+      width: 100%; padding: 11px 13px; background: var(--bg);
+      color: var(--text); border: 1.5px solid var(--border); border-radius: 9px;
+      font-family: inherit; font-size: .84rem; resize: vertical;
+      min-height: 90px; line-height: 1.55; -webkit-appearance: none;
+      transition: border-color .15s;
+    }
+    .bb-textarea::placeholder { color: var(--text-subtle); }
+    .bb-textarea:focus { outline: none; border-color: var(--brand); }
+
+    /* ── FORMAT TAGS ── */
+    .bb-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+    .bb-tag {
+      padding: 6px 13px; border-radius: 20px;
+      border: 1.5px solid var(--border); background: var(--surface);
+      font-size: .73rem; font-weight: 600; cursor: pointer;
+      color: var(--text-muted); transition: all .15s; -webkit-tap-highlight-color: transparent;
+    }
+    .bb-tag.on { background: var(--brand); border-color: var(--brand); color: #fff; }
+
+    /* ── ANALYZE BUTTON ── */
+    .bb-btn {
+      width: 100%; padding: 15px;
+      background: linear-gradient(135deg, var(--brand-dark), var(--brand));
+      color: #fff; border: none; border-radius: 12px;
+      font-family: inherit; font-size: .92rem; font-weight: 700;
+      cursor: pointer; transition: opacity .2s, transform .12s;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      margin-top: 4px;
+    }
+    .bb-btn:active { transform: translateY(1px); }
+    .bb-btn:disabled { opacity: .55; cursor: not-allowed; }
+    .bb-btn-spinner {
+      width: 16px; height: 16px; border: 2px solid rgba(255,255,255,.4);
+      border-top-color: #fff; border-radius: 50%;
+      animation: spin .7s linear infinite; display: none;
+    }
+    .bb-btn.loading .bb-btn-spinner { display: block; }
+    .bb-btn.loading .bb-btn-icon { display: none; }
+
+    /* ── LOADING (mobile full-screen / desktop right-panel) ── */
+    .bb-loading { display: none; text-align: center; padding: 48px 20px; }
+    .bb-loading.show { display: block; }
+    .bb-spinner {
+      width: 38px; height: 38px; border: 3px solid var(--brand-soft);
+      border-top-color: var(--brand); border-radius: 50%;
+      animation: spin .75s linear infinite; margin: 0 auto 16px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .bb-loading-title { font-size: .9rem; font-weight: 700; color: var(--brand-dark); margin-bottom: 6px; }
+    .bb-loading-sub { font-size: .76rem; color: var(--text-muted); line-height: 1.6; }
+    .bb-loading-steps { margin-top: 18px; display: flex; flex-direction: column; gap: 6px; }
+    .bb-loading-step {
+      font-size: .73rem; color: var(--text-subtle); opacity: 0;
+      animation: fadeStep .4s ease forwards;
+    }
+    .bb-loading-step:nth-child(1) { animation-delay: .3s; }
+    .bb-loading-step:nth-child(2) { animation-delay: 1.1s; }
+    .bb-loading-step:nth-child(3) { animation-delay: 2.2s; }
+    .bb-loading-step:nth-child(4) { animation-delay: 3.5s; }
+    @keyframes fadeStep { to { opacity: 1; } }
+
+    /* ── EMPTY STATE (desktop only) ── */
+    .bb-empty { display: none; }
+
+    /* ── RESULT ── */
+    #bb-result { display: none; }
+    #bb-result.show { display: block; }
+
+    .result-meta {
+      background: linear-gradient(135deg, var(--brand-dark), var(--brand));
+      color: #fff; border-radius: 14px; padding: 14px 16px; margin-bottom: 12px;
+    }
+    .result-meta-label { font-size: .65rem; font-weight: 700; opacity: .7; text-transform: uppercase; letter-spacing: .09em; margin-bottom: 3px; }
+    .result-meta-url { font-size: .77rem; opacity: .85; word-break: break-all; margin-bottom: 6px; }
+    .result-meta-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+    .result-meta-tag {
+      padding: 3px 10px; border-radius: 20px; font-size: .68rem; font-weight: 600;
+      background: rgba(255,255,255,.2); color: #fff;
+    }
+
+    .result-section { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; margin-bottom: 9px; }
+    .rs-header {
+      display: flex; align-items: center; gap: 10px;
+      padding: 13px 14px; cursor: pointer; -webkit-tap-highlight-color: transparent;
+      border-bottom: 1px solid transparent; transition: background .15s;
+    }
+    .rs-header:active { background: var(--surface-2); }
+    .result-section.open .rs-header { border-bottom-color: var(--border); }
+    .rs-icon {
+      width: 32px; height: 32px; border-radius: 9px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; font-size: 1rem;
+    }
+    .rs-title { font-size: .86rem; font-weight: 700; flex: 1; color: var(--text); }
+    .rs-arrow { font-size: .7rem; color: var(--text-muted); transition: transform .2s; }
+    .result-section.open .rs-arrow { transform: rotate(180deg); }
+
+    .rs-body { display: none; padding: 14px 15px; font-size: .82rem; line-height: 1.68; color: var(--text); }
+    .result-section.open .rs-body { display: block; }
+
+    /* Markdown */
+    .rs-body strong { font-weight: 700; color: var(--brand-dark); }
+    .rs-body em { font-style: italic; color: var(--text-muted); }
+    .rs-body h3 { font-size: .84rem; font-weight: 700; color: var(--brand-dark); margin: 12px 0 5px; }
+    .rs-body ul { margin: 6px 0 10px 18px; }
+    .rs-body li { margin-bottom: 5px; }
+    .rs-body p { margin-bottom: 8px; }
+    .rs-body p:last-child { margin-bottom: 0; }
+
+    /* Idea cards */
+    .idea-card {
+      background: var(--bg); border: 1.5px solid var(--border);
+      border-radius: 12px; padding: 13px 14px; margin-bottom: 10px;
+    }
+    .idea-card:last-child { margin-bottom: 0; }
+    .idea-num { font-size: .62rem; font-weight: 700; text-transform: uppercase; letter-spacing: .09em; color: var(--brand); margin-bottom: 5px; }
+    .idea-title { font-size: .9rem; font-weight: 700; color: var(--brand-dark); margin-bottom: 10px; line-height: 1.35; }
+    .idea-field { margin-bottom: 8px; }
+    .idea-field:last-child { margin-bottom: 0; }
+    .idea-field-label { font-size: .63rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--text-muted); margin-bottom: 3px; }
+    .idea-field-val { font-size: .82rem; color: var(--text); line-height: 1.55; }
+
+    /* Avoid items */
+    .avoid-item {
+      display: flex; gap: 9px; align-items: flex-start;
+      padding: 9px 12px; background: var(--danger-soft);
+      border-radius: 9px; margin-bottom: 7px; font-size: .81rem;
+    }
+    .avoid-item:last-child { margin-bottom: 0; }
+    .avoid-icon { color: var(--danger); flex-shrink: 0; margin-top: 1px; font-weight: 700; }
+
+    /* Action buttons */
+    .result-actions { display: flex; gap: 8px; margin-bottom: 80px; }
+    .action-btn {
+      flex: 1; padding: 13px 10px; border-radius: 12px; border: 1.5px solid var(--border);
+      background: var(--surface); color: var(--text-muted);
+      font-family: inherit; font-size: .78rem; font-weight: 600;
+      cursor: pointer; display: flex; flex-direction: column;
+      align-items: center; gap: 4px; -webkit-tap-highlight-color: transparent;
+      transition: background .15s, border-color .15s;
+    }
+    .action-btn:hover { background: var(--surface-2); border-color: var(--border-strong); }
+    .action-btn-icon { font-size: 1.1rem; }
+    .action-btn-primary { background: var(--brand); border-color: var(--brand); color: #fff; }
+    .action-btn-primary:hover { background: var(--brand-dark); border-color: var(--brand-dark); }
+
+    /* ── IDEIA FAB ── */
+    .ideia-fab {
+      position: fixed; bottom: 22px; right: 18px; z-index: 1100;
+      width: 50px; height: 50px; border-radius: 50%; border: none;
+      background: linear-gradient(135deg, var(--brand-dark), var(--brand));
+      color: #fff; cursor: pointer;
+      box-shadow: 0 4px 16px rgba(56,25,11,.32);
+      display: flex; align-items: center; justify-content: center;
+      transition: transform .18s, box-shadow .18s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .ideia-fab:hover { transform: scale(1.07); box-shadow: 0 6px 22px rgba(56,25,11,.4); }
+    .ideia-fab:active { transform: scale(.94); }
+
+    /* ── IDEIA PANEL ── */
+    .ideia-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,.48);
+      z-index: 1099; display: none; align-items: flex-end; justify-content: center;
+    }
+    .ideia-overlay.show { display: flex; }
+    .ideia-panel {
+      background: var(--surface); width: 100%; max-width: 480px;
+      border-radius: 22px 22px 0 0; padding: 8px 16px 36px;
+      max-height: 90vh; overflow-y: auto;
+    }
+    .ideia-handle { width: 40px; height: 4px; background: var(--border); border-radius: 4px; margin: 10px auto 16px; }
+    .ideia-panel-header { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+    .ideia-panel-icon {
+      width: 34px; height: 34px; border-radius: 9px; flex-shrink: 0;
+      background: linear-gradient(135deg, var(--brand-dark), var(--brand));
+      display: flex; align-items: center; justify-content: center; font-size: 1rem;
+    }
+    .ideia-panel-title { font-size: .97rem; font-weight: 700; color: var(--text); }
+    .ideia-panel-sub { font-size: .74rem; color: var(--text-muted); margin-bottom: 16px; margin-left: 44px; }
+    .ideia-label {
+      display: block; font-size: .68rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .07em;
+      color: var(--text-muted); margin-bottom: 6px; margin-top: 12px;
+    }
+    .ideia-hint { font-size: .65rem; font-weight: 400; text-transform: none; letter-spacing: 0; color: var(--text-subtle); }
+    .ideia-input {
+      width: 100%; padding: 11px 13px; background: var(--bg);
+      color: var(--text); border: 1.5px solid var(--border); border-radius: 9px;
+      font-family: inherit; font-size: .85rem; -webkit-appearance: none;
+      transition: border-color .15s;
+    }
+    .ideia-input::placeholder { color: var(--text-subtle); }
+    .ideia-input:focus { outline: none; border-color: var(--brand); }
+    .ideia-textarea {
+      width: 100%; padding: 10px 13px; background: var(--bg);
+      color: var(--text); border: 1.5px solid var(--border); border-radius: 9px;
+      font-family: inherit; font-size: .84rem; min-height: 72px; resize: none;
+      line-height: 1.5; -webkit-appearance: none; transition: border-color .15s;
+    }
+    .ideia-textarea::placeholder { color: var(--text-subtle); }
+    .ideia-textarea:focus { outline: none; border-color: var(--brand); }
+    .ideia-fmt-row { display: flex; flex-wrap: wrap; gap: 6px; }
+    .ideia-fmt-btn {
+      padding: 5px 12px; border-radius: 20px;
+      border: 1.5px solid var(--border); background: var(--surface);
+      font-size: .72rem; font-weight: 600; cursor: pointer;
+      color: var(--text-muted); transition: all .15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .ideia-fmt-btn.on { background: var(--brand); border-color: var(--brand); color: #fff; }
+    .ideia-send-btn {
+      width: 100%; margin-top: 16px; padding: 14px;
+      background: linear-gradient(135deg, var(--brand-dark), var(--brand));
+      color: #fff; border: none; border-radius: 11px;
+      font-family: inherit; font-size: .9rem; font-weight: 700;
+      cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+      transition: opacity .2s;
+    }
+    .ideia-send-btn:active { opacity: .85; }
+    .ideia-cancel-btn {
+      width: 100%; padding: 11px; margin-top: 6px;
+      background: none; color: var(--text-muted);
+      border: none; font-family: inherit; font-size: .84rem; cursor: pointer;
+    }
+
+    @media (min-width: 768px) {
+      .ideia-overlay { align-items: center; }
+      .ideia-panel { border-radius: 18px; max-width: 460px; }
+    }
+
+    /* ── TOAST ── */
+    .toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(10px);
+      background: var(--brand-dark); color: #fff; padding: 10px 22px;
+      border-radius: 24px; font-size: .8rem; font-weight: 600;
+      z-index: 1200; opacity: 0; pointer-events: none;
+      transition: opacity .25s, transform .25s;
+      white-space: nowrap; max-width: 88vw; text-align: center;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* ── KEY MODAL ── */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,.48);
+      z-index: 500; display: none; align-items: flex-end; justify-content: center;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal-box {
+      background: var(--surface); width: 100%; max-width: 480px;
+      border-radius: 20px 20px 0 0; padding: 22px 16px 36px;
+    }
+    .modal-handle { width: 40px; height: 4px; background: var(--border); border-radius: 4px; margin: 0 auto 18px; }
+    .modal-title { font-size: .95rem; font-weight: 700; margin-bottom: 6px; color: var(--text); }
+    .modal-sub { font-size: .77rem; color: var(--text-muted); margin-bottom: 16px; line-height: 1.5; }
+    .modal-input {
+      width: 100%; padding: 12px 14px; border: 1.5px solid var(--border);
+      border-radius: 10px; font-family: inherit; font-size: .84rem;
+      margin-bottom: 12px; background: var(--bg); color: var(--text); -webkit-appearance: none;
+    }
+    .modal-input:focus { outline: none; border-color: var(--brand); }
+    .modal-save {
+      width: 100%; padding: 14px; background: var(--brand); color: #fff;
+      border: none; border-radius: 11px; font-family: inherit;
+      font-size: .9rem; font-weight: 700; cursor: pointer; margin-bottom: 8px;
+    }
+    .modal-cancel {
+      width: 100%; padding: 11px; background: none; color: var(--text-muted);
+      border: none; font-family: inherit; font-size: .84rem; cursor: pointer;
+    }
+
+    /* ════════════════════════════════════════════════════════════
+       DESKTOP — two-column layout (≥768px)
+       ════════════════════════════════════════════════════════════ */
+    @media (min-width: 768px) {
+      body { max-width: none; }
+
+      /* Header spans full width */
+      .hdr {
+        max-width: none; padding: 12px 36px;
+        grid-template-columns: 48px 1fr 48px;
+      }
+      .hdr h1 { font-size: 1.1rem; }
+      .hdr-sub { font-size: .73rem; }
+      .hdr-back, .hdr-action { width: 38px; height: 38px; }
+
+      /* Two-column grid wrapper */
+      .bb-content {
+        display: grid;
+        grid-template-columns: 360px 1fr;
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 0;
+        min-height: calc(100vh - 54px);
+        align-items: start;
+      }
+
+      /* ── LEFT PANEL ── */
+      .bb-left-panel {
+        position: sticky;
+        top: 54px;
+        height: calc(100vh - 54px);
+        overflow-y: auto;
+        padding: 22px 20px 40px;
+        border-right: 1px solid var(--border);
+        background: var(--surface);
+        scrollbar-width: thin;
+        scrollbar-color: var(--border-strong) transparent;
+      }
+      .bb-left-panel::-webkit-scrollbar { width: 4px; }
+      .bb-left-panel::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
+
+      /* Form always visible on desktop — override JS inline style */
+      #bb-form { display: block !important; }
+
+      /* Desktop-only branding above the form */
+      .bb-left-title {
+        display: flex; align-items: center; gap: 10px;
+        margin-bottom: 18px; padding-bottom: 16px;
+        border-bottom: 1px solid var(--border);
+      }
+      .bb-left-title-icon {
+        width: 38px; height: 38px; border-radius: 10px;
+        background: linear-gradient(135deg, var(--brand-dark), var(--brand));
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.2rem; flex-shrink: 0;
+      }
+      .bb-left-title-text { flex: 1; }
+      .bb-left-title-name { font-size: .95rem; font-weight: 700; color: var(--text); }
+      .bb-left-title-sub { font-size: .72rem; color: var(--text-muted); margin-top: 1px; }
+
+      /* Hide mobile intro card on desktop */
+      .bb-intro { display: none; }
+
+      /* Compact form cards */
+      .bb-card { border-radius: 10px; padding: 12px; margin-bottom: 8px; }
+      .bb-textarea { min-height: 80px; }
+      .bb-btn { padding: 13px; font-size: .87rem; border-radius: 10px; margin-top: 6px; }
+
+      /* ── RIGHT PANEL ── */
+      .bb-right-panel {
+        padding: 24px 32px 60px;
+        background: var(--bg);
+        min-height: calc(100vh - 54px);
+        overflow-y: auto;
+      }
+
+      /* Loading in right panel */
+      .bb-loading { padding: 80px 24px; }
+
+      /* Empty state */
+      .bb-empty {
+        display: flex; flex-direction: column;
+        align-items: center; text-align: center;
+        padding: 64px 24px 40px;
+      }
+      .bb-empty-brain { font-size: 3.5rem; line-height: 1; margin-bottom: 16px; }
+      .bb-empty-title { font-size: 1.2rem; font-weight: 700; color: var(--brand-dark); margin-bottom: 8px; }
+      .bb-empty-sub { font-size: .83rem; color: var(--text-muted); line-height: 1.6; max-width: 340px; margin-bottom: 32px; }
+      .bb-empty-grid {
+        display: grid; grid-template-columns: repeat(4, 1fr);
+        gap: 10px; width: 100%; max-width: 560px; margin-bottom: 20px;
+      }
+      .bb-empty-chip {
+        background: var(--surface); border: 1px solid var(--border);
+        border-radius: 10px; padding: 12px 8px; text-align: center;
+      }
+      .bb-empty-chip-icon { font-size: 1.3rem; margin-bottom: 5px; }
+      .bb-empty-chip-label { font-size: .67rem; font-weight: 600; color: var(--text-muted); line-height: 1.3; }
+      .bb-empty-tip {
+        font-size: .75rem; color: var(--text-subtle); max-width: 380px;
+        background: var(--surface-2); border-radius: 10px; padding: 12px 16px; line-height: 1.6;
+        border: 1px solid var(--border);
+      }
+      .bb-empty-tip strong { color: var(--brand-dark); }
+
+      /* Result header row with actions */
+      .result-top-bar {
+        display: flex; align-items: center; gap: 10px; margin-bottom: 14px;
+      }
+      .result-top-bar .result-meta { flex: 1; margin-bottom: 0; }
+      .result-top-actions { display: flex; gap: 8px; flex-shrink: 0; }
+      .result-top-btn {
+        padding: 10px 16px; border-radius: 9px; border: 1.5px solid var(--border);
+        background: var(--surface); color: var(--text-muted);
+        font-family: inherit; font-size: .78rem; font-weight: 600;
+        cursor: pointer; display: flex; align-items: center; gap: 6px;
+        white-space: nowrap; transition: background .15s;
+      }
+      .result-top-btn:hover { background: var(--surface-2); border-color: var(--border-strong); }
+      .result-top-btn-primary { background: var(--brand); border-color: var(--brand); color: #fff; }
+      .result-top-btn-primary:hover { background: var(--brand-dark); border-color: var(--brand-dark); }
+
+      /* Hide mobile result actions (replaced by top bar) */
+      .result-actions { display: none; }
+
+      /* Result sections — open first 4 by default on desktop */
+      .result-section { border-radius: 12px; margin-bottom: 8px; }
+      .rs-header { padding: 12px 14px; }
+      .rs-body { padding: 14px 16px; font-size: .84rem; }
+      .rs-title { font-size: .88rem; }
+
+      /* Ideas: 3-col grid on desktop */
+      .result-section.open .rs-body.body-ideas {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        padding: 14px;
+      }
+      .result-section.open .rs-body.body-ideas .idea-card { margin-bottom: 0; }
+      .idea-card { border-radius: 10px; }
+
+      /* Modal centered on desktop */
+      .modal-box { border-radius: 16px; max-width: 440px; margin: auto; }
+      .modal-overlay { align-items: center; }
+    }
+
+    /* Wide desktop */
+    @media (min-width: 1100px) {
+      .bb-content { grid-template-columns: 400px 1fr; }
+      .bb-right-panel { padding: 28px 44px 60px; }
+      .bb-empty-grid { grid-template-columns: repeat(4, 1fr); }
+    }
+  </style>
+</head>
+<body>
+
+<div id="bb-app">
+
+  <!-- HEADER -->
+  <div class="hdr">
+    <button class="hdr-back" onclick="history.back()" aria-label="Voltar">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <div class="hdr-center">
+      <h1>Brand Brain</h1>
+      <div class="hdr-sub">Análise Estratégica de Reels</div>
+    </div>
+    <button class="hdr-action" onclick="openKeyModal()" title="Configurar chave Claude" aria-label="Configurar API">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12.22 2h-.44a2 2 0 00-2 2v.18a2 2 0 01-1 1.73l-.43.25a2 2 0 01-2 0l-.15-.08a2 2 0 00-2.73.73l-.22.38a2 2 0 00.73 2.73l.15.1a2 2 0 011 1.72v.51a2 2 0 01-1 1.74l-.15.09a2 2 0 00-.73 2.73l.22.38a2 2 0 002.73.73l.15-.08a2 2 0 012 0l.43.25a2 2 0 011 1.73V20a2 2 0 002 2h.44a2 2 0 002-2v-.18a2 2 0 011-1.73l.43-.25a2 2 0 012 0l.15.08a2 2 0 002.73-.73l.22-.39a2 2 0 00-.73-2.73l-.15-.08a2 2 0 01-1-1.74v-.5a2 2 0 011-1.74l.15-.09a2 2 0 00.73-2.73l-.22-.38a2 2 0 00-2.73-.73l-.15.08a2 2 0 01-2 0l-.43-.25a2 2 0 01-1-1.73V4a2 2 0 00-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+    </button>
+  </div>
+
+  <!-- TWO-COLUMN WRAPPER -->
+  <div class="bb-content">
+
+    <!-- ── LEFT PANEL: form (always visible on desktop) ── -->
+    <div class="bb-left-panel">
+
+      <!-- Desktop branding (hidden on mobile) -->
+      <div class="bb-left-title">
+        <div class="bb-left-title-icon">🧠</div>
+        <div class="bb-left-title-text">
+          <div class="bb-left-title-name">Brand Brain</div>
+          <div class="bb-left-title-sub">Estrategista de Conteúdo IA</div>
+        </div>
+      </div>
+
+      <!-- FORM -->
+      <div id="bb-form">
+
+        <!-- Mobile-only intro card -->
+        <div class="bb-intro">
+          <div class="bb-intro-emoji">🧠</div>
+          <div class="bb-intro-title">Estrategista de Conteúdo IA</div>
+          <div class="bb-intro-sub">Cole a legenda e descreva o que viu em um Reels — receba análise estratégica completa adaptada ao seu nicho de maquiagem.</div>
+        </div>
+
+        <div class="bb-card">
+          <label class="bb-label">Link do Reels <span class="bb-hint">— para referência</span></label>
+          <input type="url" class="bb-input" id="bb-url" placeholder="https://www.instagram.com/reel/...">
+        </div>
+
+        <div class="bb-card">
+          <label class="bb-label">Legenda / Caption <span class="bb-hint">— copie direto do Instagram</span></label>
+          <textarea class="bb-textarea" id="bb-caption" rows="5"
+            placeholder="Cole aqui a legenda completa do Reels (texto + hashtags). Quanto mais contexto, mais precisa a análise."></textarea>
+        </div>
+
+        <div class="bb-card">
+          <label class="bb-label">Formato <span class="bb-hint">— selecione um ou mais</span></label>
+          <div class="bb-tags" id="bb-format-tags">
+            <button class="bb-tag" data-v="Tutorial">Tutorial</button>
+            <button class="bb-tag" data-v="POV">POV</button>
+            <button class="bb-tag" data-v="Transformação">Transformação</button>
+            <button class="bb-tag" data-v="Bastidor">Bastidor</button>
+            <button class="bb-tag" data-v="Opinião">Opinião</button>
+            <button class="bb-tag" data-v="Trend">Trend</button>
+            <button class="bb-tag" data-v="Review">Review</button>
+            <button class="bb-tag" data-v="Storytelling">Story</button>
+            <button class="bb-tag" data-v="Humor">Humor</button>
+            <button class="bb-tag" data-v="Educativo">Educativo</button>
+            <button class="bb-tag" data-v="Antes e Depois">Antes/Depois</button>
+            <button class="bb-tag" data-v="Lista / Ranking">Lista</button>
+          </div>
+        </div>
+
+        <div class="bb-card">
+          <label class="bb-label">O que você viu <span class="bb-hint">— opcional, mas agrega muito</span></label>
+          <textarea class="bb-textarea" id="bb-obs" rows="4"
+            placeholder="Ex: começa com pergunta polêmica, cortes rápidos, usa trending sound, mostra antes/depois, termina com 'salva esse vídeo'..."></textarea>
+        </div>
+
+        <button class="bb-btn" id="bb-btn" onclick="analyzeReels()">
+          <svg class="bb-btn-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <div class="bb-btn-spinner"></div>
+          Analisar com IA
+        </button>
+
+      </div><!-- /bb-form -->
+    </div><!-- /bb-left-panel -->
+
+    <!-- ── RIGHT PANEL: empty / loading / result ── -->
+    <div class="bb-right-panel">
+
+      <!-- EMPTY STATE (desktop only, visible by default) -->
+      <div class="bb-empty" id="bb-empty">
+        <div class="bb-empty-brain">🧠</div>
+        <div class="bb-empty-title">Sua análise aparece aqui</div>
+        <div class="bb-empty-sub">Preencha o formulário ao lado com o link, legenda e o que você observou no Reels. Clique em <strong>Analisar com IA</strong>.</div>
+        <div class="bb-empty-grid">
+          <div class="bb-empty-chip"><div class="bb-empty-chip-icon">🎬</div><div class="bb-empty-chip-label">Diagnóstico</div></div>
+          <div class="bb-empty-chip"><div class="bb-empty-chip-icon">⚡</div><div class="bb-empty-chip-label">Por que funciona</div></div>
+          <div class="bb-empty-chip"><div class="bb-empty-chip-icon">📋</div><div class="bb-empty-chip-label">Estrutura do Roteiro</div></div>
+          <div class="bb-empty-chip"><div class="bb-empty-chip-icon">🎯</div><div class="bb-empty-chip-label">Gatilhos e Emoções</div></div>
+          <div class="bb-empty-chip"><div class="bb-empty-chip-icon">✨</div><div class="bb-empty-chip-label">Adaptação para o seu Perfil</div></div>
+          <div class="bb-empty-chip"><div class="bb-empty-chip-icon">💡</div><div class="bb-empty-chip-label">3 Ideias Práticas</div></div>
+          <div class="bb-empty-chip"><div class="bb-empty-chip-icon">⚠️</div><div class="bb-empty-chip-label">O que Evitar</div></div>
+          <div class="bb-empty-chip"><div class="bb-empty-chip-icon">💾</div><div class="bb-empty-chip-label">Salvar em Conteúdo</div></div>
+        </div>
+        <div class="bb-empty-tip">
+          <strong>Dica:</strong> Cole a legenda completa do post — ela contém o hook, hashtags e tom de voz que revelam muito sobre a estratégia.
+        </div>
+      </div>
+
+      <!-- LOADING -->
+      <div class="bb-loading" id="bb-loading">
+        <div class="bb-spinner"></div>
+        <div class="bb-loading-title">Analisando o Reels...</div>
+        <div class="bb-loading-sub">Identificando padrões estratégicos</div>
+        <div class="bb-loading-steps">
+          <div class="bb-loading-step">🎬 Diagnosticando estrutura e formato...</div>
+          <div class="bb-loading-step">⚡ Mapeando gatilhos de engajamento...</div>
+          <div class="bb-loading-step">✨ Adaptando ao nicho de maquiagem...</div>
+          <div class="bb-loading-step">💡 Gerando ideias práticas personalizadas...</div>
+        </div>
+      </div>
+
+      <!-- RESULT -->
+      <div id="bb-result">
+        <!-- Desktop: top bar with meta + actions. Mobile: result-meta + result-actions separately -->
+        <div class="result-top-bar" id="result-top-bar" style="display:none">
+          <div class="result-meta" id="result-meta-desk" style="flex:1;margin-bottom:0"></div>
+          <div class="result-top-actions">
+            <button class="result-top-btn" onclick="resetForm()">↩ Nova análise</button>
+            <button class="result-top-btn" onclick="copyAll()">📋 Copiar</button>
+            <button class="result-top-btn result-top-btn-primary" onclick="saveAsIdea()">💾 Salvar</button>
+          </div>
+        </div>
+
+        <!-- Mobile meta (hidden on desktop) -->
+        <div class="result-meta" id="result-meta"></div>
+
+        <div id="result-sections"></div>
+
+        <!-- Mobile actions (hidden on desktop via CSS) -->
+        <div class="result-actions">
+          <button class="action-btn" onclick="resetForm()">
+            <span class="action-btn-icon">↩</span>Nova análise
+          </button>
+          <button class="action-btn" onclick="copyAll()">
+            <span class="action-btn-icon">📋</span>Copiar
+          </button>
+          <button class="action-btn action-btn-primary" onclick="saveAsIdea()">
+            <span class="action-btn-icon">💾</span>Salvar
+          </button>
+        </div>
+      </div>
+
+    </div><!-- /bb-right-panel -->
+  </div><!-- /bb-content -->
+
+  <div class="toast" id="bb-toast"></div>
+
+  <!-- ENVIAR IDEIA FAB -->
+  <button class="ideia-fab" id="ideia-fab" onclick="openIdeiaPanel()" title="Enviar ideia pro planejamento" aria-label="Enviar ideia pro planejamento">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+  </button>
+
+  <!-- ENVIAR IDEIA PANEL -->
+  <div class="ideia-overlay" id="ideia-overlay">
+    <div class="ideia-panel">
+      <div class="ideia-handle"></div>
+      <div class="ideia-panel-header">
+        <div class="ideia-panel-icon">💡</div>
+        <div class="ideia-panel-title">Enviar pro Planejamento</div>
+      </div>
+      <div class="ideia-panel-sub">Capture a ideia enquanto está fresca — aparece em Conteúdo</div>
+
+      <label class="ideia-label">Título da ideia *</label>
+      <input type="text" class="ideia-input" id="ideia-title"
+        placeholder="Ex: Antes e depois make noiva com pele oleosa...">
+
+      <label class="ideia-label">Formato</label>
+      <div class="ideia-fmt-row" id="ideia-fmt-row">
+        <button class="ideia-fmt-btn on" data-v="Reels">Reels</button>
+        <button class="ideia-fmt-btn" data-v="Carrossel">Carrossel</button>
+        <button class="ideia-fmt-btn" data-v="Stories">Stories</button>
+        <button class="ideia-fmt-btn" data-v="Feed">Feed</button>
+      </div>
+
+      <label class="ideia-label">Notas <span class="ideia-hint">— opcional</span></label>
+      <textarea class="ideia-textarea" id="ideia-notes" rows="3"
+        placeholder="Roteiro, referências, hashtags, observações..."></textarea>
+
+      <button class="ideia-send-btn" onclick="sendIdeia()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        Enviar pro Planejamento
+      </button>
+      <button class="ideia-cancel-btn" onclick="closeIdeiaPanel()">Cancelar</button>
+    </div>
+  </div>
+
+  <!-- KEY MODAL -->
+  <div class="modal-overlay" id="key-modal">
+    <div class="modal-box">
+      <div class="modal-handle"></div>
+      <div class="modal-title">Chave da API Claude</div>
+      <div class="modal-sub">Necessária para as análises com IA. Salva apenas neste dispositivo — nunca enviada a servidores externos além da Anthropic.</div>
+      <input type="password" class="modal-input" id="key-input" placeholder="sk-ant-...">
+      <button class="modal-save" onclick="saveKey()">Salvar chave</button>
+      <button class="modal-cancel" onclick="closeKeyModal()">Cancelar</button>
+    </div>
+  </div>
+
+</div><!-- /bb-app -->
+
+<script>
+// ══════════════════════════════════════════════════════════════
+// Brand Brain — Análise Estratégica de Reels
+// ══════════════════════════════════════════════════════════════
+
+var selectedFormats = [];
+var lastAnalysisText = '';
+
+function isDesktop() { return window.innerWidth >= 768; }
+
+// ── TOAST ─────────────────────────────────────────────────────
+function toast(msg, dur) {
+  dur = dur || 2800;
+  var t = document.getElementById('bb-toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(function() { t.classList.remove('show'); }, dur);
+}
+
+// ── KEY MODAL ─────────────────────────────────────────────────
+function openKeyModal() {
+  var inp = document.getElementById('key-input');
+  inp.value = localStorage.getItem('mk_claude_key') || '';
+  document.getElementById('key-modal').classList.add('show');
+  setTimeout(function() { inp.focus(); }, 120);
+}
+function closeKeyModal() {
+  document.getElementById('key-modal').classList.remove('show');
+}
+function saveKey() {
+  var k = (document.getElementById('key-input').value || '').trim();
+  if (!k) { toast('Cole sua chave sk-ant-...'); return; }
+  localStorage.setItem('mk_claude_key', k);
+  closeKeyModal();
+  toast('Chave salva!');
+}
+
+// ── FORMAT TAGS ───────────────────────────────────────────────
+document.querySelectorAll('.bb-tag').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    var v = btn.dataset.v;
+    btn.classList.toggle('on');
+    if (btn.classList.contains('on')) {
+      if (selectedFormats.indexOf(v) < 0) selectedFormats.push(v);
+    } else {
+      selectedFormats = selectedFormats.filter(function(x) { return x !== v; });
+    }
+  });
+});
+
+// ── RESET ─────────────────────────────────────────────────────
+function resetForm() {
+  // Mobile: show form again
+  if (!isDesktop()) {
+    document.getElementById('bb-form').style.display = '';
+  }
+  // Hide result
+  var resultEl = document.getElementById('bb-result');
+  resultEl.classList.remove('show');
+  resultEl.style.display = 'none';
+  // Hide loading
+  document.getElementById('bb-loading').classList.remove('show');
+  // Show empty state (desktop)
+  if (isDesktop()) {
+    document.getElementById('bb-empty').style.display = '';
+    document.getElementById('result-top-bar').style.display = 'none';
+  }
+  // Re-enable button
+  var btn = document.getElementById('bb-btn');
+  btn.disabled = false;
+  btn.classList.remove('loading');
+}
+
+// ── PROFILE CONTEXT ───────────────────────────────────────────
+var CAROL_PROFILE = [
+  'PERFIL DA CRIADORA — Carol (@makecarolnunes):',
+  '- Profissão: Maquiadora freelancer profissional',
+  '- Nicho: Maquiagem profissional — especialista em noivas, eventos e make artístico',
+  '- Público-alvo: Noivas (25-40 anos), mulheres que buscam make profissional para eventos especiais',
+  '- Posicionamento: Autoridade técnica + conexão humana genuína (acolhedora, especialista, elegante)',
+  '- Objetivos no Instagram: Construir autoridade, criar conexão real com audiência, converter em agendamentos e orçamentos de noiva',
+  '- Pilares de conteúdo: Técnica e truques de maquiagem, transformação (antes/depois), bastidores de atendimentos reais, relacionamento com noivas, dicas de automaquiagem para clientes, produtos favoritos',
+  '- Formatos principais: Reels, Carrossel, Stories',
+  '- Tom de voz: Autêntico, acolhedor, especialista mas nunca arrogante, próxima sem ser informal demais',
+  '- Evita: Conteúdo genérico de beleza sem conexão com maquiagem, humor forçado, trends vazios, comparações negativas',
+].join('\n');
+
+// ── PROMPTS ───────────────────────────────────────────────────
+function buildSystemPrompt() {
+  return 'Você é um estrategista sênior de conteúdo para Instagram, especializado em Reels e psicologia do comportamento de audiência. Sua missão é dissecar conteúdos de sucesso e transformar os insights em estratégias práticas e personalizadas.\n\n' +
+    CAROL_PROFILE + '\n\n' +
+    'PRINCÍPIOS DA ANÁLISE:\n' +
+    '1. NÃO reproduza roteiro literal nem copie falas exatas\n' +
+    '2. Foque no MECANISMO e na LÓGICA, não no conteúdo superficial\n' +
+    '3. Adapte SEMPRE ao contexto, nicho e posicionamento de Carol\n' +
+    '4. Seja específica e prática — nada de conselhos genéricos como "seja autêntica"\n' +
+    '5. Explique o PORQUÊ de cada elemento funcionar (psicologia, comportamento)\n' +
+    '6. Identifique padrões reutilizáveis em série (não só para um post)\n' +
+    '7. Considere o algoritmo do Instagram: saves, compartilhamentos, tempo de retenção\n\n' +
+    'FORMATO DE RESPOSTA — use EXATAMENTE estes cabeçalhos:\n\n' +
+    '## DIAGNÓSTICO DO REELS\n' +
+    'Tipo de conteúdo, formato, nicho original, público-alvo do criador, contexto de performance.\n\n' +
+    '## POR QUE FUNCIONA\n' +
+    'Os mecanismos reais de engajamento. Por que as pessoas param no scroll, assistem até o fim, interagem. Gatilhos psicológicos específicos. Seja analítica e técnica.\n\n' +
+    '## ESTRUTURA DO ROTEIRO\n' +
+    'Destrinche em 3 partes: **Hook (0-3s)**, **Desenvolvimento**, **CTA/Encerramento**. Identifique o padrão de roteiro.\n\n' +
+    '## GATILHOS E EMOÇÕES\n' +
+    'Liste os gatilhos ativados: curiosidade, identificação, admiração, medo de perder, prova social, aspiração, urgência, pertencimento etc. Para cada um, explique como foi ativado.\n\n' +
+    '## ADAPTAÇÃO PARA O MEU PERFIL\n' +
+    'Como Carol aplica ESSA LÓGICA (não o conteúdo) no nicho de maquiagem/noivas. O que funciona direto, o que precisa ser ajustado, qual pilar de conteúdo ativa.\n\n' +
+    '## 3 IDEIAS PRÁTICAS\n' +
+    'Três ideias concretas. Para cada uma use EXATAMENTE este formato:\n\n' +
+    '**Ideia 1: [título criativo da ideia]**\n' +
+    '**Hook:** [frase ou modelo exato de abertura — primeiros 3 segundos]\n' +
+    '**Estrutura:** [passo a passo do roteiro]\n' +
+    '**CTA:** [call to action final específico]\n' +
+    '**Como gravar:** [orientação visual e técnica prática]\n\n' +
+    '**Ideia 2: [título]**\n...\n\n**Ideia 3: [título]**\n...\n\n' +
+    '## O QUE EVITAR\n' +
+    'Armadilhas ao adaptar esse formato ao nicho de maquiagem/noivas. O que seria desalinhado com o posicionamento de Carol.\n\n' +
+    'Responda em português brasileiro. Seja direta, específica e estratégica.';
+}
+
+function buildUserMessage() {
+  var url     = (document.getElementById('bb-url').value || '').trim();
+  var caption = (document.getElementById('bb-caption').value || '').trim();
+  var obs     = (document.getElementById('bb-obs').value || '').trim();
+  var fmts    = selectedFormats.slice();
+
+  var msg = 'Analise este Reels do Instagram:\n\n';
+  if (url)         msg += '**Link:** ' + url + '\n\n';
+  if (fmts.length) msg += '**Formato observado:** ' + fmts.join(', ') + '\n\n';
+  if (caption)     msg += '**Legenda/Caption completo:**\n' + caption + '\n\n';
+  if (obs)         msg += '**O que observei no vídeo:**\n' + obs + '\n\n';
+  if (!caption && !obs) msg += '_(Apenas link e formato disponíveis — analise com base nessas informações)_\n\n';
+  msg += 'Siga exatamente a estrutura solicitada.';
+  return msg;
+}
+
+// ── PARSE SECTIONS ────────────────────────────────────────────
+var SECTION_DEFS = [
+  { pattern: /diagnóstico/i,              title: 'Diagnóstico do Reels',         icon: '🎬', bg: '#E8F0FE' },
+  { pattern: /por que funciona/i,         title: 'Por que Funciona',             icon: '⚡', bg: '#FFF8E1' },
+  { pattern: /estrutura.*roteiro/i,       title: 'Estrutura do Roteiro',         icon: '📋', bg: '#F3E5F5' },
+  { pattern: /gatilhos/i,                 title: 'Gatilhos e Emoções',           icon: '🎯', bg: '#FCE4EC' },
+  { pattern: /adaptação/i,               title: 'Adaptação para o Meu Perfil',  icon: '✨', bg: '#E8F5E9' },
+  { pattern: /3 ideias|ideias práticas/i, title: '3 Ideias Práticas',            icon: '💡', bg: '#FFF3E0' },
+  { pattern: /o que evitar/i,             title: 'O que Evitar',                 icon: '⚠️', bg: '#FBE9E7' },
+];
+
+function parseSections(text) {
+  var sections = [];
+  var parts = text.split(/\n(?=## )/);
+  parts.forEach(function(part) {
+    var m = part.match(/^## (.+?)\n([\s\S]*)/);
+    if (!m) return;
+    var header  = m[1].trim();
+    var content = m[2].trim();
+    var def = null;
+    for (var i = 0; i < SECTION_DEFS.length; i++) {
+      if (SECTION_DEFS[i].pattern.test(header)) { def = SECTION_DEFS[i]; break; }
+    }
+    if (!def) def = { title: header, icon: '📌', bg: 'var(--surface-2)' };
+    sections.push({ title: def.title, icon: def.icon, bg: def.bg, content: content });
+  });
+  if (!sections.length) {
+    sections.push({ title: 'Análise Estratégica', icon: '🧠', bg: 'var(--surface-2)', content: text });
+  }
+  return sections;
+}
+
+// ── RENDER MARKDOWN ───────────────────────────────────────────
+function renderMd(text) {
+  text = text.trim();
+  text = text.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+  text = text.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
+  text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  text = text.replace(/\*([^*\n]+?)\*/g, '<em>$1</em>');
+  text = text.replace(/((?:^|\n)[ \t]*[-•] .+)+/g, function(block) {
+    var items = block.trim().split(/\n[ \t]*[-•] /);
+    items[0] = items[0].replace(/^[ \t]*[-•] /, '');
+    return '<ul>' + items.map(function(s) { return '<li>' + s.trim() + '</li>'; }).join('') + '</ul>';
+  });
+  var paras = text.split(/\n\n/);
+  text = paras.map(function(p) {
+    p = p.trim();
+    if (!p) return '';
+    if (/^<[hul]/.test(p)) return p;
+    return '<p>' + p.replace(/\n/g, '<br>') + '</p>';
+  }).filter(Boolean).join('\n');
+  return text;
+}
+
+// ── RENDER IDEAS ──────────────────────────────────────────────
+function renderIdeas(content) {
+  var FIELDS = [
+    { key: 'Hook',        label: 'Hook (abertura)' },
+    { key: 'Estrutura',   label: 'Estrutura do Roteiro' },
+    { key: 'CTA',         label: 'CTA' },
+    { key: 'Como gravar', label: 'Como Gravar' },
+  ];
+  var blocks = content.split(/\n(?=\*\*Ideia\s*\d)/);
+  var html = '';
+  blocks.forEach(function(block, idx) {
+    block = block.trim();
+    if (!block) return;
+    if (/^\*\*Ideia\s*\d/.test(block) || idx === 0) {
+      html += '<div class="idea-card">';
+      var titleM = block.match(/^\*\*Ideia\s*(\d+):\s*(.+?)\*\*/);
+      if (titleM) {
+        html += '<div class="idea-num">Ideia ' + titleM[1] + '</div>';
+        html += '<div class="idea-title">' + esc(titleM[2]) + '</div>';
+        block = block.replace(/^\*\*Ideia\s*\d+:\s*.+?\*\*\s*\n?/, '');
+      }
+      FIELDS.forEach(function(f) {
+        var re = new RegExp('\\*\\*' + f.key + ':\\*\\*\\s*([\\s\\S]*?)(?=\\n\\*\\*|$)', 'i');
+        var fm = block.match(re);
+        if (fm) {
+          html += '<div class="idea-field"><div class="idea-field-label">' + f.label + '</div>';
+          html += '<div class="idea-field-val">' + renderMd(fm[1].trim()) + '</div></div>';
+          block = block.replace(fm[0], '');
+        }
+      });
+      var rest = block.trim();
+      if (rest) html += renderMd(rest);
+      html += '</div>';
+    } else {
+      html += renderMd(block);
+    }
+  });
+  return html || renderMd(content);
+}
+
+// ── RENDER AVOID ──────────────────────────────────────────────
+function renderAvoid(content) {
+  var lines = content.split('\n').filter(function(l) { return l.trim(); });
+  var html = '';
+  lines.forEach(function(line) {
+    line = line.replace(/^[-•]\s*/, '').trim();
+    if (!line) return;
+    html += '<div class="avoid-item"><span class="avoid-icon">✕</span><span>' + renderMd(line) + '</span></div>';
+  });
+  return html || renderMd(content);
+}
+
+function toggleSection(el) { el.classList.toggle('open'); }
+
+// ── BUILD META HTML ───────────────────────────────────────────
+function buildMetaHtml(url) {
+  var h = '<div class="result-meta-label">Análise Brand Brain</div>';
+  if (url) h += '<div class="result-meta-url">🔗 ' + esc(url) + '</div>';
+  if (selectedFormats.length) {
+    h += '<div class="result-meta-tags">' +
+      selectedFormats.map(function(f) { return '<span class="result-meta-tag">' + esc(f) + '</span>'; }).join('') +
+      '</div>';
+  }
+  return h;
+}
+
+// ── RENDER RESULT ─────────────────────────────────────────────
+function renderResult(text, url) {
+  lastAnalysisText = text;
+  var desk = isDesktop();
+
+  // Meta cards
+  var metaHtml = buildMetaHtml(url);
+  if (desk) {
+    document.getElementById('result-meta-desk').innerHTML = metaHtml;
+    document.getElementById('result-top-bar').style.display = 'flex';
+    document.getElementById('result-meta').style.display = 'none';
+  } else {
+    document.getElementById('result-meta').innerHTML = metaHtml;
+    document.getElementById('result-meta').style.display = '';
+    document.getElementById('result-top-bar').style.display = 'none';
+  }
+
+  // Sections
+  var sections = parseSections(text);
+  var container = document.getElementById('result-sections');
+  container.innerHTML = '';
+
+  sections.forEach(function(sec, i) {
+    var isIdeas = /ideias/i.test(sec.title);
+    var isAvoid = /evitar/i.test(sec.title);
+
+    var bodyHtml = isIdeas ? renderIdeas(sec.content)
+                 : isAvoid ? renderAvoid(sec.content)
+                 : renderMd(sec.content);
+
+    // On desktop open first 4; on mobile open first 1
+    var openDefault = desk ? i < 4 : i === 0;
+
+    var el = document.createElement('div');
+    el.className = 'result-section' + (openDefault ? ' open' : '');
+    el.innerHTML =
+      '<div class="rs-header" onclick="toggleSection(this.parentElement)">' +
+        '<div class="rs-icon" style="background:' + sec.bg + '">' + sec.icon + '</div>' +
+        '<div class="rs-title">' + esc(sec.title) + '</div>' +
+        '<div class="rs-arrow">▼</div>' +
+      '</div>' +
+      '<div class="rs-body' + (isIdeas ? ' body-ideas' : '') + '">' + bodyHtml + '</div>';
+    container.appendChild(el);
+  });
+
+  // Show result
+  document.getElementById('bb-loading').classList.remove('show');
+  if (!desk) document.getElementById('bb-form').style.display = 'none';
+  document.getElementById('bb-empty').style.display = 'none';
+
+  var resultEl = document.getElementById('bb-result');
+  resultEl.style.display = 'block';
+  resultEl.classList.add('show');
+
+  if (!desk) window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function esc(s) {
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── COPY ALL ──────────────────────────────────────────────────
+function copyAll() {
+  if (!lastAnalysisText) { toast('Nenhuma análise para copiar'); return; }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(lastAnalysisText)
+      .then(function() { toast('Análise copiada!'); })
+      .catch(function() { toast('Não foi possível copiar — selecione manualmente'); });
+  } else {
+    toast('Copiar não disponível neste navegador');
+  }
+}
+
+// ── SAVE AS IDEA ──────────────────────────────────────────────
+function saveAsIdea() {
+  if (!lastAnalysisText) { toast('Nenhuma análise para salvar'); return; }
+  var url = (document.getElementById('bb-url').value || '').trim();
+  var m = lastAnalysisText.match(/\*\*Ideia\s*1:\s*(.+?)\*\*/);
+  var ideaTitle = m ? m[1] : '';
+  var title = ideaTitle ? 'Brand Brain: ' + ideaTitle : 'Brand Brain — Análise de Reels';
+  var notes = '🧠 Análise Brand Brain\n';
+  if (url) notes += 'Reels: ' + url + '\n';
+  if (selectedFormats.length) notes += 'Formato: ' + selectedFormats.join(', ') + '\n';
+  notes += '\n' + lastAnalysisText;
+
+  var ideas = [];
+  try { ideas = JSON.parse(localStorage.getItem('mk_content_ideas') || '[]'); } catch(e) {}
+  var now = new Date();
+  ideas.unshift({
+    id: 'bb_' + now.getTime(),
+    title: title,
+    categories: ['Brand Brain', 'Instagram'],
+    formatos: selectedFormats.length ? selectedFormats : ['Reels'],
+    status: 'Nao Iniciado',
+    notes: notes,
+    platforms: ['Instagram'],
+    scheduledDate: '',
+    createdAt: now.toISOString(),
+  });
+  localStorage.setItem('mk_content_ideas', JSON.stringify(ideas));
+  toast('Salvo em Conteúdo!');
+}
+
+// ── MAIN ANALYZE ──────────────────────────────────────────────
+async function analyzeReels() {
+  var apiKey = localStorage.getItem('mk_claude_key') || '';
+  if (!apiKey) { openKeyModal(); toast('Configure sua chave Claude primeiro'); return; }
+
+  var url     = (document.getElementById('bb-url').value || '').trim();
+  var caption = (document.getElementById('bb-caption').value || '').trim();
+  var obs     = (document.getElementById('bb-obs').value || '').trim();
+
+  if (!url && !caption && !obs && !selectedFormats.length) {
+    toast('Preencha pelo menos o link ou a legenda'); return;
+  }
+
+  var btn = document.getElementById('bb-btn');
+  btn.disabled = true;
+  btn.classList.add('loading');
+
+  // Show loading
+  document.getElementById('bb-empty').style.display = 'none';
+  document.getElementById('bb-result').classList.remove('show');
+  document.getElementById('bb-result').style.display = 'none';
+  document.getElementById('bb-loading').classList.add('show');
+  if (!isDesktop()) document.getElementById('bb-form').style.display = 'none';
+
+  try {
+    var res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 4096,
+        system: buildSystemPrompt(),
+        messages: [{ role: 'user', content: buildUserMessage() }]
+      })
+    });
+
+    if (!res.ok) {
+      var err = await res.json().catch(function() { return { error: { message: res.statusText } }; });
+      throw new Error((err && err.error && err.error.message) || res.statusText);
+    }
+    var data = await res.json();
+    var text = (data.content && data.content[0] && data.content[0].text) || '';
+    if (!text) throw new Error('Resposta vazia da API');
+    renderResult(text, url);
+  } catch (err) {
+    document.getElementById('bb-loading').classList.remove('show');
+    if (!isDesktop()) document.getElementById('bb-form').style.display = '';
+    document.getElementById('bb-empty').style.display = '';
+    toast('Erro: ' + err.message, 4500);
+  } finally {
+    btn.disabled = false;
+    btn.classList.remove('loading');
+  }
+}
+
+// ── ENVIAR IDEIA PANEL ────────────────────────────────────────
+var ideiaFormats = ['Reels'];
+
+document.querySelectorAll('.ideia-fmt-btn').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    var v = btn.dataset.v;
+    btn.classList.toggle('on');
+    if (btn.classList.contains('on')) {
+      if (ideiaFormats.indexOf(v) < 0) ideiaFormats.push(v);
+    } else {
+      ideiaFormats = ideiaFormats.filter(function(x) { return x !== v; });
+    }
+  });
+});
+
+function openIdeiaPanel() {
+  // Pre-fill title from analysis if available
+  var titleInp = document.getElementById('ideia-title');
+  if (!titleInp.value.trim() && lastAnalysisText) {
+    var m = lastAnalysisText.match(/\*\*Ideia\s*1:\s*(.+?)\*\*/);
+    if (m) titleInp.value = m[1];
+  }
+  // Pre-fill notes with URL reference if available
+  var notesInp = document.getElementById('ideia-notes');
+  if (!notesInp.value.trim()) {
+    var url = (document.getElementById('bb-url').value || '').trim();
+    if (url) notesInp.value = 'Referência: ' + url;
+  }
+  document.getElementById('ideia-overlay').classList.add('show');
+  setTimeout(function() { document.getElementById('ideia-title').focus(); }, 120);
+}
+
+function closeIdeiaPanel() {
+  document.getElementById('ideia-overlay').classList.remove('show');
+}
+
+function sendIdeia() {
+  var title = (document.getElementById('ideia-title').value || '').trim();
+  if (!title) { toast('Escreva o título da ideia'); document.getElementById('ideia-title').focus(); return; }
+
+  var notes = (document.getElementById('ideia-notes').value || '').trim();
+  var fmts  = ideiaFormats.slice();
+
+  var ideas = [];
+  try { ideas = JSON.parse(localStorage.getItem('mk_content_ideas') || '[]'); } catch(e) {}
+
+  var now = new Date();
+  ideas.unshift({
+    id: 'bb_' + now.getTime(),
+    title: title,
+    categories: ['Brand Brain', 'Instagram'],
+    formatos: fmts.length ? fmts : ['Reels'],
+    status: 'Nao Iniciado',
+    notes: notes,
+    platforms: ['Instagram'],
+    scheduledDate: '',
+    createdAt: now.toISOString(),
+  });
+  localStorage.setItem('mk_content_ideas', JSON.stringify(ideas));
+
+  // Reset panel
+  document.getElementById('ideia-title').value = '';
+  document.getElementById('ideia-notes').value = '';
+  closeIdeiaPanel();
+  toast('Ideia enviada pro Planejamento!');
+}
+
+// Close panel on overlay click
+document.getElementById('ideia-overlay').addEventListener('click', function(e) {
+  if (e.target === this) closeIdeiaPanel();
+});
+
+// ── INIT ──────────────────────────────────────────────────────
+document.getElementById('key-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeKeyModal();
+});
+document.getElementById('key-input').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') saveKey();
+});
+
+if (!localStorage.getItem('mk_claude_key')) {
+  setTimeout(function() {
+    toast('Configure sua chave Claude (⚙️) para usar as análises', 4000);
+  }, 800);
+}
+</script>
+
+<script src="../shared/js/sidebar.js"></script>
+</body>
+</html>
