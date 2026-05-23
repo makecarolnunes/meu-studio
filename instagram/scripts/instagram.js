@@ -1756,11 +1756,12 @@
         'Content-Type': 'application/json',
         'x-api-key': key,
         'anthropic-version': '2023-06-01',
+        'anthropic-beta': 'output-128k-2025-02-19',
         'anthropic-dangerous-direct-browser-access': 'true'
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-5-20250929',
-        max_tokens: 16000,
+        max_tokens: 32000,
         messages: [{ role: 'user', content: content }]
       })
     });
@@ -1768,6 +1769,7 @@
     var json = await res.json();
     if (json.error) throw new Error(json.error.message || 'Erro na Claude API');
     if (!json.content || !json.content.length) throw new Error('Resposta vazia da Claude');
+    if (json.stop_reason === 'max_tokens') throw new Error('Resposta cortada (muitas imagens ou briefing longo). Tente com menos imagens ou um briefing mais curto.');
     var text = json.content.map(function(c) { return c.text || ''; }).join('');
 
     // Extrai JSON (caso venha com cercas markdown apesar das instruções)
