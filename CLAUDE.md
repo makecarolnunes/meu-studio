@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-22 19:15 | main | feat(ux): sidebar completa + quick note concorrentes + limpa insights IA -->
+<!-- AUTO: 2026-05-22 22:38 | main | fix(instagram): aumenta limite de tokens do validador para suportar m├║ltiplas imagens -->
 
