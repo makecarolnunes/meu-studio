@@ -279,11 +279,14 @@ function setLoadingStep(step, msg, sub) {
 //  FOLLOW-UP TEMPLATES — storage
 // ══════════════════════════════════════════════════════════
 const DEFAULT_FU_TEMPLATES = [
-  { id:'orç-1',  nome:'ORÇ-1 — Confirmação',        texto:'Olá, [NOME]! 😊\n\nRecebi seu pedido de orçamento para [SERVIÇO] e já estou preparando sua proposta!\n\nEm breve envio todos os detalhes. Se tiver alguma dúvida, pode me chamar aqui mesmo.\n\nUm abraço! 🎂' },
-  { id:'fu-1',   nome:'FU-1 — 1º Follow-up',         texto:'Oi, [NOME]! Tudo bem? 😊\n\nPassei para verificar se você recebeu o orçamento que enviei sobre [SERVIÇO].\n\nCaso tenha alguma dúvida ou queira ajustar algum detalhe, é só me falar! Estou aqui para ajudar. 🎂\n\nAguardo seu retorno!' },
-  { id:'fu-2',   nome:'FU-2 — 2º Follow-up',         texto:'Oi, [NOME]! 👋\n\nSei que a vida fica corrida! Só queria confirmar se você ainda tem interesse no orçamento de [SERVIÇO].\n\nPosso ajustar o valor ou algum detalhe se precisar. Me fala o que você precisa! 📅' },
-  { id:'fu-3',   nome:'FU-3 — Última tentativa',      texto:'Olá, [NOME]! Espero que esteja bem. 🌟\n\nEsta é minha última mensagem sobre o orçamento de [SERVIÇO].\n\nCaso mude de ideia ou queira conversar mais pra frente, estarei aqui! 💚' },
-  { id:'neg-1',  nome:'NEG-1 — Negociação',           texto:'Oi, [NOME]! Entendo que o investimento precisa caber no orçamento. 😊\n\nPosso te oferecer algumas opções:\n\n🔸 Opção 1: [descreva uma opção mais simples]\n🔸 Opção 2: [serviço padrão] por R$ [VALOR]\n🔸 Opção 3: Parcelamento disponível\n\nMe diz o que funciona melhor pra você!' },
+  { id:'orç-1',  nome:'ORÇ-1 — Confirmação de recebimento', texto:'Oi, [NOME]! Tudo bem com você?\n\nPassei para confirmar que recebi sua mensagem sobre [SERVIÇO] — já estou preparando tudo com carinho.\n\nEm breve te envio os detalhes. Qualquer dúvida, pode me chamar aqui! 🤍' },
+  { id:'fu-1',   nome:'FU-1 — Confirmação leve (48-72h)',    texto:'Oi, [NOME]! Tudo bem? 🤍\n\nPassei para ver se o orçamento ficou claro ou se surgiu alguma dúvida por aqui. Me conta!' },
+  { id:'fu-2',   nome:'FU-2 — Confirmação de interesse (5-7d)', texto:'Oi, [NOME]! Tudo bem? Sei que a vida agita e às vezes as coisas ficam em espera.\n\nSó vim deixar aberto: se ainda tiver interesse, estou aqui. Se os planos mudaram, também tudo bem — só me avisa para eu conseguir me organizar. Sem pressão nenhuma! 🤍' },
+  { id:'fu-3',   nome:'FU-3 — Encerramento elegante',        texto:'Oi, [NOME]! Como não tivemos retorno, vou liberar o espaço na minha agenda.\n\nSe em outro momento quiser conversar, estarei por aqui. Boa sorte com tudo! 🤍' },
+  { id:'neg-1',  nome:'NEG-1 — "Ficou caro"',                texto:'Oi, [NOME]! Obrigada pela honestidade.\n\nMe conta: qual seria um valor que se encaixaria melhor pra você? Assim consigo ver o que seria possível ajustar sem comprometer a qualidade do resultado. 😊' },
+  { id:'neg-2',  nome:'NEG-2 — "Vou pensar"',                texto:'Claro, [NOME]! Se surgir alguma dúvida enquanto você pensa, pode me perguntar à vontade. Qualquer coisa que eu possa explicar melhor sobre como funciona o atendimento, estou aqui! 🤍' },
+  { id:'neg-3',  nome:'NEG-3 — "Outra cobra menos"',         texto:'Oi, [NOME]! Cada atendimento tem uma proposta diferente mesmo.\n\nO que diferencia o meu trabalho é [meu diferencial — ex: especialização em pele negra, cuidado integral com make e cabelo, atendimento personalizado]. Se quiser, posso te explicar melhor o que está incluso em cada etapa — assim você consegue comparar com mais clareza! 😊' },
+  { id:'neg-4',  nome:'NEG-4 — "Vou ver com meu marido"',    texto:'Claro, [NOME]! É uma decisão importante mesmo.\n\nSe quiser, posso te passar um resumo do que está incluso para facilitar na conversa com ele — às vezes ajuda ter tudo clarinho na hora de explicar. Quer? 🤍' },
   { id:'fech-1', nome:'FECH-1 — Fechamento',          texto:'Que ótima notícia, [NOME]! 🎉\n\nFicou confirmado o pedido de [SERVIÇO]!\n\nPróximos passos:\n✅ Pagamento do sinal via Pix\n✅ Saldo no dia do atendimento: R$ [VALOR]\n\nVou enviar o recibo assim que confirmar o pagamento. Qualquer dúvida, estou aqui! 🎂' },
   { id:'pos-1',  nome:'POS-1 — Pós-venda',            texto:'Oi, [NOME]! Espero que tudo tenha corrido maravilhosamente! 🎉\n\nGostaria de saber como foi a experiência com [SERVIÇO].\n\nSua opinião é muito importante pra mim! Se puder, me deixa uma avaliação. ⭐\n\nObrigada pela confiança. Espero te atender em breve! 💚' },
 ];
@@ -540,37 +543,37 @@ function getWaTemplate(entry) {
   // ORÇ-1 — Confirmação de recebimento (Novo Pedido)
   if (entry.Status === 'Novo Pedido') return {
     code: 'ORÇ-1', hint: 'Confirmação de recebimento do pedido',
-    text: 'Olá, ' + nome + '! 😊\n\nRecebi seu pedido de orçamento para ' + servico + ' e já estou preparando sua proposta!\n\nEm breve envio todos os detalhes. Se tiver alguma dúvida ou queira passar informações adicionais, pode me chamar aqui mesmo.\n\nUm abraço! 🎂'
+    text: 'Oi, ' + nome + '! Tudo bem com você?\n\nPassei para confirmar que recebi sua mensagem sobre ' + servico + ' — já estou preparando tudo com carinho.\n\nEm breve te envio os detalhes. Qualquer dúvida, pode me chamar aqui! 🤍'
   };
 
   // FU-1 — 1º follow-up (Orçamento Enviado, ~2 dias)
   if (entry.Status === 'Orçamento Enviado') return {
-    code: 'FU-1', hint: 'FU-1 — 1º follow-up, verificar se recebeu',
-    text: 'Oi, ' + nome + '! Tudo bem? 😊\n\nPassei para verificar se você recebeu o orçamento que enviei sobre ' + servico + '.\n\nCaso tenha alguma dúvida ou queira ajustar algum detalhe, é só me falar! Estou aqui para ajudar. 🎂\n\nAguardo seu retorno!'
+    code: 'FU-1', hint: 'FU-1 — Confirmação leve (48-72h)',
+    text: 'Oi, ' + nome + '! Tudo bem? 🤍\n\nPassei para ver se o orçamento ficou claro ou se surgiu alguma dúvida por aqui. Me conta!'
   };
 
   // FU-2 — 2º follow-up (Sem Resposta, ≤6 dias)
   if (entry.Status === 'Sem Resposta' && diasEnvio <= 6) return {
-    code: 'FU-2', hint: 'FU-2 — 2º follow-up, segunda tentativa (dia 4)',
-    text: 'Oi, ' + nome + '! 👋\n\nSei que a vida fica corrida às vezes! Só queria confirmar se você ainda tem interesse no orçamento de ' + servico + '.\n\nPosso ajustar o valor, o tamanho ou algum detalhe se precisar. Me fala o que você precisa!\n\nEm caso de data próxima, gostaria de já confirmar na agenda. 📅'
+    code: 'FU-2', hint: 'FU-2 — Confirmação de interesse (dia 5-7)',
+    text: 'Oi, ' + nome + '! Tudo bem? Sei que a vida agita e às vezes as coisas ficam em espera.\n\nSó vim deixar aberto: se ainda tiver interesse, estou aqui. Se os planos mudaram, também tudo bem — só me avisa para eu conseguir me organizar. Sem pressão nenhuma! 🤍'
   };
 
-  // FU-3 — Última tentativa (Sem Resposta, >6 dias)
+  // FU-3 — Encerramento elegante (Sem Resposta, >6 dias)
   if (entry.Status === 'Sem Resposta' && diasEnvio > 6) return {
-    code: 'FU-3', hint: 'FU-3 — Última tentativa (dia 7+)',
-    text: 'Olá, ' + nome + '! Espero que esteja bem. 🌟\n\nEsta é minha última mensagem sobre o orçamento de ' + servico + '.\n\nCaso mude de ideia ou queira conversar mais pra frente, fico feliz em te atender!\n\nSe precisar de algo diferente ou outro serviço, estarei aqui. 🎂\n\nNão perca meu contato — estarei aqui quando precisar! 💚'
+    code: 'FU-3', hint: 'FU-3 — Encerramento elegante (dia 7+)',
+    text: 'Oi, ' + nome + '! Como não tivemos retorno, vou liberar o espaço na minha agenda.\n\nSe em outro momento quiser conversar, estarei por aqui. Boa sorte com tudo! 🤍'
   };
 
   // NEG-1 — Negociação de preço
   if (entry.Status === 'Em Negociação') return {
-    code: 'NEG-1', hint: 'NEG-1 — Resposta sobre preço / negociação',
-    text: 'Oi, ' + nome + '! Entendo que o investimento precisa caber no orçamento. 😊\n\nPosso te oferecer algumas opções:\n\n🔸 Opção 1: [descreva serviço menor] por R$ [valor]\n🔸 Opção 2: [serviço padrão] por R$ [valor]\n🔸 Opção 3: Parcelamento disponível\n\nMe diz o que funciona melhor pra você e encontramos uma solução!'
+    code: 'NEG-1', hint: 'NEG-1 — Abrir diálogo sobre valor',
+    text: 'Oi, ' + nome + '! Obrigada pela honestidade. 😊\n\nMe conta: qual seria um valor que se encaixaria melhor pra você? Assim consigo ver o que seria possível ajustar sem comprometer a qualidade do resultado.'
   };
 
   // POS-1 — Pós-venda (Fechado)
   if (entry.Status === 'Fechado') return {
-    code: 'POS-1', hint: 'POS-1 — Pós-venda / pesquisa de satisfação',
-    text: 'Oi, ' + nome + '! Espero que tudo tenha corrido maravilhosamente! 🎉\n\nGostaria de saber como foi a experiência com ' + servico + '.\n\nSua opinião é muito importante pra mim! Se puder, me deixa uma avaliação: ⭐ [link do Google ou Instagram]\n\nE se tirar fotos, adoro ver o resultado! Pode me marcar. 📸\n\nObrigada pela confiança. Espero te atender em breve novamente! 💚'
+    code: 'POS-1', hint: 'POS-1 — Pós-atendimento / encantamento',
+    text: 'Que lindo foi esse dia! Obrigada pela confiança, ' + nome + '. Foi uma alegria cuidar de você. 🤍\n\nManda foto quando puder — adoro ver o resultado no mundo real!'
   };
 
   return { code: '—', hint: 'Mensagem de contato geral', text: 'Oi, ' + nome + '! 😊\n\nTudo bem?' };

@@ -195,3 +195,164 @@
       font-size: 0.73rem; color: #7c4a00; display: none;
     }
     .aviso.show { display: block; }
+
+    /* ── HEADER ICON BTN ── */
+    .hdr-icon-btn {
+      width: 34px; height: 34px; border-radius: 50%; border: none;
+      background: rgba(255,255,255,.13); color: rgba(255,255,255,.88);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; font-size: 1rem; transition: background .15s;
+    }
+    .hdr-icon-btn:active { background: rgba(255,255,255,.28); }
+
+    /* ── FOLLOW UP — botão no card ── */
+    .entry-fu { flex-wrap: wrap; }
+    .fu-row {
+      width: 100%; padding-top: 9px; margin-top: 6px;
+      border-top: 1px solid var(--border);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .fu-open-btn {
+      flex: 1; padding: 7px 12px;
+      background: var(--surface); border: 1.5px solid var(--border);
+      border-radius: 20px; font-family: inherit;
+      font-size: 0.72rem; font-weight: 700; color: var(--brand-dark);
+      cursor: pointer; display: flex; align-items: center; gap: 6px;
+      transition: background .15s, border-color .15s;
+    }
+    .fu-open-btn:active { background: var(--brand-soft); border-color: var(--brand); }
+    .fu-hist-dot {
+      background: var(--brand); color: #fff;
+      border-radius: 10px; padding: 1px 6px;
+      font-size: 0.62rem; font-weight: 800;
+    }
+
+    /* ── FOLLOW UP — overlay ── */
+    .fu-overlay {
+      position: fixed; inset: 0; z-index: 300;
+      background: rgba(0,0,0,.45); display: flex;
+      align-items: flex-end; justify-content: center;
+      opacity: 0; transition: opacity .2s;
+      -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px);
+    }
+    .fu-overlay.show { opacity: 1; }
+
+    /* ── FOLLOW UP — modal box ── */
+    .fu-box {
+      background: var(--surface); border-radius: 20px 20px 0 0;
+      width: 100%; max-width: 480px;
+      max-height: 92vh; display: flex; flex-direction: column;
+      transform: translateY(40px); transition: transform .22s cubic-bezier(.4,0,.2,1);
+      overflow: hidden;
+    }
+    .fu-overlay.show .fu-box { transform: translateY(0); }
+
+    .fu-hdr {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 16px 12px; border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .fu-hdr-name { font-size: 0.95rem; font-weight: 800; color: var(--brand-dark); }
+    .fu-hdr-sub  { font-size: 0.7rem; color: var(--text-muted); margin-top: 2px; }
+    .fu-close-btn {
+      width: 30px; height: 30px; border-radius: 50%; border: none;
+      background: var(--bg); color: var(--text-muted); font-size: 0.85rem;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+    }
+
+    .fu-body { flex: 1; overflow-y: auto; padding: 14px 14px 32px; display: flex; flex-direction: column; gap: 14px; }
+
+    /* Tipo tabs */
+    .fu-tipos {
+      display: flex; gap: 6px; flex-wrap: wrap;
+    }
+    .fu-tipo-btn {
+      padding: 6px 12px; border-radius: 20px;
+      border: 1.5px solid var(--border); background: var(--surface);
+      font-family: inherit; font-size: 0.72rem; font-weight: 700;
+      color: var(--text-muted); cursor: pointer; transition: all .15s;
+      white-space: nowrap;
+    }
+    .fu-tipo-btn.on {
+      background: var(--brand-dark); border-color: var(--brand-dark); color: #fff;
+    }
+    .fu-tipo-hint { font-size: 0.68rem; color: var(--text-muted); margin-top: -6px; }
+
+    /* Preview mensagem */
+    .fu-preview-wrap { display: flex; flex-direction: column; gap: 5px; }
+    .fu-preview-label { font-size: 0.7rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .05em; }
+    .fu-msg-preview {
+      background: var(--bg); border: 1.5px solid var(--border);
+      border-radius: 12px; padding: 12px 13px;
+      font-family: inherit; font-size: 0.83rem; line-height: 1.6;
+      white-space: pre-wrap; color: var(--text);
+      min-height: 80px; outline: none;
+    }
+    .fu-msg-preview:focus { border-color: var(--brand); }
+
+    /* Telefone */
+    .fu-phone-row { display: flex; flex-direction: column; gap: 5px; }
+    .fu-phone-label { font-size: 0.7rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .05em; }
+    .fu-phone-input {
+      padding: 11px 13px; background: var(--bg);
+      border: 1.5px solid var(--border); border-radius: 10px;
+      font-family: inherit; font-size: 0.85rem; color: var(--text);
+      width: 100%; -webkit-appearance: none; outline: none;
+    }
+    .fu-phone-input:focus { border-color: var(--brand); }
+
+    /* Botões de ação */
+    .fu-actions { display: flex; gap: 8px; }
+    .fu-btn-wa {
+      flex: 1; padding: 13px; border-radius: 12px; border: none;
+      background: #25D366; color: #fff;
+      font-family: inherit; font-size: 0.88rem; font-weight: 800;
+      cursor: pointer; transition: opacity .15s;
+    }
+    .fu-btn-wa:active { opacity: .85; }
+    .fu-btn-copy {
+      padding: 13px 16px; border-radius: 12px;
+      border: 1.5px solid var(--border); background: var(--surface);
+      font-family: inherit; font-size: 0.82rem; font-weight: 700;
+      color: var(--text-muted); cursor: pointer; white-space: nowrap;
+    }
+    .fu-btn-copy:active { background: var(--bg); }
+
+    /* Histórico */
+    .fu-hist-section { display: flex; flex-direction: column; gap: 7px; }
+    .fu-hist-title { font-size: 0.7rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .05em; }
+    .fu-hist-item {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 7px 10px; background: var(--bg); border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+    .fu-hist-label { font-size: 0.75rem; color: var(--text); }
+    .fu-hist-date  { font-size: 0.68rem; color: var(--text-muted); flex-shrink: 0; }
+    .fu-hist-empty { font-size: 0.76rem; color: var(--text-subtle); text-align: center; padding: 10px 0; }
+
+    /* ── GUIA — modal específico ── */
+    .guia-box { border-radius: 20px 20px 0 0; }
+    .guia-section {
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 12px; padding: 12px 13px;
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    .guia-title { font-size: 0.75rem; font-weight: 800; color: var(--brand-dark); margin-bottom: 3px; }
+    .guia-item { font-size: 0.77rem; color: var(--text); line-height: 1.5; display: flex; align-items: flex-start; gap: 7px; }
+    .guia-item.guia-danger { color: #c62828; }
+    .guia-item.guia-ok     { color: #2e7d32; }
+    .guia-badge {
+      flex-shrink: 0; font-size: 0.6rem; font-weight: 800;
+      padding: 2px 7px; border-radius: 8px;
+      text-transform: uppercase; letter-spacing: .04em;
+    }
+    .guia-badge-fu  { background: #e3f2fd; color: #1565c0; }
+    .guia-badge-enc { background: #fce4ec; color: #880e4f; }
+    .guia-badge-pos { background: #e8f5e9; color: #2e7d32; }
+    .guia-tip {
+      font-size: 0.78rem; color: var(--text); line-height: 1.6;
+      background: var(--surface); border-radius: 10px;
+      padding: 10px 12px; border: 1px solid var(--border);
+      font-style: italic;
+    }
+    .guia-tip-sub { font-size: 0.68rem; color: var(--text-muted); }

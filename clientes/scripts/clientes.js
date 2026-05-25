@@ -21,6 +21,13 @@ let selYear        = new Date().getFullYear();
 let curFilter      = 'todos';
 let curEquipeFilter= 'todos';
 
+// ── FOLLOW UP ─────────────────────────────────────────────
+let fuEntryMap  = {};   // id → entry (populado em render)
+let fuActiveId  = null; // id do entry aberto no modal
+let fuActiveType= 'pos-imediato';
+
+function safeJSONcli(s, fb) { try { return s ? JSON.parse(s) : fb; } catch(_) { return fb; } }
+
 // ── UTILS ─────────────────────────────────────────────────
 function todayStr() {
   const t = new Date();
@@ -289,8 +296,18 @@ function render() {
           ? 'Domicílio' : (e.local || '');
 
       const equipeTag = e.equipe ? `<span style="display:inline-block;background:#e0f7fa;color:#006064;border-radius:8px;padding:1px 7px;font-size:.65rem;font-weight:600;margin-left:4px;vertical-align:middle">↑ ${e.equipe}</span>` : '';
+
+      // Registro de follow ups já enviados para essa entry
+      const eid   = e.id || (e.dataServ||e.dataPag||'') + '|' + (e.cliente||'').toLowerCase().trim();
+      fuEntryMap[eid] = e;
+      const fuHist   = fuGetHistory(eid);
+      const fuBadge  = fuHist.length ? `<span class="fu-hist-dot">${fuHist.length}</span>` : '';
+      const amanha   = new Date(); amanha.setDate(amanha.getDate() + 1);
+      const amanhaStr = amanha.toISOString().split('T')[0];
+      const fuLabel  = (e.dataServ || e.dataPag) === amanhaStr ? '📅 Confirmar amanhã' : '📲 Follow Up';
+
       return `
-        <div class="entry ${isReal ? 'real' : 'prev'} ${isNoiva ? 'noiva' : ''}">
+        <div class="entry ${isReal ? 'real' : 'prev'} ${isNoiva ? 'noiva' : ''} entry-fu">
           ${isNoiva ? `<div class="noiva-emoji">👰</div>` : ''}
           <div class="e-time">${horario
             ? `<div class="e-time-val">${horario}</div>`
@@ -306,6 +323,11 @@ function render() {
             ${isNoiva ? `<span class="noiva-tag">💍 Noiva</span>` : ''}
             <span class="badge ${isReal ? 'badge-real' : 'badge-prev'}">${isReal ? 'Realizado' : 'Previsto'}</span>
           </div>
+          <div class="fu-row">
+            <button class="fu-open-btn" onclick="event.stopPropagation(); openFuById('${eid.replace(/'/g, "\\'")}')">
+              ${fuLabel}${fuBadge}
+            </button>
+          </div>
         </div>`;
     }).join('');
 
@@ -319,6 +341,331 @@ function render() {
         ${rows}
       </div>`;
   }).join('');
+}
+
+// ══════════════════════════════════════════════════════════
+//  FOLLOW UP — Templates
+// ══════════════════════════════════════════════════════════
+const FU_TIPOS = {
+  'd1': {
+    label: 'Confirmar D-1',
+    icon: '📅',
+    hint: 'Enviar na véspera do atendimento',
+    texto(nome, srv, horario, local) {
+      const h = horario ? `, às ${horario}` : '';
+      const l = local ? ` — ${local}` : '';
+      return `Oi, ${nome}! 🤍\n\nPassei para lembrar que seu atendimento de ${srv||'make'} está confirmado para amanhã${h}${l}.\n\nSe tiver alguma dúvida de última hora, me chama aqui. Até amanhã!`;
+    }
+  },
+  'pos-imediato': {
+    label: 'Pós-atendimento',
+    icon: '🌸',
+    hint: 'Enviar no mesmo dia, logo após',
+    texto(nome, srv) {
+      return `Que lindo foi esse dia! Obrigada pela confiança, ${nome}. Foi uma alegria cuidar de você. 🤍\n\nManda foto quando puder — adoro ver o resultado no mundo real!`;
+    }
+  },
+  'pos-24h': {
+    label: 'Pós 24h',
+    icon: '💬',
+    hint: 'Enviar no dia seguinte',
+    texto(nome, srv) {
+      return `Oi, ${nome}! Tudo bem? Fiquei pensando em você — como foi o resto do dia? 💜`;
+    }
+  },
+  'pos-7d': {
+    label: 'Depoimento (7 dias)',
+    icon: '🌟',
+    hint: 'Pedir depoimento e feedback',
+    texto(nome, srv) {
+      return `Oi, ${nome}! Espero que esteja ótima. 🤍\n\nFicou curiosa — a make segurou bem? Ficaria muito feliz se você quisesse me contar como foi a experiência!\n\nE se quiser deixar um depoimento, adoraria — ajuda muito uma freelancer como eu. 🙏`;
+    }
+  },
+  'indicacao': {
+    label: 'Indicação',
+    icon: '💛',
+    hint: 'Pedir indicação de amigas',
+    texto(nome, srv) {
+      return `Oi, ${nome}! Espero que esteja ótima. 🤍\n\nSe você gostou do atendimento e tiver amigas que precisem de make para noiva ou evento, fico feliz que me indique!\n\nObrigada pela confiança. 🙏`;
+    }
+  },
+  'reconexao': {
+    label: 'Reconexão (30-60d)',
+    icon: '💌',
+    hint: 'Manter relacionamento ativo',
+    texto(nome, srv) {
+      return `Oi, ${nome}! Faz um tempinho que não falamos. Tudo bem? Se tiver algum evento chegando, me chama! 💜`;
+    }
+  }
+};
+
+// ══════════════════════════════════════════════════════════
+//  FOLLOW UP — Storage
+// ══════════════════════════════════════════════════════════
+function fuGetHistory(eid) {
+  const all = safeJSONcli(localStorage.getItem('mk_fu_history_cli'), {});
+  return all[String(eid)] || [];
+}
+function fuAddHistory(eid, record) {
+  const all = safeJSONcli(localStorage.getItem('mk_fu_history_cli'), {});
+  const key = String(eid);
+  if (!all[key]) all[key] = [];
+  all[key].unshift(record);
+  localStorage.setItem('mk_fu_history_cli', JSON.stringify(all));
+}
+
+// ══════════════════════════════════════════════════════════
+//  FOLLOW UP — Lógica de abertura
+// ══════════════════════════════════════════════════════════
+function guessPhone(nome) {
+  const orca = safeJSONcli(localStorage.getItem('orca_entries'), []);
+  const n = (nome || '').toLowerCase().trim();
+  let match = orca.find(o => (o.Cliente || '').toLowerCase().trim() === n);
+  if (!match) {
+    const first = n.split(' ')[0];
+    if (first.length >= 3)
+      match = orca.find(o => (o.Cliente || '').toLowerCase().startsWith(first));
+  }
+  return match ? (match.Telefone || '') : '';
+}
+
+function openFuById(eid) {
+  const entry = fuEntryMap[eid];
+  if (!entry) return;
+  fuActiveId = eid;
+
+  const amanha = new Date();
+  amanha.setDate(amanha.getDate() + 1);
+  const amanhaStr = amanha.toISOString().split('T')[0];
+  const dataEntry = entry.dataServ || entry.dataPag || '';
+  if (dataEntry === amanhaStr) fuActiveType = 'd1';
+  else if (dataEntry > todayStr()) fuActiveType = 'd1';
+  else fuActiveType = 'pos-imediato';
+
+  const phone = guessPhone(entry.cliente);
+  fuRenderModal(entry, phone);
+}
+
+function setFuType(tipo) {
+  fuActiveType = tipo;
+  const entry = fuEntryMap[fuActiveId];
+  if (!entry) return;
+  document.querySelectorAll('.fu-tipo-btn').forEach(b =>
+    b.classList.toggle('on', b.dataset.tipo === tipo)
+  );
+  const nome    = (entry.cliente || '').split(' ')[0] || 'cliente';
+  const srv     = entry.servico || '';
+  const horario = matchHorario(entry) || '';
+  const local   = entry.local || '';
+  const tpl     = FU_TIPOS[tipo];
+  const msgEl   = document.getElementById('fu-msg-preview');
+  if (msgEl && tpl) msgEl.textContent = tpl.texto(nome, srv, horario, local);
+  const hintEl = document.getElementById('fu-tipo-hint');
+  if (hintEl && tpl) hintEl.textContent = tpl.hint;
+}
+
+function closeFu() {
+  const m = document.getElementById('fu-modal');
+  if (m) { m.classList.remove('show'); setTimeout(() => m.remove(), 200); }
+  fuActiveId = null;
+}
+
+function fuGetCurrentText() {
+  const el = document.getElementById('fu-msg-preview');
+  return el ? (el.innerText || el.textContent || '') : '';
+}
+
+function fuSendWA() {
+  const entry = fuEntryMap[fuActiveId];
+  if (!entry) return;
+  const text     = fuGetCurrentText();
+  const rawPhone = (document.getElementById('fu-phone-input').value || '').replace(/\D/g, '');
+  if (!rawPhone) { alert('Informe o telefone da cliente para abrir o WhatsApp!'); return; }
+  const phone = rawPhone.startsWith('55') ? rawPhone : '55' + rawPhone;
+  window.open('https://wa.me/' + phone + '?text=' + encodeURIComponent(text), '_blank');
+  const tpl = FU_TIPOS[fuActiveType];
+  fuAddHistory(fuActiveId, { date: todayStr(), tipo: 'wa', label: tpl ? tpl.icon + ' ' + tpl.label : fuActiveType });
+  fuRefreshHistory(fuActiveId);
+  render(); // atualiza badge do botão no card
+}
+
+function fuCopy() {
+  const text = fuGetCurrentText();
+  if (!text) return;
+  const tpl = FU_TIPOS[fuActiveType];
+  const doLog = () => {
+    fuAddHistory(fuActiveId, { date: todayStr(), tipo: 'copy', label: tpl ? tpl.icon + ' ' + tpl.label + ' (copiado)' : fuActiveType });
+    fuRefreshHistory(fuActiveId);
+    render();
+    const btn = document.querySelector('.fu-btn-copy');
+    if (btn) { btn.textContent = '✅ Copiado!'; setTimeout(() => btn.textContent = '📋 Copiar', 2000); }
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(doLog).catch(() => { _fuFallbackCopy(text); doLog(); });
+  } else { _fuFallbackCopy(text); doLog(); }
+}
+function _fuFallbackCopy(text) {
+  const ta = document.createElement('textarea');
+  ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select();
+  try { document.execCommand('copy'); } catch(_) {}
+  document.body.removeChild(ta);
+}
+
+function fuRefreshHistory(eid) {
+  const hist  = fuGetHistory(eid);
+  const el    = document.getElementById('fu-hist-list');
+  if (!el) return;
+  el.innerHTML = hist.length
+    ? hist.slice(0, 8).map(h => `
+        <div class="fu-hist-item">
+          <span class="fu-hist-label">${h.label || h.tipo || '—'}</span>
+          <span class="fu-hist-date">${fuFmtDate(h.date)}</span>
+        </div>`).join('')
+    : '<div class="fu-hist-empty">Nenhum follow up enviado ainda</div>';
+}
+function fuFmtDate(d) {
+  if (!d) return '';
+  const [, m, dd] = d.split('-');
+  return `${dd}/${m}`;
+}
+
+// ══════════════════════════════════════════════════════════
+//  FOLLOW UP — Render do modal
+// ══════════════════════════════════════════════════════════
+function fuRenderModal(entry, phone) {
+  const existing = document.getElementById('fu-modal');
+  if (existing) existing.remove();
+
+  const nome    = (entry.cliente || '').split(' ')[0] || 'cliente';
+  const srv     = entry.servico || '';
+  const horario = matchHorario(entry) || '';
+  const local   = entry.local || '';
+  const tpl     = FU_TIPOS[fuActiveType];
+  const msgText = tpl ? tpl.texto(nome, srv, horario, local) : '';
+  const eid     = fuActiveId;
+  const hist    = fuGetHistory(eid);
+
+  const tipoTabs = Object.entries(FU_TIPOS).map(([k, v]) =>
+    `<button class="fu-tipo-btn${fuActiveType === k ? ' on' : ''}" data-tipo="${k}" onclick="setFuType('${k}')">${v.icon} ${v.label}</button>`
+  ).join('');
+
+  const histHTML = hist.length
+    ? hist.slice(0, 8).map(h => `
+        <div class="fu-hist-item">
+          <span class="fu-hist-label">${h.label || h.tipo || '—'}</span>
+          <span class="fu-hist-date">${fuFmtDate(h.date)}</span>
+        </div>`).join('')
+    : '<div class="fu-hist-empty">Nenhum follow up enviado ainda</div>';
+
+  const modal = document.createElement('div');
+  modal.id = 'fu-modal';
+  modal.className = 'fu-overlay';
+  modal.innerHTML = `
+    <div class="fu-box">
+      <div class="fu-hdr">
+        <div class="fu-hdr-left">
+          <div class="fu-hdr-name">📲 Follow Up</div>
+          <div class="fu-hdr-sub">${entry.cliente || '—'} · ${srv || '—'}</div>
+        </div>
+        <button class="fu-close-btn" onclick="closeFu()">✕</button>
+      </div>
+      <div class="fu-body">
+        <div class="fu-tipos" id="fu-tipos">${tipoTabs}</div>
+        <div class="fu-tipo-hint" id="fu-tipo-hint">${tpl ? tpl.hint : ''}</div>
+        <div class="fu-preview-wrap">
+          <div class="fu-preview-label">Mensagem</div>
+          <div class="fu-msg-preview" id="fu-msg-preview" contenteditable="true">${msgText}</div>
+        </div>
+        <div class="fu-phone-row">
+          <label class="fu-phone-label">Telefone</label>
+          <input type="tel" id="fu-phone-input" class="fu-phone-input"
+            value="${phone || ''}" placeholder="(21) 99999-9999">
+        </div>
+        <div class="fu-actions">
+          <button class="fu-btn-wa" onclick="fuSendWA()">📲 Abrir no WhatsApp</button>
+          <button class="fu-btn-copy" onclick="fuCopy()">📋 Copiar</button>
+        </div>
+        <div class="fu-hist-section">
+          <div class="fu-hist-title">Histórico de envios</div>
+          <div id="fu-hist-list">${histHTML}</div>
+        </div>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  requestAnimationFrame(() => modal.classList.add('show'));
+  modal.addEventListener('click', ev => { if (ev.target === modal) closeFu(); });
+}
+
+// ══════════════════════════════════════════════════════════
+//  GUIA ESTRATÉGICO DE FOLLOW UP
+// ══════════════════════════════════════════════════════════
+function openGuia() {
+  const existing = document.getElementById('guia-modal');
+  if (existing) { existing.remove(); return; }
+  const modal = document.createElement('div');
+  modal.id = 'guia-modal';
+  modal.className = 'fu-overlay';
+  modal.innerHTML = `
+    <div class="fu-box guia-box">
+      <div class="fu-hdr">
+        <div class="fu-hdr-left">
+          <div class="fu-hdr-name">📖 Guia de Follow Up</div>
+          <div class="fu-hdr-sub">Referência estratégica</div>
+        </div>
+        <button class="fu-close-btn" onclick="this.closest('#guia-modal').remove()">✕</button>
+      </div>
+      <div class="fu-body">
+
+        <div class="guia-section">
+          <div class="guia-title">⏱ Timing ideal</div>
+          <div class="guia-item"><span class="guia-badge guia-badge-fu">FU-1</span>48-72h após enviar orçamento</div>
+          <div class="guia-item"><span class="guia-badge guia-badge-fu">FU-2</span>5-7 dias sem resposta</div>
+          <div class="guia-item"><span class="guia-badge guia-badge-enc">ENC</span>7-10 dias após FU-2 — encerrar elegante</div>
+          <div class="guia-item"><span class="guia-badge guia-badge-pos">D-1</span>Véspera do atendimento</div>
+          <div class="guia-item"><span class="guia-badge guia-badge-pos">POS</span>Mesmo dia (imediato) + 24h + 7 dias</div>
+        </div>
+
+        <div class="guia-section">
+          <div class="guia-title">🚫 Quando NÃO enviar</div>
+          <div class="guia-item guia-danger">Mais de 2 follow ups sem resposta — pare</div>
+          <div class="guia-item guia-danger">Logo após a cliente ter respondido (menos de 24h)</div>
+          <div class="guia-item guia-danger">Fora do horário: antes das 9h ou após as 19h</div>
+          <div class="guia-item guia-danger">Segunda de manhã cedo ou sexta à noite</div>
+        </div>
+
+        <div class="guia-section">
+          <div class="guia-title">💬 Resposta às objeções</div>
+          <div class="guia-item"><strong>"Vou pensar"</strong> → Abra espaço sem pressionar. Mencione agenda se data próxima.</div>
+          <div class="guia-item"><strong>"Ficou caro"</strong> → Pergunte o orçamento dela antes de propor qualquer ajuste.</div>
+          <div class="guia-item"><strong>"Outra cobra menos"</strong> → Explique seu diferencial com calma e confiança. Não compita.</div>
+          <div class="guia-item"><strong>"Vou ver com meu marido"</strong> → Ofereça um resumo por escrito para facilitar a conversa.</div>
+          <div class="guia-item"><strong>"Estou pesquisando"</strong> → "Faz sentido! Se tiver dúvidas sobre como funciona meu atendimento, me chama."</div>
+        </div>
+
+        <div class="guia-section">
+          <div class="guia-title">🕐 Melhores horários</div>
+          <div class="guia-item guia-ok">✅ 10h–11h30 · 14h–16h</div>
+          <div class="guia-item guia-danger">❌ Antes das 9h · Após as 19h</div>
+          <div class="guia-item guia-danger">❌ Segunda cedo · Sexta à noite</div>
+        </div>
+
+        <div class="guia-section">
+          <div class="guia-title">🎯 Encerramento elegante</div>
+          <div class="guia-tip">"Oi, [Nome]! Como não tivemos retorno, vou liberar o espaço na minha agenda. Se em outro momento quiser conversar, estarei por aqui. Boa sorte com tudo! 🤍"</div>
+          <div class="guia-tip-sub">Esse texto tem alta taxa de retorno — quem estava hesitando frequentemente responde.</div>
+        </div>
+
+        <div class="guia-section">
+          <div class="guia-title">💡 Princípio central</div>
+          <div class="guia-tip">O follow up premium não persegue — ele cuida. Você não é ansiosa. Você é organizada e presente. A cliente que se sente lembrada, não cobrada, é a que fecha e indica.</div>
+        </div>
+
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  requestAnimationFrame(() => modal.classList.add('show'));
+  modal.addEventListener('click', ev => { if (ev.target === modal) modal.remove(); });
 }
 
 // ══════════════════════════════════════════════════════════
