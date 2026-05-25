@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-25 12:58 | main | feat(brand-brain): adiciona eixo de Humaniza├º├úo e Presen├ºa Real -->
+<!-- AUTO: 2026-05-25 13:02 | main | fix(clientes): migra fonte de dados de GAS para Supabase e corrige exibi├º├úo de atendimentos -->
 
