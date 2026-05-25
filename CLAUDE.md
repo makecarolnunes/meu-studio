@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-25 18:14 | main | docs: sync CLAUDE.md [auto] -->
+<!-- AUTO: 2026-05-25 18:48 | main | feat: sistema de follow up estrat├®gico (clientes + or├ºamentos) -->
 
