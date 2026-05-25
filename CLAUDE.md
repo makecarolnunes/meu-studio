@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-25 19:48 | main | refactor(nav): renomeia m├│dulos e mescla Radar+Concorrentes em Insights de Mercado -->
+<!-- AUTO: 2026-05-25 20:04 | main | refactor(modules): renomeia Estrat├®gia de Comunica├º├úo ÔåÆ An├ílise de Marca; corrige abas Insights de Mercado; add back btn em Agendamentos -->
 
