@@ -242,7 +242,7 @@
   function buildEstrategia() {
     var ESTRATEGIA = [
       { key: 'insights',     nome: 'Insights de Mercado',        desc: 'Referências de mercado e análise de concorrentes com IA',      url: 'conteudo/brand-brain.html',     cls: 'card-radar'   },
-      { key: 'centromarca', nome: 'Estratégia de Comunicação',  desc: 'Transforme ideias em conteúdo com IA — baseado no seu guide de marca', url: 'conteudo/centro-de-marca.html', cls: 'card-cdc'     },
+      { key: 'centromarca', nome: 'Análise de Marca',            desc: 'Analise sua marca, tom de voz e posicionamento com IA',               url: 'conteudo/centro-de-marca.html', cls: 'card-cdc'     },
       { key: 'cdc',         nome: 'Manual de Marca',            desc: 'Base da empresa — DNA, posicionamento e pilares estratégicos', url: 'estrategia/centro-de-comando.html', cls: 'card-cdc' },
     ];
     document.getElementById('estrategia-section').innerHTML = ESTRATEGIA.map(function(c) {
