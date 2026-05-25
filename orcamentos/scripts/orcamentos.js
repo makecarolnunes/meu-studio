@@ -49,6 +49,7 @@ let entries     = (function() {
 let services    = safeJSON(localStorage.getItem('orca_services'), DEFAULT_SERVICES);
 let curFilter   = 'todos';
 let curOrigem   = 'todos';   // filtro por origem: 'todos' | 'Produção Social' | 'Noiva' | 'Curso de Automaquiagem'
+let curEquipe   = 'todos';   // filtro por equipe: 'todos' | '__sem__' | nome da equipe
 let curSearch   = '';        // pesquisa por nome do cliente
 let activeId    = null;
 let filterMonth = null;
@@ -127,7 +128,7 @@ function renderEntryCard(e) {
     '<div class="entry ' + cls + '" onclick="openAction(\'' + esc(e.ID) + '\')">' +
       '<div class="e-date">' + fmtDateCard(e.DataPedido) + '</div>' +
       '<div class="e-info">' +
-        '<div class="e-name">' + esc(e.Cliente || '—') + '</div>' +
+        '<div class="e-name">' + esc(e.Cliente || '—') + (e.Equipe ? ' <span style="display:inline-block;background:#e0f7fa;color:#006064;border-radius:8px;padding:1px 7px;font-size:.65rem;font-weight:600;vertical-align:middle">↑ ' + esc(e.Equipe) + '</span>' : '') + '</div>' +
         '<div class="e-srv">' + (nfu ? '<span class="fu-dot"></span>' : '') + esc(e.Servico || '—') + '</div>' +
         (meta ? '<div class="e-meta">' + esc(meta) + '</div>' : '') +
         statusRow +
@@ -899,6 +900,10 @@ function render() {
     list = list.filter(e => e.Origem === curOrigem);
   }
 
+  // Filtro por equipe
+  if (curEquipe === '__sem__') list = list.filter(e => !e.Equipe);
+  else if (curEquipe !== 'todos') list = list.filter(e => e.Equipe === curEquipe);
+
   // Pesquisa por nome do cliente
   if (curSearch.trim()) {
     const q = curSearch.toLowerCase().trim();
@@ -914,6 +919,33 @@ function render() {
   // Atualiza tabs de origem (mobile + desktop)
   document.querySelectorAll('.orig-tab').forEach(t => t.classList.toggle('on', t.dataset.o === curOrigem));
   document.querySelectorAll('.d-fil-item[data-o]').forEach(t => t.classList.toggle('active', t.dataset.o === curOrigem));
+
+  // Atualiza tabs de equipe (mobile + desktop)
+  document.querySelectorAll('.equipe-tab').forEach(t => t.classList.toggle('on', t.dataset.eq === curEquipe));
+  document.querySelectorAll('.d-fil-item[data-eq]').forEach(t => t.classList.toggle('active', t.dataset.eq === curEquipe));
+
+  // Monta filtro de equipe dinamicamente
+  const equipesDisp = [...new Set(entries.map(e => e.Equipe).filter(Boolean))];
+  const equipeTabsEl = document.getElementById('equipe-tabs');
+  const equipeTabsDsEl = document.getElementById('ds-equipe-section');
+  if (equipeTabsEl) {
+    if (equipesDisp.length) {
+      equipeTabsEl.style.display = '';
+      const items = [{eq:'todos',l:'Todas'},{eq:'__sem__',l:'Sem equipe'},...equipesDisp.map(eq=>({eq,l:eq}))];
+      equipeTabsEl.innerHTML = items.map(f=>`<button class="equipe-tab${curEquipe===f.eq?' on':''}" data-eq="${f.eq}" onclick="setEquipe('${f.eq}')">${f.l}</button>`).join('');
+    } else {
+      equipeTabsEl.style.display = 'none';
+    }
+  }
+  if (equipeTabsDsEl) {
+    if (equipesDisp.length) {
+      equipeTabsDsEl.style.display = '';
+      const items = [{eq:'todos',l:'Todas as equipes'},{eq:'__sem__',l:'Sem equipe'},...equipesDisp.map(eq=>({eq,l:eq}))];
+      equipeTabsDsEl.innerHTML = `<div class="dsb-lbl">Equipe</div>` + items.map(f=>`<button class="d-fil-item${curEquipe===f.eq?' active':''}" data-eq="${f.eq}" onclick="setEquipe('${f.eq}')"><span class="d-fil-dot" style="background:#006064"></span>${f.l}</button>`).join('');
+    } else {
+      equipeTabsDsEl.style.display = 'none';
+    }
+  }
 
   // Atualiza KPIs do sidebar desktop (se existirem)
   const dsTotal   = document.getElementById('ds-total');
@@ -965,6 +997,7 @@ function render() {
 // ══════════════════════════════════════════════════════════
 function setF(f) { curFilter = f; render(); }
 function setOrigem(v) { curOrigem = v; render(); }
+function setEquipe(v) { curEquipe = v; render(); }
 function setSearch(v) { curSearch = v; render(); }
 function navMonth(dir) {
   const base = filterMonth ? new Date(filterMonth + '-01T12:00:00') : new Date();
@@ -1022,9 +1055,27 @@ function openAddForm() {
   document.getElementById('add-followup').value = defaultFollowup();
   document.getElementById('add-obs').value      = '';
   document.getElementById('add-origem').value   = 'Produção Social';
+  const addEqChk = document.getElementById('add-eq-chk');
+  const addEqInp = document.getElementById('add-equipe');
+  if (addEqChk) addEqChk.checked = false;
+  if (addEqInp) { addEqInp.value = ''; addEqInp.style.display = 'none'; }
   addSlots = [];
   addAddSlot();
   openPanel('panel-add');
+}
+
+function toggleAddEquipeInput(checked) {
+  const inp = document.getElementById('add-equipe');
+  if (!inp) return;
+  if (checked) { inp.style.display = ''; inp.style.marginTop = '8px'; inp.focus(); }
+  else { inp.style.display = 'none'; inp.value = ''; }
+}
+
+function toggleActEquipeInput(checked) {
+  const inp = document.getElementById('act-equipe');
+  if (!inp) return;
+  if (checked) { inp.style.display = ''; inp.style.marginTop = '8px'; inp.focus(); }
+  else { inp.style.display = 'none'; inp.value = ''; }
 }
 
 function addAddSlot() {
@@ -1116,6 +1167,7 @@ async function saveNew() {
   const obs    = document.getElementById('add-obs').value.trim();
   const fu     = document.getElementById('add-followup').value;
   const origem = document.getElementById('add-origem').value;
+  const equipe = (document.getElementById('add-equipe') || {}).value?.trim() || '';
 
   if (!nome) { toast('⚠️ Informe o nome do cliente'); return; }
   if (!tel)  { toast('⚠️ Informe o telefone'); return; }
@@ -1148,6 +1200,7 @@ async function saveNew() {
     ValorFechado:'',
     Obs:          packSlots(obs, slotsToStore),
     Origem:       origem,
+    Equipe:       equipe,
     DataEvento:   dataEvento,
     DataCriacao:  todayStr(),
   };
@@ -1200,6 +1253,10 @@ function openAction(id) {
   document.getElementById('act-val-enviado').value = e.ValorProp || '';
   document.getElementById('act-followup').value = e.ProxFollowup || '';
   document.getElementById('act-obs').value      = entryCleanObs(e);
+  const actEqChk = document.getElementById('act-eq-chk');
+  const actEqInp = document.getElementById('act-equipe');
+  if (actEqChk) actEqChk.checked = !!(e.Equipe);
+  if (actEqInp) { actEqInp.value = e.Equipe || ''; actEqInp.style.display = e.Equipe ? '' : 'none'; if (e.Equipe) actEqInp.style.marginTop = '8px'; }
 
   // Carrega o picker de follow-up
   renderFollowupPicker(id);
@@ -1245,6 +1302,9 @@ async function saveAction() {
   const ve = document.getElementById('act-val-enviado').value;
   if (e.Status === 'Fechado' && vf) e.ValorFechado = vf;
   if (ve) e.ValorProp = ve;
+  const actEqInp = document.getElementById('act-equipe');
+  e.Equipe = (actEqInp && document.getElementById('act-eq-chk') && document.getElementById('act-eq-chk').checked)
+    ? actEqInp.value.trim() : '';
 
   // Salvar propostas se for noiva (por origem ou serviço)
   if (isNoivaEntry(e) && actPropostas.length > 0) {
@@ -1265,6 +1325,7 @@ async function saveAction() {
     ValorProp:     e.ValorProp,
     Obs:           e.Obs,
     Propostas:     e.Propostas,
+    Equipe:        e.Equipe || '',
   };
   const result = await postEntry({ action: 'update', id: e.ID, fields });
   if (!result.ok && result.error !== 'no-url') {
@@ -1623,6 +1684,7 @@ async function confirmarFechamento() {
       status: fechSinalRecebido ? 'Realizado' : 'Previsto',
       origem: origem,
       obs: 'Sinal — Orçamento ' + e.ID,
+      equipe: e.Equipe || '',
       auto: false,
       createdAt: new Date().toISOString(),
       noivaId: ''
@@ -1645,6 +1707,7 @@ async function confirmarFechamento() {
       status: 'Previsto',
       origem: origem,
       obs: 'Restante (sinal: R$ ' + fmt(sinal) + ') — Orçamento ' + e.ID,
+      equipe: e.Equipe || '',
       auto: true,
       createdAt: new Date().toISOString(),
       noivaId: ''

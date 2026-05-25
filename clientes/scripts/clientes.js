@@ -16,11 +16,12 @@ const CAL_ID      = 'c82d7e89c34b742daed656c5aa3113d25cb3feda4e8f159936750f2e174
 const SCRIPT_URL  = localStorage.getItem('mk_script_url') || DEFAULT_URL;
 
 // ── DATA ──────────────────────────────────────────────────
-let entries   = JSON.parse(localStorage.getItem('mk_entries') || '[]');
-let calMap    = {};
-let selMonth  = new Date().getMonth();
-let selYear   = new Date().getFullYear();
-let curFilter = 'todos';
+let entries        = JSON.parse(localStorage.getItem('mk_entries') || '[]');
+let calMap         = {};
+let selMonth       = new Date().getMonth();
+let selYear        = new Date().getFullYear();
+let curFilter      = 'todos';
+let curEquipeFilter= 'todos';
 
 // ── UTILS ─────────────────────────────────────────────────
 function todayStr() {
@@ -60,6 +61,11 @@ function chm(d) {
 function setF(btn) {
   curFilter = btn.dataset.f;
   document.querySelectorAll('.ftab').forEach(b => b.classList.toggle('on', b === btn));
+  render();
+}
+
+function setEquipeF(v) {
+  curEquipeFilter = v;
   render();
 }
 
@@ -191,6 +197,23 @@ function render() {
     uniq = uniq.filter(e => statusDoAtendimento(e) === curFilter);
   }
 
+  // Aplicar filtro por equipe
+  if (curEquipeFilter === '__sem__') uniq = uniq.filter(e => !e.equipe);
+  else if (curEquipeFilter !== 'todos') uniq = uniq.filter(e => e.equipe === curEquipeFilter);
+
+  // Montar filtro de equipe dinâmico
+  const equipesNoMes = [...new Set(Object.values(map).map(e => e.equipe).filter(Boolean))];
+  const equipeTabsEl = document.getElementById('equipe-tabs');
+  if (equipeTabsEl) {
+    if (equipesNoMes.length) {
+      equipeTabsEl.style.display = '';
+      const opts = [{eq:'todos',l:'Todas'},{eq:'__sem__',l:'Sem equipe'},...equipesNoMes.map(eq=>({eq,l:eq}))];
+      equipeTabsEl.innerHTML = opts.map(o=>`<button class="ftab${curEquipeFilter===o.eq?' on':''}" onclick="setEquipeF('${o.eq}')">${o.l}</button>`).join('');
+    } else {
+      equipeTabsEl.style.display = 'none';
+    }
+  }
+
   const total      = uniq.length;
   const realizados = uniq.filter(e => statusDoAtendimento(e) === 'Realizado').length;
   const previstos  = uniq.filter(e => statusDoAtendimento(e) === 'Previsto').length;
@@ -260,6 +283,7 @@ function render() {
         : (e.local === 'Em Domicílio' || (e.servico||'').toLowerCase().includes('domicílio'))
           ? 'Domicílio' : (e.local || '');
 
+      const equipeTag = e.equipe ? `<span style="display:inline-block;background:#e0f7fa;color:#006064;border-radius:8px;padding:1px 7px;font-size:.65rem;font-weight:600;margin-left:4px;vertical-align:middle">↑ ${e.equipe}</span>` : '';
       return `
         <div class="entry ${isReal ? 'real' : 'prev'} ${isNoiva ? 'noiva' : ''}">
           ${isNoiva ? `<div class="noiva-emoji">👰</div>` : ''}
@@ -267,7 +291,7 @@ function render() {
             ? `<div class="e-time-val">${horario}</div>`
             : `<div class="e-time-em">—</div>`}</div>
           <div class="e-info">
-            <div class="e-name">${e.cliente || '(sem nome)'}</div>
+            <div class="e-name">${e.cliente || '(sem nome)'}${equipeTag}</div>
             <div class="e-srv">
               ${icon} ${srv}
               ${localTag ? `<span class="e-local">${localTag}</span>` : ''}

@@ -31,6 +31,7 @@ function bindAll() {
     });
     on('i-ds','change',()=>updateSinalPreview());
     on('i-ob','input', e=>F.obs=e.target.value);
+    on('i-eq','input', e=>F.equipe=e.target.value);
     on('si-dp','change',e=>Fs.dataPag=e.target.value);
     on('si-v','input', e=>Fs.valor=e.target.value);
     on('si-ob','input',e=>Fs.obs=e.target.value);
@@ -82,7 +83,12 @@ function renderNova() {
         <div class="fg"><label class="fl">Local</label>${bgroup('local',['Studio','Em Domicílio'])}</div>
         <div class="fg"><label class="fl">Forma de Pagamento</label>${bgroup('forma',['PIX','Crédito','Dinheiro'])}</div>
         <div class="fg"><label class="fl">Origem</label>${bgroup('origem',['Produção Social','Noiva','Assistência',{l:'Curso Auto',v:'Curso de Automaquiagem'}])}</div>
-        <div class="fg"><label class="fl">Atendimento pela equipe <span style="color:var(--muted);font-size:.75rem">(opcional)</span></label><input class="fi" type="text" id="i-eq" placeholder="Ex: Julia" value="${F.equipe||''}" autocomplete="off"></div>
+        <div class="fg">
+            <label class="fl" style="display:flex;align-items:center;gap:8px;cursor:pointer;text-transform:none;font-size:.82rem;font-weight:600;letter-spacing:0">
+                <input type="checkbox" id="i-eq-chk" ${F.equipe?'checked':''} style="width:16px;height:16px;accent-color:var(--brand);flex-shrink:0" onchange="toggleEquipeInput(this.checked)"> Atendimento realizado por equipe
+            </label>
+            <input class="fi" type="text" id="i-eq" placeholder="Nome da equipe ou assistente" value="${F.equipe||''}" autocomplete="off" style="${F.equipe?'margin-top:8px':'display:none'}">
+        </div>
         <div class="fg"><label class="fl">Observações</label><textarea class="fi ta" id="i-ob" placeholder="Opcional...">${F.obs}</textarea></div>
     </div>
     <button class="bsub" onclick="saveEntry()">Salvar Lançamento</button>`;
@@ -107,9 +113,13 @@ function renderLista() {
     if (window.innerWidth >= 1024) return renderListaDesktop();
     let list = entries.filter(e => { const my=getMonthYear(e.dataPag); return my&&my.m===selMonth&&my.y===selYear; });
     if (listFilter!=='todos') list = list.filter(e=>e.status===listFilter||e.tipo===listFilter);
+    if (listEquipeFilter==='__sem__') list = list.filter(e=>!e.equipe);
+    else if (listEquipeFilter!=='todos') list = list.filter(e=>e.equipe===listEquipeFilter);
     list.sort((a,b)=>(b.dataPag||'').localeCompare(a.dataPag||''));
     const total = list.reduce((s,e)=>s+Number(e.valor||0),0);
     const filters = [{k:'todos',l:'Todos'},{k:'Realizado',l:'Realizado'},{k:'Previsto',l:'Previsto'},{k:'Sinal',l:'Sinal'},{k:'Pagamento',l:'Pagamento'},{k:'Parcela',l:'Parcela'}];
+    const equipes = [...new Set(entries.filter(e=>{const my=getMonthYear(e.dataPag);return my&&my.m===selMonth&&my.y===selYear;}).map(e=>e.equipe).filter(Boolean))];
+    const equipeFiltersHtml = equipes.length ? `<div class="ftabs" style="margin-top:5px">${[{k:'todos',l:'Todas'},{k:'__sem__',l:'Sem equipe'},...equipes.map(eq=>({k:eq,l:eq}))].map(f=>`<button class="ftab ${listEquipeFilter===f.k?'on':''}" onclick="setEquipeFilter('${f.k}')">${f.l}</button>`).join('')}</div>` : '';
     return `
     <div class="msel">
         <button class="mnbtn" onclick="chm(-1)">‹</button>
@@ -117,6 +127,7 @@ function renderLista() {
         <button class="mnbtn" onclick="chm(1)">›</button>
     </div>
     <div class="ftabs">${filters.map(f=>`<button class="ftab ${listFilter===f.k?'on':''}" onclick="setF('${f.k}')">${f.l}</button>`).join('')}</div>
+    ${equipeFiltersHtml}
     ${list.length===0?`<div class="empty"><div class="ico">${SVG.list}</div><p>Nenhuma entrada em<br><strong>${MONTHS[selMonth]} ${selYear}</strong></p></div>`
     :list.map(e=>{
         const s=entradaStyle(e.origem, e.tipo);
@@ -202,6 +213,8 @@ function renderEntryDetailPanel(e) {
 function renderListaDesktop() {
     let list = entries.filter(e => { const my=getMonthYear(e.dataPag); return my&&my.m===selMonth&&my.y===selYear; });
     if (listFilter!=='todos') list = list.filter(e=>e.status===listFilter||e.tipo===listFilter);
+    if (listEquipeFilter==='__sem__') list = list.filter(e=>!e.equipe);
+    else if (listEquipeFilter!=='todos') list = list.filter(e=>e.equipe===listEquipeFilter);
     list.sort((a,b)=>(b.dataPag||'').localeCompare(a.dataPag||''));
     const total    = list.reduce((s,e)=>s+Number(e.valor||0),0);
     const realized = list.filter(e=>e.status==='Realizado').reduce((s,e)=>s+Number(e.valor||0),0);
@@ -209,6 +222,8 @@ function renderListaDesktop() {
     const cntReal  = list.filter(e=>e.status==='Realizado').length;
     const cntPrev  = list.filter(e=>e.status==='Previsto').length;
     const filters  = [{k:'todos',l:'Todos'},{k:'Realizado',l:'Realizado'},{k:'Previsto',l:'Previsto'},{k:'Sinal',l:'Sinal'},{k:'Pagamento',l:'Pagamento'},{k:'Parcela',l:'Parcela'}];
+    const equipesD = [...new Set(entries.filter(e=>{const my=getMonthYear(e.dataPag);return my&&my.m===selMonth&&my.y===selYear;}).map(e=>e.equipe).filter(Boolean))];
+    const equipeToolbar = equipesD.length ? `<div class="ftabs" style="margin-top:5px">${[{k:'todos',l:'Todas'},{k:'__sem__',l:'Sem equipe'},...equipesD.map(eq=>({k:eq,l:eq}))].map(f=>`<button class="ftab ${listEquipeFilter===f.k?'on':''}" onclick="setEquipeFilter('${f.k}')">${f.l}</button>`).join('')}</div>` : '';
 
     // Limpa seleção se a entrada foi deletada
     if (selectedEntryId && !entries.find(x=>String(x.id)===String(selectedEntryId))) selectedEntryId = null;
@@ -235,7 +250,10 @@ function renderListaDesktop() {
         </div>
     </div>
     <div class="d-toolbar">
-        <div class="ftabs">${filters.map(f=>`<button class="ftab ${listFilter===f.k?'on':''}" onclick="setF('${f.k}')">${f.l}</button>`).join('')}</div>
+        <div>
+            <div class="ftabs">${filters.map(f=>`<button class="ftab ${listFilter===f.k?'on':''}" onclick="setF('${f.k}')">${f.l}</button>`).join('')}</div>
+            ${equipeToolbar}
+        </div>
         <button class="d-btn-add" onclick="go('nova')">${SVG.money} Nova entrada</button>
     </div>
     <div class="lista-split">

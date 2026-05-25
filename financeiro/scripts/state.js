@@ -16,6 +16,7 @@ let screen         = 'nova';
 let selMonth       = new Date().getMonth();
 let selYear        = new Date().getFullYear();
 let listFilter     = 'todos';
+let listEquipeFilter = 'todos';
 let saidasFormOpen = false;
 let noivaDetail    = null;
 let isSyncing        = false;

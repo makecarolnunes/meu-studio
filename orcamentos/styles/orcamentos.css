@@ -273,6 +273,14 @@
       transition: all .15s; font-family: inherit;
     }
     .orig-tab.on { background: var(--brown); border-color: var(--brown); color: white; }
+    .equipe-tab {
+      padding: 5px 11px; border-radius: 20px;
+      border: 1.5px solid #b2dfdb;
+      background: var(--card); font-size: 0.72rem; font-weight: 600;
+      cursor: pointer; white-space: nowrap; color: #006064;
+      transition: all .15s; font-family: inherit;
+    }
+    .equipe-tab.on { background: #006064; border-color: #006064; color: white; }
 
     /* ── DESKTOP SIDEBAR — oculto em mobile ─────────────── */
     .d-sidebar { display: none; }
@@ -393,6 +401,7 @@
       .month-nav   { display: none; }
       .m-search-bar{ display: none; }
       .orig-tabs   { display: none; }
+      #equipe-tabs { display: none !important; }
       .fab         { display: none; }
 
       /* ── Desktop controls bar ── */

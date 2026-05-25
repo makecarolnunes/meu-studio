@@ -59,6 +59,9 @@
     </button>
     <button class="d-fil-item"        data-o="Curso de Automaquiagem"   onclick="setOrigem('Curso de Automaquiagem')"><span class="d-fil-dot" style="background:var(--amber)"></span>Curso de Automaquiagem</button>
   </div>
+  <div class="dsb-section" id="ds-equipe-section" style="display:none">
+    <!-- Preenchido dinamicamente pelo render() -->
+  </div>
 </aside>
 
 <!-- ── HEADER ─────────────────────────────────────────────── -->
@@ -154,6 +157,9 @@
   <button class="orig-tab"    data-o="Curso de Automaquiagem"  onclick="setOrigem('Curso de Automaquiagem')">Curso</button>
 </div>
 
+<!-- ── FILTRO EQUIPE (mobile, preenchido pelo render()) ───── -->
+<div class="orig-tabs" id="equipe-tabs" style="display:none"></div>
+
 <!-- ── CONTENT ────────────────────────────────────────────── -->
 <div class="content" id="content">
   <div class="loader"><div class="spinner"></div><br>Carregando orçamentos...</div>
@@ -216,6 +222,12 @@
     <div class="form-group">
       <label class="form-label">Observações</label>
       <textarea class="form-input" id="add-obs" rows="2" placeholder="Ex: cliente quer desconto, casamento dia 20/06..."></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label" style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600">
+        <input type="checkbox" id="add-eq-chk" style="width:16px;height:16px;accent-color:#006064;flex-shrink:0" onchange="toggleAddEquipeInput(this.checked)"> Atendimento realizado por equipe
+      </label>
+      <input class="form-input" type="text" id="add-equipe" placeholder="Nome da equipe ou assistente" style="display:none" autocomplete="off">
     </div>
     <button class="btn-primary" onclick="saveNew()">💾 Salvar Orçamento</button>
     <button class="btn-outline" onclick="closeAll()">Cancelar</button>
@@ -304,6 +316,12 @@
     <div class="form-group">
       <label class="form-label">Observações</label>
       <textarea class="form-input" id="act-obs" rows="2" placeholder="Anotações sobre este cliente..."></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label" style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600">
+        <input type="checkbox" id="act-eq-chk" style="width:16px;height:16px;accent-color:#006064;flex-shrink:0" onchange="toggleActEquipeInput(this.checked)"> Atendimento realizado por equipe
+      </label>
+      <input class="form-input" type="text" id="act-equipe" placeholder="Nome da equipe ou assistente" style="display:none" autocomplete="off">
     </div>
   </div>
 

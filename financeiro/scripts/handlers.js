@@ -56,6 +56,20 @@ function syncF() {
 // ── NAVEGAÇÃO MÊS / FILTROS ──
 function chm(d) { selMonth+=d; if(selMonth<0){selMonth=11;selYear--;}if(selMonth>11){selMonth=0;selYear++;} render(); }
 function setF(f) { listFilter=f; render(); }
+function setEquipeFilter(f) { listEquipeFilter=f; render(); }
+function toggleEquipeInput(checked) {
+    const inp = document.getElementById('i-eq');
+    if (!inp) return;
+    if (checked) {
+        inp.style.display = '';
+        inp.style.marginTop = '8px';
+        inp.focus();
+    } else {
+        inp.style.display = 'none';
+        inp.value = '';
+        F.equipe = '';
+    }
+}
 
 // ── ACTIONS: ENTRADAS ──
 async function saveEntry() {
