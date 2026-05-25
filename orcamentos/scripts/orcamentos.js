@@ -1275,7 +1275,7 @@ function openAction(id) {
   openPanel('panel-action');
 }
 
-function setStatus(btn) {
+async function setStatus(btn) {
   const e = entries.find(x => String(x.ID) === String(activeId));
   if (!e) return;
   const newStatus = btn.dataset.s;
@@ -1289,6 +1289,12 @@ function setStatus(btn) {
   document.getElementById('val-fechado-row').style.display = newStatus === 'Fechado' ? 'block' : 'none';
   cacheEntries();
   render();
+
+  const fields = { Status: e.Status, DataEnvio: e.DataEnvio, DataFechamento: e.DataFechamento };
+  const result = await postEntry({ action: 'update', id: e.ID, fields });
+  if (!result.ok && result.error !== 'no-url') {
+    toast('⚠️ Sincronização do status falhou');
+  }
 }
 
 async function updateFollowup() {
@@ -1297,6 +1303,11 @@ async function updateFollowup() {
   e.ProxFollowup = document.getElementById('act-followup').value;
   cacheEntries();
   render();
+
+  const result = await postEntry({ action: 'update', id: e.ID, fields: { ProxFollowup: e.ProxFollowup } });
+  if (!result.ok && result.error !== 'no-url') {
+    toast('⚠️ Sincronização do follow-up falhou');
+  }
 }
 
 async function saveAction() {
