@@ -1,0 +1,1524 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Centro de Marca · Meu Studio</title>
+  <link rel="stylesheet" href="../shared/css/tokens.css">
+  <link rel="stylesheet" href="../shared/css/base.css">
+  <style>
+    body { max-width: 480px; margin: 0 auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; }
+
+    /* ── HEADER ── */
+    .hdr {
+      background: linear-gradient(135deg, #1a0a2e, #3d1a6e);
+      color: #fff; padding: 10px 14px; position: sticky; top: 0; z-index: 100;
+      display: grid; grid-template-columns: 44px 1fr 44px; align-items: center; gap: 8px;
+    }
+    .hdr-center { text-align: center; }
+    .hdr h1 { font-size: 1rem; font-weight: 700; }
+    .hdr-sub { font-size: .68rem; opacity: .7; margin-top: 1px; }
+    .hdr-back, .hdr-action {
+      width: 34px; height: 34px; border-radius: 50%; border: none;
+      background: rgba(255,255,255,.13); color: rgba(255,255,255,.88);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: background .15s; padding: 0;
+    }
+    .hdr-back:active, .hdr-action:active { background: rgba(255,255,255,.28); }
+
+    /* ── TAB NAV ── */
+    .cm-tabs {
+      display: flex; background: var(--surface);
+      border-bottom: 2px solid var(--border);
+      position: sticky; top: 54px; z-index: 99;
+    }
+    .cm-tab {
+      flex: 1; padding: 12px 6px; border: none; background: none;
+      font-family: inherit; font-size: .73rem; font-weight: 600;
+      color: var(--text-muted); cursor: pointer; display: flex;
+      flex-direction: column; align-items: center; gap: 3px;
+      border-bottom: 2px solid transparent; margin-bottom: -2px;
+      transition: all .15s; -webkit-tap-highlight-color: transparent;
+    }
+    .cm-tab.active { color: var(--brand-dark); border-bottom-color: var(--brand-dark); }
+    .cm-tab-icon { font-size: 1.1rem; }
+
+    /* ── TAB PANES ── */
+    .cm-pane { display: none; }
+    .cm-pane.active { display: block; }
+    .cm-content { padding: 14px 13px 100px; }
+
+    /* ── CARDS ── */
+    .cm-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 14px; padding: 14px; margin-bottom: 10px;
+    }
+    .cm-label {
+      display: block; font-size: .7rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .07em;
+      color: var(--text-muted); margin-bottom: 8px;
+    }
+    .cm-hint { font-size: .67rem; font-weight: 400; text-transform: none; letter-spacing: 0; color: var(--text-subtle); }
+    .cm-textarea {
+      width: 100%; padding: 11px 13px; background: var(--bg);
+      color: var(--text); border: 1.5px solid var(--border); border-radius: 9px;
+      font-family: inherit; font-size: .84rem; resize: vertical;
+      min-height: 88px; line-height: 1.55; -webkit-appearance: none;
+    }
+    .cm-textarea:focus { outline: none; border-color: var(--brand); }
+    .cm-textarea::placeholder { color: var(--text-subtle); }
+    .cm-input {
+      width: 100%; padding: 11px 13px; background: var(--bg);
+      color: var(--text); border: 1.5px solid var(--border); border-radius: 9px;
+      font-family: inherit; font-size: .84rem; -webkit-appearance: none;
+    }
+    .cm-input:focus { outline: none; border-color: var(--brand); }
+    .cm-input::placeholder { color: var(--text-subtle); }
+
+    /* ── TYPE BUTTONS ── */
+    .cm-type-row { display: flex; gap: 6px; flex-wrap: wrap; }
+    .cm-type-btn {
+      padding: 7px 13px; border-radius: 20px;
+      border: 1.5px solid var(--border); background: var(--surface);
+      font-size: .72rem; font-weight: 700; cursor: pointer;
+      color: var(--text-muted); transition: all .15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .cm-type-btn.on { background: #1a0a2e; border-color: #1a0a2e; color: #fff; }
+
+    /* ── ANALYZE BUTTON ── */
+    .cm-btn {
+      width: 100%; padding: 15px;
+      background: linear-gradient(135deg, #1a0a2e, #3d1a6e);
+      color: #fff; border: none; border-radius: 12px;
+      font-family: inherit; font-size: .92rem; font-weight: 700;
+      cursor: pointer; transition: opacity .2s, transform .12s;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      margin-top: 4px;
+    }
+    .cm-btn:active { transform: translateY(1px); }
+    .cm-btn:disabled { opacity: .55; cursor: not-allowed; }
+    .cm-btn-spinner {
+      width: 16px; height: 16px; border: 2px solid rgba(255,255,255,.4);
+      border-top-color: #fff; border-radius: 50%;
+      animation: spin .7s linear infinite; display: none;
+    }
+    .cm-btn.loading .cm-btn-spinner { display: block; }
+    .cm-btn.loading .cm-btn-icon { display: none; }
+
+    /* ── DNA CARD (Brand Brain) ── */
+    .dna-card {
+      background: linear-gradient(135deg, #1a0a2e, #3d1a6e);
+      border-radius: 16px; padding: 16px; margin-bottom: 12px; color: #fff;
+    }
+    .dna-card-title { font-size: .78rem; font-weight: 700; opacity: .7; text-transform: uppercase; letter-spacing: .09em; margin-bottom: 10px; }
+    .dna-essence { font-size: .88rem; font-weight: 700; line-height: 1.45; margin-bottom: 12px; }
+    .dna-pillars { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+    .dna-pillar {
+      padding: 4px 11px; border-radius: 20px;
+      background: rgba(255,255,255,.15); font-size: .68rem; font-weight: 600;
+    }
+    .dna-archetypes { font-size: .72rem; opacity: .75; line-height: 1.5; }
+    .dna-toggle {
+      width: 100%; padding: 10px 14px; background: rgba(255,255,255,.1);
+      border: none; color: rgba(255,255,255,.75); font-family: inherit;
+      font-size: .72rem; font-weight: 600; border-radius: 9px;
+      cursor: pointer; margin-top: 10px; text-align: left;
+    }
+    .dna-body { display: none; margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,.15); }
+    .dna-body.open { display: block; }
+    .dna-body-row { font-size: .72rem; opacity: .8; margin-bottom: 7px; line-height: 1.5; }
+    .dna-body-label { font-weight: 700; opacity: 1; }
+
+    /* ── LOADING ── */
+    .cm-loading { display: none; text-align: center; padding: 48px 20px; }
+    .cm-loading.show { display: block; }
+    .cm-spinner {
+      width: 38px; height: 38px; border: 3px solid rgba(61,26,110,.2);
+      border-top-color: #3d1a6e; border-radius: 50%;
+      animation: spin .75s linear infinite; margin: 0 auto 16px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .cm-loading-title { font-size: .9rem; font-weight: 700; color: #1a0a2e; margin-bottom: 6px; }
+    .cm-loading-sub { font-size: .76rem; color: var(--text-muted); line-height: 1.6; }
+    .cm-loading-steps { margin-top: 18px; display: flex; flex-direction: column; gap: 6px; }
+    .cm-loading-step {
+      font-size: .73rem; color: var(--text-subtle); opacity: 0;
+      animation: fadeStep .4s ease forwards;
+    }
+    .cm-loading-step:nth-child(1) { animation-delay: .3s; }
+    .cm-loading-step:nth-child(2) { animation-delay: 1.2s; }
+    .cm-loading-step:nth-child(3) { animation-delay: 2.4s; }
+    .cm-loading-step:nth-child(4) { animation-delay: 3.8s; }
+    @keyframes fadeStep { to { opacity: 1; } }
+
+    /* ── RESULT SECTIONS ── */
+    #cm-result-bb, #cm-result-ig, #cm-result-cv { display: none; }
+    #cm-result-bb.show, #cm-result-ig.show, #cm-result-cv.show { display: block; }
+
+    .result-meta {
+      background: linear-gradient(135deg, #1a0a2e, #3d1a6e);
+      color: #fff; border-radius: 14px; padding: 14px 16px; margin-bottom: 12px;
+    }
+    .result-meta-label { font-size: .65rem; font-weight: 700; opacity: .7; text-transform: uppercase; letter-spacing: .09em; margin-bottom: 3px; }
+    .result-meta-title { font-size: .9rem; font-weight: 700; margin-bottom: 2px; }
+    .result-meta-sub { font-size: .72rem; opacity: .75; }
+
+    .result-section { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; margin-bottom: 9px; }
+    .rs-header {
+      display: flex; align-items: center; gap: 10px;
+      padding: 13px 14px; cursor: pointer; -webkit-tap-highlight-color: transparent;
+      border-bottom: 1px solid transparent; transition: background .15s;
+    }
+    .rs-header:active { background: var(--surface-2); }
+    .result-section.open .rs-header { border-bottom-color: var(--border); }
+    .rs-icon {
+      width: 32px; height: 32px; border-radius: 9px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; font-size: 1rem;
+    }
+    .rs-title { font-size: .86rem; font-weight: 700; flex: 1; color: var(--text); }
+    .rs-arrow { font-size: .7rem; color: var(--text-muted); transition: transform .2s; }
+    .result-section.open .rs-arrow { transform: rotate(180deg); }
+    .rs-body { display: none; padding: 14px 15px; font-size: .82rem; line-height: 1.68; color: var(--text); }
+    .result-section.open .rs-body { display: block; }
+    .rs-body strong { font-weight: 700; color: #1a0a2e; }
+    .rs-body em { font-style: italic; color: var(--text-muted); }
+    .rs-body h3 { font-size: .84rem; font-weight: 700; color: #1a0a2e; margin: 12px 0 5px; }
+    .rs-body ul { margin: 6px 0 10px 18px; }
+    .rs-body li { margin-bottom: 5px; }
+    .rs-body p { margin-bottom: 8px; }
+    .rs-body p:last-child { margin-bottom: 0; }
+
+    /* ── BALANCE GRID ── */
+    .balance-grid { display: flex; flex-direction: column; gap: 9px; }
+    .balance-item {
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 10px; padding: 11px 13px;
+    }
+    .balance-item-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 7px; }
+    .balance-name { font-size: .75rem; font-weight: 700; color: var(--text); text-transform: uppercase; letter-spacing: .05em; }
+    .balance-badge {
+      font-size: .63rem; font-weight: 700; padding: 2px 9px;
+      border-radius: 10px; white-space: nowrap;
+    }
+    .badge-muito-forte { background: #E8F5E9; color: #2E7D32; }
+    .badge-forte { background: #F1F8E9; color: #558B2F; }
+    .badge-moderado { background: #FFF8E1; color: #E65100; }
+    .badge-fraco { background: #FFF3E0; color: #BF360C; }
+    .badge-muito-fraco { background: #FCE4EC; color: #880E4F; }
+    .balance-bar-wrap { height: 6px; background: var(--border); border-radius: 4px; overflow: hidden; margin-bottom: 7px; }
+    .balance-bar-fill { height: 100%; border-radius: 4px; }
+    .balance-desc { font-size: .76rem; color: var(--text-muted); line-height: 1.5; }
+
+    /* ── RESULT ACTIONS ── */
+    .result-actions { display: flex; gap: 8px; margin-bottom: 80px; margin-top: 4px; }
+    .action-btn {
+      flex: 1; padding: 12px 8px; border-radius: 12px; border: 1.5px solid var(--border);
+      background: var(--surface); color: var(--text-muted);
+      font-family: inherit; font-size: .76rem; font-weight: 600;
+      cursor: pointer; display: flex; flex-direction: column;
+      align-items: center; gap: 4px; -webkit-tap-highlight-color: transparent;
+      transition: background .15s;
+    }
+    .action-btn:hover { background: var(--surface-2); }
+    .action-btn-icon { font-size: 1.1rem; }
+    .action-btn-primary { background: #3d1a6e; border-color: #3d1a6e; color: #fff; }
+    .action-btn-primary:hover { background: #1a0a2e; border-color: #1a0a2e; }
+
+    /* ── TOAST ── */
+    .toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(10px);
+      background: #1a0a2e; color: #fff; padding: 10px 22px;
+      border-radius: 24px; font-size: .8rem; font-weight: 600;
+      z-index: 1200; opacity: 0; pointer-events: none;
+      transition: opacity .25s, transform .25s; white-space: nowrap; max-width: 88vw; text-align: center;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* ── KEY MODAL ── */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,.48);
+      z-index: 500; display: none; align-items: flex-end; justify-content: center;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal-box {
+      background: var(--surface); width: 100%; max-width: 480px;
+      border-radius: 20px 20px 0 0; padding: 22px 16px 36px;
+    }
+    .modal-handle { width: 40px; height: 4px; background: var(--border); border-radius: 4px; margin: 0 auto 18px; }
+    .modal-title { font-size: .95rem; font-weight: 700; margin-bottom: 6px; color: var(--text); }
+    .modal-sub { font-size: .77rem; color: var(--text-muted); margin-bottom: 16px; line-height: 1.5; }
+    .modal-input {
+      width: 100%; padding: 12px 14px; border: 1.5px solid var(--border);
+      border-radius: 10px; font-family: inherit; font-size: .84rem;
+      margin-bottom: 12px; background: var(--bg); color: var(--text); -webkit-appearance: none;
+    }
+    .modal-input:focus { outline: none; border-color: #3d1a6e; }
+    .modal-save {
+      width: 100%; padding: 14px; background: #3d1a6e; color: #fff;
+      border: none; border-radius: 11px; font-family: inherit;
+      font-size: .9rem; font-weight: 700; cursor: pointer; margin-bottom: 8px;
+    }
+    .modal-cancel {
+      width: 100%; padding: 11px; background: none; color: var(--text-muted);
+      border: none; font-family: inherit; font-size: .84rem; cursor: pointer;
+    }
+
+    /* ── DESKTOP ── */
+    @media (min-width: 768px) {
+      body { max-width: none; }
+      .hdr { max-width: none; padding: 12px 36px; grid-template-columns: 48px 1fr 48px; }
+      .hdr h1 { font-size: 1.1rem; }
+      .cm-tabs { position: sticky; top: 54px; max-width: none; }
+      .cm-tab { font-size: .8rem; padding: 13px 10px; }
+
+      .cm-pane.active { display: grid; }
+      .cm-content {
+        display: grid;
+        grid-template-columns: 360px 1fr;
+        max-width: 1280px; margin: 0 auto;
+        padding: 0; min-height: calc(100vh - 108px);
+        align-items: start;
+      }
+      .cm-left {
+        position: sticky; top: 108px;
+        height: calc(100vh - 108px); overflow-y: auto;
+        padding: 22px 20px 40px; border-right: 1px solid var(--border);
+        background: var(--surface); scrollbar-width: thin;
+        scrollbar-color: var(--border-strong) transparent;
+      }
+      .cm-left::-webkit-scrollbar { width: 4px; }
+      .cm-left::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
+      .cm-right {
+        padding: 24px 32px 60px; background: var(--bg);
+        min-height: calc(100vh - 108px); overflow-y: auto;
+      }
+      .cm-card { border-radius: 10px; padding: 12px; margin-bottom: 8px; }
+      .cm-btn { padding: 13px; font-size: .87rem; border-radius: 10px; }
+      .result-section { border-radius: 12px; margin-bottom: 8px; }
+      .result-actions { display: none; }
+      .balance-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; }
+      .modal-box { border-radius: 16px; max-width: 440px; margin: auto; }
+      .modal-overlay { align-items: center; }
+
+      /* Desktop result top bar */
+      .result-top-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+      .result-top-bar .result-meta { flex: 1; margin-bottom: 0; }
+      .result-top-actions { display: flex; gap: 8px; flex-shrink: 0; }
+      .result-top-btn {
+        padding: 10px 16px; border-radius: 9px; border: 1.5px solid var(--border);
+        background: var(--surface); color: var(--text-muted);
+        font-family: inherit; font-size: .78rem; font-weight: 600;
+        cursor: pointer; display: flex; align-items: center; gap: 6px;
+        white-space: nowrap; transition: background .15s;
+      }
+      .result-top-btn:hover { background: var(--surface-2); }
+      .result-top-btn-primary { background: #3d1a6e; border-color: #3d1a6e; color: #fff; }
+      .result-top-btn-primary:hover { background: #1a0a2e; }
+
+      /* Empty state */
+      .cm-empty {
+        display: flex; flex-direction: column;
+        align-items: center; text-align: center; padding: 64px 24px 40px;
+      }
+      .cm-empty-icon { font-size: 3.5rem; margin-bottom: 16px; }
+      .cm-empty-title { font-size: 1.2rem; font-weight: 700; color: #1a0a2e; margin-bottom: 8px; }
+      .cm-empty-sub { font-size: .83rem; color: var(--text-muted); line-height: 1.6; max-width: 340px; }
+    }
+    @media (min-width: 1100px) {
+      .cm-content { grid-template-columns: 400px 1fr; }
+      .cm-right { padding: 28px 44px 60px; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="cm-app">
+
+  <!-- HEADER -->
+  <div class="hdr">
+    <button class="hdr-back" onclick="history.back()" aria-label="Voltar">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <div class="hdr-center">
+      <h1>Centro de Marca</h1>
+      <div class="hdr-sub">Inteligência estratégica da sua marca</div>
+    </div>
+    <button class="hdr-action" onclick="openKeyModal()" title="Configurar chave Claude" aria-label="Configurar API">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12.22 2h-.44a2 2 0 00-2 2v.18a2 2 0 01-1 1.73l-.43.25a2 2 0 01-2 0l-.15-.08a2 2 0 00-2.73.73l-.22.38a2 2 0 00.73 2.73l.15.1a2 2 0 011 1.72v.51a2 2 0 01-1 1.74l-.15.09a2 2 0 00-.73 2.73l.22.38a2 2 0 002.73.73l.15-.08a2 2 0 012 0l.43.25a2 2 0 011 1.73V20a2 2 0 002 2h.44a2 2 0 002-2v-.18a2 2 0 011-1.73l.43-.25a2 2 0 012 0l.15.08a2 2 0 002.73-.73l.22-.39a2 2 0 00-.73-2.73l-.15-.08a2 2 0 01-1-1.74v-.5a2 2 0 011-1.74l.15-.09a2 2 0 00.73-2.73l-.22-.38a2 2 0 00-2.73-.73l-.15.08a2 2 0 01-2 0l-.43-.25a2 2 0 01-1-1.73V4a2 2 0 00-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+    </button>
+  </div>
+
+  <!-- TAB NAV -->
+  <div class="cm-tabs">
+    <button class="cm-tab active" data-tab="bb" onclick="setTab('bb')">
+      <span class="cm-tab-icon">🧠</span>Brand Brain
+    </button>
+    <button class="cm-tab" data-tab="ig" onclick="setTab('ig')">
+      <span class="cm-tab-icon">📸</span>Instagram
+    </button>
+    <button class="cm-tab" data-tab="cv" onclick="setTab('cv')">
+      <span class="cm-tab-icon">🎓</span>Curso VIP
+    </button>
+  </div>
+
+  <!-- ══ BRAND BRAIN TAB ══ -->
+  <div id="tab-bb" class="cm-pane active">
+    <div class="cm-content">
+      <div class="cm-left">
+
+        <!-- DNA CARD -->
+        <div class="dna-card">
+          <div class="dna-card-title">DNA da Marca</div>
+          <div class="dna-essence">"A marca premium não é fria — ela é segura, intencional e humana."</div>
+          <div class="dna-pillars">
+            <span class="dna-pillar">👰 Noivas</span>
+            <span class="dna-pillar">✊🏾 Pele Negra</span>
+            <span class="dna-pillar">🌀 Cachos</span>
+            <span class="dna-pillar">💎 Autoridade</span>
+            <span class="dna-pillar">🤍 Humanização</span>
+          </div>
+          <button class="dna-toggle" onclick="toggleDna()">▼ Ver DNA completo</button>
+          <div class="dna-body" id="dna-body">
+            <div class="dna-body-row"><span class="dna-body-label">Arquétipos: </span>A Criadora (primário) · A Sábia/Expert (secundário) · A Prestativa (terciário)</div>
+            <div class="dna-body-row"><span class="dna-body-label">Tom de voz: </span>Segura, especialista, sofisticada — nunca fria, nunca arrogante</div>
+            <div class="dna-body-row"><span class="dna-body-label">Objetivos: </span>Agenda cheia de noivas → referência regional → Curso VIP online</div>
+            <div class="dna-body-row"><span class="dna-body-label">Diferencial: </span>Única que une pele negra + noivas premium com presença humana genuína</div>
+            <div class="dna-body-row"><span class="dna-body-label">Públicos: </span>Noiva premium (AB, 25-38) · Mulher negra · Cabelo natural · Cliente de evento</div>
+          </div>
+        </div>
+
+        <!-- ANALYSIS TYPE -->
+        <div class="cm-card">
+          <label class="cm-label">Foco da análise</label>
+          <div class="cm-type-row" id="bb-type-row">
+            <button class="cm-type-btn on" data-v="saude">Saúde da Marca</button>
+            <button class="cm-type-btn" data-v="pilares">Por Pilar</button>
+            <button class="cm-type-btn" data-v="coerencia">Coerência</button>
+            <button class="cm-type-btn" data-v="oportunidades">Oportunidades</button>
+          </div>
+        </div>
+
+        <!-- OBSERVATIONS -->
+        <div class="cm-card">
+          <label class="cm-label">O que você percebe no seu perfil <span class="cm-hint">— seja honesta</span></label>
+          <textarea class="cm-textarea" id="bb-obs" rows="5"
+            placeholder="Ex: acho que estou muito técnica e fria ultimamente. Parei de aparecer nos stories. Meu feed está lindo mas ninguém responde..."></textarea>
+        </div>
+
+        <!-- RECENT CONTEXT -->
+        <div class="cm-card">
+          <label class="cm-label">Contexto recente <span class="cm-hint">— opcional mas poderoso</span></label>
+          <textarea class="cm-textarea" id="bb-ctx" rows="3"
+            placeholder="Ex: nos últimos 30 dias postei 4 reels técnicos, 2 carrosseis sobre noivas, zero presença humana. Engajamento caiu..."></textarea>
+        </div>
+
+        <button class="cm-btn" id="bb-btn" onclick="analyze('bb')">
+          <svg class="cm-btn-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <div class="cm-btn-spinner"></div>
+          Analisar Marca
+        </button>
+
+      </div><!-- /cm-left -->
+
+      <div class="cm-right" id="bb-right">
+        <!-- Empty state (desktop) -->
+        <div class="cm-empty" id="bb-empty">
+          <div class="cm-empty-icon">🧠</div>
+          <div class="cm-empty-title">Inteligência de marca</div>
+          <div class="cm-empty-sub">Selecione o foco, descreva o que percebe no seu perfil e clique em <strong>Analisar Marca</strong> para receber um diagnóstico estratégico profundo.</div>
+        </div>
+        <!-- Loading -->
+        <div class="cm-loading" id="bb-loading">
+          <div class="cm-spinner"></div>
+          <div class="cm-loading-title">Analisando sua marca...</div>
+          <div class="cm-loading-sub">Cruzando estratégia com comportamento real</div>
+          <div class="cm-loading-steps">
+            <div class="cm-loading-step">🧠 Lendo o DNA da marca...</div>
+            <div class="cm-loading-step">🎯 Diagnosticando alinhamento de pilares...</div>
+            <div class="cm-loading-step">🔍 Identificando incoerências e gaps...</div>
+            <div class="cm-loading-step">🚀 Gerando recomendações estratégicas...</div>
+          </div>
+        </div>
+        <!-- Desktop top bar -->
+        <div class="result-top-bar" id="bb-top-bar" style="display:none">
+          <div class="result-meta" id="bb-meta-desk" style="flex:1;margin-bottom:0"></div>
+          <div class="result-top-actions">
+            <button class="result-top-btn" onclick="resetAnalysis('bb')">↩ Nova análise</button>
+            <button class="result-top-btn" onclick="copyResult('bb')">📋 Copiar</button>
+            <button class="result-top-btn result-top-btn-primary" onclick="saveResult('bb')">💾 Salvar</button>
+          </div>
+        </div>
+        <!-- Result -->
+        <div id="cm-result-bb">
+          <div class="result-meta" id="bb-meta"></div>
+          <div id="bb-sections"></div>
+          <div class="result-actions">
+            <button class="action-btn" onclick="resetAnalysis('bb')"><span class="action-btn-icon">↩</span>Nova análise</button>
+            <button class="action-btn" onclick="copyResult('bb')"><span class="action-btn-icon">📋</span>Copiar</button>
+            <button class="action-btn action-btn-primary" onclick="saveResult('bb')"><span class="action-btn-icon">💾</span>Salvar</button>
+          </div>
+        </div>
+      </div><!-- /cm-right -->
+    </div>
+  </div><!-- /tab-bb -->
+
+  <!-- ══ INSTAGRAM TAB ══ -->
+  <div id="tab-ig" class="cm-pane">
+    <div class="cm-content">
+      <div class="cm-left">
+
+        <div class="cm-card">
+          <label class="cm-label">Perfil</label>
+          <input type="text" class="cm-input" id="ig-handle" value="@makecarolnunes" placeholder="@seu_perfil">
+        </div>
+
+        <div class="cm-card">
+          <label class="cm-label">Tipo de análise</label>
+          <div class="cm-type-row" id="ig-type-row">
+            <button class="cm-type-btn on" data-v="auditoria">Auditoria Completa</button>
+            <button class="cm-type-btn" data-v="equilibrio">Equilíbrio</button>
+            <button class="cm-type-btn" data-v="percepcao">Percepção</button>
+            <button class="cm-type-btn" data-v="perguntas">Perguntas Críticas</button>
+          </div>
+        </div>
+
+        <div class="cm-card">
+          <label class="cm-label">O que você vê no perfil agora <span class="cm-hint">— seja específica</span></label>
+          <textarea class="cm-textarea" id="ig-obs" rows="5"
+            placeholder="Ex: meu feed tem muito make técnica, pouco rosto. Minha bio fala de noivas mas os posts são 70% técnica geral. Tenho 8 destaques mas nenhum sobre mim..."></textarea>
+        </div>
+
+        <div class="cm-card">
+          <label class="cm-label">Captions recentes <span class="cm-hint">— cole 2-3 para análise de linguagem</span></label>
+          <textarea class="cm-textarea" id="ig-captions" rows="4"
+            placeholder="Cole algumas legendas recentes dos seus posts. Elas revelam muito sobre seu tom de voz real..."></textarea>
+        </div>
+
+        <button class="cm-btn" id="ig-btn" onclick="analyze('ig')">
+          <svg class="cm-btn-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <div class="cm-btn-spinner"></div>
+          Analisar Perfil
+        </button>
+
+      </div><!-- /cm-left -->
+
+      <div class="cm-right" id="ig-right">
+        <div class="cm-empty" id="ig-empty">
+          <div class="cm-empty-icon">📸</div>
+          <div class="cm-empty-title">Auditoria do perfil</div>
+          <div class="cm-empty-sub">Descreva o que você vê no seu perfil atualmente e receba uma análise estratégica profunda — posicionamento, percepção, equilíbrio e gaps.</div>
+        </div>
+        <div class="cm-loading" id="ig-loading">
+          <div class="cm-spinner"></div>
+          <div class="cm-loading-title">Auditando o perfil...</div>
+          <div class="cm-loading-sub">Analisando posicionamento, percepção e narrativa</div>
+          <div class="cm-loading-steps">
+            <div class="cm-loading-step">👁️ Avaliando primeira impressão...</div>
+            <div class="cm-loading-step">⚖️ Mapeando equilíbrio estratégico...</div>
+            <div class="cm-loading-step">🎭 Detectando arquetipos e tom de voz...</div>
+            <div class="cm-loading-step">🕳️ Identificando gaps e oportunidades...</div>
+          </div>
+        </div>
+        <div class="result-top-bar" id="ig-top-bar" style="display:none">
+          <div class="result-meta" id="ig-meta-desk" style="flex:1;margin-bottom:0"></div>
+          <div class="result-top-actions">
+            <button class="result-top-btn" onclick="resetAnalysis('ig')">↩ Nova análise</button>
+            <button class="result-top-btn" onclick="copyResult('ig')">📋 Copiar</button>
+            <button class="result-top-btn result-top-btn-primary" onclick="saveResult('ig')">💾 Salvar</button>
+          </div>
+        </div>
+        <div id="cm-result-ig">
+          <div class="result-meta" id="ig-meta"></div>
+          <div id="ig-sections"></div>
+          <div class="result-actions">
+            <button class="action-btn" onclick="resetAnalysis('ig')"><span class="action-btn-icon">↩</span>Nova análise</button>
+            <button class="action-btn" onclick="copyResult('ig')"><span class="action-btn-icon">📋</span>Copiar</button>
+            <button class="action-btn action-btn-primary" onclick="saveResult('ig')"><span class="action-btn-icon">💾</span>Salvar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /tab-ig -->
+
+  <!-- ══ CURSO VIP TAB ══ -->
+  <div id="tab-cv" class="cm-pane">
+    <div class="cm-content">
+      <div class="cm-left">
+
+        <div class="cm-card">
+          <label class="cm-label">Foco da análise</label>
+          <div class="cm-type-row" id="cv-type-row">
+            <button class="cm-type-btn on" data-v="descoberta">Descoberta</button>
+            <button class="cm-type-btn" data-v="estrutura">Estrutura de Curso</button>
+            <button class="cm-type-btn" data-v="autoridade">Autoridade</button>
+            <button class="cm-type-btn" data-v="mercado">Mercado</button>
+          </div>
+        </div>
+
+        <div class="cm-card">
+          <label class="cm-label">Conteúdos que mais performam <span class="cm-hint">— tipo, tema, reação do público</span></label>
+          <textarea class="cm-textarea" id="cv-content" rows="4"
+            placeholder="Ex: meus reels de antes e depois em pele negra sempre explodem. Carrosseis sobre técnica de base para olhos puxados também..."></textarea>
+        </div>
+
+        <div class="cm-card">
+          <label class="cm-label">Perguntas que mais recebe <span class="cm-hint">— DMs, comentários, ao vivo</span></label>
+          <textarea class="cm-textarea" id="cv-questions" rows="4"
+            placeholder="Ex: todo mundo pergunta como escolher a base certa para pele negra. Como fazer durar o dia todo na noiva. Como lidar com cabelo sem alisar..."></textarea>
+        </div>
+
+        <div class="cm-card">
+          <label class="cm-label">Sua aspiração para o curso <span class="cm-hint">— opcional</span></label>
+          <textarea class="cm-textarea" id="cv-aspiracao" rows="3"
+            placeholder="Ex: quero um curso para maquiadoras iniciantes focado em pele negra. Ou um curso para noivas se prepararem..."></textarea>
+        </div>
+
+        <button class="cm-btn" id="cv-btn" onclick="analyze('cv')">
+          <svg class="cm-btn-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <div class="cm-btn-spinner"></div>
+          Analisar Oportunidade
+        </button>
+
+      </div><!-- /cm-left -->
+
+      <div class="cm-right" id="cv-right">
+        <div class="cm-empty" id="cv-empty">
+          <div class="cm-empty-icon">🎓</div>
+          <div class="cm-empty-title">Inteligência educacional</div>
+          <div class="cm-empty-sub">Descreva seus conteúdos mais fortes e as dúvidas do seu público — o sistema identifica oportunidades reais de curso e estratégia de autoridade.</div>
+        </div>
+        <div class="cm-loading" id="cv-loading">
+          <div class="cm-spinner"></div>
+          <div class="cm-loading-title">Descobrindo oportunidades...</div>
+          <div class="cm-loading-sub">Cruzando conteúdo, público e autoridade</div>
+          <div class="cm-loading-steps">
+            <div class="cm-loading-step">📚 Mapeando autoridade percebida...</div>
+            <div class="cm-loading-step">💬 Analisando dores do público...</div>
+            <div class="cm-loading-step">🏗️ Estruturando oportunidades de curso...</div>
+            <div class="cm-loading-step">🌟 Identificando diferenciais como educadora...</div>
+          </div>
+        </div>
+        <div class="result-top-bar" id="cv-top-bar" style="display:none">
+          <div class="result-meta" id="cv-meta-desk" style="flex:1;margin-bottom:0"></div>
+          <div class="result-top-actions">
+            <button class="result-top-btn" onclick="resetAnalysis('cv')">↩ Nova análise</button>
+            <button class="result-top-btn" onclick="copyResult('cv')">📋 Copiar</button>
+            <button class="result-top-btn result-top-btn-primary" onclick="saveResult('cv')">💾 Salvar</button>
+          </div>
+        </div>
+        <div id="cm-result-cv">
+          <div class="result-meta" id="cv-meta"></div>
+          <div id="cv-sections"></div>
+          <div class="result-actions">
+            <button class="action-btn" onclick="resetAnalysis('cv')"><span class="action-btn-icon">↩</span>Nova análise</button>
+            <button class="action-btn" onclick="copyResult('cv')"><span class="action-btn-icon">📋</span>Copiar</button>
+            <button class="action-btn action-btn-primary" onclick="saveResult('cv')"><span class="action-btn-icon">💾</span>Salvar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /tab-cv -->
+
+  <div class="toast" id="cm-toast"></div>
+
+  <!-- KEY MODAL -->
+  <div class="modal-overlay" id="key-modal">
+    <div class="modal-box">
+      <div class="modal-handle"></div>
+      <div class="modal-title">Chave da API Claude</div>
+      <div class="modal-sub">Necessária para as análises com IA. Salva apenas neste dispositivo.</div>
+      <input type="password" class="modal-input" id="key-input" placeholder="sk-ant-...">
+      <button class="modal-save" onclick="saveKey()">Salvar chave</button>
+      <button class="modal-cancel" onclick="closeKeyModal()">Cancelar</button>
+    </div>
+  </div>
+
+</div><!-- /cm-app -->
+
+<script>
+// ════════════════════════════════════════════════════════════════
+// Centro de Marca — Inteligência Estratégica de Marca
+// ════════════════════════════════════════════════════════════════
+
+// ── STATE ─────────────────────────────────────────────────────
+var activeTab = 'bb';
+var lastText = { bb: '', ig: '', cv: '' };
+var activeType = { bb: 'saude', ig: 'auditoria', cv: 'descoberta' };
+
+// ── BRAND DNA ─────────────────────────────────────────────────
+var CAROL_DNA = [
+  'CAROL NUNES (@makecarolnunes) — DNA COMPLETO DE MARCA',
+  '',
+  '━━━ IDENTIDADE ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+  'Maquiadora freelancer profissional — especialista em noivas, pele negra, cachos/crespos',
+  'Posicionamento central: "A marca premium não é fria — ela é segura, intencional e humana."',
+  'Essência: Autoridade técnica real + presença humana genuína + sofisticação com acolhimento',
+  'Diferencial único: a única que une expertise em pele negra + noivas premium + presença humana',
+  '',
+  '━━━ 5 PILARES ESTRATÉGICOS ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+  'I. NOIVAS PREMIUM (25% do conteúdo)',
+  '   Especialização técnica e emocional em casamentos. Luxury feeling acessível.',
+  '   Jornada completa — do primeiro contato ao grande dia. Relacionamento de confiança.',
+  '',
+  'II. PELE NEGRA (20%)',
+  '   Representatividade real, não performática. Técnica inclusiva avançada.',
+  '   Autoridade em subtons, texturas, produtos específicos para pele negra.',
+  '   Missão: toda mulher negra merece make que a exalte, nunca apenas "atenda".',
+  '',
+  'III. CACHOS E CRESPOS (15%)',
+  '   Cabelos naturais integrados ao atendimento. Abordagem integral: pele + cabelo + make.',
+  '   Conexão com identidade cultural e autoimagem.',
+  '',
+  'IV. AUTORIDADE TÉCNICA (15%)',
+  '   Credibilidade base para futuros cursos. Conteúdo educativo de alto valor.',
+  '   Técnica como diferencial competitivo real. Confiança genuína, nunca arrogância.',
+  '',
+  'V. HUMANIZAÇÃO E PRESENÇA REAL (10-15%)',
+  '   Bastidores, rotina, espontaneidade, humor genuíno, vulnerabilidade leve.',
+  '   NÃO é virar influencer lifestyle. É criar intimidade, identificação e confiança.',
+  '   O público premium quer acompanhar personalidade — autenticidade aproxima e converte.',
+  '   Marcas premium humanas convertem mais. Nem todo post precisa ser estratégico.',
+  '   Conteúdos espontâneos constroem confiança que conteúdo perfeito não consegue.',
+  '',
+  '━━━ 4 PÚBLICOS-ALVO ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+  '1. Noiva premium (25-38 anos, classe AB) — quer a versão mais bonita de si mesma',
+  '2. Mulher negra que se valoriza (20-40 anos) — cansada de makes inadequadas para seu tom',
+  '3. Mulher com cabelo natural (20-45 anos) — identidade ligada aos cabelos',
+  '4. Cliente eventual de evento (28-50) — busca qualidade e confiabilidade',
+  '',
+  '━━━ ARQUÉTIPOS ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+  'Primário: A CRIADORA — transforma, faz acontecer, cria beleza real',
+  'Secundário: A SÁBIA/EXPERT — conhecimento profundo, orientação confiável',
+  'Terciário: A PRESTATIVA/CUIDADORA — empatia, acolhimento, segurança emocional',
+  '',
+  '━━━ TOM DE VOZ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+  'Segura sem arrogância | Especialista sem distância | Sofisticada sem frieza',
+  'Acolhedora sem excesso de informalidade | Humana sem perder o posicionamento',
+  'Direta e objetiva — zero floreados desnecessários | Entusiasmo genuíno',
+  'NÃO É: genérica, fria, seca, excessivamente formal, artificialmente perfeita',
+  '',
+  '━━━ EQUILÍBRIO IDEAL DE CONTEÚDO ━━━━━━━━━━━━━━━━━━━━━━━━',
+  'AUTORIDADE: conteúdo técnico que impressiona e educa',
+  'CONVERSÃO: conteúdo que leva à contratação direta',
+  'CONEXÃO: conteúdo que cria identificação e relacionamento',
+  'DESEJO: conteúdo que ativa aspiração ("quero isso")',
+  'HUMANIZAÇÃO: bastidores, presença real, Carol por trás da marca',
+  'LIFESTYLE: vida profissional, valores, contexto, ambiente',
+  'BASTIDORES: processo, preparação, bastidores de atendimentos',
+  'TÉCNICA: demonstrações, tutoriais, processos detalhados',
+  'PREMIUM: posicionamento, qualidade percebida, exclusividade',
+  '',
+  '━━━ OBJETIVOS ESTRATÉGICOS ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+  'Curto prazo: Agenda cheia de noivas premium + visibilidade em pele negra',
+  'Médio prazo: Referência regional em noivas + pele negra + cachos',
+  'Longo prazo: Curso VIP online + expansão de autoridade digital',
+  'Transição atual: maquiadora freelancer → marca educadora premium',
+  '',
+  '━━━ DIFERENCIAÇÃO COMPETITIVA ━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+  '1. Especialização em pele negra + noivas (raríssima combinação no mercado)',
+  '2. Metodologia própria desenvolvida na prática real',
+  '3. Abordagem integral: pele + cabelo + make',
+  '4. Marca pessoal genuína — não uma persona fabricada',
+  '5. Posicionamento premium que não exclui — sofisticação acessível',
+  '',
+  '━━━ O QUE EVITAR ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+  'Conteúdo lifestyle sem conexão com beleza | Humor forçado | Trends vazios',
+  'Comparações negativas | Perfecionismo que cria distância',
+  'Frieza excessiva | Excesso de técnica sem humanidade | Rigidez estratégica',
+  'Conteúdo que "parece" premium mas afasta a audiência por ser artificial',
+].join('\n');
+
+// ── ANALYSIS CONFIGS ──────────────────────────────────────────
+var CONFIGS = {
+  bb: {
+    saude: {
+      label: 'Saúde Geral da Marca',
+      systemRole: 'Você é uma consultora estratégica sênior de branding pessoal premium, especializada em marcas de profissionais de beleza e mercado de casamentos. Sua análise é profunda, específica e humana — nunca genérica. Você pensa como consultora de alto nível que conhece Carol intimamente.',
+      sections: [
+        '## DIAGNÓSTICO GERAL',
+        'Leitura direta do estado atual da marca. O que está funcionando, o que está desalinhado. Tom honesto e direto — como uma consultora que você confia, não como alguém tentando agradar.',
+        '',
+        '## ANÁLISE POR PILAR',
+        'Para cada um dos 5 pilares estratégicos (Noivas, Pele Negra, Cachos, Autoridade, Humanização): como está a presença, força, consistência e o que fazer.',
+        '',
+        '## PONTOS FORTES IDENTIFICADOS',
+        'O que Carol está fazendo certo que precisa ser amplificado — com explicação de por que funciona estrategicamente.',
+        '',
+        '## VULNERABILIDADES CRÍTICAS',
+        'Onde a marca está perdendo oportunidade, criando distância ou saindo do eixo. Seja específica.',
+        '',
+        '## DIAGNÓSTICO DE COERÊNCIA',
+        'Como a estratégia documentada se compara com o comportamento real do perfil. Onde a prática contradiz a intenção.',
+        '',
+        '## PRIORIDADES ESTRATÉGICAS',
+        'As 3 ações mais importantes que Carol deve tomar nos próximos 30 dias — em ordem de impacto.',
+      ].join('\n'),
+    },
+    pilares: {
+      label: 'Diagnóstico por Pilar',
+      systemRole: 'Você é uma consultora estratégica sênior de branding pessoal premium. Sua análise de pilares é cirúrgica: vai além do óbvio, detecta nuances, identifica como cada pilar se expressa (ou falha em se expressar) no perfil real.',
+      sections: [
+        '## PILAR I — NOIVAS PREMIUM',
+        'Presença, clareza, força e oportunidades neste pilar. Como noivas em potencial percebem Carol ao visitar o perfil?',
+        '',
+        '## PILAR II — PELE NEGRA',
+        'Autenticidade, representatividade e autoridade técnica neste pilar. Está sendo tratado com a profundidade que merece?',
+        '',
+        '## PILAR III — CACHOS E CRESPOS',
+        'Integração com a identidade de marca. Está presente de forma genuína ou parece adicionado?',
+        '',
+        '## PILAR IV — AUTORIDADE TÉCNICA',
+        'Credibilidade técnica percebida. O perfil convence sobre a expertise de Carol? Prepara o caminho para cursos?',
+        '',
+        '## PILAR V — HUMANIZAÇÃO E PRESENÇA REAL',
+        'Presença humana de Carol. O público vê uma pessoa ou vê uma marca fria? Este pilar costuma ser o mais negligenciado — seja honesta.',
+        '',
+        '## DIAGNÓSTICO INTEGRADO',
+        'Como os 5 pilares se relacionam no perfil atual. Há pilares competindo? Há pilar dominante demais?',
+        '',
+        '## RECOMENDAÇÕES ESPECÍFICAS',
+        'Uma ação concreta para cada pilar que precisa de atenção imediata.',
+      ].join('\n'),
+    },
+    coerencia: {
+      label: 'Coerência Estratégica',
+      systemRole: 'Você é especialista em diagnóstico de coerência entre estratégia de marca e comportamento real em redes sociais. Você detecta quando o perfil "diz uma coisa e faz outra", quando a identidade documentada não aparece na prática, e quando há excesso ou falta de algo.',
+      sections: [
+        '## ESTRATÉGIA × REALIDADE',
+        'Onde o comportamento real do perfil diverge do posicionamento estratégico. Cite exemplos específicos.',
+        '',
+        '## EXCESSOS DETECTADOS',
+        'O que aparece em quantidade acima do ideal — o que está pesado demais e pode estar afastando o público.',
+        '',
+        '## FALTAS DETECTADAS',
+        'O que deveria aparecer e não aparece — o que está faltando e criando um perfil incompleto ou desequilibrado.',
+        '',
+        '## INCOERÊNCIAS DE TOM DE VOZ',
+        'Momentos onde o tom de voz real conflita com o tom de voz estratégico. Quando Carol "sai do personagem" — para melhor ou para pior.',
+        '',
+        '## EVOLUÇÃO DO POSICIONAMENTO',
+        'Se baseado no contexto fornecido, há tendências visíveis de evolução — o perfil está melhorando, estagnando ou recuando em relação ao posicionamento ideal?',
+        '',
+        '## RECOMENDAÇÕES DE ALINHAMENTO',
+        'Como realinhar o comportamento com a estratégia — de forma humana e sustentável, não robótica.',
+      ].join('\n'),
+    },
+    oportunidades: {
+      label: 'Gaps e Oportunidades',
+      systemRole: 'Você é estrategista de crescimento para marcas pessoais premium. Você enxerga o que outros não veem: gaps que podem ser transformados em vantagem competitiva, conexões emocionais inexploradas, e oportunidades de autoridade que estão dormentes no perfil.',
+      sections: [
+        '## GAPS ESTRATÉGICOS',
+        'Espaços vazios no posicionamento atual — o que Carol poderia "possuir" que ainda não está reivindicando.',
+        '',
+        '## OPORTUNIDADES DE CONEXÃO EMOCIONAL',
+        'Formas de criar mais intimidade, identificação e confiança com a audiência — específicas para o nicho e posicionamento da Carol.',
+        '',
+        '## OPORTUNIDADES DE AUTORIDADE',
+        'Como fortalecer e expandir a percepção de expertise. Conteúdos que constroem credibilidade real.',
+        '',
+        '## OPORTUNIDADES DE CONVERSÃO',
+        'Melhorias específicas na jornada de contratação — do perfil ao DM ao agendamento.',
+        '',
+        '## OPORTUNIDADES DE HUMANIZAÇÃO',
+        'Formas de tornar a marca mais humana sem perder o premium. Este é provavelmente o maior gap — seja específica.',
+        '',
+        '## PLANO DE AÇÃO 30 DIAS',
+        'Um plano concreto e realista — não uma lista impossível de fazer, mas 5-7 ações que realmente movem o ponteiro.',
+      ].join('\n'),
+    },
+  },
+
+  ig: {
+    auditoria: {
+      label: 'Auditoria Completa',
+      systemRole: 'Você é auditora estratégica de perfis no Instagram, especializada em marcas pessoais premium. Você analisa não apenas métricas, mas posicionamento, percepção, narrativa, autenticidade e potencial de conversão. Sua análise parece uma consultoria de $5.000 — não um checklist genérico.',
+      sections: [
+        '## PRIMEIRA IMPRESSÃO',
+        'O que um visitante novo percebe nos primeiros 5 segundos. Bio, foto de perfil, stories, destaques, primeiros 9 posts. A promessa implícita do perfil.',
+        '',
+        '## POSICIONAMENTO PERCEBIDO',
+        'Como o perfil se posiciona na prática — não na intenção, na percepção real. Está claro que Carol é a especialista em pele negra + noivas? O premium aparece?',
+        '',
+        '## EQUILÍBRIO ESTRATÉGICO',
+        'Analise cada dimensão abaixo usando EXATAMENTE este formato (uma por bloco separado por linha em branco):',
+        '',
+        'AUTORIDADE | [Muito Forte/Forte/Moderado/Fraco/Muito Fraco]',
+        '[Uma ou duas frases de análise específica]',
+        '',
+        'CONVERSÃO | [nível]',
+        '[análise]',
+        '',
+        'CONEXÃO | [nível]',
+        '[análise]',
+        '',
+        'DESEJO | [nível]',
+        '[análise]',
+        '',
+        'HUMANIZAÇÃO | [nível]',
+        '[análise]',
+        '',
+        'LIFESTYLE | [nível]',
+        '[análise]',
+        '',
+        'BASTIDORES | [nível]',
+        '[análise]',
+        '',
+        'TÉCNICA | [nível]',
+        '[análise]',
+        '',
+        'PREMIUM | [nível]',
+        '[análise]',
+        '',
+        '## ARQUETIPOS PREDOMINANTES',
+        'Quais arquétipos aparecem no perfil na prática. Condizem com os arquétipos estratégicos (Criadora, Sábia, Prestativa)?',
+        '',
+        '## TOM DE VOZ DETECTADO',
+        'Como Carol realmente se comunica nas legendas. Está alinhado com o tom estratégico? Onde diverge?',
+        '',
+        '## ANÁLISE EMOCIONAL DO PERFIL',
+        'Que emoções o perfil desperta em quem visita? Admiração? Confiança? Desejo? Distância? Frieza? Inspiração? Como isso afeta conversão.',
+        '',
+        '## GAPS E OPORTUNIDADES',
+        'O que está faltando no perfil e o que está sobrando. Seja cirúrgica.',
+      ].join('\n'),
+    },
+    equilibrio: {
+      label: 'Equilíbrio Estratégico',
+      systemRole: 'Você é especialista em diagnóstico de equilíbrio estratégico de perfis Instagram premium. Sua análise mapeia com precisão o peso de cada dimensão estratégica e como o desequilíbrio afeta o negócio.',
+      sections: [
+        '## MAPA DE EQUILÍBRIO',
+        'Analise CADA uma das 9 dimensões abaixo. Use EXATAMENTE este formato para cada uma:',
+        '',
+        'AUTORIDADE | [Muito Forte/Forte/Moderado/Fraco/Muito Fraco]',
+        '[Análise de 2-3 frases sobre como essa dimensão aparece no perfil]',
+        '',
+        'CONVERSÃO | [nível]',
+        '[análise]',
+        '',
+        'CONEXÃO | [nível]',
+        '[análise]',
+        '',
+        'DESEJO | [nível]',
+        '[análise]',
+        '',
+        'HUMANIZAÇÃO | [nível]',
+        '[análise]',
+        '',
+        'LIFESTYLE | [nível]',
+        '[análise]',
+        '',
+        'BASTIDORES | [nível]',
+        '[análise]',
+        '',
+        'TÉCNICA | [nível]',
+        '[análise]',
+        '',
+        'PREMIUM | [nível]',
+        '[análise]',
+        '',
+        '## DIAGNÓSTICO DO DESEQUILÍBRIO',
+        'Quais dimensões dominam e quais estão ausentes. Como esse desequilíbrio específico afeta a percepção e os resultados da Carol.',
+        '',
+        '## IMPACTO NO NEGÓCIO',
+        'Como o equilíbrio atual afeta agendamentos, percepção de valor e futuros cursos.',
+        '',
+        '## RECEITA DE REEQUILÍBRIO',
+        'Um plano concreto para rebalancear — o que aumentar, o que reduzir, o que adicionar. Com exemplos práticos.',
+      ].join('\n'),
+    },
+    percepcao: {
+      label: 'Percepção e Narrativa',
+      systemRole: 'Você é especialista em percepção de marca e narrativa no Instagram. Você analisa como diferentes públicos percebem o perfil — não como a criadora quer que seja percebida, mas como realmente é percebida. Sua análise revela a distância entre intenção e percepção.',
+      sections: [
+        '## MAPA DE PERCEPÇÃO',
+        'O que o perfil comunica vs. o que deveria comunicar. As três primeiras palavras que um visitante provavelmente associa ao ver o perfil.',
+        '',
+        '## COMO NOIVAS EM POTENCIAL PERCEBEM',
+        'Uma noiva procurando maquiadora premium chega ao perfil. O que ela vê, sente e decide. Carol aparece como a escolha óbvia ou como "mais uma opção"?',
+        '',
+        '## COMO MULHERES NEGRAS PERCEBEM',
+        'Uma mulher negra buscando representatividade real chega ao perfil. Ela se sente vista e atendida? O compromisso de Carol com pele negra aparece com clareza e autenticidade?',
+        '',
+        '## COMO O ALGORITMO E NOVOS SEGUIDORES PERCEBEM',
+        'Uma pessoa que não conhece Carol chega pelo algoritmo. Em 10 segundos, o que fica? Há razão clara para seguir?',
+        '',
+        '## GAPS DE PERCEPÇÃO',
+        'Onde a percepção real difere da intenção estratégica. O que Carol ACHA que está comunicando mas não está chegando.',
+        '',
+        '## CONSISTÊNCIA NARRATIVA',
+        'Há uma narrativa coerente ao longo do perfil? Ou são posts isolados sem fio condutor? A história de Carol está sendo contada?',
+        '',
+        '## AJUSTES DE PERCEPÇÃO',
+        'O que mudar para que a percepção real se aproxime da percepção ideal. Seja específica — não "seja mais autêntica", mas "poste um stories por semana mostrando X".',
+      ].join('\n'),
+    },
+    perguntas: {
+      label: 'Perguntas Críticas',
+      systemRole: 'Você é estrategista de branding pessoal que responde as perguntas difíceis sobre o perfil da Carol. Sua função é ser honesta, direta e específica — não confortante. A Carol precisa saber a verdade para poder melhorar.',
+      sections: [
+        '## ESTÁ DISTANTE DO PÚBLICO?',
+        'O perfil cria proximidade ou afastamento? O visitante sente que pode se aproximar da Carol ou sente que ela é inatingível?',
+        '',
+        '## ESTÁ SOFISTICADO DEMAIS?',
+        'O premium está funcionando como aspiração ou está criando barreira de entrada? Há frieza embutida no posicionamento atual?',
+        '',
+        '## ESTÁ COMERCIAL DEMAIS?',
+        'O perfil parece uma vitrine de serviços ou parece a presença de uma pessoa que realmente ama o que faz?',
+        '',
+        '## FALTA ROSTO E PRESENÇA?',
+        'Carol aparece como pessoa no perfil? O visitante sente que conhece Carol — ou apenas conhece o trabalho dela?',
+        '',
+        '## ESTÁ REPETITIVO OU MONÓTONO?',
+        'O conteúdo varia o suficiente para manter diferentes tipos de audiência engajada? Há fadiga de padrão?',
+        '',
+        '## EQUILÍBRIO AUTORIDADE × CONEXÃO',
+        'O perfil está pesado demais para um lado? Como isso afeta a conversão em noivas e a fidelização de seguidoras?',
+        '',
+        '## O QUE MAIS APROXIMA VS. O QUE MAIS AFASTA',
+        'Baseado no que foi descrito, quais tipos de conteúdo criam aproximação genuína e quais criam distância — às vezes sem intenção.',
+        '',
+        '## CONTEÚDOS QUE MAIS GERAM CONFIANÇA E DESEJO',
+        'Que padrões de conteúdo provavelmente geram mais confiança para contratar Carol? E mais desejo de seguir e acompanhar?',
+      ].join('\n'),
+    },
+  },
+
+  cv: {
+    descoberta: {
+      label: 'Descoberta de Oportunidades',
+      systemRole: 'Você é estrategista de produtos educacionais online, especializada em transformar expertise de profissionais de beleza em cursos premium. Você identifica oportunidades reais de monetização educacional e desenvolve estratégias de autoridade para maquiadoras que querem ensinar.',
+      sections: [
+        '## POTENCIAL EDUCACIONAL',
+        'Avaliação do potencial de Carol como educadora online — baseado nos conteúdos descritos, no nicho e no posicionamento.',
+        '',
+        '## TEMAS DE ALTA AUTORIDADE PERCEBIDA',
+        'Tópicos onde Carol provavelmente tem autoridade percebida mais alta — onde o público naturalmente a vê como referência.',
+        '',
+        '## DORES RECORRENTES DO PÚBLICO',
+        'Baseado nas perguntas frequentes e no nicho, quais são as dores não resolvidas que um curso da Carol poderia endereçar.',
+        '',
+        '## OPORTUNIDADES DE PRODUTO EDUCACIONAL',
+        'Formatos e temas específicos para produtos educacionais. Seja concreta: não "um curso sobre pele negra", mas "um curso de 6 horas para maquiadoras iniciantes sobre base e correção de cor em pele negra com 4 módulos específicos".',
+        '',
+        '## CONTEÚDOS QUE JÁ DEMONSTRAM CAPACIDADE DE ENSINO',
+        'Tipos de conteúdo que Carol já cria e que provam que ela consegue ensinar de forma clara e envolvente.',
+        '',
+        '## PRÓXIMOS PASSOS',
+        'Três ações concretas que Carol pode tomar nos próximos 60 dias para validar e começar a construir o caminho para o curso.',
+      ].join('\n'),
+    },
+    estrutura: {
+      label: 'Estrutura de Curso',
+      systemRole: 'Você é designer instrucional especializada em cursos online para profissionais de beleza. Você cria estruturas pedagógicas que ensinam de forma eficaz e constroem a autoridade da instrutora como diferencial.',
+      sections: [
+        '## PROPOSTA DO CURSO',
+        'Nome, posicionamento, promessa central e público-alvo específico do curso.',
+        '',
+        '## MÓDULOS SUGERIDOS',
+        'Estrutura de módulos com nome, objetivo e principais conteúdos de cada módulo. Seja detalhada e pedagógica.',
+        '',
+        '## PROGRESSÃO DE APRENDIZADO',
+        'Como o aluno avança do ponto A ao ponto B. A lógica pedagógica do curso — por que essa ordem faz sentido.',
+        '',
+        '## CONTEÚDO BÔNUS E MATERIAIS',
+        'Materiais complementares, bônus e recursos que agregariam valor sem inflacionar o escopo.',
+        '',
+        '## RESULTADO TRANSFORMADOR',
+        'O que o aluno terá conquistado ao terminar o curso — em termos de habilidade, confiança e aplicação prática.',
+        '',
+        '## FORMATO E PLATAFORMA',
+        'Recomendações de formato (vídeo, ao vivo, assíncrono), duração ideal e plataformas adequadas.',
+      ].join('\n'),
+    },
+    autoridade: {
+      label: 'Estratégia de Autoridade',
+      systemRole: 'Você é estrategista de construção de autoridade para educadores online no mercado de beleza. Você sabe como transformar um profissional competente em uma referência reconhecida que as pessoas querem aprender.',
+      sections: [
+        '## AUTORIDADE PERCEBIDA ATUAL',
+        'Onde Carol já tem autoridade genuína percebida — e onde ainda precisa construir para se posicionar como educadora.',
+        '',
+        '## GAPS DE AUTORIDADE PARA EDUCADORA',
+        'O que está faltando no posicionamento atual para que Carol seja vista como referência para ensinar, não apenas para executar.',
+        '',
+        '## ESTRATÉGIA DE CONSTRUÇÃO DE AUTORIDADE',
+        'Um plano para construir autoridade como educadora — conteúdo, presença, parcerias, prova social.',
+        '',
+        '## CONTEÚDOS QUE PROVAM CAPACIDADE DE ENSINAR',
+        'Tipos específicos de posts, reels e lives que demonstram didática, clareza e profundidade de conhecimento.',
+        '',
+        '## DIFERENCIAÇÃO COMO EDUCADORA',
+        'O que tornaria Carol uma educadora única — não apenas "mais um curso de maquiagem", mas uma metodologia própria.',
+        '',
+        '## CRONOGRAMA DE AUTORIDADE',
+        'Uma progressão de 6 meses para Carol se estabelecer como referência educacional no Instagram.',
+      ].join('\n'),
+    },
+    mercado: {
+      label: 'Validação de Mercado',
+      systemRole: 'Você é analista de mercado educacional online para profissionais de beleza. Você avalia viabilidade, competição, diferenciação e estratégia de lançamento com objetividade.',
+      sections: [
+        '## VALIDAÇÃO DO MERCADO',
+        'Existe demanda real para o tipo de produto educacional que Carol pode criar? Análise do mercado de cursos de maquiagem online com foco em pele negra e noivas.',
+        '',
+        '## CONCORRÊNCIA NO NICHO EDUCACIONAL',
+        'Quem já está no espaço? Como Carol pode se posicionar de forma que não seja "mais um curso de maquiagem"?',
+        '',
+        '## DIFERENCIAÇÃO POTENCIAL',
+        'O que tornaria o curso da Carol irresistível e difícil de comparar com outros. Seu diferencial único no mercado educacional.',
+        '',
+        '## PRECIFICAÇÃO E POSICIONAMENTO',
+        'Faixas de preço que fazem sentido para o posicionamento premium da Carol e para o público-alvo do curso.',
+        '',
+        '## ESTRATÉGIA DE LANÇAMENTO',
+        'Como lançar com segurança — validação antes do lançamento completo, estratégia de marketing orgânico usando o Instagram.',
+        '',
+        '## RISCOS E COMO MITIGAR',
+        'Riscos reais para considerar — e como Carol pode mitigá-los antes de investir pesado no curso.',
+      ].join('\n'),
+    },
+  },
+};
+
+// ── SECTION DEFS ──────────────────────────────────────────────
+var SDEFS = {
+  bb: [
+    { p: /diagnóstico geral|estado da marca/i, icon: '🧠', bg: '#E8F0FE' },
+    { p: /análise por pilar|pilar i —|pilar ii —|pilar iii —|pilar iv —|pilar v —/i, icon: '🎯', bg: '#F3E5F5' },
+    { p: /pilar i/i, icon: '👰', bg: '#FCE4EC' },
+    { p: /pilar ii/i, icon: '✊', bg: '#FBE9E7' },
+    { p: /pilar iii/i, icon: '🌀', bg: '#F3E5F5' },
+    { p: /pilar iv/i, icon: '💎', bg: '#EDE9FE' },
+    { p: /pilar v/i, icon: '🤍', bg: '#E8F5E9' },
+    { p: /pontos fortes/i, icon: '✅', bg: '#E8F5E9' },
+    { p: /vulnerabilidades/i, icon: '⚠️', bg: '#FFF8E1' },
+    { p: /coerência|estratégia × realidade/i, icon: '🔄', bg: '#EDE9FE' },
+    { p: /prioridades|plano de ação/i, icon: '🚀', bg: '#FCE4EC' },
+    { p: /gaps|oportunidades estratégicas|oportunidades de/i, icon: '💡', bg: '#FFF3E0' },
+    { p: /excessos detectados/i, icon: '📊', bg: '#FFF8E1' },
+    { p: /faltas detectadas/i, icon: '🕳️', bg: '#FBE9E7' },
+    { p: /incoerências/i, icon: '🔍', bg: '#F3E5F5' },
+    { p: /evolução/i, icon: '📈', bg: '#E8F5E9' },
+    { p: /recomendações/i, icon: '💡', bg: '#FFF3E0' },
+    { p: /diagnóstico integrado/i, icon: '🎯', bg: '#E8F0FE' },
+  ],
+  ig: [
+    { p: /primeira impressão/i, icon: '👁️', bg: '#E8F0FE' },
+    { p: /posicionamento percebido/i, icon: '📍', bg: '#F3E5F5' },
+    { p: /equilíbrio estratégico|mapa de equilíbrio/i, icon: '⚖️', bg: '#EDE9FE', special: 'balance' },
+    { p: /arquetipos/i, icon: '🎭', bg: '#FCE4EC' },
+    { p: /tom de voz/i, icon: '🗣️', bg: '#FFF8E1' },
+    { p: /análise emocional/i, icon: '💫', bg: '#E8F5E9' },
+    { p: /gaps e oportunidades|gaps identificados/i, icon: '🕳️', bg: '#FBE9E7' },
+    { p: /está distante/i, icon: '↔️', bg: '#E8F0FE' },
+    { p: /está sofisticado/i, icon: '💎', bg: '#EDE9FE' },
+    { p: /está comercial/i, icon: '💰', bg: '#FFF8E1' },
+    { p: /falta rosto/i, icon: '🙋', bg: '#FCE4EC' },
+    { p: /está repetitivo/i, icon: '🔁', bg: '#F3E5F5' },
+    { p: /equilíbrio autoridade/i, icon: '⚖️', bg: '#E8F5E9' },
+    { p: /aproxima vs|afasta/i, icon: '🧲', bg: '#FFF3E0' },
+    { p: /conteúdos que mais geram/i, icon: '✨', bg: '#E8F0FE' },
+    { p: /mapa de percepção/i, icon: '🗺️', bg: '#E8F0FE' },
+    { p: /como noivas/i, icon: '👰', bg: '#FCE4EC' },
+    { p: /como mulheres negras/i, icon: '✊', bg: '#FBE9E7' },
+    { p: /como o algoritmo/i, icon: '📱', bg: '#F3E5F5' },
+    { p: /gaps de percepção/i, icon: '🕳️', bg: '#FBE9E7' },
+    { p: /consistência narrativa/i, icon: '📖', bg: '#EDE9FE' },
+    { p: /ajustes de percepção/i, icon: '🎯', bg: '#E8F5E9' },
+    { p: /diagnóstico do desequilíbrio/i, icon: '📊', bg: '#FCE4EC' },
+    { p: /impacto no negócio/i, icon: '💼', bg: '#FFF8E1' },
+    { p: /receita de reequilíbrio/i, icon: '🧪', bg: '#E8F5E9' },
+  ],
+  cv: [
+    { p: /potencial educacional/i, icon: '🌱', bg: '#E8F5E9' },
+    { p: /temas de alta autoridade|temas de autoridade/i, icon: '📚', bg: '#E8F0FE' },
+    { p: /dores recorrentes|dores do público/i, icon: '💬', bg: '#FCE4EC' },
+    { p: /oportunidades de produto|produto educacional/i, icon: '🎁', bg: '#FFF8E1' },
+    { p: /conteúdos que (já )?demonstram/i, icon: '🎬', bg: '#F3E5F5' },
+    { p: /próximos passos/i, icon: '🚀', bg: '#FFF3E0' },
+    { p: /proposta do curso/i, icon: '📋', bg: '#E8F0FE' },
+    { p: /módulos sugeridos/i, icon: '🏗️', bg: '#F3E5F5' },
+    { p: /progressão|aprendizado/i, icon: '📈', bg: '#EDE9FE' },
+    { p: /conteúdo bônus/i, icon: '⭐', bg: '#FFF8E1' },
+    { p: /resultado transformador/i, icon: '✨', bg: '#E8F5E9' },
+    { p: /formato e plataforma/i, icon: '💻', bg: '#FCE4EC' },
+    { p: /autoridade percebida atual/i, icon: '👑', bg: '#E8F0FE' },
+    { p: /gaps de autoridade/i, icon: '🕳️', bg: '#FBE9E7' },
+    { p: /estratégia de construção/i, icon: '🧱', bg: '#F3E5F5' },
+    { p: /conteúdos que provam/i, icon: '🎯', bg: '#EDE9FE' },
+    { p: /diferenciação como educadora/i, icon: '🌟', bg: '#FFF3E0' },
+    { p: /cronograma/i, icon: '📅', bg: '#E8F5E9' },
+    { p: /validação do mercado/i, icon: '🔬', bg: '#E8F0FE' },
+    { p: /concorrência/i, icon: '🏆', bg: '#FFF8E1' },
+    { p: /diferenciação potencial/i, icon: '💎', bg: '#EDE9FE' },
+    { p: /precificação/i, icon: '💰', bg: '#FCE4EC' },
+    { p: /estratégia de lançamento/i, icon: '🚀', bg: '#FFF3E0' },
+    { p: /riscos/i, icon: '⚠️', bg: '#FBE9E7' },
+  ],
+};
+
+// ── TAB MANAGEMENT ─────────────────────────────────────────────
+function setTab(tab) {
+  document.querySelectorAll('.cm-tab').forEach(function(b) { b.classList.toggle('active', b.dataset.tab === tab); });
+  document.querySelectorAll('.cm-pane').forEach(function(p) { p.classList.toggle('active', p.id === 'tab-' + tab); });
+  activeTab = tab;
+}
+
+function setType(tab, typeRow, val) {
+  document.querySelectorAll('#' + typeRow + ' .cm-type-btn').forEach(function(b) {
+    b.classList.toggle('on', b.dataset.v === val);
+  });
+  activeType[tab] = val;
+}
+
+document.querySelectorAll('#bb-type-row .cm-type-btn').forEach(function(b) {
+  b.addEventListener('click', function() { setType('bb', 'bb-type-row', b.dataset.v); });
+});
+document.querySelectorAll('#ig-type-row .cm-type-btn').forEach(function(b) {
+  b.addEventListener('click', function() { setType('ig', 'ig-type-row', b.dataset.v); });
+});
+document.querySelectorAll('#cv-type-row .cm-type-btn').forEach(function(b) {
+  b.addEventListener('click', function() { setType('cv', 'cv-type-row', b.dataset.v); });
+});
+
+// ── DNA TOGGLE ─────────────────────────────────────────────────
+function toggleDna() {
+  var body = document.getElementById('dna-body');
+  var open = body.classList.toggle('open');
+  document.querySelector('.dna-toggle').textContent = (open ? '▲' : '▼') + ' Ver DNA completo';
+}
+
+// ── PROMPT BUILDERS ────────────────────────────────────────────
+function buildSystemPrompt(tab) {
+  var cfg = CONFIGS[tab][activeType[tab]];
+  return cfg.systemRole + '\n\n' +
+    CAROL_DNA + '\n\n' +
+    'PRINCÍPIOS DA ANÁLISE:\n' +
+    '1. NUNCA seja genérica — Carol tem uma marca específica e única\n' +
+    '2. Seja honesta e direta como uma consultora de confiança\n' +
+    '3. Cite mecanismos específicos, não conselhos vagos\n' +
+    '4. Conteúdo humano/bastidores É estratégico — nunca trate como menor\n' +
+    '5. Marcas premium são humanas — sofisticação e autenticidade coexistem\n' +
+    '6. Insights acionáveis sempre — não análise pela análise\n' +
+    '7. Considere o contexto específico de noivas, pele negra e cachos\n\n' +
+    'FORMATO: Use EXATAMENTE os cabeçalhos com ## abaixo. Responda em português brasileiro.\n\n' +
+    cfg.sections;
+}
+
+function buildUserMessage(tab) {
+  var msg = '';
+  if (tab === 'bb') {
+    var obs = (document.getElementById('bb-obs').value || '').trim();
+    var ctx = (document.getElementById('bb-ctx').value || '').trim();
+    var type = CONFIGS.bb[activeType.bb].label;
+    msg = 'Análise solicitada: ' + type + '\n\n';
+    if (obs) msg += 'O que percebo no meu perfil:\n' + obs + '\n\n';
+    if (ctx) msg += 'Contexto recente:\n' + ctx + '\n\n';
+    if (!obs && !ctx) msg += 'Faça o diagnóstico com base no DNA da marca e no que você sabe sobre o nicho.\n\n';
+    msg += 'Gere o diagnóstico completo seguindo os cabeçalhos definidos.';
+  } else if (tab === 'ig') {
+    var handle = (document.getElementById('ig-handle').value || '@makecarolnunes').trim();
+    var obs = (document.getElementById('ig-obs').value || '').trim();
+    var caps = (document.getElementById('ig-captions').value || '').trim();
+    var type = CONFIGS.ig[activeType.ig].label;
+    msg = 'Análise do perfil: ' + handle + '\nTipo: ' + type + '\n\n';
+    if (obs) msg += 'O que vejo no perfil agora:\n' + obs + '\n\n';
+    if (caps) msg += 'Exemplos de captions recentes:\n' + caps + '\n\n';
+    if (!obs) msg += 'Baseie-se no DNA da marca e faça a análise com base no que você sabe sobre o nicho.\n\n';
+    msg += 'Gere a análise completa seguindo os cabeçalhos definidos.';
+  } else if (tab === 'cv') {
+    var content = (document.getElementById('cv-content').value || '').trim();
+    var questions = (document.getElementById('cv-questions').value || '').trim();
+    var asp = (document.getElementById('cv-aspiracao').value || '').trim();
+    var type = CONFIGS.cv[activeType.cv].label;
+    msg = 'Análise solicitada: ' + type + '\n\n';
+    if (content) msg += 'Conteúdos que mais performam:\n' + content + '\n\n';
+    if (questions) msg += 'Perguntas que mais recebo:\n' + questions + '\n\n';
+    if (asp) msg += 'Aspiração para o curso:\n' + asp + '\n\n';
+    if (!content && !questions) msg += 'Baseie-se no DNA da marca para identificar oportunidades educacionais.\n\n';
+    msg += 'Gere a análise completa seguindo os cabeçalhos definidos.';
+  }
+  return msg;
+}
+
+// ── API CALL ───────────────────────────────────────────────────
+async function analyze(tab) {
+  var apiKey = localStorage.getItem('mk_claude_key') || '';
+  if (!apiKey) { openKeyModal(); toast('Configure sua chave Claude primeiro'); return; }
+
+  var btn = document.getElementById(tab + '-btn');
+  btn.disabled = true; btn.classList.add('loading');
+
+  // Show loading
+  var resultEl = document.getElementById('cm-result-' + tab);
+  resultEl.classList.remove('show'); resultEl.style.display = 'none';
+  document.getElementById(tab + '-loading').classList.add('show');
+  document.getElementById(tab + '-empty').style.display = 'none';
+  document.getElementById(tab + '-top-bar').style.display = 'none';
+
+  try {
+    var res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 5000,
+        system: buildSystemPrompt(tab),
+        messages: [{ role: 'user', content: buildUserMessage(tab) }]
+      })
+    });
+
+    if (!res.ok) {
+      var err = await res.json().catch(function() { return { error: { message: res.statusText } }; });
+      throw new Error((err && err.error && err.error.message) || res.statusText);
+    }
+    var data = await res.json();
+    var text = (data.content && data.content[0] && data.content[0].text) || '';
+    if (!text) throw new Error('Resposta vazia da API');
+    lastText[tab] = text;
+    renderResult(text, tab);
+  } catch (err) {
+    document.getElementById(tab + '-loading').classList.remove('show');
+    document.getElementById(tab + '-empty').style.display = '';
+    toast('Erro: ' + err.message, 4500);
+  } finally {
+    btn.disabled = false; btn.classList.remove('loading');
+  }
+}
+
+// ── BALANCE PARSER ─────────────────────────────────────────────
+var BALANCE_LEVELS = {
+  'muito forte': { pct: 90, cls: 'badge-muito-forte', color: '#4CAF50' },
+  'forte':       { pct: 74, cls: 'badge-forte',       color: '#8BC34A' },
+  'moderado':    { pct: 54, cls: 'badge-moderado',    color: '#FFC107' },
+  'fraco':       { pct: 32, cls: 'badge-fraco',       color: '#FF9800' },
+  'muito fraco': { pct: 14, cls: 'badge-muito-fraco', color: '#F44336' },
+};
+
+function parseBalance(content) {
+  var items = [];
+  var paras = content.split(/\n\n+/);
+  var remainLines = [];
+  var inItem = false;
+
+  paras.forEach(function(para) {
+    var lines = para.trim().split('\n');
+    var first = lines[0] || '';
+    // Match: NOME | Nível or NOME | Nível
+    var m = first.match(/^([A-ZÁÉÍÓÚÂÊÎÔÛÃÕÇ\s]+?)\s*\|\s*(Muito Forte|Forte|Moderado|Fraco|Muito Fraco)/i);
+    if (m) {
+      var levelStr = m[2].toLowerCase();
+      var lvl = BALANCE_LEVELS[levelStr] || BALANCE_LEVELS['moderado'];
+      items.push({
+        name: m[1].trim().toUpperCase(),
+        levelLabel: m[2],
+        lvl: lvl,
+        desc: lines.slice(1).join(' ').trim().replace(/^\*+|\*+$/g, '').trim()
+      });
+      inItem = true;
+    } else {
+      if (para.trim()) remainLines.push(para.trim());
+      inItem = false;
+    }
+  });
+
+  return { items: items, rest: remainLines.join('\n\n') };
+}
+
+function renderBalance(content) {
+  var parsed = parseBalance(content);
+  if (!parsed.items.length) return renderMd(content);
+
+  var html = '<div class="balance-grid">';
+  parsed.items.forEach(function(item) {
+    html += '<div class="balance-item">';
+    html += '<div class="balance-item-header">';
+    html += '<div class="balance-name">' + esc(item.name) + '</div>';
+    html += '<div class="balance-badge ' + item.lvl.cls + '">' + esc(item.levelLabel) + '</div>';
+    html += '</div>';
+    html += '<div class="balance-bar-wrap"><div class="balance-bar-fill" style="width:' + item.lvl.pct + '%;background:' + item.lvl.color + '"></div></div>';
+    if (item.desc) html += '<div class="balance-desc">' + esc(item.desc) + '</div>';
+    html += '</div>';
+  });
+  html += '</div>';
+
+  if (parsed.rest) html += '<div style="margin-top:12px">' + renderMd(parsed.rest) + '</div>';
+  return html;
+}
+
+// ── RENDER MARKDOWN ────────────────────────────────────────────
+function renderMd(text) {
+  text = text.trim();
+  text = text.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+  text = text.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
+  text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  text = text.replace(/\*([^*\n]+?)\*/g, '<em>$1</em>');
+  text = text.replace(/((?:^|\n)[ \t]*[-•] .+)+/g, function(block) {
+    var items = block.trim().split(/\n[ \t]*[-•] /);
+    items[0] = items[0].replace(/^[ \t]*[-•] /, '');
+    return '<ul>' + items.map(function(s) { return '<li>' + s.trim() + '</li>'; }).join('') + '</ul>';
+  });
+  var paras = text.split(/\n\n/);
+  text = paras.map(function(p) {
+    p = p.trim(); if (!p) return '';
+    if (/^<[hul]/.test(p)) return p;
+    return '<p>' + p.replace(/\n/g, '<br>') + '</p>';
+  }).filter(Boolean).join('\n');
+  return text;
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── RENDER RESULT ──────────────────────────────────────────────
+function renderResult(text, tab) {
+  var defs = SDEFS[tab] || [];
+  var desk = window.innerWidth >= 768;
+
+  // Meta
+  var cfg = CONFIGS[tab][activeType[tab]];
+  var metaHtml = '<div class="result-meta-label">Centro de Marca · ' + esc(TABNAMES[tab]) + '</div>' +
+    '<div class="result-meta-title">' + esc(cfg.label) + '</div>' +
+    '<div class="result-meta-sub">' + new Date().toLocaleDateString('pt-BR') + '</div>';
+
+  if (desk) {
+    document.getElementById(tab + '-meta-desk').innerHTML = metaHtml;
+    document.getElementById(tab + '-top-bar').style.display = 'flex';
+    document.getElementById(tab + '-meta').style.display = 'none';
+  } else {
+    document.getElementById(tab + '-meta').innerHTML = metaHtml;
+    document.getElementById(tab + '-meta').style.display = '';
+    document.getElementById(tab + '-top-bar').style.display = 'none';
+  }
+
+  // Parse sections
+  var parts = text.split(/\n(?=## )/);
+  var sections = [];
+  parts.forEach(function(part) {
+    var m = part.match(/^## (.+?)\n([\s\S]*)/);
+    if (!m) return;
+    var title = m[1].trim();
+    var content = m[2].trim();
+    var def = null;
+    for (var i = 0; i < defs.length; i++) {
+      if (defs[i].p.test(title)) { def = defs[i]; break; }
+    }
+    if (!def) def = { icon: '📌', bg: 'var(--surface-2)', special: null };
+    sections.push({ title: title, content: content, icon: def.icon, bg: def.bg, special: def.special || null });
+  });
+  if (!sections.length) {
+    sections.push({ title: 'Análise', icon: '🧠', bg: '#E8F0FE', content: text, special: null });
+  }
+
+  var container = document.getElementById(tab + '-sections');
+  container.innerHTML = '';
+
+  sections.forEach(function(sec, i) {
+    var isBalance = sec.special === 'balance';
+    var bodyHtml = isBalance ? renderBalance(sec.content) : renderMd(sec.content);
+    var openDefault = desk ? i < 3 : i === 0;
+
+    var el = document.createElement('div');
+    el.className = 'result-section' + (openDefault ? ' open' : '');
+    el.innerHTML =
+      '<div class="rs-header" onclick="this.parentElement.classList.toggle(\'open\')">' +
+        '<div class="rs-icon" style="background:' + sec.bg + '">' + sec.icon + '</div>' +
+        '<div class="rs-title">' + esc(sec.title) + '</div>' +
+        '<div class="rs-arrow">▼</div>' +
+      '</div>' +
+      '<div class="rs-body">' + bodyHtml + '</div>';
+    container.appendChild(el);
+  });
+
+  // Show result
+  document.getElementById(tab + '-loading').classList.remove('show');
+  var resultEl = document.getElementById('cm-result-' + tab);
+  resultEl.style.display = 'block';
+  resultEl.classList.add('show');
+
+  if (!desk) window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+var TABNAMES = { bb: 'Brand Brain', ig: 'Instagram', cv: 'Curso VIP' };
+
+// ── RESET ──────────────────────────────────────────────────────
+function resetAnalysis(tab) {
+  var resultEl = document.getElementById('cm-result-' + tab);
+  resultEl.classList.remove('show'); resultEl.style.display = 'none';
+  document.getElementById(tab + '-loading').classList.remove('show');
+  document.getElementById(tab + '-top-bar').style.display = 'none';
+  document.getElementById(tab + '-empty').style.display = '';
+  lastText[tab] = '';
+}
+
+// ── COPY ───────────────────────────────────────────────────────
+function copyResult(tab) {
+  if (!lastText[tab]) { toast('Nenhuma análise para copiar'); return; }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(lastText[tab])
+      .then(function() { toast('Análise copiada!'); })
+      .catch(function() { toast('Selecione o texto manualmente'); });
+  }
+}
+
+// ── SAVE TO QUICK NOTES ────────────────────────────────────────
+function saveResult(tab) {
+  if (!lastText[tab]) { toast('Nenhuma análise para salvar'); return; }
+  var cfg = CONFIGS[tab][activeType[tab]];
+  var notes = [];
+  try { notes = JSON.parse(localStorage.getItem('mk_quick_notes') || '[]'); } catch(e) {}
+  notes.unshift({
+    id: 'cm_' + Date.now(),
+    text: '[Centro de Marca · ' + TABNAMES[tab] + ' · ' + cfg.label + ']\n\n' + lastText[tab],
+    source: 'instagram',
+    createdAt: new Date().toISOString(),
+    promoted: false
+  });
+  localStorage.setItem('mk_quick_notes', JSON.stringify(notes));
+  toast('Salvo em Conteúdo → Inbox!');
+}
+
+// ── KEY MODAL ──────────────────────────────────────────────────
+function openKeyModal() {
+  document.getElementById('key-input').value = localStorage.getItem('mk_claude_key') || '';
+  document.getElementById('key-modal').classList.add('show');
+  setTimeout(function() { document.getElementById('key-input').focus(); }, 120);
+}
+function closeKeyModal() { document.getElementById('key-modal').classList.remove('show'); }
+function saveKey() {
+  var k = (document.getElementById('key-input').value || '').trim();
+  if (!k) { toast('Cole sua chave sk-ant-...'); return; }
+  localStorage.setItem('mk_claude_key', k);
+  closeKeyModal(); toast('Chave salva!');
+}
+
+// ── TOAST ──────────────────────────────────────────────────────
+function toast(msg, dur) {
+  dur = dur || 2800;
+  var t = document.getElementById('cm-toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(function() { t.classList.remove('show'); }, dur);
+}
+
+// ── INIT ───────────────────────────────────────────────────────
+document.getElementById('key-modal').addEventListener('click', function(e) { if (e.target === this) closeKeyModal(); });
+document.getElementById('key-input').addEventListener('keydown', function(e) { if (e.key === 'Enter') saveKey(); });
+
+if (!localStorage.getItem('mk_claude_key')) {
+  setTimeout(function() {
+    if (!localStorage.getItem('mk_claude_key'))
+      toast('Configure sua chave Claude (⚙️) para usar as análises', 4000);
+  }, 1500);
+}
+</script>
+
+<script src="../shared/js/sidebar.js"></script>
+</body>
+</html>
