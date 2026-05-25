@@ -742,7 +742,7 @@ function simplifyServiceName(servName) {
   return servName.replace(/\s+(em domicílio|no studio|no estúdio|em domicilio|no estudio)\s*$/i, '').trim();
 }
 
-function buildEventos(nome, slots, endereco, total, sinal, saldo, telefone) {
+function buildEventos(nome, slots, endereco, total, sinal, saldo, telefone, equipe) {
   const eventos = [];
   slots.forEach(s => {
     if (!s.data || !s.horario) return;
@@ -751,10 +751,12 @@ function buildEventos(nome, slots, endereco, total, sinal, saldo, telefone) {
     const fim = addMinutesFmt(s.horario, dur);
     const local = fechLocal === 'studio' ? 'Studio' : 'Domicílio';
     const abrev = abrevServico(s.servico);
-    const titulo = inicio + ' - ' + fim + ' | ' + (nome || '[nome]') + ' | ' + abrev + ' | ' + local;
+    const nomeComEquipe = (nome || '[nome]') + (equipe ? ' — Equipe ' + equipe : '');
+    const titulo = inicio + ' - ' + fim + ' | ' + nomeComEquipe + ' | ' + abrev + ' | ' + local;
 
     const desc = [];
     desc.push('Serviço: ' + (s.servico || ''));
+    if (equipe) desc.push('Equipe responsável: ' + equipe);
     desc.push('Data: ' + (fmtDateWeek(s.data) || ''));
     desc.push('Horário de início: ' + inicio);
     desc.push('Endereço: ' + (endereco || ''));
@@ -1076,6 +1078,11 @@ function toggleActEquipeInput(checked) {
   if (!inp) return;
   if (checked) { inp.style.display = ''; inp.style.marginTop = '8px'; inp.focus(); }
   else { inp.style.display = 'none'; inp.value = ''; }
+  const toToggle = ['act-val-enviado-wrap', 'act-fu-row', 'act-comp-wrap', 'fu-picker'];
+  toToggle.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = checked ? 'none' : '';
+  });
 }
 
 function addAddSlot() {
@@ -1257,6 +1264,7 @@ function openAction(id) {
   const actEqInp = document.getElementById('act-equipe');
   if (actEqChk) actEqChk.checked = !!(e.Equipe);
   if (actEqInp) { actEqInp.value = e.Equipe || ''; actEqInp.style.display = e.Equipe ? '' : 'none'; if (e.Equipe) actEqInp.style.marginTop = '8px'; }
+  toggleActEquipeInput(!!(e.Equipe));
 
   // Carrega o picker de follow-up
   renderFollowupPicker(id);
@@ -1719,7 +1727,7 @@ async function confirmarFechamento() {
   setLoadingStep(2, 'Preparando confirmação...', 'Quase lá!');
 
   // 4) Prepara dados para Google Agenda + WhatsApp
-  const eventos = buildEventos(e.Cliente, slotsValidos, endereco, total, sinal, saldo, e.Telefone);
+  const eventos = buildEventos(e.Cliente, slotsValidos, endereco, total, sinal, saldo, e.Telefone, e.Equipe || '');
   const waText  = buildConfirmacaoMessage(e.Cliente, slotsValidos, total, sinal, saldo, endereco, fechLocal);
 
   lastFechamento = {
@@ -2066,7 +2074,7 @@ async function adicionarAgendaDeAction() {
   const sinal = parseFloat(e.SinalFech)    || Math.round(total * 0.30 * 100) / 100;
   const saldo = parseFloat(e.SaldoFech)    || Math.max(0, total - sinal);
 
-  const eventos = buildEventos(e.Cliente, slots, endereco, total, sinal, saldo, e.Telefone);
+  const eventos = buildEventos(e.Cliente, slots, endereco, total, sinal, saldo, e.Telefone, e.Equipe || '');
   const validos = eventos.filter(ev => ev.startISO && ev.endISO);
 
   if (!validos.length) {

@@ -283,7 +283,7 @@
   </div>
 
   <!-- Valor enviado e Valor fechado -->
-  <div style="padding:10px 18px 0;">
+  <div id="act-val-enviado-wrap" style="padding:10px 18px 0;">
     <div class="form-group">
       <label class="form-label">Valor enviado à cliente (R$)</label>
       <input class="form-input" id="act-val-enviado" type="number" placeholder="0,00" step="0.01">
@@ -306,7 +306,7 @@
   </div>
 
   <!-- Follow-up row -->
-  <div class="fu-row">
+  <div class="fu-row" id="act-fu-row">
     <label>📅 Follow-up:</label>
     <input type="date" id="act-followup" onchange="updateFollowup()">
   </div>
@@ -328,7 +328,7 @@
   <!-- Follow-up rápido -->
 
   <!-- ★ COMPROVANTE ★ -->
-  <div style="padding: 0 18px 0;">
+  <div id="act-comp-wrap" style="padding: 0 18px 0;">
     <div class="form-group">
       <label class="form-label">🧾 Comprovante de pagamento</label>
       <div id="act-comp-content"></div>

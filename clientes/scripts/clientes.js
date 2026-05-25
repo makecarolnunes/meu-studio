@@ -11,9 +11,7 @@ const SRV_ICON = {
   'Curso de Automaquiagem':'📚'
 };
 
-const DEFAULT_URL = 'https://script.google.com/macros/s/AKfycbw8ShiDfpUvpRe8TwLuLn6jre02F0lFCvSq0mqk7brhHtBSVJ1rj3vh5UWAnCl89M9UEw/exec';
-const CAL_ID      = 'c82d7e89c34b742daed656c5aa3113d25cb3feda4e8f159936750f2e17473b38@group.calendar.google.com';
-const SCRIPT_URL  = localStorage.getItem('mk_script_url') || DEFAULT_URL;
+const CAL_ID = 'c82d7e89c34b742daed656c5aa3113d25cb3feda4e8f159936750f2e17473b38@group.calendar.google.com';
 
 // ── DATA ──────────────────────────────────────────────────
 let entries        = JSON.parse(localStorage.getItem('mk_entries') || '[]');
@@ -69,24 +67,31 @@ function setEquipeF(v) {
   render();
 }
 
+function checkAuth() {
+  const session = localStorage.getItem('mk_session');
+  if (session) {
+    try {
+      const { expires } = JSON.parse(session);
+      if (Date.now() < expires) return;
+    } catch(_) {}
+    localStorage.removeItem('mk_session');
+  }
+  window.location.href = '../';
+}
+
 function syncAll() {
   dot('syncing');
   calMap = {};
-  loadSheets();
+  loadFromSupabase();
   loadCalendar();
 }
 
-// ══════════════════════════════════════════════════════════
-//  GOOGLE SHEETS — mesmos dados do sistema financeiro
-// ══════════════════════════════════════════════════════════
-async function loadSheets() {
-  if (!SCRIPT_URL) { dot('offline'); render(); return; }
+async function loadFromSupabase() {
   try {
     dot('syncing');
-    const r = await fetch(`${SCRIPT_URL}?action=load&_=${Date.now()}`);
-    const d = await r.json();
-    if (d.ok) {
-      entries = d.entries || [];
+    const result = await DB.entries.list();
+    if (Array.isArray(result)) {
+      entries = result;
       localStorage.setItem('mk_entries', JSON.stringify(entries));
       dot('ok');
     } else {
@@ -319,6 +324,7 @@ function render() {
 // ══════════════════════════════════════════════════════════
 //  INIT
 // ══════════════════════════════════════════════════════════
+checkAuth();
 if (entries.length > 0) { render(); dot('syncing'); }
-loadSheets();
+loadFromSupabase();
 loadCalendar();
