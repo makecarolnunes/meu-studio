@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-25 18:00 | main | feat(direcao-criativa): adiciona quick note para salvar ideia no planejamento -->
+<!-- AUTO: 2026-05-25 18:13 | main | fix(orcamentos): sincroniza status e follow-up com Supabase imediatamente -->
 
