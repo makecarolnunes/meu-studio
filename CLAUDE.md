@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-25 12:45 | main | docs: sync CLAUDE.md [auto] -->
+<!-- AUTO: 2026-05-25 12:58 | main | feat(brand-brain): adiciona eixo de Humaniza├º├úo e Presen├ºa Real -->
 
