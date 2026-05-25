@@ -216,6 +216,75 @@
     .action-btn-icon { font-size: 1.1rem; }
     .action-btn-primary { background: linear-gradient(135deg, #1a0a2e, #6b1e4e); border-color: #1a0a2e; color: #fff; }
 
+    /* ── QUICK NOTE PANEL ── */
+    .qn-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,.48);
+      z-index: 600; display: none; align-items: flex-end; justify-content: center;
+    }
+    .qn-overlay.show { display: flex; }
+    .qn-panel {
+      background: var(--surface); width: 100%; max-width: 480px;
+      border-radius: 22px 22px 0 0; padding: 8px 16px 36px;
+      max-height: 88vh; overflow-y: auto;
+    }
+    .qn-handle { width: 40px; height: 4px; background: var(--border); border-radius: 4px; margin: 10px auto 16px; }
+    .qn-header { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+    .qn-header-icon {
+      width: 34px; height: 34px; border-radius: 9px; flex-shrink: 0;
+      background: linear-gradient(135deg, #1a0a2e, #6b1e4e);
+      display: flex; align-items: center; justify-content: center; font-size: 1rem;
+    }
+    .qn-header-title { font-size: .97rem; font-weight: 700; color: var(--text); }
+    .qn-header-sub { font-size: .74rem; color: var(--text-muted); margin-bottom: 14px; margin-left: 44px; }
+    .qn-label {
+      display: block; font-size: .68rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .07em;
+      color: var(--text-muted); margin-bottom: 6px; margin-top: 14px;
+    }
+    .qn-input {
+      width: 100%; padding: 11px 13px; background: var(--bg);
+      color: var(--text); border: 1.5px solid var(--border); border-radius: 9px;
+      font-family: inherit; font-size: .85rem; -webkit-appearance: none;
+      box-sizing: border-box; transition: border-color .15s;
+    }
+    .qn-input:focus { outline: none; border-color: #6b1e4e; }
+    .qn-textarea {
+      width: 100%; padding: 10px 13px; background: var(--bg);
+      color: var(--text); border: 1.5px solid var(--border); border-radius: 9px;
+      font-family: inherit; font-size: .84rem; min-height: 72px; resize: none;
+      line-height: 1.5; -webkit-appearance: none; box-sizing: border-box;
+      transition: border-color .15s;
+    }
+    .qn-textarea:focus { outline: none; border-color: #6b1e4e; }
+    .qn-textarea::placeholder, .qn-input::placeholder { color: var(--text-subtle); }
+    .qn-fmt-row { display: flex; flex-wrap: wrap; gap: 6px; }
+    .qn-fmt-btn {
+      padding: 5px 12px; border-radius: 20px;
+      border: 1.5px solid var(--border); background: var(--surface);
+      font-size: .72rem; font-weight: 600; cursor: pointer;
+      color: var(--text-muted); transition: all .15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .qn-fmt-btn.on { background: #6b1e4e; border-color: #6b1e4e; color: #fff; }
+    .qn-save-btn {
+      width: 100%; margin-top: 18px; padding: 14px;
+      background: linear-gradient(135deg, #1a0a2e, #6b1e4e);
+      color: #fff; border: none; border-radius: 11px;
+      font-family: inherit; font-size: .9rem; font-weight: 700;
+      cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+      transition: opacity .2s;
+    }
+    .qn-save-btn:active { opacity: .85; }
+    .qn-cancel-btn {
+      width: 100%; padding: 11px; margin-top: 6px;
+      background: none; color: var(--text-muted);
+      border: none; font-family: inherit; font-size: .84rem; cursor: pointer;
+    }
+    @media (min-width: 768px) {
+      .qn-overlay { align-items: center; }
+      .qn-panel { border-radius: 18px; max-width: 460px; }
+    }
+
     /* ── TOAST ── */
     .toast {
       position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(10px);
@@ -436,6 +505,36 @@
   </div><!-- /dc-main -->
 
   <div class="toast" id="dc-toast"></div>
+
+  <!-- QUICK NOTE PANEL -->
+  <div class="qn-overlay" id="qn-overlay" onclick="if(event.target===this)closeQuickNote()">
+    <div class="qn-panel">
+      <div class="qn-handle"></div>
+      <div class="qn-header">
+        <div class="qn-header-icon">💡</div>
+        <div class="qn-header-title">Salvar no Planejamento</div>
+      </div>
+      <div class="qn-header-sub">A ideia vai direto para o Planejamento de Conteúdo</div>
+
+      <label class="qn-label" for="qn-title">Título da ideia</label>
+      <input type="text" class="qn-input" id="qn-title" placeholder="Ex: Reel — autoridade sem parecer distante">
+
+      <label class="qn-label">Formato <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-subtle)">— opcional</span></label>
+      <div class="qn-fmt-row" id="qn-fmt-row">
+        <button class="qn-fmt-btn" data-v="Reels">Reels</button>
+        <button class="qn-fmt-btn" data-v="Carrossel">Carrossel</button>
+        <button class="qn-fmt-btn" data-v="Foto">Foto</button>
+        <button class="qn-fmt-btn" data-v="Stories">Stories</button>
+        <button class="qn-fmt-btn" data-v="Bastidores">Bastidores</button>
+      </div>
+
+      <label class="qn-label" for="qn-note">Anotação rápida <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-subtle)">— opcional</span></label>
+      <textarea class="qn-textarea" id="qn-note" rows="3" placeholder="O que você não quer esquecer dessa direção criativa..."></textarea>
+
+      <button class="qn-save-btn" onclick="confirmSaveToIdeas()">💾 Salvar no Planejamento</button>
+      <button class="qn-cancel-btn" onclick="closeQuickNote()">Cancelar</button>
+    </div>
+  </div>
 
   <!-- KEY MODAL -->
   <div class="modal-overlay" id="key-modal">
@@ -869,26 +968,58 @@ function copyResult() {
   }).catch(function() { toast('Não foi possível copiar'); });
 }
 
+// ── QUICK NOTE ────────────────────────────────────────────────
+var qnFmts = [];
+
+document.querySelectorAll('#qn-fmt-row .qn-fmt-btn').forEach(function(b) {
+  b.addEventListener('click', function() {
+    var v = b.dataset.v;
+    if (b.classList.contains('on')) {
+      b.classList.remove('on');
+      qnFmts = qnFmts.filter(function(x) { return x !== v; });
+    } else {
+      b.classList.add('on');
+      qnFmts.push(v);
+    }
+  });
+});
+
 function saveToIdeas() {
-  // Extracts the first creative path name as idea title and saves to conteudo
+  if (!lastResultText) { toast('Gere uma direção criativa primeiro'); return; }
   var intencao = (document.getElementById('dc-intencao').value || '').trim();
-  var title = intencao.length > 60 ? intencao.substring(0, 57) + '...' : (intencao || 'Ideia da Direção Criativa');
+  var suggestion = intencao.length > 70 ? intencao.substring(0, 67) + '...' : (intencao || 'Ideia da Direção Criativa');
+  document.getElementById('qn-title').value = suggestion;
+  document.getElementById('qn-note').value = '';
+  qnFmts = [];
+  document.querySelectorAll('#qn-fmt-row .qn-fmt-btn').forEach(function(b) { b.classList.remove('on'); });
+  document.getElementById('qn-overlay').classList.add('show');
+  setTimeout(function() { document.getElementById('qn-title').focus(); }, 120);
+}
+
+function closeQuickNote() {
+  document.getElementById('qn-overlay').classList.remove('show');
+}
+
+function confirmSaveToIdeas() {
+  var title = (document.getElementById('qn-title').value || '').trim() || 'Ideia da Direção Criativa';
+  var note  = (document.getElementById('qn-note').value  || '').trim();
+  var notes = note ? note + '\n\n---\n' + lastResultText.substring(0, 600) : lastResultText.substring(0, 600);
   var existing = [];
   try { existing = JSON.parse(localStorage.getItem('mk_content_ideas') || '[]'); } catch(e) {}
-  var idea = {
+  existing.unshift({
     id: Date.now().toString(),
     title: title,
     categories: ['Maquiagem Profissional'],
-    formatos: [],
+    formatos: qnFmts.slice(),
     status: 'Nao Iniciado',
-    notes: lastResultText.substring(0, 800),
+    notes: notes,
     platforms: ['Instagram'],
     scheduledDate: '',
     createdAt: new Date().toISOString(),
-  };
-  existing.unshift(idea);
+  });
   localStorage.setItem('mk_content_ideas', JSON.stringify(existing));
-  toast('Ideia salva no planejamento de conteúdo!');
+  closeQuickNote();
+  toast('Ideia salva no planejamento!');
 }
 
 // ── TOAST ─────────────────────────────────────────────────────
