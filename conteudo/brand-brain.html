@@ -847,101 +847,119 @@ function resetForm() {
 var CAROL_PROFILE = [
   'PERFIL DA CRIADORA — Carol (@makecarolnunes):',
   '- Profissão: Maquiadora freelancer profissional',
-  '- Nicho: Maquiagem profissional — especialista em noivas, eventos e make artístico',
-  '- Público-alvo: Noivas (25-40 anos), mulheres que buscam make profissional para eventos especiais',
-  '- Posicionamento: Autoridade técnica + conexão humana genuína (acolhedora, especialista, elegante)',
-  '- Objetivos no Instagram: Construir autoridade, criar conexão real com audiência, converter em agendamentos e orçamentos de noiva',
-  '- Pilares de conteúdo: Técnica e truques de maquiagem, transformação (antes/depois), bastidores de atendimentos reais, relacionamento com noivas, dicas de automaquiagem para clientes, produtos favoritos',
-  '- Formatos principais: Reels, Carrossel, Stories',
-  '- Tom de voz: Autêntico, acolhedor, especialista mas nunca arrogante, próxima sem ser informal demais',
-  '- Evita: Conteúdo genérico de beleza sem conexão com maquiagem, humor forçado, trends vazios, comparações negativas',
+  '- Nicho: Maquiagem profissional — especialista em noivas, pele negra, cachos/crespos e make artístico',
+  '- Público-alvo: Noivas (25–40 anos), mulheres negras, mulheres com cabelos naturais, clientes que buscam make profissional para eventos especiais',
+  '- Posicionamento central: "A marca premium não é fria — ela é segura, intencional e humana." Autoridade técnica real + presença humana genuína + sofisticação com acolhimento.',
+  '',
+  '- PILARES ESTRATÉGICOS (5):',
+  '  1. NOIVAS PREMIUM — especialização técnica e emocional, relacionamento, luxury feeling acessível',
+  '  2. PELE NEGRA — representatividade, técnica inclusiva, autoridade no segmento',
+  '  3. CACHOS E CRESPOS — cabelos naturais integrados ao atendimento completo',
+  '  4. AUTORIDADE TÉCNICA — credibilidade como base para futuros cursos',
+  '  5. HUMANIZAÇÃO E PRESENÇA REAL — bastidores, rotina, espontaneidade, vulnerabilidade leve, humor genuíno, pensamentos do dia a dia',
+  '',
+  '- SOBRE O EIXO DE HUMANIZAÇÃO (importante — leia com atenção):',
+  '  Não é virar influencer lifestyle aleatória. É tornar Carol mais próxima, aumentar identificação emocional, criar intimidade e confiança, mostrar que existe uma pessoa real por trás da marca.',
+  '  Conteúdos de rotina, bastidores, humor situacional e vulnerabilidade leve FORTALECEM autoridade — não enfraquecem.',
+  '  O público premium também quer acompanhar personalidade e rotina. Excesso de perfeição afasta; autenticidade controlada aproxima e converte.',
+  '  Nem todo conteúdo precisa estar explicitamente encaixado em um pilar estratégico. Momentos naturais e espontâneos também têm valor real.',
+  '  Marcas pessoais fortes equilibram estratégia + presença real. Conexão emocional também é performance de marca.',
+  '',
+  '- Objetivos no Instagram: construir autoridade, criar conexão real, converter em agendamentos e orçamentos, preparar audiência para cursos futuros',
+  '- Tom de voz: Segura, intencional e humana. Acolhedora, especialista, sofisticada — nunca fria, nunca arrogante, nunca genérica.',
+  '- Evita: Conteúdo de blogueira lifestyle sem conexão com maquiagem, humor forçado, trends vazios, comparações negativas, perfecionismo que cria distância, dicas rasas apenas por engajamento',
 ].join('\n');
 
 // ── PROMPTS POR TIPO DE CONTEÚDO ──────────────────────────────
 var PROMPT_CONFIGS = {
   'Reels': {
     sections:
-      '## DIAGNÓSTICO DO REELS\nTipo, formato, nicho original, público-alvo, contexto de performance.\n\n' +
-      '## POR QUE FUNCIONA\nMecanismos reais de engajamento. Por que as pessoas param no scroll, assistem até o fim, interagem. Gatilhos psicológicos específicos.\n\n' +
-      '## ESTRUTURA DO ROTEIRO\n**Hook (0-3s)**, **Desenvolvimento**, **CTA/Encerramento**. Identifique o padrão de roteiro.\n\n' +
-      '## GATILHOS E EMOÇÕES\nGatilhos ativados: curiosidade, identificação, admiração, medo de perder, prova social, aspiração, urgência, pertencimento. Para cada um, explique como foi ativado.\n\n' +
-      '## ADAPTAÇÃO PARA O MEU PERFIL\nComo Carol aplica ESSA LÓGICA no nicho de maquiagem/noivas. O que funciona direto, o que precisa ser ajustado.\n\n' +
-      '## 3 IDEIAS PRÁTICAS\nTrês ideias concretas. Para cada uma:\n**Ideia N: [título]**\n**Hook:** [abertura exata — 3s]\n**Estrutura:** [passo a passo]\n**CTA:** [call to action]\n**Como gravar:** [orientação técnica]\n\n' +
-      '## O QUE EVITAR\nArmadilhas ao adaptar esse formato ao nicho de maquiagem/noivas.',
+      '## DIAGNÓSTICO DO REELS\nTipo, formato, nicho original, público-alvo, contexto de performance. Identifique se é conteúdo técnico, aspiracional ou humano/de conexão — todos são igualmente válidos estrategicamente.\n\n' +
+      '## POR QUE FUNCIONA\nMecanismos reais de engajamento. Por que as pessoas param no scroll, assistem até o fim, interagem. Gatilhos psicológicos específicos — incluindo conexão emocional, identificação e intimidade quando presentes.\n\n' +
+      '## ESTRUTURA DO ROTEIRO\n**Hook (0-3s)**, **Desenvolvimento**, **CTA/Encerramento**. Identifique o padrão de roteiro. Note se a estrutura é técnica/polida ou espontânea/humana — ambas têm valor.\n\n' +
+      '## GATILHOS E EMOÇÕES\nGatilhos ativados: curiosidade, identificação, admiração, medo de perder, prova social, aspiração, urgência, pertencimento, intimidade, confiança. Para cada um relevante, explique como foi ativado.\n\n' +
+      '## ADAPTAÇÃO PARA O MEU PERFIL\nComo Carol aplica ESSA LÓGICA no nicho de maquiagem/noivas/pele negra/cachos. O que funciona direto, o que precisa ajuste. Se a lógica serve tanto para conteúdo técnico quanto para um momento mais humano ou de bastidores, apresente as duas possibilidades.\n\n' +
+      '## 3 IDEIAS PRÁTICAS\nTrês ideias concretas — varie o mix: nem todas precisam ser técnicas. Quando fizer sentido estratégico, inclua uma ideia humana/de bastidores. Para cada uma:\n**Ideia N: [título]**\n**Hook:** [abertura exata — 3s]\n**Estrutura:** [passo a passo]\n**CTA:** [call to action]\n**Como gravar:** [orientação técnica ou de presença/espontaneidade]\n\n' +
+      '## O QUE EVITAR\nArmadilhas ao adaptar esse formato ao nicho de maquiagem/noivas. Inclua também: riscos de artificialidade excessiva ou perfecionismo que criam distância com o público.',
     userLabel: 'Analise este Reels do Instagram'
   },
   'Stories': {
     sections:
-      '## DIAGNÓSTICO DOS STORIES\nEstrutura da sequência, tom, duração, elementos interativos.\n\n' +
-      '## POR QUE PRENDE A ATENÇÃO\nPor que as pessoas continuam assistindo. Mecanismos de retenção entre um story e outro.\n\n' +
-      '## ESTRUTURA DA SEQUÊNCIA\nComo foi organizada: abertura, desenvolvimento, clímax, encerramento. Quantos stories, em qual posição está o gancho.\n\n' +
-      '## GATILHOS E EMOÇÕES\nGatilhos emocionais e de comportamento usados na sequência.\n\n' +
-      '## ADAPTAÇÃO PARA O MEU PERFIL\nComo Carol aplica essa estrutura de stories no nicho de maquiagem/noivas.\n\n' +
-      '## 3 IDEIAS PRÁTICAS\nTrês sequências de stories para Carol. Para cada uma:\n**Ideia N: [título]**\n**Abertura:** [primeiro story]\n**Sequência:** [desenvolvimento]\n**Encerramento:** [CTA ou swipe up]\n**Dica de gravação:** [orientação]\n\n' +
-      '## O QUE EVITAR\nErros comuns ao adaptar esse estilo de stories para maquiagem/noivas.',
+      '## DIAGNÓSTICO DOS STORIES\nEstrutura da sequência, tom, duração, elementos interativos. Identifique se é conteúdo técnico, de bastidores, cotidiano ou misto.\n\n' +
+      '## POR QUE PRENDE A ATENÇÃO\nPor que as pessoas continuam assistindo. Mecanismos de retenção entre um story e outro — incluindo conexão humana, curiosidade sobre a rotina e identificação emocional.\n\n' +
+      '## ESTRUTURA DA SEQUÊNCIA\nComo foi organizada: abertura, desenvolvimento, clímax, encerramento. Quantos stories, em qual posição está o gancho. A sequência é polida/técnica ou espontânea/natural?\n\n' +
+      '## GATILHOS E EMOÇÕES\nGatilhos emocionais e de comportamento usados na sequência — inclua intimidade, confiança e identificação com a rotina quando presentes.\n\n' +
+      '## ADAPTAÇÃO PARA O MEU PERFIL\nComo Carol aplica essa estrutura de stories no nicho de maquiagem/noivas. Considere variações: stories técnicos, de bastidores de atendimento, de relacionamento com clientes, de rotina cotidiana.\n\n' +
+      '## 3 IDEIAS PRÁTICAS\nTrês sequências de stories para Carol — inclua pelo menos uma ideia de presença humana/cotidiana quando fizer sentido estratégico. Para cada uma:\n**Ideia N: [título]**\n**Abertura:** [primeiro story]\n**Sequência:** [desenvolvimento]\n**Encerramento:** [CTA ou momento de conexão]\n**Dica de gravação:** [orientação técnica ou de naturalidade]\n\n' +
+      '## O QUE EVITAR\nErros comuns ao adaptar esse estilo de stories para maquiagem/noivas. Inclua o risco de stories excessivamente roteirizados que perdem naturalidade e conexão.',
     userLabel: 'Analise estes Stories do Instagram'
   },
   'Post Imagem': {
     sections:
-      '## DIAGNÓSTICO VISUAL\nTipo de imagem, composição, paleta, texto sobreposto, estilo visual.\n\n' +
-      '## POR QUE PARA NO SCROLL\nO que na imagem faz a pessoa parar e olhar. Elementos visuais de alto impacto.\n\n' +
-      '## COMPOSIÇÃO E LEGENDA\nAnálise da imagem: enquadramento, luz, cores, hierarquia visual. Análise da legenda: hook textual, tom, CTA.\n\n' +
-      '## GATILHOS E EMOÇÕES\nGatilhos ativados pela combinação visual + texto.\n\n' +
-      '## ADAPTAÇÃO PARA O MEU PERFIL\nComo Carol replica essa lógica visual e textual no nicho de maquiagem/noivas.\n\n' +
-      '## 3 IDEIAS PRÁTICAS\nTrês posts imagem para Carol. Para cada uma:\n**Ideia N: [título]**\n**Conceito visual:** [como montar a foto]\n**Texto na imagem:** [se houver]\n**Legenda:** [estrutura sugerida]\n**CTA:** [call to action]\n\n' +
-      '## O QUE EVITAR\nErros ao adaptar esse estilo visual para o nicho de maquiagem/noivas.',
+      '## DIAGNÓSTICO VISUAL\nTipo de imagem, composição, paleta, texto sobreposto, estilo visual. Identifique se é conteúdo polido/aspiracional ou mais natural/humano.\n\n' +
+      '## POR QUE PARA NO SCROLL\nO que na imagem faz a pessoa parar e olhar. Elementos visuais de alto impacto — incluindo autenticidade e humanidade quando são o diferencial.\n\n' +
+      '## COMPOSIÇÃO E LEGENDA\nAnálise da imagem: enquadramento, luz, cores, hierarquia visual. Análise da legenda: hook textual, tom, CTA. A legenda é formal/estratégica ou tem voz humana e espontânea?\n\n' +
+      '## GATILHOS E EMOÇÕES\nGatilhos ativados pela combinação visual + texto — incluindo identificação, intimidade e pertencimento quando presentes.\n\n' +
+      '## ADAPTAÇÃO PARA O MEU PERFIL\nComo Carol replica essa lógica visual e textual no nicho de maquiagem/noivas. Considere variações: posts de portfólio polido e posts mais naturais de presença real.\n\n' +
+      '## 3 IDEIAS PRÁTICAS\nTrês posts imagem para Carol — inclua pelo menos uma variação mais espontânea/humana quando fizer sentido. Para cada uma:\n**Ideia N: [título]**\n**Conceito visual:** [como montar a foto — polida ou natural]\n**Texto na imagem:** [se houver]\n**Legenda:** [estrutura sugerida — com tom de voz]\n**CTA:** [call to action]\n\n' +
+      '## O QUE EVITAR\nErros ao adaptar esse estilo visual para o nicho de maquiagem/noivas. Inclua o risco de posts excessivamente editados que perdem autenticidade.',
     userLabel: 'Analise este Post Imagem do Instagram'
   },
   'Carrossel': {
     sections:
-      '## DIAGNÓSTICO DO CARROSSEL\nQuantidade de slides, tema, tipo (educativo, lista, storytelling, before/after).\n\n' +
-      '## POR QUE ARRASTA\nO que faz a pessoa continuar passando os slides. Gatilho de curiosidade, promessa da capa.\n\n' +
-      '## ESTRUTURA DE SLIDES\nAnálise de cada parte: **Capa** (gancho), **Slides do meio** (desenvolvimento e valor), **Slide final** (CTA, save, compartilhar). Padrão visual.\n\n' +
-      '## GATILHOS E EMOÇÕES\nGatilhos usados para maximizar saves e compartilhamentos.\n\n' +
-      '## ADAPTAÇÃO PARA O MEU PERFIL\nComo Carol aplica esse formato de carrossel no nicho de maquiagem/noivas.\n\n' +
-      '## 3 IDEIAS PRÁTICAS\nTrês carrosseis para Carol. Para cada um:\n**Ideia N: [título]**\n**Capa:** [texto e visual]\n**Estrutura:** [o que vai em cada slide]\n**Último slide:** [CTA e motivação para salvar]\n**Dica de design:** [orientação visual]\n\n' +
-      '## O QUE EVITAR\nErros comuns ao fazer carrosseis no nicho de maquiagem/noivas.',
+      '## DIAGNÓSTICO DO CARROSSEL\nQuantidade de slides, tema, tipo (educativo, lista, storytelling, before/after, bastidores, relato pessoal). Todos os tipos têm valor estratégico.\n\n' +
+      '## POR QUE ARRASTA\nO que faz a pessoa continuar passando os slides. Gatilho de curiosidade, promessa da capa — pode ser informativo ou emocional.\n\n' +
+      '## ESTRUTURA DE SLIDES\nAnálise de cada parte: **Capa** (gancho), **Slides do meio** (desenvolvimento e valor), **Slide final** (CTA, save, compartilhar). A estrutura é técnica/informativa ou narrativa/humana?\n\n' +
+      '## GATILHOS E EMOÇÕES\nGatilhos usados para maximizar saves e compartilhamentos — incluindo identificação emocional e conexão com experiências reais.\n\n' +
+      '## ADAPTAÇÃO PARA O MEU PERFIL\nComo Carol aplica esse formato de carrossel no nicho de maquiagem/noivas. Considere variações: carrossel técnico, storytelling de atendimento, relato de bastidores ou jornada profissional.\n\n' +
+      '## 3 IDEIAS PRÁTICAS\nTrês carrosseis para Carol — varie entre técnico, aspiracional e narrativo/humano quando fizer sentido. Para cada um:\n**Ideia N: [título]**\n**Capa:** [texto e visual]\n**Estrutura:** [o que vai em cada slide]\n**Último slide:** [CTA e motivação para salvar]\n**Dica de design:** [orientação visual]\n\n' +
+      '## O QUE EVITAR\nErros comuns ao fazer carrosseis no nicho de maquiagem/noivas. Inclua o risco de carrosseis excessivamente didáticos que perdem calor humano.',
     userLabel: 'Analise este Carrossel do Instagram'
   },
   'Destaque': {
     sections:
-      '## DIAGNÓSTICO DO DESTAQUE\nQuantidade, temas, consistência visual das capas, estratégia aparente.\n\n' +
-      '## POR QUE FUNCIONA\nO papel estratégico dos destaques no perfil. Por que esse conjunto atrai o visitante a ficar.\n\n' +
-      '## CURADORIA E IDENTIDADE\nComo os temas foram escolhidos. Hierarquia (o que aparece primeiro). Coerência visual das capas.\n\n' +
-      '## FUNÇÃO ESTRATÉGICA\nQual história os destaques contam juntos. Como funcionam como vitrine do negócio ou serviço.\n\n' +
-      '## ADAPTAÇÃO PARA O MEU PERFIL\nComo Carol estrutura os destaques para maquiagem/noivas — quais temas, qual ordem, qual visual.\n\n' +
-      '## 3 IDEIAS PRÁTICAS\nTrês sugestões de organização de destaques para Carol:\n**Proposta N: [nome]**\n**Temas sugeridos:** [lista]\n**Ordem:** [qual vem primeiro]\n**Capas:** [estilo visual recomendado]\n\n' +
-      '## O QUE EVITAR\nErros comuns nos destaques de maquiadoras/criadores de beleza.',
+      '## DIAGNÓSTICO DO DESTAQUE\nQuantidade, temas, consistência visual das capas, estratégia aparente. Há espaço para humanização (bastidores, sobre mim, rotina)?\n\n' +
+      '## POR QUE FUNCIONA\nO papel estratégico dos destaques no perfil. Por que esse conjunto atrai o visitante a ficar — incluindo se a humanização foi usada como elemento de aproximação.\n\n' +
+      '## CURADORIA E IDENTIDADE\nComo os temas foram escolhidos. Hierarquia (o que aparece primeiro). Coerência visual das capas. Como a personalidade da criadora aparece — ou não — nos destaques.\n\n' +
+      '## FUNÇÃO ESTRATÉGICA\nQual história os destaques contam juntos. Como funcionam como vitrine do negócio — e como criam (ou não) conexão humana com quem chega ao perfil pela primeira vez.\n\n' +
+      '## ADAPTAÇÃO PARA O MEU PERFIL\nComo Carol estrutura os destaques para maquiagem/noivas/pele negra/cachos — quais temas, qual ordem, qual visual. Inclua a possibilidade de um destaque de presença real (bastidores, sobre Carol, rotina) para humanizar a marca.\n\n' +
+      '## 3 IDEIAS PRÁTICAS\nTrês sugestões de organização de destaques para Carol:\n**Proposta N: [nome]**\n**Temas sugeridos:** [lista — inclua possibilidade de tema humano/sobre Carol]\n**Ordem:** [qual vem primeiro]\n**Capas:** [estilo visual recomendado]\n\n' +
+      '## O QUE EVITAR\nErros comuns nos destaques de maquiadoras/criadores de beleza. Inclua destaques excessivamente técnicos ou corporativos que perdem a dimensão humana da marca.',
     userLabel: 'Analise os Destaques deste perfil do Instagram'
   },
   'Perfil Completo': {
     sections:
-      '## DIAGNÓSTICO DO PERFIL\nNicho, posicionamento aparente, público-alvo, volume de conteúdo, frequência.\n\n' +
-      '## POSICIONAMENTO E PROPOSTA DE VALOR\nComo o perfil se posiciona. Qual é a promessa implícita para quem chega. O que diferencia.\n\n' +
-      '## GRADE E IDENTIDADE VISUAL\nEstrutura da grade: padrão de cores, variedade de formatos, consistência visual, primeiros 9 posts.\n\n' +
-      '## MIX DE CONTEÚDO\nDistribuição entre formatos (Reels, carrosseis, fotos). Pilares temáticos identificados. Frequência.\n\n' +
-      '## O QUE APRENDER\nOs 3-5 elementos mais estratégicos desse perfil que Carol pode usar como aprendizado — não copiar.\n\n' +
-      '## 3 APLICAÇÕES PRÁTICAS\nTrês mudanças ou adições que Carol pode fazer inspirada nesse perfil:\n**Aplicação N: [o quê]**\n**Por que funciona:** [mecanismo]\n**Como implementar:** [passo a passo]\n\n' +
-      '## O QUE EVITAR\nO que não faz sentido copiar dado o posicionamento e nicho da Carol.',
+      '## DIAGNÓSTICO DO PERFIL\nNicho, posicionamento aparente, público-alvo, volume de conteúdo, frequência. Qual é o equilíbrio entre conteúdo técnico, aspiracional e humano/de conexão?\n\n' +
+      '## POSICIONAMENTO E PROPOSTA DE VALOR\nComo o perfil se posiciona. Qual é a promessa implícita para quem chega. O que diferencia — incluindo como a personalidade da criadora aparece (ou deveria aparecer). A marca é só técnica ou também humana?\n\n' +
+      '## GRADE E IDENTIDADE VISUAL\nEstrutura da grade: padrão de cores, variedade de formatos, consistência visual, primeiros 9 posts. Como a identidade visual equilibra polimento e presença humana.\n\n' +
+      '## MIX DE CONTEÚDO\nDistribuição entre formatos (Reels, carrosseis, fotos). Pilares temáticos identificados. Frequência. Há espaço para humanização no mix — rotina, bastidores, presença real? Como isso impacta engajamento e confiança?\n\n' +
+      '## O QUE APRENDER\nOs 3–5 elementos mais estratégicos desse perfil que Carol pode usar como aprendizado — não copiar. Inclua o que funciona em termos de autoridade técnica, humanização, conexão emocional e conversão.\n\n' +
+      '## 3 APLICAÇÕES PRÁTICAS\nTrês mudanças ou adições que Carol pode fazer inspirada nesse perfil — inclua pelo menos uma no eixo de humanização/presença real se fizer sentido:\n**Aplicação N: [o quê]**\n**Por que funciona:** [mecanismo — técnico ou humano]\n**Como implementar:** [passo a passo]\n\n' +
+      '## O QUE EVITAR\nO que não faz sentido copiar dado o posicionamento e nicho da Carol. Inclua práticas que criam distância com o público ou que não combinam com uma marca premium humana.',
     userLabel: 'Analise este Perfil Completo do Instagram'
   },
 };
 
 function buildSystemPrompt() {
   var cfg = PROMPT_CONFIGS[selectedContentType] || PROMPT_CONFIGS['Reels'];
-  return 'Você é um estrategista sênior de conteúdo para Instagram, especializado em comportamento de audiência e psicologia de engajamento. Sua missão é dissecar conteúdos de sucesso e transformar os insights em estratégias práticas e personalizadas.\n\n' +
+  return 'Você é uma estrategista sênior de conteúdo para Instagram, especializada em comportamento de audiência, psicologia de engajamento e branding pessoal premium. Sua missão é dissecar conteúdos de sucesso e transformar os insights em estratégias práticas, personalizadas e humanas.\n\n' +
     CAROL_PROFILE + '\n\n' +
     'PRINCÍPIOS DA ANÁLISE:\n' +
     '1. NÃO reproduza roteiro literal nem copie falas ou elementos exatos\n' +
     '2. Foque no MECANISMO e na LÓGICA, não no conteúdo superficial\n' +
     '3. Adapte SEMPRE ao contexto, nicho e posicionamento de Carol\n' +
     '4. Seja específica e prática — nada de conselhos genéricos\n' +
-    '5. Explique o PORQUÊ de cada elemento funcionar (psicologia, comportamento)\n' +
+    '5. Explique o PORQUÊ de cada elemento funcionar (psicologia, comportamento, conexão emocional)\n' +
     '6. Identifique padrões reutilizáveis em série\n' +
-    '7. Considere o algoritmo do Instagram: saves, compartilhamentos, retenção\n\n' +
+    '7. Considere o algoritmo do Instagram: saves, compartilhamentos, retenção\n' +
+    '8. CONTEÚDO HUMANO É ESTRATÉGICO — bastidores, rotina, vulnerabilidade leve e humor genuíno constroem confiança, intimidade e desejo de contratar. Reconheça e valorize isso nas análises, não trate como conteúdo menor.\n' +
+    '9. NEM TODO CONTEÚDO PRECISA ESTAR EM UM PILAR FECHADO — conteúdos espontâneos e naturais têm valor estratégico real, especialmente em nichos de alta confiança como casamentos e beleza.\n' +
+    '10. MARCAS PREMIUM SÃO HUMANAS — sofisticação e autenticidade coexistem e se reforçam. Varie o mix de ideias entre técnico, aspiracional e humano/conexão. Não proponha só conteúdo perfeito e polido.\n\n' +
+    'COMO EQUILIBRAR O MIX DE IDEIAS:\n' +
+    'Ao propor ideias para Carol, pense em variar: conteúdo técnico (demonstra autoridade), aspiracional/transformação (gera desejo), humano/bastidores (cria confiança e identificação). Os três tipos convertem — por caminhos diferentes. Não force pilar em todo conteúdo. Permita o espontâneo.\n\n' +
     'FORMATO DE RESPOSTA — use EXATAMENTE estes cabeçalhos:\n\n' +
     cfg.sections + '\n\n' +
-    'Responda em português brasileiro. Seja direta, específica e estratégica.';
+    'Responda em português brasileiro. Seja direta, específica e humana nos insights — bons insights não são frios.';
 }
 
 function buildUserMessage() {
