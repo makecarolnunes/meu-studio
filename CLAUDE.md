@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-25 13:09 | main | feat(centro-de-comando): adiciona Pilar V ÔÇö Humaniza├º├úo e Presen├ºa Real -->
+<!-- AUTO: 2026-05-25 13:58 | main | feat: adiciona Centro de Marca e atualiza Centro de Comando com an├ílise do Instagram -->
 
