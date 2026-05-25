@@ -124,6 +124,7 @@ function saveCfgKey() {
     const k = document.getElementById('cfg-claude-key').value.trim();
     if (!k) { toast('Cole a sk-ant-key no campo!'); return; }
     localStorage.setItem('mk_claude_key', k);
+    DB.config.set('claude_api_key', k).catch(e => console.warn('[config] erro ao salvar no Supabase:', e));
     closeModal();
     toast('Chave Claude salva!');
 }

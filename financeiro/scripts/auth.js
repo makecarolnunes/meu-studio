@@ -21,6 +21,9 @@ function showApp() {
     document.getElementById('app').style.display = 'block';
     render();
     loadFromSupabase();
+    DB.config.get('claude_api_key').then(v => {
+        if (v && !localStorage.getItem('mk_claude_key')) localStorage.setItem('mk_claude_key', v);
+    }).catch(() => {});
 }
 
 function doLogout() {

@@ -703,6 +703,7 @@ function saveKey() {
   var k = (document.getElementById('key-input').value || '').trim();
   if (!k) { toast('Cole sua chave sk-ant-...'); return; }
   localStorage.setItem('mk_claude_key', k);
+  if (window.DB) DB.config.set('claude_api_key', k).catch(function(){});
   closeKeyModal(); toast('Chave salva!');
 }
 
@@ -1310,10 +1311,16 @@ if (isDesktop()) {
   document.getElementById('bb-empty').style.display = '';
 }
 
+if (window.DB) {
+  DB.config.get('claude_api_key').then(function(v) {
+    if (v && !localStorage.getItem('mk_claude_key')) localStorage.setItem('mk_claude_key', v);
+  }).catch(function(){});
+}
 if (!localStorage.getItem('mk_claude_key')) {
   setTimeout(function() {
-    toast('Configure sua chave Claude (⚙️) para usar as análises', 4000);
-  }, 800);
+    if (!localStorage.getItem('mk_claude_key'))
+      toast('Configure sua chave Claude (⚙️) para usar as análises', 4000);
+  }, 1500);
 }
 </script>
 

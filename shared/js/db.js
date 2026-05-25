@@ -695,6 +695,26 @@ window.DB = {
     },
   },
 
+  config: {
+    async get(chave) {
+      _guard();
+      const { data, error } = await _sb
+        .from('configuracoes')
+        .select('valor')
+        .eq('chave', chave)
+        .maybeSingle();
+      if (error) throw error;
+      return data ? data.valor : null;
+    },
+    async set(chave, valor) {
+      _guard();
+      const { error } = await _sb
+        .from('configuracoes')
+        .upsert({ chave, valor, updated_at: new Date().toISOString() }, { onConflict: 'chave' });
+      if (error) throw error;
+    },
+  },
+
   auth: {
     // Retorna { id, usuario, nivel } se válido, null se inválido, lança erro se offline
     async login(usuario, senha) {
