@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <title>Centro de Marca · Meu Studio</title>
+  <title>Estratégia de Comunicação · Meu Studio</title>
   <link rel="stylesheet" href="../shared/css/tokens.css">
   <link rel="stylesheet" href="../shared/css/base.css">
   <style>
@@ -342,8 +342,8 @@
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
     </button>
     <div class="hdr-center">
-      <h1>Centro de Marca</h1>
-      <div class="hdr-sub">Inteligência estratégica da sua marca</div>
+      <h1>Estratégia de Comunicação</h1>
+      <div class="hdr-sub">Transforme ideias em conteúdo com IA</div>
     </div>
     <button class="hdr-action" onclick="openKeyModal()" title="Configurar chave Claude" aria-label="Configurar API">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12.22 2h-.44a2 2 0 00-2 2v.18a2 2 0 01-1 1.73l-.43.25a2 2 0 01-2 0l-.15-.08a2 2 0 00-2.73.73l-.22.38a2 2 0 00.73 2.73l.15.1a2 2 0 011 1.72v.51a2 2 0 01-1 1.74l-.15.09a2 2 0 00-.73 2.73l.22.38a2 2 0 002.73.73l.15-.08a2 2 0 012 0l.43.25a2 2 0 011 1.73V20a2 2 0 002 2h.44a2 2 0 002-2v-.18a2 2 0 011-1.73l.43-.25a2 2 0 012 0l.15.08a2 2 0 002.73-.73l.22-.39a2 2 0 00-.73-2.73l-.15-.08a2 2 0 01-1-1.74v-.5a2 2 0 011-1.74l.15-.09a2 2 0 00.73-2.73l-.22-.38a2 2 0 00-2.73-.73l-.15.08a2 2 0 01-2 0l-.43-.25a2 2 0 01-1-1.73V4a2 2 0 00-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -639,7 +639,7 @@
 
 <script>
 // ════════════════════════════════════════════════════════════════
-// Centro de Marca — Inteligência Estratégica de Marca
+// Estratégia de Comunicação — Inteligência de Marca com IA
 // ════════════════════════════════════════════════════════════════
 
 // ── STATE ─────────────────────────────────────────────────────
@@ -1384,7 +1384,7 @@ function renderResult(text, tab) {
 
   // Meta
   var cfg = CONFIGS[tab][activeType[tab]];
-  var metaHtml = '<div class="result-meta-label">Centro de Marca · ' + esc(TABNAMES[tab]) + '</div>' +
+  var metaHtml = '<div class="result-meta-label">Estratégia de Comunicação · ' + esc(TABNAMES[tab]) + '</div>' +
     '<div class="result-meta-title">' + esc(cfg.label) + '</div>' +
     '<div class="result-meta-sub">' + new Date().toLocaleDateString('pt-BR') + '</div>';
 
@@ -1476,7 +1476,7 @@ function saveResult(tab) {
   try { notes = JSON.parse(localStorage.getItem('mk_quick_notes') || '[]'); } catch(e) {}
   notes.unshift({
     id: 'cm_' + Date.now(),
-    text: '[Centro de Marca · ' + TABNAMES[tab] + ' · ' + cfg.label + ']\n\n' + lastText[tab],
+    text: '[Estratégia de Comunicação · ' + TABNAMES[tab] + ' · ' + cfg.label + ']\n\n' + lastText[tab],
     source: 'instagram',
     createdAt: new Date().toISOString(),
     promoted: false

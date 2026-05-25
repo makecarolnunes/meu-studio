@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <title>Concorrentes · Meu Studio</title>
+  <title>Concorrentes · Insights de Mercado · Meu Studio</title>
   <link rel="stylesheet" href="../shared/css/tokens.css">
   <link rel="stylesheet" href="../shared/css/base.css">
   <style>
@@ -458,6 +458,10 @@
       .qn-overlay { align-items: center; }
       .qn-panel { border-radius: 18px; max-width: 460px; }
     }
+    .insights-subnav { display:flex; gap:0; border-bottom:1px solid rgba(255,255,255,.08); padding:0 4px; }
+    .isn-tab { padding:9px 14px; font-size:13px; font-weight:500; color:rgba(255,255,255,.4); text-decoration:none; border-bottom:2px solid transparent; margin-bottom:-1px; transition:color .14s,border-color .14s; letter-spacing:-.01em; }
+    .isn-tab:hover { color:rgba(255,255,255,.72); }
+    .isn-active { color:rgba(255,255,255,.9) !important; border-bottom-color:#c47aab !important; }
   </style>
 </head>
 <body>
@@ -476,6 +480,12 @@
     <button class="hdr-action" onclick="openKeyModal()" title="Configurar chave Claude" aria-label="Configurar API">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12.22 2h-.44a2 2 0 00-2 2v.18a2 2 0 01-1 1.73l-.43.25a2 2 0 01-2 0l-.15-.08a2 2 0 00-2.73.73l-.22.38a2 2 0 00.73 2.73l.15.1a2 2 0 011 1.72v.51a2 2 0 01-1 1.74l-.15.09a2 2 0 00-.73 2.73l.22.38a2 2 0 002.73.73l.15-.08a2 2 0 012 0l.43.25a2 2 0 011 1.73V20a2 2 0 002 2h.44a2 2 0 002-2v-.18a2 2 0 011-1.73l.43-.25a2 2 0 012 0l.15.08a2 2 0 002.73-.73l.22-.39a2 2 0 00-.73-2.73l-.15-.08a2 2 0 01-1-1.74v-.5a2 2 0 011-1.74l.15-.09a2 2 0 00.73-2.73l-.22-.38a2 2 0 00-2.73-.73l-.15.08a2 2 0 01-2 0l-.43-.25a2 2 0 01-1-1.73V4a2 2 0 00-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
     </button>
+  </div>
+
+  <!-- INSIGHTS DE MERCADO — sub-nav -->
+  <div class="insights-subnav">
+    <a href="brand-brain.html" class="isn-tab">Referências</a>
+    <a href="concorrentes.html" class="isn-tab isn-active">Concorrentes</a>
   </div>
 
   <div class="bb-content">

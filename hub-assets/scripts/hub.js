@@ -206,13 +206,12 @@
     }
     var contUrl  = (cont && cont.url)  ? cont.url  : 'conteudo/';
     var contNome = (cont && cont.nome) ? cont.nome : 'Conteúdo';
-    var contDesc = (cont && cont.descricao) ? cont.descricao : 'Planejamento de posts e ideias';
+    var contDesc = (cont && cont.descricao) ? cont.descricao : 'Fila de conteúdo pronto para gravar ou postar';
 
     var CREATIVE = [
-      { key: 'conteudo',  nome: 'Planejamento de Conteúdo', desc: 'Ideias, calendário e fila de gravação',                   url: contUrl,                               cls: 'card-cont'  },
-      { key: 'direcao',  nome: 'Direção Criativa',          desc: 'Transforme intenção em ideias estratégicas — brainstorm com IA', url: 'conteudo/direcao-criativa.html',     cls: 'card-dc'    },
-      { key: 'validador', nome: 'Validador de Conteúdo',    desc: 'Valide antes de postar — feedback estratégico IA',             url: 'instagram/?tab=validador',            cls: 'card-val'   },
-      { key: 'radar',     nome: 'Radar',                    desc: 'Decodifique referências e adapte para o seu nicho',            url: 'conteudo/brand-brain.html',           cls: 'card-radar' },
+      { key: 'conteudo',  nome: 'Lista de Conteúdos',   desc: 'Fila de conteúdo pronto para gravar ou postar',               url: contUrl,                               cls: 'card-cont'  },
+      { key: 'direcao',  nome: 'Direção Criativa',     desc: 'Transforme intenção em ideias estratégicas — brainstorm com IA', url: 'conteudo/direcao-criativa.html',     cls: 'card-dc'    },
+      { key: 'validador', nome: 'Validador de Conteúdo', desc: 'Valide antes de postar — feedback estratégico IA',             url: 'instagram/?tab=validador',            cls: 'card-val'   },
     ];
     document.getElementById('creative-section').innerHTML = CREATIVE.map(function(c) {
       return '<a href="' + esc(c.url) + '" class="sys-card ' + c.cls + '">' +
@@ -242,9 +241,9 @@
   // ── Estratégia ──
   function buildEstrategia() {
     var ESTRATEGIA = [
-      { key: 'centromarca',   nome: 'Centro de Marca',  desc: 'Diagnóstico estratégico da sua marca — Brand Brain, Instagram e Curso VIP', url: 'conteudo/centro-de-marca.html', cls: 'card-cdc'    },
-      { key: 'concorrentes', nome: 'Concorrentes',      desc: 'Analise concorrentes e extraia estratégias com IA',       url: 'conteudo/concorrentes.html',          cls: 'card-concorrentes' },
-      { key: 'cdc',          nome: 'Centro de Comando', desc: 'Manual da marca — DNA, posicionamento e pilares estratégicos', url: 'estrategia/centro-de-comando.html', cls: 'card-cdc'         },
+      { key: 'insights',     nome: 'Insights de Mercado',        desc: 'Referências de mercado e análise de concorrentes com IA',      url: 'conteudo/brand-brain.html',     cls: 'card-radar'   },
+      { key: 'centromarca', nome: 'Estratégia de Comunicação',  desc: 'Transforme ideias em conteúdo com IA — baseado no seu guide de marca', url: 'conteudo/centro-de-marca.html', cls: 'card-cdc'     },
+      { key: 'cdc',         nome: 'Manual de Marca',            desc: 'Base da empresa — DNA, posicionamento e pilares estratégicos', url: 'estrategia/centro-de-comando.html', cls: 'card-cdc' },
     ];
     document.getElementById('estrategia-section').innerHTML = ESTRATEGIA.map(function(c) {
       return '<a href="' + esc(c.url) + '" class="sys-card ' + c.cls + '">' +

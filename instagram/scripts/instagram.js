@@ -710,7 +710,7 @@
       (posicionamento ? '<div class="brand-position"><span class="t-label">Posicionamento</span><div>' + esc(posicionamento) + '</div></div>' : '') +
       '<div class="brand-pilares-row">' + pilaresHTML + '</div>' +
       (pilaresEdHTML ? '<div class="brand-edit-pilares"><span class="t-label">Pilares editoriais ideais</span><table class="brand-table">' + pilaresEdHTML + '</table></div>' : '') +
-      '<a class="brand-link" href="../centro de comando/centro-de-comando.html" target="_blank">Ver Brand Brain completo →</a>';
+      '<a class="brand-link" href="../estrategia/centro-de-comando.html" target="_blank">Abrir Manual de Marca →</a>';
   }
 
   function renderAccountInsights() {

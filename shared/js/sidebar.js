@@ -15,9 +15,9 @@
   var ACTIVE = 'hub';
   var BASE   = './';
 
-  if      (_p.indexOf('/conteudo/brand-brain')       !== -1) { ACTIVE = 'radar';        BASE = '../'; }
-  else if (_p.indexOf('/conteudo/direcao-criativa')  !== -1) { ACTIVE = 'direcao';      BASE = '../'; }
-  else if (_p.indexOf('/conteudo/concorrentes')      !== -1) { ACTIVE = 'concorrentes'; BASE = '../'; }
+  if      (_p.indexOf('/conteudo/brand-brain')       !== -1) { ACTIVE = 'radar';  BASE = '../'; }
+  else if (_p.indexOf('/conteudo/direcao-criativa')  !== -1) { ACTIVE = 'direcao'; BASE = '../'; }
+  else if (_p.indexOf('/conteudo/concorrentes')      !== -1) { ACTIVE = 'radar';  BASE = '../'; }
   else if (_p.indexOf('/estrategia')            !== -1) { ACTIVE = 'cdc';          BASE = '../'; }
   else if (_p.indexOf('/instagram')             !== -1) { BASE = '../'; ACTIVE = _qs.indexOf('tab=validador') !== -1 ? 'validador' : 'instagram'; }
   else {
@@ -72,12 +72,11 @@
     { id: 'conteudo',     label: 'Conteúdo',           path: 'conteudo/',                          icon: IC.cam   },
     { id: 'direcao',      label: 'Direção Criativa',   path: 'conteudo/direcao-criativa.html',     icon: IC.cdc   },
     { id: 'validador',    label: 'Validador',          path: 'instagram/?tab=validador',           icon: IC.check },
-    { id: 'radar',        label: 'Radar',              path: 'conteudo/brand-brain.html',          icon: IC.radar },
+    { id: 'radar',        label: 'Insights de Mercado', path: 'conteudo/brand-brain.html',          icon: IC.radar },
     // Social
     { id: 'instagram',    label: 'Instagram',          path: 'instagram/',                         icon: IC.ig    },
     // Estratégia
-    { id: 'concorrentes', label: 'Concorrentes',       path: 'conteudo/concorrentes.html',         icon: IC.comp  },
-    { id: 'cdc',          label: 'Centro de Comando',  path: 'estrategia/centro-de-comando.html',  icon: IC.cdc   },
+    { id: 'cdc',          label: 'Manual de Marca',    path: 'estrategia/centro-de-comando.html',  icon: IC.cdc   },
     // Organização
     { id: 'tarefas',      label: 'Tarefas',            path: 'tarefas/',                           icon: IC.task  },
     { id: 'anotacoes',    label: 'Anotações',          path: 'anotacoes/',                         icon: IC.note  },
