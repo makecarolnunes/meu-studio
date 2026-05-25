@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-25 12:45 | main | feat: atendimento por equipe nos m├│dulos Financeiro, Or├ºamentos e Clientes -->
+<!-- AUTO: 2026-05-25 12:45 | main | docs: sync CLAUDE.md [auto] -->
 
