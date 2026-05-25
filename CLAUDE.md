@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-22 22:38 | main | fix(instagram): aumenta limite de tokens do validador para suportar m├║ltiplas imagens -->
+<!-- AUTO: 2026-05-25 00:10 | main | feat(config): salva chave Claude API no Supabase para sync entre devices -->
 
