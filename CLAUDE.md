@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-25 18:13 | main | fix(orcamentos): sincroniza status e follow-up com Supabase imediatamente -->
+<!-- AUTO: 2026-05-25 18:14 | main | docs: sync CLAUDE.md [auto] -->
 
