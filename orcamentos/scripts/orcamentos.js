@@ -1000,9 +1000,9 @@ function render() {
 // ══════════════════════════════════════════════════════════
 //  FILTROS
 // ══════════════════════════════════════════════════════════
-function setF(f) { curFilter = f; render(); }
-function setOrigem(v) { curOrigem = v; render(); }
-function setEquipe(v) { curEquipe = v; render(); }
+function setF(f) { curFilter = f; localStorage.setItem('orca_cur_filter', f); render(); }
+function setOrigem(v) { curOrigem = v; localStorage.setItem('orca_cur_origem', v); render(); }
+function setEquipe(v) { curEquipe = v; localStorage.setItem('orca_cur_equipe', v); render(); }
 function setSearch(v) { curSearch = v; render(); }
 function navMonth(dir) {
   const base = filterMonth ? new Date(filterMonth + '-01T12:00:00') : new Date();
@@ -2369,6 +2369,9 @@ function resizeImageBase64(base64, tipo) {
 }
 
 (function init() {
+  curFilter = localStorage.getItem('orca_cur_filter') || 'todos';
+  curOrigem = localStorage.getItem('orca_cur_origem') || 'todos';
+  curEquipe = localStorage.getItem('orca_cur_equipe') || 'todos';
   render();
   syncAll();
 })();
