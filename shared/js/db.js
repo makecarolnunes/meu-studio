@@ -189,6 +189,8 @@ function _orcFromDb(r) {
     SinalFech:      r.sinal_fech       != null ? String(r.sinal_fech)  : '',
     SaldoFech:      r.saldo_fech       != null ? String(r.saldo_fech)  : '',
     Comprovantes:   r.comprovantes     || [],
+    Propostas:      r.propostas        || [],
+    Equipe:         r.equipe           || '',
     DataCriacao:    r.created_at       || '',
   };
 }
