@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-25 19:02 | main | fix(db): adiciona Equipe e Propostas no _orcFromDb -->
+<!-- AUTO: 2026-05-25 19:48 | main | refactor(nav): renomeia m├│dulos e mescla Radar+Concorrentes em Insights de Mercado -->
 
