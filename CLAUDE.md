@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-25 18:55 | main | fix(orcamentos): persiste filtros de status, origem e equipe no localStorage -->
+<!-- AUTO: 2026-05-25 19:02 | main | fix(db): adiciona Equipe e Propostas no _orcFromDb -->
 
