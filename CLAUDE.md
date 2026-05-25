@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-25 17:33 | main | feat: adiciona Dire├º├úo Criativa ÔÇö brainstorm estrat├®gico de conte├║do com IA -->
+<!-- AUTO: 2026-05-25 18:00 | main | feat(direcao-criativa): adiciona quick note para salvar ideia no planejamento -->
 
