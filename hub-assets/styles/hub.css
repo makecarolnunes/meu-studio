@@ -380,6 +380,7 @@
     .card-val        { --accent: #0D9488;           --icon-bg: #CCFBF1; }
     .card-concorrentes { --accent: var(--brand);     --icon-bg: var(--brown-soft); }
     .card-cdc          { --accent: var(--brand-dark); --icon-bg: #EDD9C8; }
+    .card-dc           { --accent: #6B1E4E;           --icon-bg: #F8EEF4; }
 
     /* Widget de tarefas logo abaixo da seção Organização */
     #todo-section { margin-top: 10px; }

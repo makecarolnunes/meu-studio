@@ -132,6 +132,12 @@
         '<path d="M12 2a5 5 0 0 1 5 5c0 2.38-1.32 4.45-3.25 5.54L12 22l-1.75-9.46A5.99 5.99 0 0 1 7 7a5 5 0 0 1 5-5z"/>' +
         '<circle cx="12" cy="7" r="2"/>' +
       '</svg>',
+    direcao:
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+        '<path d="M12 20h9"/>' +
+        '<path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>' +
+        '<path d="M15 5l3 3"/>' +
+      '</svg>',
     arrow:
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
         '<path d="M5 12h14M13 6l6 6-6 6"/>' +
@@ -203,9 +209,10 @@
     var contDesc = (cont && cont.descricao) ? cont.descricao : 'Planejamento de posts e ideias';
 
     var CREATIVE = [
-      { key: 'conteudo',  nome: 'Planejamento de Conteúdo', desc: 'Ideias, calendário e fila de gravação',             url: contUrl,                      cls: 'card-cont'  },
-      { key: 'validador', nome: 'Validador de Conteúdo',    desc: 'Valide antes de postar — feedback estratégico IA',  url: 'instagram/?tab=validador',   cls: 'card-val'   },
-      { key: 'radar',     nome: 'Radar',                    desc: 'Decodifique referências e adapte para o seu nicho', url: 'conteudo/brand-brain.html',  cls: 'card-radar' },
+      { key: 'conteudo',  nome: 'Planejamento de Conteúdo', desc: 'Ideias, calendário e fila de gravação',                   url: contUrl,                               cls: 'card-cont'  },
+      { key: 'direcao',  nome: 'Direção Criativa',          desc: 'Transforme intenção em ideias estratégicas — brainstorm com IA', url: 'conteudo/direcao-criativa.html',     cls: 'card-dc'    },
+      { key: 'validador', nome: 'Validador de Conteúdo',    desc: 'Valide antes de postar — feedback estratégico IA',             url: 'instagram/?tab=validador',            cls: 'card-val'   },
+      { key: 'radar',     nome: 'Radar',                    desc: 'Decodifique referências e adapte para o seu nicho',            url: 'conteudo/brand-brain.html',           cls: 'card-radar' },
     ];
     document.getElementById('creative-section').innerHTML = CREATIVE.map(function(c) {
       return '<a href="' + esc(c.url) + '" class="sys-card ' + c.cls + '">' +

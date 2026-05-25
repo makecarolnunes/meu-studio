@@ -15,8 +15,9 @@
   var ACTIVE = 'hub';
   var BASE   = './';
 
-  if      (_p.indexOf('/conteudo/brand-brain')  !== -1) { ACTIVE = 'radar';        BASE = '../'; }
-  else if (_p.indexOf('/conteudo/concorrentes') !== -1) { ACTIVE = 'concorrentes'; BASE = '../'; }
+  if      (_p.indexOf('/conteudo/brand-brain')       !== -1) { ACTIVE = 'radar';        BASE = '../'; }
+  else if (_p.indexOf('/conteudo/direcao-criativa')  !== -1) { ACTIVE = 'direcao';      BASE = '../'; }
+  else if (_p.indexOf('/conteudo/concorrentes')      !== -1) { ACTIVE = 'concorrentes'; BASE = '../'; }
   else if (_p.indexOf('/estrategia')            !== -1) { ACTIVE = 'cdc';          BASE = '../'; }
   else if (_p.indexOf('/instagram')             !== -1) { BASE = '../'; ACTIVE = _qs.indexOf('tab=validador') !== -1 ? 'validador' : 'instagram'; }
   else {
@@ -69,6 +70,7 @@
     { id: 'clientes',     label: 'Clientes',           path: 'clientes/',                          icon: IC.usr   },
     // Conteúdo
     { id: 'conteudo',     label: 'Conteúdo',           path: 'conteudo/',                          icon: IC.cam   },
+    { id: 'direcao',      label: 'Direção Criativa',   path: 'conteudo/direcao-criativa.html',     icon: IC.cdc   },
     { id: 'validador',    label: 'Validador',          path: 'instagram/?tab=validador',           icon: IC.check },
     { id: 'radar',        label: 'Radar',              path: 'conteudo/brand-brain.html',          icon: IC.radar },
     // Social

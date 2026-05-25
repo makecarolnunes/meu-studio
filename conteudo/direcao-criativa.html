@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Direção Criativa · Meu Studio</title>
+  <link rel="stylesheet" href="../shared/css/tokens.css">
+  <link rel="stylesheet" href="../shared/css/base.css">
+  <style>
+    body { max-width: 480px; margin: 0 auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; }
+
+    /* ── HEADER ── */
+    .hdr {
+      background: linear-gradient(135deg, #1a0a2e 0%, #6b1e4e 100%);
+      color: #fff; padding: 10px 14px; position: sticky; top: 0; z-index: 100;
+      display: grid; grid-template-columns: 44px 1fr 44px; align-items: center; gap: 8px;
+    }
+    .hdr-center { text-align: center; }
+    .hdr h1 { font-size: 1rem; font-weight: 700; }
+    .hdr-sub { font-size: .68rem; opacity: .7; margin-top: 1px; }
+    .hdr-back, .hdr-action {
+      width: 34px; height: 34px; border-radius: 50%; border: none;
+      background: rgba(255,255,255,.13); color: rgba(255,255,255,.88);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: background .15s; padding: 0;
+    }
+    .hdr-back:active, .hdr-action:active { background: rgba(255,255,255,.28); }
+
+    /* ── LAYOUT ── */
+    .dc-content { padding: 14px 13px 100px; }
+
+    /* ── INTRO CARD ── */
+    .dc-intro {
+      background: linear-gradient(135deg, #f8eef4, var(--surface));
+      border: 1px solid #e0c8d8; border-radius: 16px;
+      padding: 16px; margin-bottom: 14px;
+    }
+    .dc-intro-title {
+      font-size: .84rem; font-weight: 700; color: #1a0a2e; margin-bottom: 5px;
+      display: flex; align-items: center; gap: 7px;
+    }
+    .dc-intro-sub { font-size: .74rem; color: var(--text-muted); line-height: 1.55; }
+    .dc-intro-sep { border: none; border-top: 1px solid #e0c8d8; margin: 12px 0 10px; }
+    .dc-examples-label { font-size: .66rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--text-subtle); margin-bottom: 7px; }
+    .dc-examples { display: flex; gap: 5px; flex-wrap: wrap; }
+    .dc-eg-tag {
+      padding: 5px 11px; background: rgba(107,30,78,.08); color: #6b1e4e;
+      border-radius: 20px; font-size: .68rem; font-weight: 600; cursor: pointer;
+      border: 1px solid rgba(107,30,78,.2); transition: background .15s;
+      -webkit-tap-highlight-color: transparent; line-height: 1.4;
+    }
+    .dc-eg-tag:active { background: rgba(107,30,78,.18); }
+
+    /* ── CARDS ── */
+    .dc-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 14px; padding: 14px; margin-bottom: 10px;
+    }
+    .dc-label {
+      display: block; font-size: .7rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .07em;
+      color: var(--text-muted); margin-bottom: 8px;
+    }
+    .dc-hint { font-size: .67rem; font-weight: 400; text-transform: none; letter-spacing: 0; color: var(--text-subtle); }
+    .dc-textarea {
+      width: 100%; padding: 11px 13px; background: var(--bg);
+      color: var(--text); border: 1.5px solid var(--border); border-radius: 9px;
+      font-family: inherit; font-size: .84rem; resize: vertical;
+      min-height: 100px; line-height: 1.6; -webkit-appearance: none;
+      box-sizing: border-box;
+    }
+    .dc-textarea:focus { outline: none; border-color: #6b1e4e; }
+    .dc-textarea::placeholder { color: var(--text-subtle); }
+    .dc-textarea-sm { min-height: 70px; }
+
+    /* ── CHIP ROWS ── */
+    .dc-chip-row { display: flex; gap: 6px; flex-wrap: wrap; }
+    .dc-chip {
+      padding: 6px 13px; border-radius: 20px;
+      border: 1.5px solid var(--border); background: var(--surface);
+      font-size: .72rem; font-weight: 600; cursor: pointer;
+      color: var(--text-muted); transition: all .15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .dc-chip.on { background: #1a0a2e; border-color: #1a0a2e; color: #fff; }
+
+    /* ── MAIN BUTTON ── */
+    .dc-btn {
+      width: 100%; padding: 15px;
+      background: linear-gradient(135deg, #1a0a2e 0%, #6b1e4e 100%);
+      color: #fff; border: none; border-radius: 12px;
+      font-family: inherit; font-size: .92rem; font-weight: 700;
+      cursor: pointer; transition: opacity .2s, transform .12s;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      margin-top: 4px;
+    }
+    .dc-btn:active { transform: translateY(1px); }
+    .dc-btn:disabled { opacity: .55; cursor: not-allowed; }
+    .dc-btn-spinner {
+      width: 16px; height: 16px; border: 2px solid rgba(255,255,255,.4);
+      border-top-color: #fff; border-radius: 50%;
+      animation: spin .7s linear infinite; display: none;
+    }
+    .dc-btn.loading .dc-btn-spinner { display: block; }
+    .dc-btn.loading .dc-btn-icon { display: none; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── LOADING ── */
+    .dc-loading { display: none; text-align: center; padding: 52px 20px; }
+    .dc-loading.show { display: block; }
+    .dc-spinner {
+      width: 40px; height: 40px;
+      border: 3px solid rgba(107,30,78,.15);
+      border-top-color: #6b1e4e; border-radius: 50%;
+      animation: spin .75s linear infinite; margin: 0 auto 18px;
+    }
+    .dc-loading-title { font-size: .9rem; font-weight: 700; color: #1a0a2e; margin-bottom: 6px; }
+    .dc-loading-sub { font-size: .76rem; color: var(--text-muted); line-height: 1.6; }
+    .dc-loading-steps { margin-top: 20px; display: flex; flex-direction: column; gap: 7px; }
+    .dc-loading-step {
+      font-size: .74rem; color: var(--text-subtle); opacity: 0;
+      animation: fadeStep .4s ease forwards;
+    }
+    .dc-loading-step:nth-child(1) { animation-delay: .4s; }
+    .dc-loading-step:nth-child(2) { animation-delay: 1.6s; }
+    .dc-loading-step:nth-child(3) { animation-delay: 3.2s; }
+    .dc-loading-step:nth-child(4) { animation-delay: 5.0s; }
+    @keyframes fadeStep { to { opacity: 1; } }
+
+    /* ── RESULT ── */
+    #dc-result { display: none; }
+    #dc-result.show { display: block; }
+
+    /* ── RESULT META ── */
+    .result-meta {
+      background: linear-gradient(135deg, #1a0a2e 0%, #6b1e4e 100%);
+      color: #fff; border-radius: 14px; padding: 14px 16px; margin-bottom: 12px;
+    }
+    .result-meta-label { font-size: .65rem; font-weight: 700; opacity: .7; text-transform: uppercase; letter-spacing: .09em; margin-bottom: 3px; }
+    .result-meta-title { font-size: .9rem; font-weight: 700; margin-bottom: 2px; }
+    .result-meta-sub { font-size: .72rem; opacity: .75; }
+
+    /* ── STANDARD COLLAPSIBLE SECTIONS ── */
+    .result-section { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; margin-bottom: 9px; }
+    .rs-header {
+      display: flex; align-items: center; gap: 10px;
+      padding: 13px 14px; cursor: pointer; -webkit-tap-highlight-color: transparent;
+      border-bottom: 1px solid transparent; transition: background .15s;
+    }
+    .rs-header:active { background: var(--surface-2); }
+    .result-section.open .rs-header { border-bottom-color: var(--border); }
+    .rs-icon {
+      width: 32px; height: 32px; border-radius: 9px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; font-size: 1rem;
+    }
+    .rs-title { font-size: .86rem; font-weight: 700; flex: 1; color: var(--text); }
+    .rs-arrow { font-size: .7rem; color: var(--text-muted); transition: transform .2s; }
+    .result-section.open .rs-arrow { transform: rotate(180deg); }
+    .rs-body { display: none; padding: 14px 15px; font-size: .82rem; line-height: 1.68; color: var(--text); }
+    .result-section.open .rs-body { display: block; }
+    .rs-body strong { font-weight: 700; color: #1a0a2e; }
+    .rs-body em { font-style: italic; color: var(--text-muted); }
+    .rs-body h3 { font-size: .84rem; font-weight: 700; color: #1a0a2e; margin: 12px 0 5px; }
+    .rs-body ul { margin: 6px 0 10px 18px; }
+    .rs-body li { margin-bottom: 5px; }
+    .rs-body p { margin-bottom: 8px; }
+    .rs-body p:last-child { margin-bottom: 0; }
+
+    /* ── CREATIVE PATH CARDS ── */
+    .path-card {
+      border-radius: 16px; overflow: hidden; margin-bottom: 11px;
+      border: 1px solid rgba(0,0,0,.1); box-shadow: 0 2px 8px rgba(0,0,0,.06);
+    }
+    .path-card-header {
+      padding: 14px 16px; display: flex; align-items: center; gap: 12px;
+    }
+    .path-card-1 .path-card-header { background: linear-gradient(135deg, #1a0a2e, #6b1e4e); }
+    .path-card-2 .path-card-header { background: linear-gradient(135deg, #3d1a6e, #1a2a5e); }
+    .path-card-3 .path-card-header { background: linear-gradient(135deg, #1e3a5f, #2d1a6e); }
+    .path-num {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: rgba(255,255,255,.22); color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .7rem; font-weight: 700; flex-shrink: 0; letter-spacing: .03em;
+    }
+    .path-name { font-size: .88rem; font-weight: 700; color: #fff; line-height: 1.3; }
+    .path-card-body { background: var(--surface); }
+    .path-attr {
+      display: flex; gap: 11px; padding: 10px 14px;
+      border-bottom: 1px solid var(--border); font-size: .8rem; line-height: 1.55;
+    }
+    .path-attr:last-child { border-bottom: none; }
+    .path-attr-icon { font-size: .95rem; flex-shrink: 0; margin-top: 2px; width: 18px; text-align: center; }
+    .path-attr-content { flex: 1; min-width: 0; }
+    .path-attr-label { font-size: .63rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--text-muted); margin-bottom: 2px; }
+    .path-attr-value { color: var(--text); }
+    .path-attr-value strong { font-weight: 700; color: #1a0a2e; }
+    .path-attr-value em { font-style: italic; color: var(--text-muted); }
+    .path-attr-value ul { margin: 4px 0 0 16px; }
+    .path-attr-value li { margin-bottom: 3px; }
+    .path-attr-value p { margin: 0 0 4px; }
+    .path-attr-value p:last-child { margin: 0; }
+
+    /* ── RESULT ACTIONS ── */
+    .result-actions { display: flex; gap: 8px; margin-bottom: 80px; margin-top: 4px; }
+    .action-btn {
+      flex: 1; padding: 12px 8px; border-radius: 12px; border: 1.5px solid var(--border);
+      background: var(--surface); color: var(--text-muted);
+      font-family: inherit; font-size: .76rem; font-weight: 600;
+      cursor: pointer; display: flex; flex-direction: column;
+      align-items: center; gap: 4px; -webkit-tap-highlight-color: transparent;
+      transition: background .15s;
+    }
+    .action-btn:active { background: var(--surface-2); }
+    .action-btn-icon { font-size: 1.1rem; }
+    .action-btn-primary { background: linear-gradient(135deg, #1a0a2e, #6b1e4e); border-color: #1a0a2e; color: #fff; }
+
+    /* ── TOAST ── */
+    .toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(10px);
+      background: #1a0a2e; color: #fff; padding: 10px 22px;
+      border-radius: 24px; font-size: .8rem; font-weight: 600;
+      z-index: 1200; opacity: 0; pointer-events: none;
+      transition: opacity .25s, transform .25s; white-space: nowrap; max-width: 88vw; text-align: center;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* ── KEY MODAL ── */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,.48);
+      z-index: 500; display: none; align-items: flex-end; justify-content: center;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal-box {
+      background: var(--surface); width: 100%; max-width: 480px;
+      border-radius: 20px 20px 0 0; padding: 22px 16px 36px;
+    }
+    .modal-handle { width: 40px; height: 4px; background: var(--border); border-radius: 4px; margin: 0 auto 18px; }
+    .modal-title { font-size: .95rem; font-weight: 700; margin-bottom: 6px; color: var(--text); }
+    .modal-sub { font-size: .77rem; color: var(--text-muted); margin-bottom: 16px; line-height: 1.5; }
+    .modal-input {
+      width: 100%; padding: 12px 14px; border: 1.5px solid var(--border);
+      border-radius: 10px; font-family: inherit; font-size: .84rem;
+      margin-bottom: 12px; background: var(--bg); color: var(--text); -webkit-appearance: none;
+      box-sizing: border-box;
+    }
+    .modal-input:focus { outline: none; border-color: #6b1e4e; }
+    .modal-save {
+      width: 100%; padding: 14px;
+      background: linear-gradient(135deg, #1a0a2e, #6b1e4e);
+      color: #fff; border: none; border-radius: 11px; font-family: inherit;
+      font-size: .9rem; font-weight: 700; cursor: pointer; margin-bottom: 8px;
+    }
+    .modal-cancel {
+      width: 100%; padding: 11px; background: none; color: var(--text-muted);
+      border: none; font-family: inherit; font-size: .84rem; cursor: pointer;
+    }
+
+    /* ── DESKTOP ── */
+    @media (min-width: 768px) {
+      body { max-width: none; }
+      .hdr { max-width: none; padding: 12px 36px; grid-template-columns: 48px 1fr 48px; }
+      .hdr h1 { font-size: 1.1rem; }
+
+      .dc-main {
+        display: grid; grid-template-columns: 390px 1fr;
+        max-width: 1280px; margin: 0 auto; align-items: start;
+      }
+      .dc-left {
+        position: sticky; top: 58px;
+        height: calc(100vh - 58px); overflow-y: auto;
+        padding: 22px 20px 40px; border-right: 1px solid var(--border);
+        background: var(--surface); scrollbar-width: thin;
+        scrollbar-color: var(--border-strong) transparent;
+      }
+      .dc-left::-webkit-scrollbar { width: 4px; }
+      .dc-left::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
+      .dc-right {
+        padding: 24px 32px 60px; background: var(--bg);
+        min-height: calc(100vh - 58px);
+      }
+      .dc-content { padding: 0; }
+      .dc-card { border-radius: 10px; margin-bottom: 8px; }
+      .dc-intro { border-radius: 12px; }
+      .dc-btn { padding: 13px; border-radius: 10px; }
+      .result-section { border-radius: 12px; }
+      .result-actions { display: none; }
+
+      .dc-empty {
+        display: flex; flex-direction: column;
+        align-items: center; text-align: center; padding: 64px 24px 40px;
+      }
+      .dc-empty-icon { font-size: 3.5rem; margin-bottom: 16px; }
+      .dc-empty-title { font-size: 1.15rem; font-weight: 700; color: #1a0a2e; margin-bottom: 8px; }
+      .dc-empty-sub { font-size: .83rem; color: var(--text-muted); line-height: 1.65; max-width: 360px; }
+      .dc-empty-sub strong { font-weight: 700; color: #1a0a2e; }
+
+      .modal-box { border-radius: 16px; max-width: 440px; margin: auto; }
+      .modal-overlay { align-items: center; }
+    }
+    @media (min-width: 1100px) {
+      .dc-main { grid-template-columns: 430px 1fr; }
+      .dc-right { padding: 28px 44px 60px; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="dc-app">
+
+  <!-- HEADER -->
+  <div class="hdr">
+    <button class="hdr-back" onclick="history.back()" aria-label="Voltar">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <div class="hdr-center">
+      <h1>Direção Criativa</h1>
+      <div class="hdr-sub">Transforme intenção em conteúdo estratégico</div>
+    </div>
+    <button class="hdr-action" onclick="openKeyModal()" title="Configurar chave Claude" aria-label="Configurar API">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12.22 2h-.44a2 2 0 00-2 2v.18a2 2 0 01-1 1.73l-.43.25a2 2 0 01-2 0l-.15-.08a2 2 0 00-2.73.73l-.22.38a2 2 0 00.73 2.73l.15.1a2 2 0 011 1.72v.51a2 2 0 01-1 1.74l-.15.09a2 2 0 00-.73 2.73l.22.38a2 2 0 002.73.73l.15-.08a2 2 0 012 0l.43.25a2 2 0 011 1.73V20a2 2 0 002 2h.44a2 2 0 002-2v-.18a2 2 0 011-1.73l.43-.25a2 2 0 012 0l.15.08a2 2 0 002.73-.73l.22-.39a2 2 0 00-.73-2.73l-.15-.08a2 2 0 01-1-1.74v-.5a2 2 0 011-1.74l.15-.09a2 2 0 00.73-2.73l-.22-.38a2 2 0 00-2.73-.73l-.15.08a2 2 0 01-2 0l-.43-.25a2 2 0 01-1-1.73V4a2 2 0 00-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+    </button>
+  </div>
+
+  <!-- MAIN LAYOUT -->
+  <div class="dc-main">
+
+    <!-- ══ LEFT: INPUT PANEL ══ -->
+    <div class="dc-left">
+      <div class="dc-content">
+
+        <!-- INTRO + EXAMPLES -->
+        <div class="dc-intro">
+          <div class="dc-intro-title">
+            <span>🎨</span> Direção Criativa da Marca
+          </div>
+          <div class="dc-intro-sub">Escreva o que você quer comunicar, que sensação quer passar, qual objetivo tem — ou até um pensamento solto. A IA pensa estrategicamente e sugere caminhos criativos alinhados ao seu posicionamento.</div>
+          <hr class="dc-intro-sep">
+          <div class="dc-examples-label">Experimente um desses pontos de partida</div>
+          <div class="dc-examples">
+            <span class="dc-eg-tag" onclick="useExample(this)">Autoridade sem parecer distante</span>
+            <span class="dc-eg-tag" onclick="useExample(this)">Atendimento de noiva de forma emocional</span>
+            <span class="dc-eg-tag" onclick="useExample(this)">Conteúdo bonito mas pouco humano</span>
+            <span class="dc-eg-tag" onclick="useExample(this)">Vender o VIP sem parecer lançamento</span>
+            <span class="dc-eg-tag" onclick="useExample(this)">Beleza natural sem discurso repetitivo</span>
+            <span class="dc-eg-tag" onclick="useExample(this)">Autoestima da mulher negra</span>
+            <span class="dc-eg-tag" onclick="useExample(this)">Luxo sem parecer inacessível</span>
+          </div>
+        </div>
+
+        <!-- INTENÇÃO PRINCIPAL -->
+        <div class="dc-card">
+          <label class="dc-label" for="dc-intencao">O que você quer comunicar <span class="dc-hint">— use suas palavras, sem formato</span></label>
+          <textarea class="dc-textarea" id="dc-intencao" rows="5"
+            placeholder="Ex: quero comunicar autoridade sem parecer distante. Sinto que meu conteúdo está muito técnico e frio ultimamente. Quero mostrar que sou especialista mas também acolhedora...&#10;&#10;Ou simplesmente: quero postar algo sobre autoestima da mulher negra mas de uma forma que não seja clichê."></textarea>
+        </div>
+
+        <!-- OBJETIVO -->
+        <div class="dc-card">
+          <label class="dc-label">Objetivo principal <span class="dc-hint">— opcional</span></label>
+          <div class="dc-chip-row" id="obj-row">
+            <button class="dc-chip" data-v="autoridade">Autoridade</button>
+            <button class="dc-chip" data-v="venda">Venda</button>
+            <button class="dc-chip" data-v="conexao">Conexão</button>
+            <button class="dc-chip" data-v="representatividade">Representatividade</button>
+            <button class="dc-chip" data-v="bastidores">Bastidores</button>
+            <button class="dc-chip" data-v="educacao">Educação</button>
+          </div>
+        </div>
+
+        <!-- PÚBLICO -->
+        <div class="dc-card">
+          <label class="dc-label">Para quem principalmente <span class="dc-hint">— opcional</span></label>
+          <div class="dc-chip-row" id="pub-row">
+            <button class="dc-chip" data-v="noivas">Noivas</button>
+            <button class="dc-chip" data-v="pele-negra">Pele Negra</button>
+            <button class="dc-chip" data-v="cachos">Cachos/Crespos</button>
+            <button class="dc-chip" data-v="geral">Geral</button>
+          </div>
+        </div>
+
+        <!-- CONTEXTO ADICIONAL -->
+        <div class="dc-card">
+          <label class="dc-label" for="dc-contexto">Contexto adicional <span class="dc-hint">— o que está acontecendo no seu perfil agora</span></label>
+          <textarea class="dc-textarea dc-textarea-sm" id="dc-contexto" rows="3"
+            placeholder="Ex: meu perfil está muito técnico ultimamente. Quero algo mais humano. Ou: preciso de algo diferente do que costumo postar..."></textarea>
+        </div>
+
+        <button class="dc-btn" id="dc-btn" onclick="generate()">
+          <span class="dc-btn-icon">🎨</span>
+          <div class="dc-btn-spinner"></div>
+          Encontrar Direção Criativa
+        </button>
+
+      </div>
+    </div><!-- /dc-left -->
+
+    <!-- ══ RIGHT: RESULT PANEL ══ -->
+    <div class="dc-right" id="dc-right">
+
+      <!-- EMPTY STATE (desktop only) -->
+      <div class="dc-empty" id="dc-empty">
+        <div class="dc-empty-icon">🎨</div>
+        <div class="dc-empty-title">Direção Criativa da Marca</div>
+        <div class="dc-empty-sub">
+          Escreva o que você quer comunicar — uma intenção, um objetivo, um sentimento sobre seu conteúdo. A IA pensa como <strong>diretora criativa da sua marca</strong> e sugere caminhos estratégicos com hooks, narrativas, formatos, emoções e riscos de percepção.
+        </div>
+      </div>
+
+      <!-- LOADING -->
+      <div class="dc-loading" id="dc-loading">
+        <div class="dc-spinner"></div>
+        <div class="dc-loading-title">Pensando estrategicamente...</div>
+        <div class="dc-loading-sub">Cruzando sua intenção com o DNA da marca</div>
+        <div class="dc-loading-steps">
+          <div class="dc-loading-step">🔮 Lendo a intenção emocional e estratégica...</div>
+          <div class="dc-loading-step">🧠 Cruzando com o DNA da marca...</div>
+          <div class="dc-loading-step">🚫 Identificando clichês a evitar...</div>
+          <div class="dc-loading-step">✨ Destilando os caminhos criativos...</div>
+        </div>
+      </div>
+
+      <!-- RESULT -->
+      <div id="dc-result">
+        <div class="result-meta" id="dc-meta"></div>
+        <div id="dc-sections"></div>
+        <div class="result-actions">
+          <button class="action-btn" onclick="resetResult()"><span class="action-btn-icon">↩</span>Nova ideia</button>
+          <button class="action-btn" onclick="copyResult()"><span class="action-btn-icon">📋</span>Copiar</button>
+          <button class="action-btn action-btn-primary" onclick="saveToIdeas()"><span class="action-btn-icon">💾</span>Salvar ideia</button>
+        </div>
+      </div>
+
+    </div><!-- /dc-right -->
+  </div><!-- /dc-main -->
+
+  <div class="toast" id="dc-toast"></div>
+
+  <!-- KEY MODAL -->
+  <div class="modal-overlay" id="key-modal">
+    <div class="modal-box">
+      <div class="modal-handle"></div>
+      <div class="modal-title">Chave da API Claude</div>
+      <div class="modal-sub">Necessária para gerar direções criativas. Salva apenas neste dispositivo.</div>
+      <input type="password" class="modal-input" id="key-input" placeholder="sk-ant-...">
+      <button class="modal-save" onclick="saveKey()">Salvar chave</button>
+      <button class="modal-cancel" onclick="closeKeyModal()">Cancelar</button>
+    </div>
+  </div>
+
+</div><!-- /dc-app -->
+
+<script>
+// ════════════════════════════════════════════════════════════════
+// Direção Criativa — Brainstorm Estratégico de Conteúdo
+// ════════════════════════════════════════════════════════════════
+
+var lastResultText = '';
+var selectedObj = '';
+var selectedPub = '';
+
+// ── CHIP SELECTION ─────────────────────────────────────────────
+document.querySelectorAll('#obj-row .dc-chip').forEach(function(b) {
+  b.addEventListener('click', function() {
+    var v = b.dataset.v;
+    if (selectedObj === v) { b.classList.remove('on'); selectedObj = ''; }
+    else {
+      document.querySelectorAll('#obj-row .dc-chip').forEach(function(x) { x.classList.remove('on'); });
+      b.classList.add('on'); selectedObj = v;
+    }
+  });
+});
+document.querySelectorAll('#pub-row .dc-chip').forEach(function(b) {
+  b.addEventListener('click', function() {
+    var v = b.dataset.v;
+    if (selectedPub === v) { b.classList.remove('on'); selectedPub = ''; }
+    else {
+      document.querySelectorAll('#pub-row .dc-chip').forEach(function(x) { x.classList.remove('on'); });
+      b.classList.add('on'); selectedPub = v;
+    }
+  });
+});
+
+// ── EXAMPLE TAGS ──────────────────────────────────────────────
+function useExample(el) {
+  var ta = document.getElementById('dc-intencao');
+  ta.value = 'Quero comunicar: ' + el.textContent;
+  ta.focus();
+  ta.setSelectionRange(ta.value.length, ta.value.length);
+}
+
+// ── BRAND DNA ─────────────────────────────────────────────────
+var CAROL_DNA = [
+  'CAROL NUNES (@makecarolnunes) — DNA COMPLETO DE MARCA',
+  '',
+  '━━━ IDENTIDADE ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+  'Maquiadora freelancer profissional — especialista em noivas, pele negra, cachos/crespos',
+  'Posicionamento central: "A marca premium não é fria — ela é segura, intencional e humana."',
+  'Essência: Autoridade técnica real + presença humana genuína + sofisticação com acolhimento',
+  'Diferencial único: a única que une expertise em pele negra + noivas premium + presença humana',
+  '',
+  '━━━ 5 PILARES ESTRATÉGICOS ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+  'I. NOIVAS PREMIUM (25% do conteúdo)',
+  '   Especialização técnica e emocional em casamentos. Luxury feeling acessível.',
+  '   Jornada completa — do primeiro contato ao grande dia. Relacionamento de confiança.',
+  '',
+  'II. PELE NEGRA (20%)',
+  '   Representatividade real, não performática. Técnica inclusiva avançada.',
+  '   Autoridade em subtons, texturas, produtos específicos para pele negra.',
+  '   Missão: toda mulher negra merece make que a exalte, nunca apenas "atenda".',
+  '',
+  'III. CACHOS E CRESPOS (15%)',
+  '   Cabelos naturais integrados ao atendimento. Abordagem integral: pele + cabelo + make.',
+  '   Conexão com identidade cultural e autoimagem.',
+  '',
+  'IV. AUTORIDADE TÉCNICA (15%)',
+  '   Credibilidade base para futuros cursos. Conteúdo educativo de alto valor.',
+  '   Técnica como diferencial competitivo real. Confiança genuína, nunca arrogância.',
+  '',
+  'V. HUMANIZAÇÃO E PRESENÇA REAL (10-15%)',
+  '   Bastidores, rotina, espontaneidade, humor genuíno, vulnerabilidade leve.',
+  '   NÃO é virar influencer lifestyle. É criar intimidade, identificação e confiança.',
+  '   O público premium quer acompanhar personalidade — autenticidade aproxima e converte.',
+  '   Marcas premium humanas convertem mais. Nem todo post precisa ser estratégico.',
+  '',
+  '━━━ 4 PÚBLICOS-ALVO ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+  '1. Noiva premium (25-38 anos, classe AB) — quer a versão mais bonita de si mesma',
+  '2. Mulher negra que se valoriza (20-40 anos) — cansada de makes inadequadas para seu tom',
+  '3. Mulher com cabelo natural (20-45 anos) — identidade ligada aos cabelos',
+  '4. Cliente eventual de evento (28-50) — busca qualidade e confiabilidade',
+  '',
+  '━━━ ARQUÉTIPOS ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+  'Primário: A CRIADORA — transforma, faz acontecer, cria beleza real',
+  'Secundário: A SÁBIA/EXPERT — conhecimento profundo, orientação confiável',
+  'Terciário: A PRESTATIVA/CUIDADORA — empatia, acolhimento, segurança emocional',
+  '',
+  '━━━ TOM DE VOZ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+  'Segura sem arrogância | Especialista sem distância | Sofisticada sem frieza',
+  'Acolhedora sem excesso de informalidade | Humana sem perder o posicionamento',
+  'Direta e objetiva — zero floreados desnecessários | Entusiasmo genuíno',
+  'NÃO É: genérica, fria, seca, excessivamente formal, artificialmente perfeita',
+  '',
+  '━━━ EQUILÍBRIO IDEAL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+  'AUTORIDADE: conteúdo técnico que impressiona e educa',
+  'CONVERSÃO: conteúdo que leva à contratação direta',
+  'CONEXÃO: conteúdo que cria identificação e relacionamento',
+  'DESEJO: conteúdo que ativa aspiração ("quero isso")',
+  'HUMANIZAÇÃO: bastidores, presença real, Carol por trás da marca',
+  '',
+  '━━━ O QUE EVITAR ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+  'Conteúdo lifestyle sem conexão com beleza | Humor forçado | Trends vazios',
+  'Comparações negativas | Perfecionismo que cria distância',
+  'Frieza excessiva | Excesso de técnica sem humanidade | Rigidez estratégica',
+  'Conteúdo que "parece" premium mas afasta a audiência por ser artificial',
+].join('\n');
+
+// ── SYSTEM PROMPT ─────────────────────────────────────────────
+function buildSystemPrompt() {
+  return [
+    'Você é a Diretora Criativa da marca Carol Nunes (@makecarolnunes).',
+    'Você é uma estrategista criativa sênior que combina pensamento profundo de branding com intuição criativa genuína e sensibilidade cultural.',
+    '',
+    'Sua função exclusiva: transformar intenções, pensamentos soltos e objetivos de comunicação em possibilidades estratégicas de conteúdo profundamente alinhadas ao DNA da marca.',
+    '',
+    'Você NÃO é um gerador genérico de posts. Você pensa estrategicamente antes de criar.',
+    '',
+    CAROL_DNA,
+    '',
+    '━━━ PRINCÍPIOS DA DIREÇÃO CRIATIVA ━━━━━━━━━━━━━━━━━━━━━━',
+    '1. ENTENDA a intenção emocional e estratégica por trás das palavras antes de sugerir qualquer coisa',
+    '2. IDENTIFIQUE CLICHÊS — sinalize o que já foi feito demais neste nicho para este tema específico',
+    '3. BUSQUE O ÂNGULO MENOS ÓBVIO — a segunda ideia costuma ser mais poderosa que a primeira',
+    '4. CONECTE COM O DNA — cada caminho deve ser inconfundível como marca Carol Nunes, não genérico',
+    '5. PENSE EM PERCEPÇÃO — nomeie como o público pode receber o conteúdo, incluindo riscos',
+    '6. SEJA ESPECÍFICA, NÃO VAGA — não "faça um reel humanizado", mas "Reel: câmera lenta enquanto você termina o make da noiva, sem falar, com áudio da própria noiva dizendo como se sentiu ao se ver"',
+    '7. CONSIDERE O CONTEXTO — pele negra, cachos, noivas premium, Brasil, mercado regional',
+    '8. NOMEIE EMOÇÕES — especifique qual emoção cada conteúdo deve despertar: admiração, confiança, desejo, identificação, inspiração, pertencimento',
+    '9. AUTENTICIDADE PRIMEIRO — o melhor conteúdo é aquele que só Carol poderia criar',
+    '10. FORMATS IMPORTAM — pense em qual formato serve melhor a intenção, não o contrário',
+    '',
+    'FORMATO DE RESPOSTA: Use EXATAMENTE os cabeçalhos ## abaixo na ordem correta. Responda em português brasileiro.',
+    '',
+    '## LEITURA DA INTENÇÃO',
+    'Sua leitura estratégica e emocional do que Carol quer comunicar. O que está por trás das palavras. Qual é a tensão criativa central que este conteúdo precisa resolver.',
+    '',
+    '## CLICHÊS A EVITAR',
+    'O que NÃO fazer — conteúdos que já foram feitos demais neste nicho para este tema. Seja específica sobre por que são clichês e por que afastariam o posicionamento da Carol. Mínimo 3 clichês reais.',
+    '',
+    '## ÂNGULO MAIS PODEROSO',
+    'O ângulo estratégico mais forte para este tema, alinhado ao DNA da Carol. Por que este ângulo específico é mais relevante para ela do que para qualquer outra maquiadora.',
+    '',
+    '## CAMINHO 1 — [Nome criativo e descritivo do caminho]',
+    'Use EXATAMENTE esta estrutura interna com os rótulos em negrito:',
+    '**Narrativa central:** [A ideia central — o que este conteúdo conta, mostra ou provoca]',
+    '**Hook sugerido:** [O gancho de abertura — o que prende nos primeiros 2 segundos do Reel ou linha 1 da legenda]',
+    '**Formato ideal:** [Reels / Carrossel / Foto + legenda longa / Stories sequência / Live — com breve justificativa de por que este formato]',
+    '**Emoção que desperta:** [Que emoção específica — admiration, identificação, desejo, confiança, pertencimento, inspiração]',
+    '**Risco de percepção:** [Como pode ser mal interpretado ou o que pode afastar — seja honesta]',
+    '**Como autenticar:** [O detalhe específico que tornaria este conteúdo genuinamente da Carol e não genérico]',
+    '',
+    '## CAMINHO 2 — [Nome criativo e descritivo do caminho]',
+    '(mesma estrutura interna com os 6 rótulos em negrito)',
+    '',
+    '## CAMINHO 3 — [Nome criativo e descritivo do caminho]',
+    '(mesma estrutura interna com os 6 rótulos em negrito)',
+    '',
+    '## OPORTUNIDADE OCULTA',
+    'O ângulo menos óbvio que a maioria das maquiadoras não está explorando neste tema. A abordagem que pode surpreender e se destacar genuinamente. O que ninguém ainda fez.',
+    '',
+    '## PRÓXIMO PASSO CONCRETO',
+    'Uma ação específica e realizável que Carol pode fazer hoje ou amanhã para começar. NÃO uma lista — UMA ação concreta com detalhes suficientes para executar.',
+  ].join('\n');
+}
+
+// ── USER MESSAGE ──────────────────────────────────────────────
+var OBJ_LABELS = {
+  autoridade: 'Construir autoridade e credibilidade',
+  venda: 'Venda/Conversão — levar à contratação',
+  conexao: 'Conexão emocional — criar relacionamento',
+  representatividade: 'Representatividade — pele negra / cachos',
+  bastidores: 'Bastidores — mostrar o processo e a pessoa',
+  educacao: 'Educação — ensinar algo de valor'
+};
+var PUB_LABELS = {
+  'noivas': 'Noivas premium (25-38 anos)',
+  'pele-negra': 'Mulheres negras que se valorizam',
+  'cachos': 'Mulheres com cabelos naturais (cachos/crespos)',
+  'geral': 'Público geral / todos os públicos'
+};
+
+function buildUserMessage() {
+  var intencao = (document.getElementById('dc-intencao').value || '').trim();
+  var contexto = (document.getElementById('dc-contexto').value || '').trim();
+  var msg = 'Preciso de direção criativa.\n\n';
+  if (intencao) msg += 'O que quero comunicar:\n' + intencao + '\n\n';
+  if (selectedObj) msg += 'Objetivo principal: ' + (OBJ_LABELS[selectedObj] || selectedObj) + '\n\n';
+  if (selectedPub) msg += 'Público principal: ' + (PUB_LABELS[selectedPub] || selectedPub) + '\n\n';
+  if (contexto) msg += 'Contexto adicional sobre o perfil agora:\n' + contexto + '\n\n';
+  if (!intencao && !selectedObj) msg += 'Gere direções criativas relevantes baseadas no DNA da marca e no momento atual.\n\n';
+  msg += 'Gere a direção criativa completa com os 3 caminhos, seguindo exatamente os cabeçalhos definidos.';
+  return msg;
+}
+
+// ── API CALL ──────────────────────────────────────────────────
+async function generate() {
+  var intencao = (document.getElementById('dc-intencao').value || '').trim();
+  if (!intencao && !selectedObj && !selectedPub) {
+    toast('Escreva o que você quer comunicar primeiro');
+    document.getElementById('dc-intencao').focus();
+    return;
+  }
+  var apiKey = localStorage.getItem('mk_claude_key') || '';
+  if (!apiKey) { openKeyModal(); toast('Configure sua chave Claude primeiro'); return; }
+
+  var btn = document.getElementById('dc-btn');
+  btn.disabled = true; btn.classList.add('loading');
+  document.getElementById('dc-result').classList.remove('show');
+  document.getElementById('dc-result').style.display = 'none';
+  document.getElementById('dc-empty').style.display = 'none';
+  document.getElementById('dc-loading').classList.add('show');
+
+  // Mobile: scroll to loading
+  if (window.innerWidth < 768) {
+    document.getElementById('dc-right').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  try {
+    var res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 5000,
+        system: buildSystemPrompt(),
+        messages: [{ role: 'user', content: buildUserMessage() }]
+      })
+    });
+
+    if (!res.ok) {
+      var err = await res.json().catch(function() { return { error: { message: res.statusText } }; });
+      throw new Error((err && err.error && err.error.message) || res.statusText);
+    }
+    var data = await res.json();
+    var text = (data.content && data.content[0] && data.content[0].text) || '';
+    if (!text) throw new Error('Resposta vazia da API');
+    lastResultText = text;
+    renderResult(text);
+  } catch (err) {
+    document.getElementById('dc-loading').classList.remove('show');
+    document.getElementById('dc-empty').style.display = '';
+    toast('Erro: ' + err.message, 4500);
+  } finally {
+    btn.disabled = false; btn.classList.remove('loading');
+  }
+}
+
+// ── SECTION DEFINITIONS ───────────────────────────────────────
+var SDEFS = [
+  { p: /leitura da inten/i,       icon: '🔮', bg: '#f5edf9', isPath: false },
+  { p: /clich/i,                  icon: '🚫', bg: '#fff3e0', isPath: false },
+  { p: /ngulo mais poder/i,       icon: '⚡', bg: '#e8f0fe', isPath: false },
+  { p: /^caminho\s+1/i,           icon: null, bg: null, isPath: true, pathNum: 1 },
+  { p: /^caminho\s+2/i,           icon: null, bg: null, isPath: true, pathNum: 2 },
+  { p: /^caminho\s+3/i,           icon: null, bg: null, isPath: true, pathNum: 3 },
+  { p: /oportunidade oculta/i,    icon: '💎', bg: '#e8f5e9', isPath: false },
+  { p: /pr.ximo passo/i,          icon: '🚀', bg: '#fce4ec', isPath: false },
+];
+
+// ── PATH ATTR DEFINITIONS ─────────────────────────────────────
+var PATH_ATTRS = [
+  { key: /narrativa central/i,    icon: '📖', label: 'Narrativa central' },
+  { key: /hook sugerido/i,        icon: '🎣', label: 'Hook sugerido' },
+  { key: /formato ideal/i,        icon: '🎬', label: 'Formato ideal' },
+  { key: /emo.o que desperta/i,   icon: '💫', label: 'Emoção que desperta' },
+  { key: /risco de percep/i,      icon: '⚠️', label: 'Risco de percepção' },
+  { key: /como autenticar/i,      icon: '✨', label: 'Como autenticar' },
+];
+
+// ── RENDER PATH CARD ──────────────────────────────────────────
+function renderPathCard(title, content, pathNum) {
+  var nameMatch = title.match(/caminho\s+\d+\s*[—\-–]+\s*(.+)/i);
+  var pathName = nameMatch ? nameMatch[1].trim() : title;
+
+  // Parse bold-label attributes: **Label:** value
+  var lines = content.split('\n');
+  var attrs = [];
+  var cur = null;
+  lines.forEach(function(line) {
+    var m = line.match(/^\*\*(.+?):\*\*\s*(.*)/);
+    if (m) {
+      if (cur) attrs.push(cur);
+      cur = { raw: m[1].trim(), val: m[2].trim() ? [m[2].trim()] : [] };
+    } else if (cur && line.trim()) {
+      cur.val.push(line.trim());
+    }
+  });
+  if (cur) attrs.push(cur);
+
+  var html = '<div class="path-card path-card-' + pathNum + '">';
+  html += '<div class="path-card-header">';
+  html += '<div class="path-num">0' + pathNum + '</div>';
+  html += '<div class="path-name">' + esc(pathName) + '</div>';
+  html += '</div>';
+  html += '<div class="path-card-body">';
+
+  if (attrs.length > 0) {
+    attrs.forEach(function(a) {
+      var def = null;
+      for (var i = 0; i < PATH_ATTRS.length; i++) {
+        if (PATH_ATTRS[i].key.test(a.raw)) { def = PATH_ATTRS[i]; break; }
+      }
+      if (!def) def = { icon: '•', label: a.raw };
+      var valText = a.val.join(' ').trim();
+      html += '<div class="path-attr">';
+      html += '<div class="path-attr-icon">' + def.icon + '</div>';
+      html += '<div class="path-attr-content">';
+      html += '<div class="path-attr-label">' + esc(def.label) + '</div>';
+      html += '<div class="path-attr-value">' + renderMd(valText) + '</div>';
+      html += '</div></div>';
+    });
+  } else {
+    // Fallback: render as markdown
+    html += '<div style="padding:12px 15px;font-size:.82rem;line-height:1.65">' + renderMd(content) + '</div>';
+  }
+
+  html += '</div></div>';
+  return html;
+}
+
+// ── RENDER RESULT ─────────────────────────────────────────────
+function renderResult(text) {
+  var intencao = (document.getElementById('dc-intencao').value || '').trim();
+  var short = intencao.length > 65 ? intencao.substring(0, 62) + '...' : intencao;
+
+  document.getElementById('dc-meta').innerHTML =
+    '<div class="result-meta-label">Direção Criativa · ' + new Date().toLocaleDateString('pt-BR') + '</div>' +
+    '<div class="result-meta-title">' + esc(short || 'Brainstorm Estratégico') + '</div>' +
+    '<div class="result-meta-sub">3 caminhos criativos alinhados ao DNA da marca</div>';
+
+  var container = document.getElementById('dc-sections');
+  container.innerHTML = '';
+
+  var parts = text.split(/\n(?=## )/);
+  parts.forEach(function(part) {
+    var m = part.match(/^## (.+?)\n([\s\S]*)/);
+    if (!m) return;
+    var title = m[1].trim();
+    var content = m[2].trim();
+
+    var def = null;
+    for (var i = 0; i < SDEFS.length; i++) {
+      if (SDEFS[i].p.test(title)) { def = SDEFS[i]; break; }
+    }
+    if (!def) def = { icon: '💡', bg: '#f3e5f5', isPath: false };
+
+    var el = document.createElement('div');
+    if (def.isPath) {
+      el.innerHTML = renderPathCard(title, content, def.pathNum);
+    } else {
+      el.className = 'result-section open';
+      el.innerHTML =
+        '<div class="rs-header" onclick="this.parentElement.classList.toggle(\'open\')">' +
+          '<div class="rs-icon" style="background:' + def.bg + '">' + def.icon + '</div>' +
+          '<div class="rs-title">' + esc(title) + '</div>' +
+          '<div class="rs-arrow">▼</div>' +
+        '</div>' +
+        '<div class="rs-body">' + renderMd(content) + '</div>';
+    }
+    container.appendChild(el);
+  });
+
+  document.getElementById('dc-loading').classList.remove('show');
+  document.getElementById('dc-result').style.display = 'block';
+  document.getElementById('dc-result').classList.add('show');
+
+  // Mobile: scroll to result
+  if (window.innerWidth < 768) {
+    setTimeout(function() {
+      document.getElementById('dc-result').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 80);
+  }
+}
+
+// ── RENDER MARKDOWN ───────────────────────────────────────────
+function renderMd(text) {
+  if (!text) return '';
+  text = text.trim();
+  text = text.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+  text = text.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
+  text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  text = text.replace(/\*([^*\n]+?)\*/g, '<em>$1</em>');
+  text = text.replace(/((?:^|\n)[ \t]*[-•] .+)+/g, function(block) {
+    var items = block.trim().split(/\n[ \t]*[-•] /);
+    items[0] = items[0].replace(/^[ \t]*[-•] /, '');
+    return '<ul>' + items.map(function(s) { return '<li>' + s.trim() + '</li>'; }).join('') + '</ul>';
+  });
+  var paras = text.split(/\n\n/);
+  text = paras.map(function(p) {
+    p = p.trim(); if (!p) return '';
+    if (/^<[hul]/.test(p)) return p;
+    return '<p>' + p.replace(/\n/g, '<br>') + '</p>';
+  }).filter(Boolean).join('\n');
+  return text;
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── ACTIONS ───────────────────────────────────────────────────
+function resetResult() {
+  document.getElementById('dc-result').classList.remove('show');
+  document.getElementById('dc-result').style.display = 'none';
+  document.getElementById('dc-empty').style.display = '';
+  lastResultText = '';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function copyResult() {
+  if (!lastResultText) return;
+  navigator.clipboard.writeText(lastResultText).then(function() {
+    toast('Resultado copiado!');
+  }).catch(function() { toast('Não foi possível copiar'); });
+}
+
+function saveToIdeas() {
+  // Extracts the first creative path name as idea title and saves to conteudo
+  var intencao = (document.getElementById('dc-intencao').value || '').trim();
+  var title = intencao.length > 60 ? intencao.substring(0, 57) + '...' : (intencao || 'Ideia da Direção Criativa');
+  var existing = [];
+  try { existing = JSON.parse(localStorage.getItem('mk_content_ideas') || '[]'); } catch(e) {}
+  var idea = {
+    id: Date.now().toString(),
+    title: title,
+    categories: ['Maquiagem Profissional'],
+    formatos: [],
+    status: 'Nao Iniciado',
+    notes: lastResultText.substring(0, 800),
+    platforms: ['Instagram'],
+    scheduledDate: '',
+    createdAt: new Date().toISOString(),
+  };
+  existing.unshift(idea);
+  localStorage.setItem('mk_content_ideas', JSON.stringify(existing));
+  toast('Ideia salva no planejamento de conteúdo!');
+}
+
+// ── TOAST ─────────────────────────────────────────────────────
+var toastTimer;
+function toast(msg, dur) {
+  var el = document.getElementById('dc-toast');
+  el.textContent = msg; el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function() { el.classList.remove('show'); }, dur || 2800);
+}
+
+// ── KEY MODAL ─────────────────────────────────────────────────
+function openKeyModal() {
+  var el = document.getElementById('key-modal');
+  el.classList.add('show');
+  var inp = document.getElementById('key-input');
+  inp.value = localStorage.getItem('mk_claude_key') || '';
+  setTimeout(function() { inp.focus(); }, 100);
+}
+function closeKeyModal() {
+  document.getElementById('key-modal').classList.remove('show');
+}
+function saveKey() {
+  var key = (document.getElementById('key-input').value || '').trim();
+  if (key) { localStorage.setItem('mk_claude_key', key); toast('Chave salva!'); }
+  closeKeyModal();
+}
+document.getElementById('key-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeKeyModal();
+});
+</script>
+<script src="../shared/js/sidebar.js"></script>
+</body>
+</html>
