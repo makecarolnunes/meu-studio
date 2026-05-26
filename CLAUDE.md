@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-25 20:04 | main | refactor(modules): renomeia Estrat├®gia de Comunica├º├úo ÔåÆ An├ílise de Marca; corrige abas Insights de Mercado; add back btn em Agendamentos -->
+<!-- AUTO: 2026-05-25 21:15 | main | refactor(orcamentos): substitui status por variantes de Perdido; remove Em Negocia├º├úo -->
 
