@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-26 14:38 | main | docs: sync CLAUDE.md [auto] -->
+<!-- AUTO: 2026-05-26 15:40 | main | feat(conteudo): adiciona m├│dulos TikTok Estrat├®gico e Radar TikTok -->
 
