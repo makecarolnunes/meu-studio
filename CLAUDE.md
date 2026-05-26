@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-25 21:35 | main | refactor(orcamentos): limpa painel de a├º├úo ÔÇö fu-chip inline, s├│ sinal, wrap no desktop -->
+<!-- AUTO: 2026-05-25 23:27 | main | feat(sidebar): reordena m├│dulos seguindo a sequ├¬ncia do Hub -->
 
