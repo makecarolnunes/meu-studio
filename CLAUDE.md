@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-25 23:36 | main | docs: sync CLAUDE.md [auto] -->
+<!-- AUTO: 2026-05-26 14:38 | main | fix(orcamentos): permite editar data/hor├írio dos slots ap├│s fechamento -->
 
