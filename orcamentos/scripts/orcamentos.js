@@ -1264,6 +1264,7 @@ function openAction(id) {
   // Carrega o picker de follow-up
   renderFollowupPicker(id);
 
+  renderActSlots(e);
   renderActGcalSection(e);
   renderActCompSection(String(id));
   renderActPropostaSection(e);
@@ -1975,6 +1976,63 @@ function marcarAgendaCriada(id) {
   postEntry({ action: 'update', id: e.ID, fields: { AgendaCriada: 'true' } });
 }
 
+function renderActSlots(e) {
+  const section = document.getElementById('act-slots-section');
+  if (!section) return;
+
+  if (e.Status !== 'Fechado') { section.style.display = 'none'; return; }
+
+  const slots = entrySlots(e);
+  if (!slots.length) { section.style.display = 'none'; return; }
+
+  section.style.display = 'block';
+  const list = document.getElementById('act-slots-list');
+  list.innerHTML = slots.map((s, idx) => {
+    const horarioMissing = !s.horario;
+    const dataMissing    = !s.data;
+    const warnRow = horarioMissing || dataMissing;
+    const warnMsgs = [];
+    if (dataMissing)    warnMsgs.push('data');
+    if (horarioMissing) warnMsgs.push('horário');
+    return (
+      '<div class="slot-row" style="margin-bottom:8px;' + (warnRow ? 'background:#fff8e1;border-radius:8px;padding:8px;' : '') + '">' +
+        '<div class="slot-num">' + (idx + 1) + '</div>' +
+        '<div class="slot-fields">' +
+          '<div style="font-size:0.78rem; color:var(--brown); font-weight:700;">' + esc(s.servico || 'Serviço') + '</div>' +
+          '<div class="form-row">' +
+            '<input class="form-input" type="date" value="' + esc(s.data || '') + '" oninput="syncActSlot(' + idx + ', \'data\', this.value)">' +
+            '<input class="form-input" type="time" placeholder="Horário" value="' + esc(s.horario || '') + '" oninput="syncActSlot(' + idx + ', \'horario\', this.value)">' +
+          '</div>' +
+          (warnRow ? '<div style="font-size:0.66rem; color:#c62828;">⚠️ Preencha ' + warnMsgs.join(' e ') + ' para poder agendar</div>' : '') +
+        '</div>' +
+      '</div>'
+    );
+  }).join('');
+}
+
+let _actSlotSyncTimer = null;
+function syncActSlot(idx, campo, valor) {
+  const e = entries.find(x => String(x.ID) === String(activeId));
+  if (!e) return;
+  const slots = entrySlots(e);
+  if (!slots[idx]) return;
+
+  slots[idx][campo] = valor;
+  e.Obs = packSlots(entryCleanObs(e), slots);
+
+  const datas = slots.map(s => s.data).filter(Boolean).sort();
+  if (datas.length) e.DataEvento = datas[0];
+
+  cacheEntries();
+  renderActSlots(e);
+
+  clearTimeout(_actSlotSyncTimer);
+  _actSlotSyncTimer = setTimeout(() => {
+    postEntry({ action: 'update', id: e.ID, fields: { Obs: e.Obs, DataEvento: e.DataEvento || '' } });
+    render();
+  }, 600);
+}
+
 function renderActGcalSection(e) {
   const section  = document.getElementById('act-gcal-section');
   const fechArea = document.getElementById('act-fech-btn-area');
@@ -2095,7 +2153,9 @@ async function adicionarAgendaDeAction() {
   const validos = eventos.filter(ev => ev.startISO && ev.endISO);
 
   if (!validos.length) {
-    toast('⚠️ Preencha data e horário nos serviços para poder agendar');
+    toast('⚠️ Preencha data e horário acima — destacados em amarelo');
+    const sec = document.getElementById('act-slots-section');
+    if (sec) sec.scrollIntoView({ behavior: 'smooth', block: 'center' });
     return;
   }
 
