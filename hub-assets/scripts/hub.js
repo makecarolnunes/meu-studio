@@ -102,6 +102,12 @@
         '<path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>' +
         '<line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>' +
       '</svg>',
+    tiktok:
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+        '<path d="M9 18V5l12-2v13"/>' +
+        '<circle cx="6" cy="18" r="3"/>' +
+        '<circle cx="18" cy="16" r="3"/>' +
+      '</svg>',
     radar:
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
         '<path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/>' +
@@ -226,7 +232,9 @@
   // ── Redes Sociais ──
   function buildSocial() {
     var SOCIAL = [
-      { key: 'instagram', nome: 'Instagram', desc: 'Dashboard, métricas e análise de performance', url: 'instagram/', cls: 'card-insta' },
+      { key: 'instagram',   nome: 'Instagram',    desc: 'Dashboard, métricas e análise de performance',                              url: 'instagram/',                 cls: 'card-insta'        },
+      { key: 'tiktok',     nome: 'TikTok',       desc: 'Diretor criativo estratégico — ideias e plano de conteúdo com IA',         url: 'conteudo/tiktok.html',       cls: 'card-tiktok'       },
+      { key: 'radar',      nome: 'Radar TikTok', desc: 'Tendências, sons, hooks e oportunidades filtrados pela sua marca com IA',  url: 'conteudo/tiktok-radar.html', cls: 'card-tiktok-radar' },
     ];
     document.getElementById('social-section').innerHTML = SOCIAL.map(function(c) {
       return '<a href="' + esc(c.url) + '" class="sys-card ' + c.cls + '">' +

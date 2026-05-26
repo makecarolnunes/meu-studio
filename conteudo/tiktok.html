@@ -1,0 +1,1347 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Estratégia TikTok · Meu Studio</title>
+  <link rel="stylesheet" href="../shared/css/tokens.css">
+  <link rel="stylesheet" href="../shared/css/base.css">
+  <style>
+    body {
+      max-width: 480px; margin: 0 auto; overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* ── HEADER ── */
+    .hdr {
+      background: linear-gradient(135deg, #010101 0%, #1a0a2e 60%, #0d1a2e 100%);
+      color: #fff; padding: 10px 14px; position: sticky; top: 0; z-index: 100;
+      display: grid; grid-template-columns: 44px 1fr 44px; align-items: center; gap: 8px;
+    }
+    .hdr-center { text-align: center; }
+    .hdr h1 { font-size: 1rem; font-weight: 700; }
+    .hdr-sub { font-size: .68rem; opacity: .7; margin-top: 1px; }
+    .hdr-back, .hdr-action {
+      width: 34px; height: 34px; border-radius: 50%; border: none;
+      background: rgba(255,255,255,.13); color: rgba(255,255,255,.88);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: background .15s; padding: 0;
+    }
+    .hdr-back:active, .hdr-action:active { background: rgba(255,255,255,.28); }
+
+    /* TikTok brand accent */
+    .tt-accent { color: #69C9D0; }
+    .tt-accent-pink { color: #EE1D52; }
+
+    /* ── LAYOUT ── */
+    .tt-content { padding: 14px 13px 100px; }
+
+    /* ── INTRO (mobile only) ── */
+    .tt-intro {
+      background: linear-gradient(135deg, #0d0d0d, #1a1a2e);
+      border: 1px solid rgba(105,201,208,.25); border-radius: 16px;
+      padding: 18px 16px; margin-bottom: 14px; text-align: center;
+    }
+    .tt-intro-emoji { font-size: 2.2rem; line-height: 1; margin-bottom: 8px; }
+    .tt-intro-title { font-size: .97rem; font-weight: 700; color: #69C9D0; margin-bottom: 5px; }
+    .tt-intro-sub { font-size: .75rem; color: rgba(255,255,255,.6); line-height: 1.55; }
+
+    /* ── CARDS ── */
+    .tt-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 14px; padding: 14px; margin-bottom: 10px;
+    }
+    .tt-label {
+      display: block; font-size: .7rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .07em;
+      color: var(--text-muted); margin-bottom: 8px;
+    }
+    .tt-hint-inline { font-size: .67rem; font-weight: 400; text-transform: none; letter-spacing: 0; color: var(--text-subtle); }
+    .tt-sub-label { font-size: .72rem; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; }
+
+    /* ── CHIP ROWS ── */
+    .tt-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 6px; }
+    .tt-chip {
+      padding: 7px 14px; border-radius: 20px;
+      border: 1.5px solid var(--border); background: var(--surface);
+      font-size: .73rem; font-weight: 600; cursor: pointer;
+      color: var(--text-muted); transition: all .15s;
+      -webkit-tap-highlight-color: transparent; line-height: 1.4;
+    }
+    .tt-chip.on { background: #010101; border-color: #010101; color: #fff; }
+    .tt-chip.on-teal { background: #0d3e42; border-color: #69C9D0; color: #69C9D0; }
+    .tt-chip:active { opacity: .75; }
+
+    /* Objective chips get colored when selected */
+    .tt-chip[data-obj="alcance"].on    { background: #EE1D52; border-color: #EE1D52; }
+    .tt-chip[data-obj="autoridade"].on { background: #7C3AED; border-color: #7C3AED; }
+    .tt-chip[data-obj="conexao"].on    { background: #BE185D; border-color: #BE185D; }
+    .tt-chip[data-obj="conversao"].on  { background: #0D9488; border-color: #0D9488; }
+    .tt-chip[data-obj="posicionamento"].on { background: #010101; border-color: #010101; }
+
+    /* ── INPUTS ── */
+    .tt-textarea, .tt-input {
+      width: 100%; padding: 11px 13px; background: var(--bg);
+      color: var(--text); border: 1.5px solid var(--border); border-radius: 9px;
+      font-family: inherit; font-size: .84rem; -webkit-appearance: none;
+      transition: border-color .15s; box-sizing: border-box;
+    }
+    .tt-textarea { resize: vertical; min-height: 90px; line-height: 1.6; }
+    .tt-textarea-sm { min-height: 65px; }
+    .tt-textarea::placeholder, .tt-input::placeholder { color: var(--text-subtle); }
+    .tt-textarea:focus, .tt-input:focus { outline: none; border-color: #69C9D0; }
+
+    /* ── MAIN BUTTON ── */
+    .tt-btn {
+      width: 100%; padding: 16px;
+      background: linear-gradient(135deg, #010101 0%, #1a0a2e 100%);
+      color: #fff; border: none; border-radius: 12px;
+      font-family: inherit; font-size: .95rem; font-weight: 700;
+      cursor: pointer; transition: opacity .2s, transform .12s;
+      display: flex; align-items: center; justify-content: center; gap: 9px;
+      margin-top: 4px; letter-spacing: -.01em;
+    }
+    .tt-btn:active { transform: translateY(1px); }
+    .tt-btn:disabled { opacity: .55; cursor: not-allowed; }
+    .tt-btn-spinner {
+      width: 17px; height: 17px; border: 2px solid rgba(255,255,255,.3);
+      border-top-color: #69C9D0; border-radius: 50%;
+      animation: spin .7s linear infinite; display: none; flex-shrink: 0;
+    }
+    .tt-btn.loading .tt-btn-spinner { display: block; }
+    .tt-btn.loading .tt-btn-icon { display: none; }
+
+    /* ── LOADING ── */
+    .tt-loading { display: none; text-align: center; padding: 52px 20px; }
+    .tt-loading.show { display: block; }
+    .tt-spinner {
+      width: 42px; height: 42px; border: 3px solid rgba(105,201,208,.2);
+      border-top-color: #69C9D0; border-radius: 50%;
+      animation: spin .75s linear infinite; margin: 0 auto 18px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .tt-loading-title { font-size: .93rem; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+    .tt-loading-sub { font-size: .76rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 20px; }
+    .tt-loading-steps { display: flex; flex-direction: column; gap: 8px; }
+    .tt-loading-step {
+      font-size: .74rem; color: var(--text-subtle); opacity: 0;
+      animation: fadeStep .4s ease forwards;
+    }
+    .tt-loading-step:nth-child(1) { animation-delay: .4s; }
+    .tt-loading-step:nth-child(2) { animation-delay: 1.4s; }
+    .tt-loading-step:nth-child(3) { animation-delay: 2.8s; }
+    .tt-loading-step:nth-child(4) { animation-delay: 4.5s; }
+    @keyframes fadeStep { to { opacity: 1; } }
+
+    /* ── RESULT ── */
+    .result-meta {
+      background: linear-gradient(135deg, #010101, #1a0a2e);
+      color: #fff; border-radius: 14px; padding: 14px 16px; margin-bottom: 12px;
+    }
+    .result-meta-label { font-size: .65rem; font-weight: 700; opacity: .6; text-transform: uppercase; letter-spacing: .09em; margin-bottom: 4px; }
+    .result-meta-objs { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+    .result-meta-obj {
+      padding: 3px 11px; border-radius: 20px; font-size: .68rem; font-weight: 600;
+    }
+    .result-meta-obj.obj-alcance    { background: rgba(238,29,82,.25); color: #ff6b8a; border: 1px solid rgba(238,29,82,.4); }
+    .result-meta-obj.obj-autoridade { background: rgba(124,58,237,.25); color: #b892ff; border: 1px solid rgba(124,58,237,.4); }
+    .result-meta-obj.obj-conexao    { background: rgba(190,24,93,.25); color: #f472b6; border: 1px solid rgba(190,24,93,.4); }
+    .result-meta-obj.obj-conversao  { background: rgba(13,148,136,.25); color: #5eead4; border: 1px solid rgba(13,148,136,.4); }
+    .result-meta-obj.obj-posicionamento { background: rgba(255,255,255,.15); color: rgba(255,255,255,.85); border: 1px solid rgba(255,255,255,.2); }
+
+    /* ── ACCORDION ── */
+    .result-section { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; margin-bottom: 9px; }
+    .rs-header {
+      display: flex; align-items: center; gap: 10px;
+      padding: 13px 14px; cursor: pointer; -webkit-tap-highlight-color: transparent;
+      border-bottom: 1px solid transparent; transition: background .15s;
+    }
+    .rs-header:active { background: var(--surface-2); }
+    .result-section.open .rs-header { border-bottom-color: var(--border); }
+    .rs-icon {
+      width: 32px; height: 32px; border-radius: 9px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; font-size: 1rem;
+    }
+    .rs-title { font-size: .86rem; font-weight: 700; flex: 1; color: var(--text); }
+    .rs-arrow { font-size: .7rem; color: var(--text-muted); transition: transform .2s; }
+    .result-section.open .rs-arrow { transform: rotate(90deg); }
+    .rs-body { display: none; padding: 14px 16px; font-size: .84rem; line-height: 1.65; color: var(--text); }
+    .result-section.open .rs-body { display: block; }
+
+    /* ── IDEA CARDS ── */
+    .idea-card {
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 11px; padding: 13px; margin-bottom: 10px;
+    }
+    .idea-card:last-child { margin-bottom: 0; }
+    .idea-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+    .idea-num { font-size: .65rem; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; color: var(--text-subtle); }
+    .idea-title { font-size: .87rem; font-weight: 700; color: var(--text); margin-bottom: 10px; line-height: 1.4; }
+    .idea-field { margin-bottom: 7px; }
+    .idea-field:last-child { margin-bottom: 0; }
+    .idea-field-label { font-size: .65rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--text-subtle); margin-bottom: 3px; }
+    .idea-field-val { font-size: .82rem; color: var(--text); line-height: 1.55; }
+    .idea-field-val ul { margin: 4px 0; padding-left: 16px; }
+    .idea-field-val li { margin-bottom: 3px; }
+    .idea-field-val strong { font-weight: 700; }
+    .idea-field-val p { margin: 0 0 4px; }
+
+    /* Potencial badge */
+    .potencial-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 4px 11px; border-radius: 20px; font-size: .7rem; font-weight: 700;
+      margin-top: 10px; flex-shrink: 0;
+    }
+    .potencial-viral { background: rgba(238,29,82,.1); color: #CC1542; border: 1px solid rgba(238,29,82,.25); }
+    .potencial-autoridade { background: rgba(124,58,237,.1); color: #6D2FCC; border: 1px solid rgba(124,58,237,.25); }
+    .potencial-ambos { background: rgba(1,1,1,.07); color: #1a1a2e; border: 1px solid rgba(1,1,1,.15); }
+
+    /* Send to planning button */
+    .idea-send-btn-sm {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 6px 12px; border-radius: 8px; margin-top: 10px;
+      background: var(--surface); border: 1.5px solid var(--border);
+      font-family: inherit; font-size: .73rem; font-weight: 600;
+      color: var(--text-muted); cursor: pointer; transition: all .15s;
+    }
+    .idea-send-btn-sm:active { background: var(--surface-2); }
+
+    /* Diagnostico section special styles */
+    .diag-item { margin-bottom: 10px; }
+    .diag-item strong { color: var(--text); }
+    .diag-highlight {
+      background: rgba(105,201,208,.08); border-left: 3px solid #69C9D0;
+      border-radius: 0 8px 8px 0; padding: 10px 13px; margin-bottom: 8px;
+      font-size: .82rem; color: var(--text); line-height: 1.55;
+    }
+
+    /* Top 3 special section */
+    .top3-card {
+      background: linear-gradient(135deg, #010101, #1a0a2e);
+      border-radius: 12px; padding: 14px; margin-bottom: 10px; color: #fff;
+    }
+    .top3-card:last-child { margin-bottom: 0; }
+    .top3-num { font-size: .65rem; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; color: #69C9D0; margin-bottom: 4px; }
+    .top3-title { font-size: .88rem; font-weight: 700; margin-bottom: 6px; }
+    .top3-why { font-size: .79rem; color: rgba(255,255,255,.7); line-height: 1.55; }
+
+    /* ── RESULT ACTIONS (mobile) ── */
+    .result-actions {
+      display: flex; gap: 8px; margin-top: 14px;
+    }
+    .result-btn {
+      flex: 1; padding: 13px; border-radius: 10px;
+      border: 1.5px solid var(--border); background: var(--surface);
+      font-family: inherit; font-size: .83rem; font-weight: 600;
+      color: var(--text-muted); cursor: pointer; transition: background .15s;
+    }
+    .result-btn-primary {
+      background: #010101; border-color: #010101; color: #fff;
+    }
+    .result-btn:active { opacity: .8; }
+
+    /* ── MARKDOWN CONTENT ── */
+    .rs-body ul { margin: 6px 0; padding-left: 18px; }
+    .rs-body li { margin-bottom: 4px; }
+    .rs-body p { margin: 0 0 8px; }
+    .rs-body p:last-child { margin-bottom: 0; }
+    .rs-body strong { font-weight: 700; }
+    .rs-body h3 { font-size: .86rem; font-weight: 700; margin: 12px 0 6px; color: var(--text); }
+
+    /* ── BOTTOM SHEET — SEND TO PLANNING ── */
+    .ideia-bg {
+      position: fixed; inset: 0; background: rgba(0,0,0,.45);
+      z-index: 200; display: none; align-items: flex-end;
+    }
+    .ideia-bg.show { display: flex; }
+    .ideia-panel {
+      background: var(--surface); border-radius: 22px 22px 0 0;
+      padding: 10px 18px 36px; width: 100%; max-height: 88vh;
+      overflow-y: auto; -webkit-overflow-scrolling: touch;
+    }
+    .ideia-handle {
+      width: 36px; height: 4px; background: var(--border-strong);
+      border-radius: 2px; margin: 0 auto 14px;
+    }
+    .ideia-panel-header { display: flex; align-items: center; gap: 10px; margin-bottom: 5px; }
+    .ideia-panel-icon { font-size: 1.5rem; }
+    .ideia-panel-title { font-size: .97rem; font-weight: 700; color: var(--text); }
+    .ideia-panel-sub { font-size: .77rem; color: var(--text-muted); margin-bottom: 16px; line-height: 1.5; }
+    .ideia-label { display: block; font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--text-muted); margin-bottom: 6px; margin-top: 14px; }
+    .ideia-hint { font-size: .65rem; font-weight: 400; text-transform: none; letter-spacing: 0; color: var(--text-subtle); }
+    .ideia-input, .ideia-textarea {
+      width: 100%; padding: 11px 13px; background: var(--bg);
+      color: var(--text); border: 1.5px solid var(--border); border-radius: 9px;
+      font-family: inherit; font-size: .85rem; box-sizing: border-box;
+    }
+    .ideia-textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
+    .ideia-input:focus, .ideia-textarea:focus { outline: none; border-color: #69C9D0; }
+    .ideia-fmt-row { display: flex; gap: 6px; flex-wrap: wrap; }
+    .ideia-fmt-btn {
+      padding: 7px 14px; border-radius: 20px;
+      border: 1.5px solid var(--border); background: var(--surface);
+      font-size: .73rem; font-weight: 600; cursor: pointer;
+      color: var(--text-muted); transition: all .15s;
+    }
+    .ideia-fmt-btn.on { background: #010101; border-color: #010101; color: #fff; }
+    .ideia-send-btn {
+      width: 100%; padding: 15px; margin-top: 18px;
+      background: linear-gradient(135deg, #010101, #1a0a2e);
+      color: #fff; border: none; border-radius: 12px;
+      font-family: inherit; font-size: .92rem; font-weight: 700;
+      cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .ideia-cancel-btn {
+      width: 100%; padding: 13px; margin-top: 8px;
+      background: var(--surface); color: var(--text-muted);
+      border: 1.5px solid var(--border); border-radius: 12px;
+      font-family: inherit; font-size: .88rem; font-weight: 600; cursor: pointer;
+    }
+
+    /* ── KEY MODAL ── */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,.5);
+      z-index: 300; display: none; align-items: flex-end;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal-box {
+      background: var(--surface); border-radius: 22px 22px 0 0;
+      padding: 10px 18px 36px; width: 100%;
+    }
+    .modal-handle {
+      width: 36px; height: 4px; background: var(--border-strong);
+      border-radius: 2px; margin: 0 auto 16px;
+    }
+    .modal-title { font-size: .97rem; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+    .modal-sub { font-size: .78rem; color: var(--text-muted); line-height: 1.55; margin-bottom: 14px; }
+    .modal-input {
+      width: 100%; padding: 12px 14px; background: var(--bg);
+      color: var(--text); border: 1.5px solid var(--border); border-radius: 9px;
+      font-family: inherit; font-size: .88rem; box-sizing: border-box; margin-bottom: 12px;
+    }
+    .modal-input:focus { outline: none; border-color: #69C9D0; }
+    .modal-save {
+      width: 100%; padding: 14px; border: none; border-radius: 11px;
+      background: #010101; color: #fff;
+      font-family: inherit; font-size: .92rem; font-weight: 700; cursor: pointer; margin-bottom: 8px;
+    }
+    .modal-cancel {
+      width: 100%; padding: 13px; border: 1.5px solid var(--border);
+      border-radius: 11px; background: var(--surface); color: var(--text-muted);
+      font-family: inherit; font-size: .88rem; font-weight: 600; cursor: pointer;
+    }
+
+    /* ── TOAST ── */
+    .tt-toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
+      background: #1a1a2e; color: #fff; padding: 10px 20px;
+      border-radius: 22px; font-size: .83rem; font-weight: 600;
+      opacity: 0; transition: all .25s; pointer-events: none; white-space: nowrap;
+      box-shadow: 0 4px 16px rgba(0,0,0,.3); z-index: 400;
+    }
+    .tt-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* ── DESKTOP ── */
+    @media (min-width: 768px) {
+      body { max-width: 100%; }
+
+      .hdr { max-width: 100%; }
+
+      .tt-content {
+        display: grid;
+        grid-template-columns: 380px 1fr;
+        gap: 0;
+        padding: 0;
+        max-width: 1200px;
+        margin: 0 auto;
+        min-height: calc(100vh - 57px);
+      }
+
+      .tt-intro { display: none; }
+
+      .tt-left-panel {
+        padding: 20px 18px 60px;
+        border-right: 1px solid var(--border);
+        overflow-y: auto;
+        max-height: calc(100vh - 57px);
+        position: sticky;
+        top: 57px;
+      }
+
+      .tt-right-panel {
+        padding: 24px 28px 60px;
+        overflow-y: auto;
+        max-height: calc(100vh - 57px);
+      }
+
+      /* Desktop left title */
+      .tt-left-title {
+        display: flex; align-items: center; gap: 12px;
+        padding: 12px 0 18px; border-bottom: 1px solid var(--border); margin-bottom: 16px;
+      }
+      .tt-left-title-icon { font-size: 2rem; }
+      .tt-left-title-name { font-size: .95rem; font-weight: 700; color: var(--text); }
+      .tt-left-title-sub { font-size: .74rem; color: var(--text-muted); margin-top: 2px; }
+
+      /* Result top bar */
+      .result-top-bar {
+        display: flex; align-items: center; gap: 10px; margin-bottom: 18px;
+      }
+      .result-top-bar .result-meta { flex: 1; margin-bottom: 0; }
+      .result-top-actions { display: flex; gap: 8px; flex-shrink: 0; }
+      .result-top-btn {
+        padding: 10px 16px; border-radius: 9px; border: 1.5px solid var(--border);
+        background: var(--surface); color: var(--text-muted);
+        font-family: inherit; font-size: .78rem; font-weight: 600;
+        cursor: pointer; display: flex; align-items: center; gap: 6px;
+        white-space: nowrap; transition: background .15s;
+      }
+      .result-top-btn:hover { background: var(--surface-2); }
+      .result-top-btn-primary { background: #010101; border-color: #010101; color: #fff; }
+      .result-top-btn-primary:hover { background: #1a0a2e; border-color: #1a0a2e; }
+
+      /* Hide mobile actions on desktop */
+      .result-actions { display: none; }
+
+      /* Desktop empty state */
+      .tt-empty {
+        display: flex; flex-direction: column; align-items: center;
+        justify-content: center; min-height: 400px; text-align: center; padding: 40px 20px;
+      }
+      .tt-empty-icon { font-size: 3.5rem; margin-bottom: 14px; opacity: .5; }
+      .tt-empty-title { font-size: 1.1rem; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+      .tt-empty-sub { font-size: .82rem; color: var(--text-muted); line-height: 1.65; max-width: 360px; margin-bottom: 24px; }
+      .tt-empty-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; max-width: 320px; }
+      .tt-empty-chip {
+        background: var(--surface-2); border: 1px solid var(--border);
+        border-radius: 10px; padding: 12px 8px; text-align: center;
+      }
+      .tt-empty-chip-icon { font-size: 1.3rem; margin-bottom: 5px; }
+      .tt-empty-chip-label { font-size: .67rem; font-weight: 600; color: var(--text-muted); line-height: 1.3; }
+
+      /* Idea grid on desktop */
+      .body-ideas {
+        display: grid !important;
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        gap: 10px;
+        padding: 14px !important;
+      }
+      .body-ideas .idea-card { margin-bottom: 0; }
+
+      /* Modal centered */
+      .modal-overlay, .ideia-bg { align-items: center; }
+      .modal-box, .ideia-panel {
+        border-radius: 16px; max-width: 440px; margin: auto;
+        max-height: 88vh; overflow-y: auto;
+      }
+    }
+
+    @media (min-width: 1100px) {
+      .tt-content { grid-template-columns: 420px 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="tt-app">
+
+  <!-- HEADER -->
+  <div class="hdr">
+    <button class="hdr-back" onclick="history.back()" aria-label="Voltar">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <div class="hdr-center">
+      <h1>TikTok Estratégico</h1>
+      <div class="hdr-sub">Direção criativa com IA</div>
+    </div>
+    <button class="hdr-action" onclick="openKeyModal()" title="Configurar chave Claude" aria-label="Configurar API">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12.22 2h-.44a2 2 0 00-2 2v.18a2 2 0 01-1 1.73l-.43.25a2 2 0 01-2 0l-.15-.08a2 2 0 00-2.73.73l-.22.38a2 2 0 00.73 2.73l.15.1a2 2 0 011 1.72v.51a2 2 0 01-1 1.74l-.15.09a2 2 0 00-.73 2.73l.22.38a2 2 0 002.73.73l.15-.08a2 2 0 012 0l.43.25a2 2 0 011 1.73V20a2 2 0 002 2h.44a2 2 0 002-2v-.18a2 2 0 011-1.73l.43-.25a2 2 0 012 0l.15.08a2 2 0 002.73-.73l.22-.39a2 2 0 00-.73-2.73l-.15-.08a2 2 0 01-1-1.74v-.5a2 2 0 011-1.74l.15-.09a2 2 0 00.73-2.73l-.22-.38a2 2 0 00-2.73-.73l-.15.08a2 2 0 01-2 0l-.43-.25a2 2 0 01-1-1.73V4a2 2 0 00-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+    </button>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div class="tt-content">
+
+    <!-- ── LEFT PANEL (FORM) ── -->
+    <div class="tt-left-panel">
+
+      <!-- Desktop branding (hidden on mobile) -->
+      <div class="tt-left-title">
+        <div class="tt-left-title-icon">🎬</div>
+        <div>
+          <div class="tt-left-title-name">Diretor Criativo TikTok</div>
+          <div class="tt-left-title-sub">Estratégia personalizada para @makecarolnunes</div>
+        </div>
+      </div>
+
+      <div id="tt-form">
+
+        <!-- Mobile intro -->
+        <div class="tt-intro">
+          <div class="tt-intro-emoji">🎬</div>
+          <div class="tt-intro-title">Diretor Criativo TikTok</div>
+          <div class="tt-intro-sub">Descreva seu contexto atual e receba uma estratégia completa — ideias reais, hooks fortes e prioridades claras.</div>
+        </div>
+
+        <!-- 1. Objetivos -->
+        <div class="tt-card">
+          <label class="tt-label">Objetivos desta rodada <span class="tt-hint-inline">— um ou mais</span></label>
+          <div class="tt-chips" id="obj-chips">
+            <button class="tt-chip on" data-obj="alcance">🚀 Alcance</button>
+            <button class="tt-chip on" data-obj="autoridade">🏆 Autoridade</button>
+            <button class="tt-chip on" data-obj="conexao">💜 Conexão</button>
+            <button class="tt-chip" data-obj="conversao">💰 Conversão</button>
+            <button class="tt-chip" data-obj="posicionamento">🌟 Posicionamento</button>
+          </div>
+        </div>
+
+        <!-- 2. Contexto atual -->
+        <div class="tt-card">
+          <label class="tt-label">Contexto atual no TikTok <span class="tt-hint-inline">— seja honesta</span></label>
+          <textarea class="tt-textarea" id="tt-context" rows="5"
+            placeholder="Quantos seguidores? Já postou? O que performou? O que não funcionou? Qual seu maior desafio agora?&#10;&#10;Ex: Tenho 320 seguidores, postei 5 vídeos. Um tutorial de noiva chegou a 2k views. Mas não tenho consistência e trava na hora de gravar sozinha."></textarea>
+        </div>
+
+        <!-- 3. Materiais disponíveis -->
+        <div class="tt-card">
+          <label class="tt-label">O que você tem disponível</label>
+          <div class="tt-chips" id="mat-chips">
+            <button class="tt-chip" data-mat="bastidores">🎬 Bastidores</button>
+            <button class="tt-chip" data-mat="making-noivas">💍 Making of Noivas</button>
+            <button class="tt-chip" data-mat="tutoriais">🎓 Tutoriais Gravados</button>
+            <button class="tt-chip" data-mat="antes-depois">✨ Antes &amp; Depois</button>
+            <button class="tt-chip" data-mat="produtos">💄 Reviews/Produtos</button>
+            <button class="tt-chip" data-mat="rotina">📱 Clipes do Dia a Dia</button>
+            <button class="tt-chip" data-mat="depoimentos">💬 Depoimentos</button>
+            <button class="tt-chip" data-mat="fotos">📸 Fotos Profissionais</button>
+          </div>
+          <textarea class="tt-textarea tt-textarea-sm" id="tt-materials" rows="2" style="margin-top:8px"
+            placeholder="Algo específico que quer usar ou reaproveitar..."></textarea>
+        </div>
+
+        <!-- 4. Sua realidade -->
+        <div class="tt-card">
+          <label class="tt-label">Sua realidade</label>
+          <div class="tt-sub-label">Tempo por semana para conteúdo</div>
+          <div class="tt-chips" id="time-chips">
+            <button class="tt-chip" data-time="ate-1h">Até 1h</button>
+            <button class="tt-chip on" data-time="2-3h">2–3h</button>
+            <button class="tt-chip" data-time="4-5h">4–5h</button>
+            <button class="tt-chip" data-time="5h+">5h+</button>
+          </div>
+          <div class="tt-sub-label" style="margin-top:12px">Equipamento</div>
+          <div class="tt-chips" id="equip-chips">
+            <button class="tt-chip" data-equip="so-celular">📱 Só celular</button>
+            <button class="tt-chip on" data-equip="celular-ring">📱💡 Celular + ring light</button>
+            <button class="tt-chip" data-equip="setup">🎥 Setup completo</button>
+          </div>
+        </div>
+
+        <!-- 5. Referência ou trend (opcional) -->
+        <div class="tt-card">
+          <label class="tt-label">Referência ou trend <span class="tt-hint-inline">— opcional</span></label>
+          <input type="url" class="tt-input" id="tt-ref-url" placeholder="Link do TikTok/Reels que quer adaptar..." style="margin-bottom:8px">
+          <textarea class="tt-textarea tt-textarea-sm" id="tt-ref-desc" rows="3"
+            placeholder="Descreva a trend ou contexto que quer explorar. Ex: 'Trend de POV rápido com texto na tela mostrando o processo de make...'"></textarea>
+        </div>
+
+        <!-- GENERATE BUTTON -->
+        <button class="tt-btn" id="tt-btn" onclick="generateStrategy()">
+          <span class="tt-btn-icon">🎬</span>
+          <div class="tt-btn-spinner"></div>
+          Gerar Estratégia
+        </button>
+
+      </div><!-- /tt-form -->
+    </div><!-- /tt-left-panel -->
+
+    <!-- ── RIGHT PANEL (RESULT) ── -->
+    <div class="tt-right-panel">
+
+      <!-- Loading -->
+      <div class="tt-loading" id="tt-loading">
+        <div class="tt-spinner"></div>
+        <div class="tt-loading-title">Criando sua estratégia TikTok...</div>
+        <div class="tt-loading-sub">Analisando objetivos, contexto e oportunidades do nicho</div>
+        <div class="tt-loading-steps">
+          <div class="tt-loading-step">🎯 Diagnosticando seu perfil e momento...</div>
+          <div class="tt-loading-step">⚡ Identificando oportunidades no nicho de beleza...</div>
+          <div class="tt-loading-step">💡 Gerando ideias por objetivo...</div>
+          <div class="tt-loading-step">🔥 Priorizando ações desta semana...</div>
+        </div>
+      </div>
+
+      <!-- Empty state (desktop only) -->
+      <div class="tt-empty" id="tt-empty">
+        <div class="tt-empty-icon">🎬</div>
+        <div class="tt-empty-title">Sua estratégia TikTok</div>
+        <div class="tt-empty-sub">Preencha o contexto ao lado e clique em <strong>Gerar Estratégia</strong> para receber um plano completo e personalizado para @makecarolnunes.</div>
+        <div class="tt-empty-grid">
+          <div class="tt-empty-chip">
+            <div class="tt-empty-chip-icon">🚀</div>
+            <div class="tt-empty-chip-label">Ideias de alcance</div>
+          </div>
+          <div class="tt-empty-chip">
+            <div class="tt-empty-chip-icon">🏆</div>
+            <div class="tt-empty-chip-label">Autoridade técnica</div>
+          </div>
+          <div class="tt-empty-chip">
+            <div class="tt-empty-chip-icon">💜</div>
+            <div class="tt-empty-chip-label">Conexão emocional</div>
+          </div>
+          <div class="tt-empty-chip">
+            <div class="tt-empty-chip-icon">🔥</div>
+            <div class="tt-empty-chip-label">Top 3 prioridades</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Result -->
+      <div id="tt-result" style="display:none">
+
+        <!-- Top bar (desktop) -->
+        <div class="result-top-bar" id="result-top-bar" style="display:none">
+          <div class="result-meta" id="result-meta-desk"></div>
+          <div class="result-top-actions">
+            <button class="result-top-btn" onclick="copyAll()">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+              Copiar tudo
+            </button>
+            <button class="result-top-btn result-top-btn-primary" onclick="resetForm()">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4"/></svg>
+              Nova estratégia
+            </button>
+          </div>
+        </div>
+
+        <!-- Meta (mobile) -->
+        <div class="result-meta" id="result-meta-mob"></div>
+
+        <!-- Sections accordion -->
+        <div id="tt-sections"></div>
+
+        <!-- Actions (mobile) -->
+        <div class="result-actions">
+          <button class="result-btn" onclick="copyAll()">📋 Copiar tudo</button>
+          <button class="result-btn result-btn-primary" onclick="resetForm()">↺ Nova estratégia</button>
+        </div>
+
+      </div><!-- /tt-result -->
+
+    </div><!-- /tt-right-panel -->
+  </div><!-- /tt-content -->
+
+  <!-- SEND TO PLANNING BOTTOM SHEET -->
+  <div class="ideia-bg" id="ideia-bg" onclick="onIdeiaOverlayClick(event)">
+    <div class="ideia-panel" id="ideia-panel">
+      <div class="ideia-handle"></div>
+      <div class="ideia-panel-header">
+        <div class="ideia-panel-icon">💡</div>
+        <div class="ideia-panel-title">Enviar pro Planejamento</div>
+      </div>
+      <div class="ideia-panel-sub">Capture a ideia enquanto está fresca — aparece em Conteúdo.</div>
+      <label class="ideia-label">Título da ideia *</label>
+      <input type="text" class="ideia-input" id="ideia-title" placeholder="Ex: POV maquiando noiva afro...">
+      <label class="ideia-label">Formato</label>
+      <div class="ideia-fmt-row" id="ideia-fmt-row">
+        <button class="ideia-fmt-btn on" data-v="Reels">Reels</button>
+        <button class="ideia-fmt-btn" data-v="Stories">Stories</button>
+        <button class="ideia-fmt-btn" data-v="Feed">Feed</button>
+        <button class="ideia-fmt-btn" data-v="Lives">Lives</button>
+      </div>
+      <label class="ideia-label">Notas <span class="ideia-hint">— hook, referências, observações</span></label>
+      <textarea class="ideia-textarea" id="ideia-notes" rows="3" placeholder="Hook, roteiro resumido, hashtags..."></textarea>
+      <button class="ideia-send-btn" onclick="sendIdeia()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        Enviar pro Planejamento
+      </button>
+      <button class="ideia-cancel-btn" onclick="closeIdeiaPanel()">Cancelar</button>
+    </div>
+  </div>
+
+  <!-- KEY MODAL -->
+  <div class="modal-overlay" id="key-modal" onclick="onKeyOverlayClick(event)">
+    <div class="modal-box">
+      <div class="modal-handle"></div>
+      <div class="modal-title">Chave da API Claude</div>
+      <div class="modal-sub">Necessária para gerar estratégias com IA. Salva apenas neste dispositivo — nunca enviada a servidores além da Anthropic.</div>
+      <input type="password" class="modal-input" id="key-input" placeholder="sk-ant-...">
+      <button class="modal-save" onclick="saveKey()">Salvar chave</button>
+      <button class="modal-cancel" onclick="closeKeyModal()">Cancelar</button>
+    </div>
+  </div>
+
+  <div class="tt-toast" id="tt-toast"></div>
+
+</div><!-- /tt-app -->
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="../config.js"></script>
+<script src="../shared/js/db.js"></script>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+// TikTok Estratégico — Diretor Criativo com IA
+// ══════════════════════════════════════════════════════════════
+
+var lastStrategyText = '';
+var ideiaFormats = ['Reels'];
+
+function isDesktop() { return window.innerWidth >= 768; }
+
+// ── TOAST ─────────────────────────────────────────────────────
+function toast(msg, dur) {
+  dur = dur || 2800;
+  var t = document.getElementById('tt-toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(function() { t.classList.remove('show'); }, dur);
+}
+
+// ── KEY MODAL ─────────────────────────────────────────────────
+function openKeyModal() {
+  var inp = document.getElementById('key-input');
+  inp.value = localStorage.getItem('mk_claude_key') || '';
+  document.getElementById('key-modal').classList.add('show');
+  setTimeout(function() { inp.focus(); }, 120);
+}
+function closeKeyModal() {
+  document.getElementById('key-modal').classList.remove('show');
+}
+function onKeyOverlayClick(e) {
+  if (e.target === document.getElementById('key-modal')) closeKeyModal();
+}
+function saveKey() {
+  var k = (document.getElementById('key-input').value || '').trim();
+  if (!k) { toast('Cole sua chave sk-ant-...'); return; }
+  localStorage.setItem('mk_claude_key', k);
+  if (window.DB) DB.config.set('claude_api_key', k).catch(function(){});
+  closeKeyModal();
+  toast('Chave salva!');
+}
+
+// ── OBJECTIVE CHIPS ───────────────────────────────────────────
+document.querySelectorAll('#obj-chips .tt-chip').forEach(function(btn) {
+  btn.addEventListener('click', function() { btn.classList.toggle('on'); });
+});
+
+function getSelectedObjs() {
+  var objs = [];
+  document.querySelectorAll('#obj-chips .tt-chip.on').forEach(function(b) {
+    objs.push(b.dataset.obj);
+  });
+  return objs;
+}
+
+// ── MATERIAL CHIPS ────────────────────────────────────────────
+document.querySelectorAll('#mat-chips .tt-chip').forEach(function(btn) {
+  btn.addEventListener('click', function() { btn.classList.toggle('on'); });
+});
+
+function getSelectedMaterials() {
+  var mats = [];
+  document.querySelectorAll('#mat-chips .tt-chip.on').forEach(function(b) {
+    mats.push(b.textContent.trim());
+  });
+  return mats;
+}
+
+// ── SINGLE-SELECT CHIPS ───────────────────────────────────────
+function initSingleSelect(groupId) {
+  document.querySelectorAll('#' + groupId + ' .tt-chip').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('#' + groupId + ' .tt-chip').forEach(function(b) { b.classList.remove('on'); });
+      btn.classList.add('on');
+    });
+  });
+}
+initSingleSelect('time-chips');
+initSingleSelect('equip-chips');
+
+function getSingleChip(groupId) {
+  var el = document.querySelector('#' + groupId + ' .tt-chip.on');
+  return el ? el.textContent.trim() : '';
+}
+
+// ── RESET ─────────────────────────────────────────────────────
+function resetForm() {
+  if (!isDesktop()) {
+    document.getElementById('tt-form').style.display = '';
+  }
+  var resultEl = document.getElementById('tt-result');
+  resultEl.style.display = 'none';
+  document.getElementById('tt-loading').classList.remove('show');
+  if (isDesktop()) {
+    document.getElementById('tt-empty').style.display = '';
+    document.getElementById('result-top-bar').style.display = 'none';
+    document.getElementById('result-meta-mob').style.display = 'none';
+  }
+  var btn = document.getElementById('tt-btn');
+  btn.disabled = false;
+  btn.classList.remove('loading');
+}
+
+// ── CAROL PROFILE ─────────────────────────────────────────────
+var CAROL_PROFILE = [
+  'PERFIL DA CRIADORA — Carol (@makecarolnunes):',
+  '- Profissão: Maquiadora freelancer profissional, Rio de Janeiro',
+  '- Formação: 10 anos de formação e experiência em publicidade — nenhuma concorrente tem isso',
+  '- Nicho: Maquiagem profissional — especialista em noivas, pele negra, cachos/crespos e make artístico',
+  '- Público-alvo: Noivas (25–40 anos), mulheres negras, mulheres com cabelos naturais, clientes que buscam make profissional para eventos especiais',
+  '- Posicionamento: "A marca premium não é fria — ela é segura, intencional e humana." Autoridade técnica real + presença humana genuína + sofisticação com acolhimento.',
+  '- Essência da marca: "Beleza que revela quem você já é." — não transforma, revela.',
+  '',
+  '- PILARES ESTRATÉGICOS (5):',
+  '  1. NOIVAS PREMIUM — especialização técnica e emocional, luxury feeling acessível',
+  '  2. PELE NEGRA — representatividade, técnica inclusiva, autoridade real',
+  '  3. CACHOS E CRESPOS — cabelos naturais integrados ao atendimento completo',
+  '  4. AUTORIDADE TÉCNICA — credibilidade como base para futuros cursos',
+  '  5. HUMANIZAÇÃO — bastidores, rotina, espontaneidade, humor situacional',
+  '',
+  '- DIFERENCIAL SUBUTILIZADO: 10 anos de publicidade — Carol entende narrativa, posicionamento e comunicação de marca em nível que concorrentes não têm',
+  '- Tom de voz: Segura, intencional e humana. Acolhedora, especialista, sofisticada — nunca fria, nunca arrogante, nunca genérica.',
+  '- Paleta: Café Escuro, Caramelo, Terra, Nude, Creme — elegância cálida',
+  '- Arquétipo principal: A Criadora. Secundários: A Cuidadora + A Sábia.',
+  '- Evita: Conteúdo de blogueira lifestyle sem conexão, humor forçado, trends vazios, dicas rasas para engajamento, perfecionismo que cria distância',
+].join('\n');
+
+// ── BUILD SYSTEM PROMPT ───────────────────────────────────────
+function buildSystemPrompt(objs) {
+  var objLabels = {
+    alcance: 'ALCANCE — VIRALIZAÇÃO',
+    autoridade: 'AUTORIDADE — EXPERTISE',
+    conexao: 'CONEXÃO — COMUNIDADE',
+    conversao: 'CONVERSÃO — CLIENTES',
+    posicionamento: 'POSICIONAMENTO — MARCA'
+  };
+  var objSectionGuides = {
+    alcance: '3 ideias com alto potencial viral — conteúdo que pode explodir para fora da base. Pense em formatos que o algoritmo do TikTok favorece: hook forte, alta taxa de conclusão, compartilhamento emocional.',
+    autoridade: '3 ideias que estabelecem credibilidade técnica. Conteúdo que faz o público pensar "essa mulher realmente sabe o que faz". Pode incluir educação, desmistificações, técnicas avançadas.',
+    conexao: '3 ideias que geram identificação emocional, pertencimento e intimidade. Bastidores reais, vulnerabilidade estratégica, humor situacional, momentos humanos.',
+    conversao: '3 ideias que convertem seguidores em orçamentos e agendamentos. Conteúdo que resolve a objeção antes de surgir, cria urgência, mostra resultado concreto.',
+    posicionamento: '3 ideias que diferenciam Carol de todas as outras maquiadoras. Conteúdo que só ela poderia fazer — usando o diferencial de publicidade, os dois pilares únicos, o ponto de vista específico.'
+  };
+
+  var sections = objs.map(function(o) {
+    return '## ' + objLabels[o] + '\n' + (objSectionGuides[o] || '3 ideias estratégicas.\n');
+  }).join('\n\n');
+
+  return [
+    'Você é o Diretor Criativo Estratégico de TikTok da Carol. Seu papel é construir estratégia real — não sugestões genéricas de social media.',
+    '',
+    '=== PERFIL DA MARCA ===',
+    CAROL_PROFILE,
+    '',
+    '=== CONTEXTO TIKTOK 2025-2026 (NICHO BELEZA) ===',
+    '- Conteúdo educativo técnico performa bem com hook forte e ritmo acelerado',
+    '- "POV fazendo make de noiva" gera engajamento emocional alto',
+    '- Conteúdo de pele negra tem demanda reprimida e alta identificação — comunidade ativa',
+    '- Storytelling rápido (15-30s) tem taxa de conclusão excelente no nicho',
+    '- Bastidores autênticos criam conexão mais forte que produção polida',
+    '- Tutoriais com transformação visível geram saves e compartilhamentos',
+    '- Humor situacional de maquiadora (clientes difíceis, situações absurdas) viraliza bem',
+    '- TikTok favorece consistência e autenticidade mais que produção cara',
+    '- Duetos/stitch para corrigir informações erradas do nicho posiciona como autoridade',
+    '- Séries recorrentes criam expectativa e audiência fiel',
+    '- Noivas do TikTok seguem maquiadoras que mostram o processo, não só o resultado',
+    '- Hook de 0-3s: primeira frase falada, texto na tela e primeira imagem precisam ser irresistíveis',
+    '',
+    '=== FORMATO DA RESPOSTA ===',
+    'Responda EXATAMENTE com estas seções (## para marcar cada uma):',
+    '',
+    '## DIAGNÓSTICO ESTRATÉGICO',
+    'Avalie a situação atual, oportunidades imediatas e pontos de atenção. Seja específico — não genérico.',
+    'Use este formato:',
+    '**Situação:** [avaliação honesta do momento]',
+    '**Maior oportunidade:** [o que Carol deve atacar primeiro]',
+    '**Ponto de atenção:** [o que pode estar travando o crescimento]',
+    '**Vantagem única:** [o que Carol tem que ninguém mais tem]',
+    '',
+    sections,
+    '',
+    '## REAPROVEITAMENTO DE MATERIAIS',
+    'Sugestões específicas para os materiais disponíveis informados. Como transformar o que Carol já tem em conteúdo forte. Seja prático — dê exemplos concretos.',
+    '',
+    '## TOP 3 DESTA SEMANA',
+    'Os 3 conteúdos com maior probabilidade de resultado AGORA, levando em conta realidade (tempo, equipamento, contexto informado).',
+    'Para cada um:',
+    '**Prioridade N: [título]**',
+    '**Por que agora:** [motivo específico de timing e potencial]',
+    '**Como executar:** [orientação prática considerando os recursos disponíveis]',
+    '',
+    '=== FORMATO DE CADA IDEIA (nas seções de objetivo) ===',
+    '**Ideia N: [título impactante]**',
+    '**Por que funciona:** [mecanismo real — por que pessoas param, assistem até o fim, interagem]',
+    '**Hook (0-3s):** [frase ou cena de abertura EXATA — o que a Carol fala ou aparece na tela]',
+    '**Estrutura:** [passo a passo do vídeo de 15 a 90s]',
+    '**CTA:** [call to action natural, não forçado]',
+    '**Legenda:** [primeiras 2 linhas que aparecem antes do "ver mais" + 5-8 hashtags estratégicos]',
+    '**Potencial:** 🚀 Viral / 🏆 Autoridade de Marca / 🔥 Ambos',
+    '',
+    '=== REGRAS ABSOLUTAS ===',
+    '- NUNCA sugira conteúdo que qualquer maquiadora poderia fazer',
+    '- SEMPRE conecte aos pilares únicos de Carol: pele negra, noivas, cachos, humanização',
+    '- Considere tempo e equipamento disponíveis informados — não sugira o que ela não consegue',
+    '- O tom é sempre: segura, intencional e humana — nunca vaga ou genérica',
+    '- Priorize séries recorrentes, não posts isolados',
+    '- Quando uma ideia puder se tornar série, sinalize com: 💫 [pode virar série]',
+    '- Pense em retenção: cada segundo de vídeo precisa ter motivo para o usuário não swipe',
+  ].join('\n');
+}
+
+// ── BUILD USER MESSAGE ────────────────────────────────────────
+function buildUserMessage() {
+  var context   = (document.getElementById('tt-context').value || '').trim();
+  var materials = (document.getElementById('tt-materials').value || '').trim();
+  var refUrl    = (document.getElementById('tt-ref-url').value || '').trim();
+  var refDesc   = (document.getElementById('tt-ref-desc').value || '').trim();
+
+  var objs    = getSelectedObjs();
+  var mats    = getSelectedMaterials();
+  var tempo   = getSingleChip('time-chips');
+  var equip   = getSingleChip('equip-chips');
+
+  var msg = 'Crie minha estratégia de conteúdo TikTok.\n\n';
+
+  msg += '**Objetivos desta rodada:** ' + (objs.length ? objs.join(', ') : 'todos') + '\n\n';
+
+  if (context) msg += '**Contexto atual no TikTok:**\n' + context + '\n\n';
+
+  if (mats.length || materials) {
+    msg += '**Materiais disponíveis:**\n';
+    if (mats.length) msg += '- ' + mats.join('\n- ') + '\n';
+    if (materials) msg += materials + '\n';
+    msg += '\n';
+  }
+
+  if (tempo) msg += '**Tempo disponível por semana:** ' + tempo + '\n';
+  if (equip) msg += '**Equipamento:** ' + equip + '\n';
+  msg += '\n';
+
+  if (refUrl || refDesc) {
+    msg += '**Referência/Trend que quer adaptar:**\n';
+    if (refUrl) msg += 'Link: ' + refUrl + '\n';
+    if (refDesc) msg += refDesc + '\n';
+    msg += '\n';
+  }
+
+  msg += 'Siga exatamente a estrutura de seções solicitada.';
+  return msg;
+}
+
+// ── SECTION DEFINITIONS ───────────────────────────────────────
+var SECTION_DEFS = [
+  { pattern: /diagnóstico estratégico/i,    icon: '🎯', bg: 'rgba(105,201,208,.08)', borderColor: '#69C9D0' },
+  { pattern: /alcance.*viral/i,             icon: '🚀', bg: 'rgba(238,29,82,.05)',   borderColor: '#EE1D52' },
+  { pattern: /autoridade.*expert/i,         icon: '🏆', bg: 'rgba(124,58,237,.05)',  borderColor: '#7C3AED' },
+  { pattern: /conexão.*comuni/i,            icon: '💜', bg: 'rgba(190,24,93,.05)',   borderColor: '#BE185D' },
+  { pattern: /conversão.*client/i,          icon: '💰', bg: 'rgba(13,148,136,.05)',  borderColor: '#0D9488' },
+  { pattern: /posicionamento.*marca/i,      icon: '🌟', bg: 'rgba(26,10,46,.05)',    borderColor: '#1a0a2e' },
+  { pattern: /reaproveit/i,                 icon: '♻️', bg: 'rgba(56,105,11,.05)',   borderColor: '#3B6D11' },
+  { pattern: /top 3/i,                      icon: '🔥', bg: 'rgba(186,117,23,.06)',  borderColor: '#BA7517' },
+];
+
+function getSectionDef(title) {
+  for (var i = 0; i < SECTION_DEFS.length; i++) {
+    if (SECTION_DEFS[i].pattern.test(title)) return SECTION_DEFS[i];
+  }
+  return { icon: '📌', bg: 'var(--surface-2)', borderColor: 'var(--border-strong)' };
+}
+
+// ── RENDER MARKDOWN ───────────────────────────────────────────
+function renderMd(text) {
+  text = text.trim();
+  text = text.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+  text = text.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
+  text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  text = text.replace(/\*([^*\n]+?)\*/g, '<em>$1</em>');
+  text = text.replace(/((?:^|\n)[ \t]*[-•] .+)+/g, function(block) {
+    var items = block.trim().split(/\n[ \t]*[-•] /);
+    items[0] = items[0].replace(/^[ \t]*[-•] /, '');
+    return '<ul>' + items.map(function(s) { return '<li>' + s.trim() + '</li>'; }).join('') + '</ul>';
+  });
+  var paras = text.split(/\n\n/);
+  text = paras.map(function(p) {
+    p = p.trim();
+    if (!p) return '';
+    if (/^<[hul]/.test(p)) return p;
+    return '<p>' + p.replace(/\n/g, '<br>') + '</p>';
+  }).filter(Boolean).join('\n');
+  return text;
+}
+
+// ── RENDER IDEAS ──────────────────────────────────────────────
+function renderIdeas(content, sectionTitle) {
+  var FIELDS = [
+    { key: 'Por que funciona',  label: 'Por que funciona' },
+    { key: 'Hook \\(0-3s\\)',   label: 'Hook (0–3s)' },
+    { key: 'Estrutura',         label: 'Estrutura' },
+    { key: 'CTA',               label: 'CTA' },
+    { key: 'Legenda',           label: 'Legenda sugerida' },
+    { key: 'Potencial',         label: 'Potencial' },
+  ];
+
+  var blocks = content.split(/\n(?=\*\*Ideia\s*\d)/);
+  var html = '';
+  var isIdeaSection = /alcance|autoridade|conexão|conversão|posicionamento/i.test(sectionTitle);
+
+  blocks.forEach(function(block, idx) {
+    block = block.trim();
+    if (!block) return;
+
+    if (/^\*\*Ideia\s*\d/.test(block) || (idx === 0 && isIdeaSection)) {
+      html += '<div class="idea-card">';
+
+      var titleM = block.match(/^\*\*Ideia\s*(\d+):\s*(.+?)\*\*/);
+      var ideaTitle = '';
+      if (titleM) {
+        html += '<div class="idea-num">Ideia ' + titleM[1] + '</div>';
+        ideaTitle = titleM[2];
+        html += '<div class="idea-title">' + esc(ideaTitle) + '</div>';
+        block = block.replace(/^\*\*Ideia\s*\d+:\s*.+?\*\*\s*\n?/, '');
+      }
+
+      // Extract fields
+      FIELDS.forEach(function(f) {
+        var re = new RegExp('\\*\\*' + f.key + ':\\*\\*\\s*([\\s\\S]*?)(?=\\n\\*\\*|$)', 'i');
+        var fm = block.match(re);
+        if (fm) {
+          var val = fm[1].trim();
+          if (f.key === 'Potencial') {
+            var pClass = /viral/i.test(val) && /autoridade/i.test(val) ? 'potencial-ambos'
+              : /viral/i.test(val) ? 'potencial-viral'
+              : 'potencial-autoridade';
+            html += '<div class="potencial-badge ' + pClass + '">' + val + '</div>';
+          } else {
+            html += '<div class="idea-field">';
+            html += '<div class="idea-field-label">' + f.label + '</div>';
+            html += '<div class="idea-field-val">' + renderMd(val) + '</div>';
+            html += '</div>';
+          }
+          block = block.replace(fm[0], '');
+        }
+      });
+
+      // Any remaining content
+      var rest = block.trim();
+      if (rest) html += '<div class="idea-field-val">' + renderMd(rest) + '</div>';
+
+      // Send to planning button
+      html += '<button class="idea-send-btn-sm" onclick="openIdeiaPanel(' + JSON.stringify(ideaTitle) + ')">' +
+        '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>' +
+        ' Enviar pro Planejamento</button>';
+
+      html += '</div>';
+    } else {
+      html += renderMd(block);
+    }
+  });
+  return html || renderMd(content);
+}
+
+// ── RENDER DIAGNOSTICO ────────────────────────────────────────
+function renderDiagnostico(content) {
+  var DIAG_FIELDS = ['Situação', 'Maior oportunidade', 'Ponto de atenção', 'Vantagem única'];
+  var html = '';
+
+  DIAG_FIELDS.forEach(function(f) {
+    var re = new RegExp('\\*\\*' + f + ':\\*\\*\\s*([\\s\\S]*?)(?=\\n\\*\\*|$)', 'i');
+    var m = content.match(re);
+    if (m) {
+      html += '<div class="diag-highlight"><strong>' + f + ':</strong> ' + renderMd(m[1].trim()) + '</div>';
+      content = content.replace(m[0], '');
+    }
+  });
+
+  var rest = content.trim();
+  if (rest) html += renderMd(rest);
+  return html || renderMd(content);
+}
+
+// ── RENDER TOP 3 ──────────────────────────────────────────────
+function renderTop3(content) {
+  var blocks = content.split(/\n(?=\*\*Prioridade\s*\d)/);
+  var html = '';
+
+  blocks.forEach(function(block) {
+    block = block.trim();
+    if (!block) return;
+
+    var titleM = block.match(/^\*\*Prioridade\s*(\d+):\s*(.+?)\*\*/);
+    if (titleM) {
+      html += '<div class="top3-card">';
+      html += '<div class="top3-num">#' + titleM[1] + ' Prioridade</div>';
+      html += '<div class="top3-title">' + esc(titleM[2]) + '</div>';
+      block = block.replace(/^\*\*Prioridade\s*\d+:\s*.+?\*\*\s*\n?/, '');
+
+      ['Por que agora', 'Como executar'].forEach(function(f) {
+        var re = new RegExp('\\*\\*' + f + ':\\*\\*\\s*([\\s\\S]*?)(?=\\n\\*\\*|$)', 'i');
+        var m = block.match(re);
+        if (m) {
+          html += '<div class="top3-why"><strong>' + f + ':</strong> ' + m[1].trim() + '</div>';
+          block = block.replace(m[0], '');
+        }
+      });
+
+      var rest = block.trim();
+      if (rest) html += '<div class="top3-why">' + rest + '</div>';
+      html += '</div>';
+    } else {
+      html += renderMd(block);
+    }
+  });
+
+  return html || renderMd(content);
+}
+
+// ── PARSE & RENDER RESULT ─────────────────────────────────────
+function parseSections(text) {
+  var sections = [];
+  var parts = text.split(/\n(?=## )/);
+  parts.forEach(function(part) {
+    var m = part.match(/^## (.+?)\n([\s\S]*)/);
+    if (!m) return;
+    sections.push({ title: m[1].trim(), content: m[2].trim() });
+  });
+  if (!sections.length) {
+    sections.push({ title: 'Estratégia TikTok', content: text });
+  }
+  return sections;
+}
+
+function renderResult(text, objs) {
+  lastStrategyText = text;
+  var desk = isDesktop();
+
+  // Meta HTML
+  var objClsMap = { alcance: 'obj-alcance', autoridade: 'obj-autoridade', conexao: 'obj-conexao', conversao: 'obj-conversao', posicionamento: 'obj-posicionamento' };
+  var metaHtml = '<div class="result-meta-label">TikTok Estratégico · ' + new Date().toLocaleDateString('pt-BR') + '</div>';
+  if (objs.length) {
+    metaHtml += '<div class="result-meta-objs">' + objs.map(function(o) {
+      var labels = { alcance: '🚀 Alcance', autoridade: '🏆 Autoridade', conexao: '💜 Conexão', conversao: '💰 Conversão', posicionamento: '🌟 Posicionamento' };
+      return '<span class="result-meta-obj ' + (objClsMap[o] || '') + '">' + (labels[o] || o) + '</span>';
+    }).join('') + '</div>';
+  }
+
+  document.getElementById('result-meta-mob').innerHTML = metaHtml;
+  document.getElementById('result-meta-mob').style.display = desk ? 'none' : '';
+  if (desk) {
+    document.getElementById('result-meta-desk').innerHTML = metaHtml;
+    document.getElementById('result-top-bar').style.display = '';
+  }
+
+  // Build sections
+  var sections = parseSections(text);
+  var sectionsHtml = '';
+
+  sections.forEach(function(sec, i) {
+    var def = getSectionDef(sec.title);
+    var isDiag = /diagnóstico/i.test(sec.title);
+    var isTop3 = /top 3/i.test(sec.title);
+    var isIdea = /alcance|autoridade|conexão|conversão|posicionamento/i.test(sec.title);
+
+    var bodyClass = isIdea ? 'rs-body body-ideas' : 'rs-body';
+    var isOpen = i < 2 || isTop3; // first 2 sections + Top 3 open by default
+
+    var bodyHtml;
+    if (isDiag) {
+      bodyHtml = renderDiagnostico(sec.content);
+    } else if (isTop3) {
+      bodyHtml = renderTop3(sec.content);
+    } else if (isIdea) {
+      bodyHtml = renderIdeas(sec.content, sec.title);
+    } else {
+      bodyHtml = renderMd(sec.content);
+    }
+
+    sectionsHtml +=
+      '<div class="result-section' + (isOpen ? ' open' : '') + '">' +
+        '<div class="rs-header" onclick="toggleSection(this.parentElement)" style="border-left: 3px solid ' + def.borderColor + '; background:' + def.bg + '">' +
+          '<div class="rs-icon" style="background:' + def.bg + '">' + def.icon + '</div>' +
+          '<div class="rs-title">' + esc(sec.title) + '</div>' +
+          '<div class="rs-arrow">›</div>' +
+        '</div>' +
+        '<div class="' + bodyClass + '">' + bodyHtml + '</div>' +
+      '</div>';
+  });
+
+  document.getElementById('tt-sections').innerHTML = sectionsHtml;
+
+  // Show result
+  var resultEl = document.getElementById('tt-result');
+  resultEl.style.display = '';
+  if (desk) {
+    document.getElementById('tt-empty').style.display = 'none';
+  } else {
+    document.getElementById('tt-form').style.display = 'none';
+  }
+  document.getElementById('tt-loading').classList.remove('show');
+}
+
+function toggleSection(el) { el.classList.toggle('open'); }
+
+// ── COPY ALL ──────────────────────────────────────────────────
+function copyAll() {
+  if (!lastStrategyText) { toast('Nenhuma estratégia para copiar'); return; }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(lastStrategyText)
+      .then(function() { toast('Estratégia copiada!'); })
+      .catch(function() { toast('Selecione manualmente para copiar'); });
+  } else {
+    toast('Copiar não disponível neste navegador');
+  }
+}
+
+// ── SEND TO PLANNING ──────────────────────────────────────────
+function openIdeiaPanel(title) {
+  document.getElementById('ideia-title').value = title || '';
+  // reset formats
+  ideiaFormats = ['Reels'];
+  document.querySelectorAll('.ideia-fmt-btn').forEach(function(b) {
+    b.classList.toggle('on', b.dataset.v === 'Reels');
+  });
+  document.getElementById('ideia-notes').value = '';
+  document.getElementById('ideia-bg').classList.add('show');
+  setTimeout(function() { document.getElementById('ideia-title').focus(); }, 150);
+}
+function closeIdeiaPanel() {
+  document.getElementById('ideia-bg').classList.remove('show');
+}
+function onIdeiaOverlayClick(e) {
+  if (e.target === document.getElementById('ideia-bg')) closeIdeiaPanel();
+}
+
+document.querySelectorAll('.ideia-fmt-btn').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    var v = btn.dataset.v;
+    btn.classList.toggle('on');
+    if (btn.classList.contains('on')) {
+      if (ideiaFormats.indexOf(v) < 0) ideiaFormats.push(v);
+    } else {
+      ideiaFormats = ideiaFormats.filter(function(x) { return x !== v; });
+    }
+  });
+});
+
+function sendIdeia() {
+  var title = (document.getElementById('ideia-title').value || '').trim();
+  if (!title) { toast('Digite o título da ideia'); return; }
+
+  var notes = (document.getElementById('ideia-notes').value || '').trim();
+  var notesWithContext = 'TikTok Estratégico\n' + (notes ? '\n' + notes : '');
+
+  var ideas = [];
+  try { ideas = JSON.parse(localStorage.getItem('mk_content_ideas') || '[]'); } catch(e) {}
+  var now = new Date();
+  ideas.unshift({
+    id: 'tt_' + now.getTime(),
+    title: title,
+    categories: ['TikTok', 'Estratégia'],
+    formatos: ideiaFormats.length ? ideiaFormats : ['Reels'],
+    status: 'Nao Iniciado',
+    notes: notesWithContext,
+    platforms: ['TikTok'],
+    scheduledDate: '',
+    createdAt: now.toISOString(),
+  });
+  localStorage.setItem('mk_content_ideas', JSON.stringify(ideas));
+
+  if (window.DB && DB.conteudo) {
+    DB.conteudo.upsert(ideas[0]).catch(function(){});
+  }
+
+  closeIdeiaPanel();
+  toast('Enviado para o Planejamento!');
+}
+
+// ── MAIN GENERATE ─────────────────────────────────────────────
+async function generateStrategy() {
+  var apiKey = localStorage.getItem('mk_claude_key') || '';
+  if (!apiKey) { openKeyModal(); toast('Configure sua chave Claude primeiro'); return; }
+
+  var objs = getSelectedObjs();
+  if (!objs.length) { toast('Selecione pelo menos um objetivo'); return; }
+
+  var context = (document.getElementById('tt-context').value || '').trim();
+  if (!context) { toast('Descreva seu contexto atual no TikTok'); return; }
+
+  var btn = document.getElementById('tt-btn');
+  btn.disabled = true;
+  btn.classList.add('loading');
+
+  // Show loading
+  document.getElementById('tt-empty').style.display = 'none';
+  document.getElementById('tt-result').style.display = 'none';
+  document.getElementById('result-top-bar').style.display = 'none';
+  document.getElementById('tt-loading').classList.add('show');
+  if (!isDesktop()) document.getElementById('tt-form').style.display = 'none';
+
+  try {
+    var res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 6000,
+        system: buildSystemPrompt(objs),
+        messages: [{ role: 'user', content: buildUserMessage() }]
+      })
+    });
+
+    if (!res.ok) {
+      var err = await res.json().catch(function() { return { error: { message: res.statusText } }; });
+      throw new Error((err && err.error && err.error.message) || res.statusText);
+    }
+    var data = await res.json();
+    var text = (data.content && data.content[0] && data.content[0].text) || '';
+    if (!text) throw new Error('Resposta vazia da API');
+    renderResult(text, objs);
+  } catch (err) {
+    document.getElementById('tt-loading').classList.remove('show');
+    if (!isDesktop()) document.getElementById('tt-form').style.display = '';
+    document.getElementById('tt-empty').style.display = '';
+    toast('Erro: ' + err.message, 4500);
+  } finally {
+    btn.disabled = false;
+    btn.classList.remove('loading');
+  }
+}
+
+// ── UTILS ─────────────────────────────────────────────────────
+function esc(s) {
+  return String(s || '')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── INIT ──────────────────────────────────────────────────────
+document.getElementById('tt-btn').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') generateStrategy();
+});
+document.getElementById('key-input').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') saveKey();
+});
+
+// Load API key from Supabase config if available
+if (window.DB) {
+  DB.config.get('claude_api_key').then(function(v) {
+    if (v && !localStorage.getItem('mk_claude_key')) localStorage.setItem('mk_claude_key', v);
+  }).catch(function(){});
+}
+if (!localStorage.getItem('mk_claude_key')) {
+  setTimeout(function() {
+    if (!localStorage.getItem('mk_claude_key'))
+      toast('Configure sua chave Claude (⚙️) para usar o Diretor Criativo', 4000);
+  }, 1500);
+}
+</script>
+
+<script src="../shared/js/sidebar.js"></script>
+</body>
+</html>
