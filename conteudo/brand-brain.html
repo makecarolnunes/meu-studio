@@ -1022,8 +1022,8 @@ function parseSections(text) {
     for (var i = 0; i < SECTION_DEFS.length; i++) {
       if (SECTION_DEFS[i].pattern.test(header)) { def = SECTION_DEFS[i]; break; }
     }
-    if (!def) def = { title: header, icon: '📌', bg: 'var(--surface-2)' };
-    sections.push({ title: def.title, icon: def.icon, bg: def.bg, content: content });
+    if (!def) def = { icon: '📌', bg: 'var(--surface-2)' };
+    sections.push({ title: header, icon: def.icon, bg: def.bg, content: content });
   });
   if (!sections.length) {
     sections.push({ title: 'Análise Estratégica', icon: '🧠', bg: 'var(--surface-2)', content: text });
