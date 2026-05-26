@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-25 23:36 | main | fix(brand-brain): t├¡tulo das se├º├Áes aparecendo como "undefined" -->
+<!-- AUTO: 2026-05-25 23:36 | main | docs: sync CLAUDE.md [auto] -->
 
