@@ -212,7 +212,6 @@
     }
     .st-novo     { background: var(--blue-l);   color: var(--blue);   }
     .st-enviado  { background: var(--amber-l);  color: #7c4a00;       }
-    .st-negoc    { background: var(--orange-l); color: var(--orange); }
     .st-fechado  { background: var(--ok-l);     color: var(--ok);     }
     .st-perdido  { background: var(--red-l);    color: var(--red);    }
     .st-semresp  { background: var(--slate-l);  color: var(--slate);  }
@@ -591,7 +590,6 @@
     .st-btn.active { border-color: var(--purple); box-shadow: 0 0 0 2px rgba(125,60,110,0.2); }
     .st-btn-novo    { background: var(--blue-l);   color: var(--blue);   }
     .st-btn-enviado { background: var(--amber-l);  color: #7c4a00;       }
-    .st-btn-negoc   { background: var(--orange-l); color: var(--orange); }
     .st-btn-fechado { background: var(--ok-l);     color: var(--ok);     }
     .st-btn-perdido { background: var(--red-l);    color: var(--red);    }
     .st-btn-semresp { background: var(--slate-l);  color: var(--slate);  }

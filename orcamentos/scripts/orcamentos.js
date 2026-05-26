@@ -29,12 +29,11 @@ function pickIcon(s) {
 }
 
 const STATUS_CLASS = {
-  'Novo Pedido':       'st-novo',
-  'Orçamento Enviado': 'st-enviado',
-  'Em Negociação':     'st-negoc',
-  'Fechado':           'st-fechado',
-  'Perdido':           'st-perdido',
-  'Sem Resposta':      'st-semresp',
+  'Novo Pedido':                   'st-novo',
+  'Orçamento Enviado':             'st-enviado',
+  'Fechado':                       'st-fechado',
+  'Perdido - Sem Resposta':        'st-semresp',
+  'Perdido - Sem Disponibilidade': 'st-perdido',
 };
 
 const DIAS = ['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'];
@@ -106,7 +105,7 @@ function renderEntryCard(e) {
   const agPend = e.Status === 'Fechado' && !getAgendaCriada(e);
   const cls    = agPend ? 'is-agenda-pend' :
                  agOk   ? 'is-agenda-ok'   :
-                 e.Status === 'Perdido' ? 'is-perdido' :
+                 ['Perdido - Sem Resposta','Perdido - Sem Disponibilidade'].includes(e.Status) ? 'is-perdido' :
                  needsFollowup(e) ? 'needs-fu' : '';
   const nfu    = needsFollowup(e);
   const val    = e.ValorFechado ? parseFloat(e.ValorFechado) : parseFloat(e.ValorProp) || 0;
@@ -165,7 +164,7 @@ function daysSince(dateStr) {
   return Math.floor((Date.now() - d) / 86400000);
 }
 function needsFollowup(e) {
-  if (['Fechado','Perdido'].includes(e.Status)) return false;
+  if (['Fechado','Perdido - Sem Resposta','Perdido - Sem Disponibilidade'].includes(e.Status)) return false;
   return e.ProxFollowup && e.ProxFollowup <= todayStr();
 }
 function initials(name) {
@@ -552,22 +551,16 @@ function getWaTemplate(entry) {
     text: 'Oi, ' + nome + '! Tudo bem? 🤍\n\nPassei para ver se o orçamento ficou claro ou se surgiu alguma dúvida por aqui. Me conta!'
   };
 
-  // FU-2 — 2º follow-up (Sem Resposta, ≤6 dias)
-  if (entry.Status === 'Sem Resposta' && diasEnvio <= 6) return {
+  // FU-2 — 2º follow-up (Perdido - Sem Resposta, ≤6 dias)
+  if (entry.Status === 'Perdido - Sem Resposta' && diasEnvio <= 6) return {
     code: 'FU-2', hint: 'FU-2 — Confirmação de interesse (dia 5-7)',
     text: 'Oi, ' + nome + '! Tudo bem? Sei que a vida agita e às vezes as coisas ficam em espera.\n\nSó vim deixar aberto: se ainda tiver interesse, estou aqui. Se os planos mudaram, também tudo bem — só me avisa para eu conseguir me organizar. Sem pressão nenhuma! 🤍'
   };
 
-  // FU-3 — Encerramento elegante (Sem Resposta, >6 dias)
-  if (entry.Status === 'Sem Resposta' && diasEnvio > 6) return {
+  // FU-3 — Encerramento elegante (Perdido - Sem Resposta, >6 dias)
+  if (entry.Status === 'Perdido - Sem Resposta' && diasEnvio > 6) return {
     code: 'FU-3', hint: 'FU-3 — Encerramento elegante (dia 7+)',
     text: 'Oi, ' + nome + '! Como não tivemos retorno, vou liberar o espaço na minha agenda.\n\nSe em outro momento quiser conversar, estarei por aqui. Boa sorte com tudo! 🤍'
-  };
-
-  // NEG-1 — Negociação de preço
-  if (entry.Status === 'Em Negociação') return {
-    code: 'NEG-1', hint: 'NEG-1 — Abrir diálogo sobre valor',
-    text: 'Oi, ' + nome + '! Obrigada pela honestidade. 😊\n\nMe conta: qual seria um valor que se encaixaria melhor pra você? Assim consigo ver o que seria possível ajustar sem comprometer a qualidade do resultado.'
   };
 
   // POS-1 — Pós-venda (Fechado)
@@ -893,9 +886,7 @@ function render() {
   // Filtro por status
   if (curFilter === 'followup')          list = list.filter(e => needsFollowup(e));
   else if (curFilter === 'novos')        list = list.filter(e => ['Novo Pedido','Orçamento Enviado'].includes(e.Status));
-  else if (curFilter === 'sem-resposta') list = list.filter(e => e.Status === 'Sem Resposta');
-  else if (curFilter === 'negoc')        list = list.filter(e => e.Status === 'Em Negociação');
-  else if (curFilter === 'perdidos')     list = list.filter(e => e.Status === 'Perdido');
+  else if (curFilter === 'perdidos')     list = list.filter(e => ['Perdido - Sem Resposta','Perdido - Sem Disponibilidade'].includes(e.Status));
   else if (curFilter === 'fechados')     list = list.filter(e => e.Status === 'Fechado');
   else if (curFilter === 'agenda-pend')  list = list.filter(e => e.Status === 'Fechado' && !getAgendaCriada(e));
   else if (curFilter === 'agenda-ok')    list = list.filter(e => e.Status === 'Fechado' && getAgendaCriada(e));
