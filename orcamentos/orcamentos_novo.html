@@ -242,7 +242,12 @@
   </div>
   <div class="action-status-row">
     <span class="badge" id="act-badge">—</span>
-    <span style="font-size:0.72rem; color:var(--muted)" id="act-meta">—</span>
+    <span class="action-meta" id="act-meta">—</span>
+    <label class="fu-chip" id="act-fu-chip" title="Editar data de follow-up">
+      <span aria-hidden="true">📅</span>
+      <span class="fu-chip-lbl" id="act-fu-lbl">—</span>
+      <input type="date" id="act-followup" onchange="updateFollowup()">
+    </label>
   </div>
 
   <!-- ★ FECHAR E AGENDAR TUDO ★ -->
@@ -300,12 +305,6 @@
     </div>
   </div>
 
-  <!-- Follow-up row -->
-  <div class="fu-row" id="act-fu-row">
-    <label>📅 Follow-up:</label>
-    <input type="date" id="act-followup" onchange="updateFollowup()">
-  </div>
-
   <!-- Obs -->
   <div style="padding: 10px 18px 0;">
     <div class="form-group">
@@ -320,12 +319,11 @@
     </div>
   </div>
 
-  <!-- Follow-up rápido -->
-
-  <!-- ★ COMPROVANTE ★ -->
+  <!-- ★ COMPROVANTE DO SINAL ★ -->
   <div id="act-comp-wrap" style="padding: 0 18px 0;">
     <div class="form-group">
-      <label class="form-label">🧾 Comprovante de pagamento</label>
+      <label class="form-label">🧾 Comprovante do sinal</label>
+      <div id="act-comp-hint" style="font-size:0.7rem; color:var(--muted); margin-top:-2px; margin-bottom:6px;">Restante é registrado no módulo Financeiro no dia do atendimento.</div>
       <div id="act-comp-content"></div>
       <input type="file" id="act-comp-input" style="display:none" accept="image/*,application/pdf">
     </div>

@@ -1072,7 +1072,7 @@ function toggleActEquipeInput(checked) {
   if (!inp) return;
   if (checked) { inp.style.display = ''; inp.style.marginTop = '8px'; inp.focus(); }
   else { inp.style.display = 'none'; inp.value = ''; }
-  const toToggle = ['act-val-enviado-wrap', 'act-fu-row', 'act-comp-wrap', 'fu-picker'];
+  const toToggle = ['act-val-enviado-wrap', 'act-comp-wrap', 'fu-picker'];
   toToggle.forEach(id => {
     const el = document.getElementById(id);
     if (el) el.style.display = checked ? 'none' : '';
@@ -1253,6 +1253,7 @@ function openAction(id) {
   document.getElementById('act-val-fechado').value = e.ValorFechado || '';
   document.getElementById('act-val-enviado').value = e.ValorProp || '';
   document.getElementById('act-followup').value = e.ProxFollowup || '';
+  updateFollowupChipLabel();
   document.getElementById('act-obs').value      = entryCleanObs(e);
   const actEqChk = document.getElementById('act-eq-chk');
   const actEqInp = document.getElementById('act-equipe');
@@ -1291,10 +1292,21 @@ async function setStatus(btn) {
   }
 }
 
+function updateFollowupChipLabel() {
+  const lbl = document.getElementById('act-fu-lbl');
+  const inp = document.getElementById('act-followup');
+  if (!lbl || !inp) return;
+  const v = inp.value;
+  if (!v) { lbl.textContent = 'definir'; return; }
+  const [y, m, d] = v.split('-');
+  lbl.textContent = (d && m) ? (d + '/' + m) : v;
+}
+
 async function updateFollowup() {
   const e = entries.find(x => String(x.ID) === String(activeId));
   if (!e) return;
   e.ProxFollowup = document.getElementById('act-followup').value;
+  updateFollowupChipLabel();
   cacheEntries();
   render();
 
@@ -2112,7 +2124,7 @@ async function adicionarAgendaDeAction() {
 //  Compat. legado: e.Comprovante (objeto único) e localStorage
 // ══════════════════════════════════════════════════════════
 
-let currentCompCat = 'sinal'; // categoria selecionada no formulário de upload
+let currentCompCat = 'sinal'; // mantido por compat; uploads novos sempre 'sinal'
 
 function setCompCat(cat) {
   currentCompCat = cat;
@@ -2235,11 +2247,16 @@ function renderActCompSection(id) {
     '</div>';
   }
 
-  // Comprovantes novos agrupados por categoria
-  cats.forEach(cat => {
+  // Sinal primeiro (sem rótulo — é o foco da aba)
+  const sinalItems = arr.filter(ci => ci.categoria === 'sinal');
+  sinalItems.forEach(item => { html += renderCompItem(id, item); });
+
+  // Legados (restante/outros) — exibidos com rótulo, sem permitir adicionar novos
+  const legacyCats = ['restante', 'outros'];
+  legacyCats.forEach(cat => {
     const items = arr.filter(ci => ci.categoria === cat);
     if (!items.length) return;
-    html += '<div class="comp-cat-lbl">' + catLabels[cat] + '</div>';
+    html += '<div class="comp-cat-lbl">' + catLabels[cat] + ' <span style="font-size:0.58rem;font-weight:600;color:var(--muted);text-transform:none;letter-spacing:0">(legado)</span></div>';
     items.forEach(item => { html += renderCompItem(id, item); });
   });
   // Sem categoria definida
@@ -2249,18 +2266,12 @@ function renderActCompSection(id) {
 
   html += '</div>';
 
-  // Área de upload
+  // Upload único — sempre vai como 'sinal'
+  currentCompCat = 'sinal';
   html +=
     '<div class="comp-add-area">' +
-      '<div class="comp-cat-tabs">' +
-        cats.map(cat =>
-          '<button class="comp-cat-tab' + (cat === currentCompCat ? ' on' : '') + '" ' +
-          'data-cat="' + cat + '" onclick="setCompCat(\'' + cat + '\')">' +
-          catLabels[cat] + '</button>'
-        ).join('') +
-      '</div>' +
       '<div class="comp-upload" onclick="document.getElementById(\'act-comp-input\').click()">' +
-        '📎 Adicionar comprovante<br>' +
+        '📎 Adicionar comprovante do sinal<br>' +
         '<span style="font-size:0.7rem;opacity:0.7">Imagem ou PDF · máx. 10 MB</span>' +
       '</div>' +
     '</div>';
@@ -2276,7 +2287,7 @@ async function handleComprovanteUpload(event, id) {
   const MAX_BYTES = 10 * 1024 * 1024;
   if (file.size > MAX_BYTES) { toast('⚠️ Arquivo muito grande. Máximo 10 MB.'); return; }
 
-  const categoria = currentCompCat || 'outros';
+  const categoria = 'sinal';
 
   // Loading isolado dentro da área de comprovante (não bloqueia o resto)
   const addArea = document.querySelector('.comp-add-area');
