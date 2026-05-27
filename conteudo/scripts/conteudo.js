@@ -31,6 +31,51 @@ var calYear=new Date().getFullYear(), calMonth=new Date().getMonth();
 var curDayDate=null, dayPickerOpen=false, dayPickerQ='';
 
 /* ============================================================
+   RTE — EDITOR RICO
+   ============================================================ */
+var activeRTE = 'roteiro';
+
+function switchRteTab(tab){
+  activeRTE = tab;
+  ['roteiro','legenda','notas'].forEach(function(t){
+    var tabEl = document.getElementById('rte-tab-'+t);
+    var bodyEl = document.getElementById('rte-'+t);
+    if(tabEl) tabEl.classList.toggle('on', t===tab);
+    if(bodyEl) bodyEl.classList.toggle('rte-hidden', t!==tab);
+  });
+  var el = document.getElementById('rte-'+tab);
+  if(el) el.focus();
+}
+
+function rfmt(cmd, val){
+  var el = document.getElementById('rte-'+activeRTE);
+  if(!el) return;
+  el.focus();
+  document.execCommand(cmd, false, val||null);
+}
+
+function rfmtBg(color){
+  var el = document.getElementById('rte-'+activeRTE);
+  if(!el) return;
+  el.focus();
+  document.execCommand('hiliteColor', false, color);
+}
+
+function getRteHtml(id){
+  var el = document.getElementById(id);
+  if(!el) return '';
+  var h = el.innerHTML;
+  if(h===''||h==='<br>'||h==='<p></p>'||h==='<p><br></p>') return '';
+  return h;
+}
+
+function setRteHtml(id, html){
+  var el = document.getElementById(id);
+  if(!el) return;
+  el.innerHTML = html||'';
+}
+
+/* ============================================================
    SYNC
    ============================================================ */
 var syncTimer=null;
@@ -131,7 +176,8 @@ function promoteToIdeia(id){
   if(!note) return;
   // Abre modal pré-preenchido com texto da nota
   openModal(null);
-  document.getElementById('f-notes').value=note.text;
+  var rteNotas=document.getElementById('rte-notas');
+  if(rteNotas) rteNotas.textContent=note.text;
   // Tenta inferir título: primeira linha até 60 chars
   var firstLine=note.text.split('\n')[0].slice(0,60);
   document.getElementById('f-title').value=firstLine;
@@ -155,7 +201,7 @@ function fmtNoteDate(iso){
   return ('0'+d.getDate()).slice(-2)+'/'+('0'+(d.getMonth()+1)).slice(-2);
 }
 function srcLabel(src){
-  var map={'instagram':'📸 Instagram','conteudo':'📋 Conteúdo'};
+  var map={'instagram':'📸 Instagram','conteudo':'📋 Conteúdo','analise-marca':'🏷️ Análise de Marca'};
   return map[src]||'';
 }
 function renderInbox(){
@@ -207,7 +253,16 @@ function loadData(){
   DB.conteudo.list()
     .then(function(data){
       if(data.length > 0 || ideas.length === 0){
-        ideas = data; migrate(); validateCurPlat(); writeLS();
+        // Preserva ideias que só existem no localStorage (ainda não sincronizadas com Supabase)
+        var sbIds = {};
+        for(var i=0;i<data.length;i++) sbIds[data[i].id] = true;
+        var localOnly = ideas.filter(function(idea){ return !sbIds[idea.id]; });
+        ideas = data.concat(localOnly);
+        // Sincroniza as ideias locais pendentes com Supabase
+        for(var j=0;j<localOnly.length;j++){
+          (function(idea){ DB.conteudo.upsert(idea).catch(function(){}); })(localOnly[j]);
+        }
+        migrate(); validateCurPlat(); writeLS();
       }
       updateSyncDot('ok'); render();
     })
@@ -252,9 +307,10 @@ function attachHorizWheel(el){
   if(!el||el._hw) return; el._hw=true;
   el.addEventListener('wheel',function(e){
     if(el.scrollWidth<=el.clientWidth) return;
-    var dy=e.deltaY,dx=e.deltaX;
-    if(Math.abs(dx)>Math.abs(dy)||dy===0) return;
-    e.preventDefault(); el.scrollLeft+=dy;
+    // Só intercepta scroll horizontal puro — não bloqueia rolagem vertical da página
+    if(Math.abs(e.deltaX)>Math.abs(e.deltaY)){
+      e.preventDefault(); el.scrollLeft+=e.deltaX;
+    }
   },{passive:false});
   var dn=false,sx=0,ss=0;
   el.addEventListener('mousedown',function(e){if(e.target.closest('button')) return; dn=true;sx=e.pageX;ss=el.scrollLeft;el.style.cursor='grabbing';});
@@ -601,20 +657,29 @@ function renderList(){
 
 function ideaCardHTML(idea){
   var sc=ST[idea.status]||ST['Nao Iniciado'];
-  var cats=catsOf(idea);
-  var meta='';
-  for(var c=0;c<cats.length;c++) meta+='<span class="idea-cat">'+safe(cats[c])+'</span>';
-  var notes=idea.notes?'<div class="idea-notes">'+safe(idea.notes)+'</div>':'';
-  var calBadge=idea.scheduledDate?'<span class="idea-cal-date">📅 '+fmtDate(idea.scheduledDate)+'</span>':'';
+  var cat=catsOf(idea)[0]||'';
+  var hasContent=!!(idea.roteiro||idea.legenda);
+  var contentDot=hasContent?'<span class="idea-content-dot" title="Tem roteiro">●</span>':'';
+  var dateStr=idea.scheduledDate
+    ?'<span class="idea-cal-date">📅 '+fmtDate(idea.scheduledDate)+'</span>'
+    :'<span class="idea-date-sm">'+fDate(idea.createdAt)+'</span>';
   return '<div class="idea-card '+sc.cls+'" data-id="'+safe(idea.id)+'">'+
-    (meta?'<div class="idea-meta">'+meta+'</div>':'')+
-    '<div class="idea-title">'+safe(idea.title)+'</div>'+
-    notes+
-    '<div class="idea-footer">'+
-      '<div class="status-pill" style="background:'+sc.bg+';color:'+sc.color+'"><span class="sdot" style="background:'+sc.dot+'"></span>'+safe(idea.status)+'</div>'+
-      '<span class="idea-date">'+fDate(idea.createdAt)+'</span>'+
-      calBadge+
-    '</div></div>';
+    '<div class="idea-card-top">'+
+      '<div class="idea-title">'+safe(idea.title)+contentDot+'</div>'+
+      '<div class="status-pill" style="background:'+sc.bg+';color:'+sc.color+'">'+
+        '<span class="sdot" style="background:'+sc.dot+'"></span>'+
+        stLabel(idea.status)+
+      '</div>'+
+    '</div>'+
+    '<div class="idea-card-bot">'+
+      dateStr+
+      (cat?'<span class="idea-cat-sm">'+safe(cat)+'</span>':'')+
+    '</div>'+
+  '</div>';
+}
+function stLabel(s){
+  var map={'Nao Iniciado':'Ideia','Fila de Gravacao':'Gravar','Editando':'Editando','Publicado':'Publicado'};
+  return map[s]||safe(s);
 }
 
 /* ============================================================
@@ -833,7 +898,6 @@ function openModal(id){
   var idea=id?ideas.filter(function(i){return i.id===id;})[0]:null;
   document.getElementById('modal-title').textContent=idea?'Editar Ideia':'Nova Ideia';
   document.getElementById('f-title').value=idea?idea.title:'';
-  document.getElementById('f-notes').value=idea?(idea.notes||''):'';
   document.getElementById('f-date').value=idea?(idea.scheduledDate||''):'';
   document.getElementById('new-cat-inp').value='';
   document.getElementById('btn-del').style.display=idea?'block':'none';
@@ -841,6 +905,11 @@ function openModal(id){
   fFmts = idea ? fmtsOf(idea).slice() : ['Reels'];
   fSt   = idea ? (idea.status||'Nao Iniciado') : 'Nao Iniciado';
   fPlats= idea ? platsOf(idea).slice() : [(curPlat==='todos')?'Instagram':curPlat];
+  // Preenche editores ricos
+  setRteHtml('rte-roteiro', idea?(idea.roteiro||''):'');
+  setRteHtml('rte-legenda', idea?(idea.legenda||''):'');
+  setRteHtml('rte-notas',   idea?(idea.notes||''):'');
+  switchRteTab('roteiro');
   buildCatBtns(); buildPlatBtns(); syncFmtBtns(); syncStBtns();
   document.getElementById('modal-bg').classList.add('open');
   setTimeout(function(){document.getElementById('f-title').focus();},320);
@@ -853,20 +922,24 @@ function saveIdea(){
   if(!fPlats.length){showToast('Escolhe pelo menos uma plataforma!');return;}
   if(!fCats.length){showToast('Escolhe pelo menos um tema!');return;}
   if(!fFmts.length){showToast('Escolhe pelo menos um formato!');return;}
-  var notes=document.getElementById('f-notes').value.trim();
+  var roteiro=getRteHtml('rte-roteiro');
+  var legenda=getRteHtml('rte-legenda');
+  var notas  =getRteHtml('rte-notas');
   var sdate=document.getElementById('f-date').value||'';
   if(editId){
     for(var i=0;i<ideas.length;i++){
       if(ideas[i].id===editId){
         ideas[i].title=title; ideas[i].categories=fCats.slice(); ideas[i].formatos=fFmts.slice();
-        ideas[i].status=fSt; ideas[i].notes=notes; ideas[i].platforms=fPlats.slice();
-        ideas[i].scheduledDate=sdate;
+        ideas[i].status=fSt; ideas[i].notes=notas; ideas[i].roteiro=roteiro; ideas[i].legenda=legenda;
+        ideas[i].platforms=fPlats.slice(); ideas[i].scheduledDate=sdate;
         break;
       }
     }
     showToast('Ideia atualizada!');
   } else {
-    ideas.unshift({id:uid(),title:title,categories:fCats.slice(),formatos:fFmts.slice(),status:fSt,notes:notes,platforms:fPlats.slice(),scheduledDate:sdate,createdAt:new Date().toISOString()});
+    ideas.unshift({id:uid(),title:title,categories:fCats.slice(),formatos:fFmts.slice(),status:fSt,
+      notes:notas,roteiro:roteiro,legenda:legenda,platforms:fPlats.slice(),scheduledDate:sdate,
+      createdAt:new Date().toISOString()});
     showToast('Ideia salva!');
   }
   var syncIdea = editId ? ideas.find(function(i){return i.id===editId;}) : ideas[0];
@@ -890,6 +963,122 @@ function addCustomCat(){
 }
 
 /* ============================================================
+   MODO GRAVAÇÃO
+   ============================================================ */
+var gravFontSize = 1.5;
+
+function openGravacao(){
+  var idea = editId ? ideas.find(function(i){return i.id===editId;}) : null;
+  var roteiro = getRteHtml('rte-roteiro') || (idea&&idea.roteiro) || '';
+  var body = document.getElementById('gravacao-body');
+  if(!roteiro){
+    body.innerHTML = '<p style="opacity:.4;font-size:1rem">Nenhum roteiro escrito ainda.<br>Escreva na aba Roteiro e volte aqui.</p>';
+  } else {
+    body.innerHTML = roteiro;
+  }
+  if(idea) document.getElementById('grav-title-lbl').textContent = idea.title || 'Modo Gravação';
+  body.style.fontSize = gravFontSize + 'rem';
+  document.getElementById('gravacao-bg').classList.add('open');
+}
+function closeGravacao(){
+  document.getElementById('gravacao-bg').classList.remove('open');
+}
+function increaseFontGrav(){
+  gravFontSize = Math.min(3.2, +(gravFontSize + 0.15).toFixed(2));
+  document.getElementById('gravacao-body').style.fontSize = gravFontSize + 'rem';
+}
+function decreaseFontGrav(){
+  gravFontSize = Math.max(0.9, +(gravFontSize - 0.15).toFixed(2));
+  document.getElementById('gravacao-body').style.fontSize = gravFontSize + 'rem';
+}
+
+/* ============================================================
+   MODO TELEPROMPTER
+   ============================================================ */
+var tpInterval = null;
+var tpPlaying  = false;
+var tpMirrored = false;
+var tpSpeed    = 3;
+var tpFontSize = 1.6;
+
+function openTeleprompter(){
+  var idea = editId ? ideas.find(function(i){return i.id===editId;}) : null;
+  var roteiro = getRteHtml('rte-roteiro') || (idea&&idea.roteiro) || '';
+  var body = document.getElementById('tp-body');
+  if(!roteiro){
+    body.innerHTML = '<p style="opacity:.35;font-size:1rem">Nenhum roteiro escrito ainda.</p>';
+  } else {
+    body.innerHTML = roteiro;
+  }
+  body.scrollTop = 0;
+  body.style.fontSize = tpFontSize + 'rem';
+  tpPlaying = false;
+  tpMirrored = false;
+  updateTpMirror();
+  var playBtn = document.getElementById('tp-play-btn');
+  if(playBtn) playBtn.textContent = '▶';
+  var speedEl = document.getElementById('tp-speed');
+  if(speedEl) speedEl.value = tpSpeed;
+  // Fecha gravação se estiver aberta
+  closeGravacao();
+  document.getElementById('tp-bg').classList.add('open');
+}
+function closeTeleprompter(){
+  stopTpScroll();
+  if(document.fullscreenElement) document.exitFullscreen().catch(function(){});
+  document.getElementById('tp-bg').classList.remove('open');
+}
+function toggleTpPlay(){
+  tpPlaying = !tpPlaying;
+  var btn = document.getElementById('tp-play-btn');
+  if(tpPlaying){ if(btn) btn.textContent='⏸'; startTpScroll(); }
+  else          { if(btn) btn.textContent='▶'; stopTpScroll(); }
+}
+function startTpScroll(){
+  if(tpInterval) clearInterval(tpInterval);
+  tpInterval = setInterval(function(){
+    var el = document.getElementById('tp-body'); if(!el) return;
+    el.scrollTop += tpSpeed * 0.4;
+    if(el.scrollTop + el.clientHeight >= el.scrollHeight - 4){
+      stopTpScroll(); tpPlaying=false;
+      var btn=document.getElementById('tp-play-btn'); if(btn) btn.textContent='▶';
+    }
+  }, 40);
+}
+function stopTpScroll(){
+  if(tpInterval){ clearInterval(tpInterval); tpInterval=null; }
+}
+function setTpSpeed(v){
+  tpSpeed = parseInt(v);
+}
+function toggleTpMirror(){
+  tpMirrored = !tpMirrored;
+  updateTpMirror();
+}
+function updateTpMirror(){
+  var body = document.getElementById('tp-body');
+  if(body) body.style.transform = tpMirrored ? 'scaleX(-1)' : '';
+  var btn = document.getElementById('tp-mirror-btn');
+  if(btn) btn.classList.toggle('on', tpMirrored);
+}
+function increaseTpFont(){
+  tpFontSize = Math.min(4, +(tpFontSize + 0.15).toFixed(2));
+  document.getElementById('tp-body').style.fontSize = tpFontSize + 'rem';
+}
+function decreaseTpFont(){
+  tpFontSize = Math.max(0.9, +(tpFontSize - 0.15).toFixed(2));
+  document.getElementById('tp-body').style.fontSize = tpFontSize + 'rem';
+}
+function toggleTpFullscreen(){
+  var el = document.getElementById('tp-bg');
+  if(!document.fullscreenElement){
+    (el.requestFullscreen||el.webkitRequestFullscreen||function(){}).call(el);
+  } else {
+    (document.exitFullscreen||document.webkitExitFullscreen||function(){}).call(document);
+  }
+}
+
+/* ============================================================
    UTILS
    ============================================================ */
 function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
@@ -907,6 +1096,15 @@ document.getElementById('btn-del').onclick=deleteIdea;
 document.getElementById('btn-add-cat').onclick=addCustomCat;
 document.getElementById('modal-bg').onclick=function(e){if(e.target===document.getElementById('modal-bg'))closeModal();};
 document.getElementById('day-bg').onclick=function(e){if(e.target===document.getElementById('day-bg'))closeDayModal();};
+
+// Fechar overlays com Escape
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape'){
+    if(document.getElementById('tp-bg').classList.contains('open')) closeTeleprompter();
+    else if(document.getElementById('gravacao-bg').classList.contains('open')) closeGravacao();
+    else if(document.getElementById('modal-bg').classList.contains('open')) closeModal();
+  }
+});
 
 // Formato multi-select
 var fmtBtns=document.querySelectorAll('#fmt-btns .gbtn');
