@@ -237,11 +237,13 @@
 .cont-main-wrap { display: contents; }
 
 @media (min-width: 1024px) {
+  html { height: auto; overflow-y: visible; }
   body {
     max-width: none;
     background: linear-gradient(135deg, #f0ebe8 0%, #e8e0db 100%);
     min-height: 100vh;
     overflow-x: hidden;
+    overflow-y: visible;
   }
 
   #cont-app {

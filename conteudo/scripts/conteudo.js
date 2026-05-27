@@ -1157,7 +1157,6 @@ document.getElementById('fab-btn').onclick=function(){openModal(null);};
 document.getElementById('btn-save').onclick=saveIdea;
 document.getElementById('btn-del').onclick=deleteIdea;
 document.getElementById('btn-add-cat').onclick=addCustomCat;
-document.getElementById('modal-bg').onclick=function(e){if(e.target===document.getElementById('modal-bg'))closeModal();};
 document.getElementById('day-bg').onclick=function(e){if(e.target===document.getElementById('day-bg'))closeDayModal();};
 
 // Auto-save do rascunho: título e data
