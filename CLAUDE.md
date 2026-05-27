@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-26 23:45 | main | feat(conteudo): editor rico, modo grava├º├úo e teleprompter -->
+<!-- AUTO: 2026-05-26 23:53 | main | feat(conteudo): auto-save de rascunho no modal -->
 
