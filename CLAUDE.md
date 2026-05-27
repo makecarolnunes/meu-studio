@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-26 15:40 | main | feat(conteudo): adiciona m├│dulos TikTok Estrat├®gico e Radar TikTok -->
+<!-- AUTO: 2026-05-26 23:45 | main | feat(conteudo): editor rico, modo grava├º├úo e teleprompter -->
 
