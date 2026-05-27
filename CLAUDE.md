@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-26 23:53 | main | feat(conteudo): auto-save de rascunho no modal -->
+<!-- AUTO: 2026-05-27 00:18 | main | fix(conteudo): corrige scroll do mouse no desktop -->
 
