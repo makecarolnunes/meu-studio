@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-27 00:18 | main | fix(conteudo): corrige scroll do mouse no desktop -->
+<!-- AUTO: 2026-05-27 11:15 | main | fix(conteudo): restaura scroll do mouse e mant├®m modal aberto ao clicar fora -->
 
