@@ -119,6 +119,71 @@ function savePlats(){try{localStorage.setItem('mk_content_platforms',JSON.string
 function saveCurPlat(){try{localStorage.setItem('mk_content_cur_platform',curPlat);}catch(e){} scheduleSync();}
 
 /* ============================================================
+   RASCUNHO AUTOMÁTICO (draft)
+   ============================================================ */
+var DRAFT_KEY  = 'mk_modal_draft';
+var draftTimer = null;
+
+function scheduleDraft(){
+  if(draftTimer) clearTimeout(draftTimer);
+  draftTimer = setTimeout(saveDraft, 700);
+}
+
+function saveDraft(){
+  if(!document.getElementById('modal-bg').classList.contains('open')) return;
+  var draft = {
+    editId:  editId,
+    title:   document.getElementById('f-title').value,
+    roteiro: getRteHtml('rte-roteiro'),
+    legenda: getRteHtml('rte-legenda'),
+    notas:   getRteHtml('rte-notas'),
+    sdate:   (document.getElementById('f-date').value)||'',
+    fCats:   fCats.slice(),
+    fFmts:   fFmts.slice(),
+    fSt:     fSt,
+    fPlats:  fPlats.slice(),
+    savedAt: new Date().toISOString()
+  };
+  try{ localStorage.setItem(DRAFT_KEY, JSON.stringify(draft)); }catch(e){}
+  showDraftIndicator();
+}
+
+function clearDraft(){
+  if(draftTimer){ clearTimeout(draftTimer); draftTimer=null; }
+  try{ localStorage.removeItem(DRAFT_KEY); }catch(e){}
+}
+
+function restoreDraft(id){
+  try{
+    var raw = localStorage.getItem(DRAFT_KEY);
+    if(!raw) return false;
+    var d = JSON.parse(raw);
+    // Só restaura se for o mesmo contexto (mesma ideia ou ambos "nova")
+    if(d.editId !== id) return false;
+    // Ignora rascunhos com mais de 7 dias
+    if(Date.now() - new Date(d.savedAt).getTime() > 7*86400000){ clearDraft(); return false; }
+    document.getElementById('f-title').value = d.title||'';
+    document.getElementById('f-date').value  = d.sdate||'';
+    setRteHtml('rte-roteiro', d.roteiro||'');
+    setRteHtml('rte-legenda', d.legenda||'');
+    setRteHtml('rte-notas',   d.notas||'');
+    if(d.fCats  && d.fCats.length)  fCats  = d.fCats;
+    if(d.fFmts  && d.fFmts.length)  fFmts  = d.fFmts;
+    if(d.fSt)                        fSt    = d.fSt;
+    if(d.fPlats && d.fPlats.length)  fPlats = d.fPlats;
+    return true;
+  }catch(e){ return false; }
+}
+
+function showDraftIndicator(){
+  var el = document.getElementById('draft-indicator');
+  if(!el) return;
+  el.classList.add('show');
+  clearTimeout(el._t);
+  el._t = setTimeout(function(){ el.classList.remove('show'); }, 2200);
+}
+
+/* ============================================================
    MIGRATION — handles old single-value fields
    ============================================================ */
 function migrate(){
@@ -905,12 +970,15 @@ function openModal(id){
   fFmts = idea ? fmtsOf(idea).slice() : ['Reels'];
   fSt   = idea ? (idea.status||'Nao Iniciado') : 'Nao Iniciado';
   fPlats= idea ? platsOf(idea).slice() : [(curPlat==='todos')?'Instagram':curPlat];
-  // Preenche editores ricos
+  // Preenche editores ricos com dados da ideia
   setRteHtml('rte-roteiro', idea?(idea.roteiro||''):'');
   setRteHtml('rte-legenda', idea?(idea.legenda||''):'');
   setRteHtml('rte-notas',   idea?(idea.notes||''):'');
   switchRteTab('roteiro');
   buildCatBtns(); buildPlatBtns(); syncFmtBtns(); syncStBtns();
+  // Restaura rascunho salvo automaticamente (sobrescreve dados acima se houver)
+  var restored = restoreDraft(id);
+  if(restored){ buildCatBtns(); buildPlatBtns(); syncFmtBtns(); syncStBtns(); showToast('Rascunho restaurado ✓'); }
   document.getElementById('modal-bg').classList.add('open');
   setTimeout(function(){document.getElementById('f-title').focus();},320);
 }
@@ -943,7 +1011,7 @@ function saveIdea(){
     showToast('Ideia salva!');
   }
   var syncIdea = editId ? ideas.find(function(i){return i.id===editId;}) : ideas[0];
-  saveIdeas(); closeModal(); render();
+  clearDraft(); saveIdeas(); closeModal(); render();
   if(syncIdea && typeof DB !== 'undefined' && !window._SB_ERROR)
     DB.conteudo.upsert(syncIdea).catch(function(){});
 }
@@ -951,7 +1019,7 @@ function deleteIdea(){
   if(!editId) return; if(!confirm('Excluir essa ideia?')) return;
   var delId = editId;
   ideas=ideas.filter(function(i){return i.id!==delId;});
-  saveIdeas(); closeModal(); render(); showToast('Ideia excluida');
+  clearDraft(); saveIdeas(); closeModal(); render(); showToast('Ideia excluida');
   if(typeof DB !== 'undefined' && !window._SB_ERROR)
     DB.conteudo.delete(delId).catch(function(){});
 }
@@ -1096,6 +1164,15 @@ document.getElementById('btn-del').onclick=deleteIdea;
 document.getElementById('btn-add-cat').onclick=addCustomCat;
 document.getElementById('modal-bg').onclick=function(e){if(e.target===document.getElementById('modal-bg'))closeModal();};
 document.getElementById('day-bg').onclick=function(e){if(e.target===document.getElementById('day-bg'))closeDayModal();};
+
+// Auto-save do rascunho: título e data
+document.getElementById('f-title').addEventListener('input', scheduleDraft);
+document.getElementById('f-date').addEventListener('change', scheduleDraft);
+// Auto-save do rascunho: editores ricos (contenteditable)
+['rte-roteiro','rte-legenda','rte-notas'].forEach(function(id){
+  var el = document.getElementById(id);
+  if(el) el.addEventListener('input', scheduleDraft);
+});
 
 // Fechar overlays com Escape
 document.addEventListener('keydown',function(e){
