@@ -370,15 +370,10 @@ function showMigrateBanner(on){ document.getElementById('migrate-banner').classN
    ============================================================ */
 function attachHorizWheel(el){
   if(!el||el._hw) return; el._hw=true;
-  el.addEventListener('wheel',function(e){
-    if(el.scrollWidth<=el.clientWidth) return;
-    // Só intercepta scroll horizontal puro — não bloqueia rolagem vertical da página
-    if(Math.abs(e.deltaX)>Math.abs(e.deltaY)){
-      e.preventDefault(); el.scrollLeft+=e.deltaX;
-    }
-  },{passive:false});
+  // Sem listener de wheel — não interfere no scroll da página
+  // Drag horizontal com mouse (arrastar as abas)
   var dn=false,sx=0,ss=0;
-  el.addEventListener('mousedown',function(e){if(e.target.closest('button')) return; dn=true;sx=e.pageX;ss=el.scrollLeft;el.style.cursor='grabbing';});
+  el.addEventListener('mousedown',function(e){if(e.target.closest('button')) return; dn=true;sx=e.pageX;ss=el.scrollLeft;el.style.cursor='grabbing';e.preventDefault();});
   document.addEventListener('mouseup',function(){dn=false;if(el)el.style.cursor='';});
   document.addEventListener('mousemove',function(e){if(!dn) return; el.scrollLeft=ss-(e.pageX-sx);});
 }
