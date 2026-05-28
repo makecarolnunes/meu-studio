@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-28 17:26 | main | feat(fiscal): m├│dulo fiscal/tribut├írio MEI completo -->
+<!-- AUTO: 2026-05-28 17:27 | main | docs: sync CLAUDE.md [auto] -->
 
