@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-28 18:00 | main | refactor(fiscal+resumo): integra Fiscal no nav do Financeiro + filtros de per├¡odo + desktop layout -->
+<!-- AUTO: 2026-05-28 18:00 | main | docs: sync CLAUDE.md [auto] -->
 
