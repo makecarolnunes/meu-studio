@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-28 18:00 | main | docs: sync CLAUDE.md [auto] -->
+<!-- AUTO: 2026-05-28 18:12 | main | fix(fiscal-import): natureza/categoria sobrescreve a├º├úo 'ignorar' + bot├úo Voltar vis├¡vel em desktop -->
 
