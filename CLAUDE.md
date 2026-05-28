@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-28 17:27 | main | docs: sync CLAUDE.md [auto] -->
+<!-- AUTO: 2026-05-28 17:42 | main | refactor(fiscal): unifica c├ílculo MEI + sidebar + import na aba Sa├¡das -->
 
