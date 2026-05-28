@@ -255,10 +255,10 @@
     min-height: 100vh;
     display: flex;
     flex-direction: row;
-    align-items: stretch;
+    align-items: flex-start;
   }
 
-  /* ── Sidebar (flex item, não absolute) ── */
+  /* ── Sidebar (sticky para não capturar o wheel da página) ── */
   .d-sidebar {
     display: flex;
     flex-direction: column;
@@ -266,8 +266,12 @@
     flex-shrink: 0;
     background: linear-gradient(160deg, #3d1e12 0%, #5a2e1e 55%, #8B6B61 100%);
     padding: 22px 15px 28px;
-    overflow-y: auto;
     border-radius: 0 0 0 20px;
+    position: sticky;
+    top: 0;
+    align-self: stretch;
+    height: 100vh;
+    overflow-y: auto;
   }
 
   /* ── Main wrap (flex item, coluna) ── */
