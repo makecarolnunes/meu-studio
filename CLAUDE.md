@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-27 11:15 | main | docs: sync CLAUDE.md [auto] -->
+<!-- AUTO: 2026-05-27 23:39 | main | fix(conteudo): sidebar sticky + align-items flex-start para liberar scroll -->
 
