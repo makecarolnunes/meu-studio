@@ -319,15 +319,20 @@ function fsImportRenderItemReceita(t) {
 }
 
 function fsImportSetNat(hash, nat) {
-  FS_REV.decisoes[hash].natureza = nat;
-  if (nat === 'PESSOAL') FS_REV.decisoes[hash].categoria = 'Pessoal';
+  const dec = FS_REV.decisoes[hash];
+  dec.natureza = nat;
+  if (nat === 'PESSOAL') dec.categoria = 'Pessoal';
+  // Usuário tocou na natureza → intenção é aprovar (sobrescreve 'ignorar' que veio
+  // da sugestão IGNORAR da IA). Mantém 'vincular' se estava conciliando duplicata.
+  if (dec.acao !== 'vincular') dec.acao = 'aprovar';
   fsImportRenderItem();
 }
 function fsImportSetCat(hash, cat) {
-  FS_REV.decisoes[hash].categoria = cat;
-  // Se escolheu Pessoal, ajusta natureza
+  const dec = FS_REV.decisoes[hash];
+  dec.categoria = cat;
   const c = fsCategoriaByNome(cat);
-  if (c && c.nat === 'PESSOAL') FS_REV.decisoes[hash].natureza = 'PESSOAL';
+  if (c && c.nat === 'PESSOAL') dec.natureza = 'PESSOAL';
+  if (dec.acao !== 'vincular') dec.acao = 'aprovar';
   fsImportRenderItem();
 }
 function fsImportDecidir(hash, acao, vincularId, avancar) {
