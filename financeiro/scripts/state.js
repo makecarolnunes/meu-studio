@@ -9,6 +9,24 @@ const MONTHS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','A
 const MONTHS_SHORT = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 const SAIDA_TIPOS = ['Reposição de Material','Curso','DAS','Assistente','Seguro de Celular','Investimento Produto','Investimento Material','Outro'];
 
+// Categorias profissionais sugeridas (Sprint 1.5).
+// Pessoais NÃO têm categorias — basta natureza='PESSOAL'.
+const SAIDA_TIPOS_PROF_EXTRA = [
+  'Deslocamento','Combustível','Estacionamento','Alimentação trabalho',
+  'Produtos','Equipamentos','Fornecedores','Marketing','Cursos'
+];
+
+// Lista dinâmica de tipos profissionais já usados + sugestões.
+function getTiposProfissionais() {
+    const usados = new Set();
+    saidas.forEach(s => {
+        if ((s.natureza || 'PROFISSIONAL') === 'PROFISSIONAL' && s.tipo) usados.add(s.tipo);
+    });
+    SAIDA_TIPOS.forEach(t => usados.add(t));
+    SAIDA_TIPOS_PROF_EXTRA.forEach(t => usados.add(t));
+    return Array.from(usados);
+}
+
 let entries        = JSON.parse(localStorage.getItem('mk_entries') || '[]');
 let saidas         = JSON.parse(localStorage.getItem('mk_saidas')  || '[]');
 let noivas         = JSON.parse(localStorage.getItem('mk_noivas')  || '[]');
@@ -18,6 +36,7 @@ let selYear        = new Date().getFullYear();
 let listFilter     = 'todos';
 let listEquipeFilter = 'todos';
 let saidasFormOpen = false;
+let saidasNaturezaFilter = 'todas';  // 'todas' | 'PROFISSIONAL' | 'PESSOAL' | 'MISTA'
 let noivaDetail    = null;
 let isSyncing        = false;
 let selectedEntryId  = null;   // master-detail desktop: entrada selecionada
@@ -35,5 +54,6 @@ function initF()  {
 }
 function initFs() {
     Fs = { dataPag: today(), valor: '', tipo: 'Reposição de Material',
-           status: 'Pago', forma: 'PIX', obs: '', recorrencia: 'unica', meses: 2 };
+           status: 'Pago', forma: 'PIX', obs: '', recorrencia: 'unica', meses: 2,
+           natureza: 'PROFISSIONAL' };
 }

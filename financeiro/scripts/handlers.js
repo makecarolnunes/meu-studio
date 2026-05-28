@@ -57,6 +57,8 @@ function syncF() {
 function chm(d) { selMonth+=d; if(selMonth<0){selMonth=11;selYear--;}if(selMonth>11){selMonth=0;selYear++;} render(); }
 function setF(f) { listFilter=f; render(); }
 function setEquipeFilter(f) { listEquipeFilter=f; render(); }
+function setSaidaNatureza(n) { saidasNaturezaFilter = n; render(); }
+function pickSaidaNatureza(n) { Fs.natureza = n; render(); }
 function toggleEquipeInput(checked) {
     const inp = document.getElementById('i-eq');
     if (!inp) return;
@@ -148,10 +150,14 @@ async function saveSaida() {
     if (!Fs.dataPag) { toast('⚠️ Informe a data!'); return; }
     const rec = Fs.recorrencia || 'unica';
     const k = {tipo:Fs.tipo, forma:Fs.forma};
+    const naturezaFs = Fs.natureza || 'PROFISSIONAL';
+    // Pessoais: zera tipo (a interface não pede categoria — basta natureza)
+    const tipoFs = naturezaFs === 'PESSOAL' ? 'Pessoal' : Fs.tipo;
     if (rec === 'unica') {
-        const saida = { id:genId(), dataPag:Fs.dataPag, tipo:Fs.tipo, valor:Fs.valor,
+        const saida = { id:genId(), dataPag:Fs.dataPag, tipo:tipoFs, valor:Fs.valor,
             forma:Fs.forma, status:Fs.status, obs:Fs.obs,
-            recorrencia:'unica', grupoId:null, createdAt:new Date().toISOString() };
+            recorrencia:'unica', grupoId:null, natureza:naturezaFs,
+            createdAt:new Date().toISOString() };
         saidas.unshift(saida); cacheSaidas();
         toast('Saída salva!');
         initFs(); Object.assign(Fs,k);
@@ -163,8 +169,9 @@ async function saveSaida() {
         const novasSaidas = [];
         for (let i = 0; i < totalMeses; i++) {
             novasSaidas.push({ id:genId(), dataPag:addMonths(Fs.dataPag, i),
-                tipo:Fs.tipo, valor:Fs.valor, forma:Fs.forma, status:Fs.status, obs:Fs.obs,
-                recorrencia:rec, grupoId, createdAt:new Date().toISOString() });
+                tipo:tipoFs, valor:Fs.valor, forma:Fs.forma, status:Fs.status, obs:Fs.obs,
+                recorrencia:rec, grupoId, natureza:naturezaFs,
+                createdAt:new Date().toISOString() });
         }
         [...novasSaidas].reverse().forEach(s=>saidas.unshift(s)); cacheSaidas();
         toast(rec==='fixa' ? `Saída fixa criada (12 meses)!` : `${totalMeses} parcelas criadas!`);

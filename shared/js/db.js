@@ -65,6 +65,7 @@ const _SAIDA_KEYS = {
   forma: 'forma', status: 'status', obs: 'obs',
   recorrencia: 'recorrencia', grupoId: 'grupo_id',
   createdAt: 'created_at',
+  natureza: 'natureza',
 };
 
 const _ORC_KEYS = {
@@ -150,6 +151,7 @@ function _saidaFromDb(r) {
     recorrencia: r.recorrencia || 'unica',
     grupoId:     r.grupo_id  || null,
     createdAt:   r.created_at || '',
+    natureza:    r.natureza  || 'PROFISSIONAL',
   };
 }
 
@@ -734,4 +736,262 @@ window.DB = {
       return (data && data.length > 0) ? data[0] : null;
     },
   },
+
+  // ──────────────────────────────────────────────────────────────
+  //  FISCAL — módulo tributário (Sprint 1+)
+  //  Namespace isolado. Não compartilha estado com entries/saidas.
+  //  Tabelas: fiscal_config (singleton), fiscal_das.
+  // ──────────────────────────────────────────────────────────────
+  fiscal: {
+    config: {
+      // Retorna { regime, tetoAnual, dataAbertura, cnpj, atividade } ou null se nunca configurou
+      async get() {
+        _guard();
+        const { data, error } = await _sb
+          .from('fiscal_config')
+          .select('*')
+          .eq('id', 'default')
+          .maybeSingle();
+        if (error) throw error;
+        if (!data) return null;
+        return {
+          regime:       data.regime        || 'MEI',
+          tetoAnual:    data.teto_anual    != null ? Number(data.teto_anual) : 81000,
+          dataAbertura: data.data_abertura || '',
+          cnpj:         data.cnpj          || '',
+          atividade:    data.atividade     || '',
+          updatedAt:    data.updated_at    || '',
+        };
+      },
+      async save(cfg) {
+        _guard();
+        const row = {
+          id:            'default',
+          regime:        cfg.regime || 'MEI',
+          teto_anual:    cfg.tetoAnual != null && cfg.tetoAnual !== '' ? parseFloat(cfg.tetoAnual) : 81000,
+          data_abertura: cfg.dataAbertura || null,
+          cnpj:          cfg.cnpj || null,
+          atividade:     cfg.atividade || null,
+          updated_at:    new Date().toISOString(),
+        };
+        const { error } = await _sb.from('fiscal_config').upsert(row, { onConflict: 'id' });
+        if (error) throw error;
+      },
+    },
+
+    das: {
+      async list() {
+        _guard();
+        const { data, error } = await _sb
+          .from('fiscal_das')
+          .select('*')
+          .order('competencia', { ascending: false });
+        if (error) throw error;
+        return (data || []).map(r => ({
+          id:             String(r.id),
+          competencia:    r.competencia     || '',
+          valor:          r.valor           != null ? Number(r.valor) : 0,
+          vencimento:     r.vencimento      || '',
+          pago:           !!r.pago,
+          dataPagamento:  r.data_pagamento  || '',
+          comprovanteUrl: r.comprovante_url || '',
+          observacao:     r.observacao      || '',
+          createdAt:      r.created_at      || '',
+        }));
+      },
+      async upsert(d) {
+        _guard();
+        const row = {
+          id:              String(d.id || Date.now()),
+          competencia:     d.competencia,
+          valor:           d.valor != null && d.valor !== '' ? parseFloat(d.valor) : 0,
+          vencimento:      d.vencimento,
+          pago:            !!d.pago,
+          data_pagamento:  d.dataPagamento  || null,
+          comprovante_url: d.comprovanteUrl || null,
+          observacao:      d.observacao     || null,
+        };
+        const { error } = await _sb.from('fiscal_das').upsert(row, { onConflict: 'id' });
+        if (error) throw error;
+        return row.id;
+      },
+      async delete(id) {
+        _guard();
+        const { error } = await _sb.from('fiscal_das').delete().eq('id', String(id));
+        if (error) throw error;
+      },
+    },
+
+    transacoes: {
+      async list(filtro) {
+        _guard();
+        let q = _sb.from('fiscal_transacoes_raw').select('*').order('data', { ascending: false });
+        if (filtro && filtro.importacaoId) q = q.eq('importacao_id', filtro.importacaoId);
+        if (filtro && filtro.status)       q = q.eq('status', filtro.status);
+        const { data, error } = await q;
+        if (error) throw error;
+        return (data || []).map(_rawFromDb);
+      },
+      async insertBatch(arr) {
+        _guard();
+        if (!arr || !arr.length) return { inserted: 0, duplicates: 0 };
+        const rows = arr.map(_rawToDb);
+        // Para detectar duplicatas: tenta inserir e ignora conflitos via upsert + ignoreDuplicates
+        const { data, error } = await _sb
+          .from('fiscal_transacoes_raw')
+          .upsert(rows, { onConflict: 'hash', ignoreDuplicates: true })
+          .select('id');
+        if (error) throw error;
+        const inserted = (data || []).length;
+        return { inserted, duplicates: rows.length - inserted };
+      },
+      async update(id, fields) {
+        _guard();
+        const row = _rawToDb({ id, ...fields });
+        delete row.id;
+        const { error } = await _sb.from('fiscal_transacoes_raw').update(row).eq('id', String(id));
+        if (error) throw error;
+      },
+      async delete(id) {
+        _guard();
+        const { error } = await _sb.from('fiscal_transacoes_raw').delete().eq('id', String(id));
+        if (error) throw error;
+      },
+    },
+
+    despesas: {
+      async list() {
+        _guard();
+        const { data, error } = await _sb
+          .from('fiscal_despesas').select('*').order('data', { ascending: false });
+        if (error) throw error;
+        return (data || []).map(_despFromDb);
+      },
+      async upsert(d) {
+        _guard();
+        const row = _despToDb(d);
+        const { error } = await _sb.from('fiscal_despesas').upsert(row, { onConflict: 'id' });
+        if (error) throw error;
+        return row.id;
+      },
+      async delete(id) {
+        _guard();
+        const { error } = await _sb.from('fiscal_despesas').delete().eq('id', String(id));
+        if (error) throw error;
+      },
+    },
+
+    regras: {
+      async list() {
+        _guard();
+        const { data, error } = await _sb
+          .from('fiscal_regras').select('*').order('prioridade', { ascending: false });
+        if (error) throw error;
+        return (data || []).map(r => ({
+          id: String(r.id), padrao: r.padrao || '',
+          categoria: r.categoria || '', natureza: r.natureza || 'PROFISSIONAL',
+          prioridade: r.prioridade || 0, origem: r.origem || 'manual',
+          acertos: r.acertos || 0, erros: r.erros || 0,
+          createdAt: r.created_at || '',
+        }));
+      },
+      async upsert(r) {
+        _guard();
+        const row = {
+          id: String(r.id || Date.now()),
+          padrao: String(r.padrao || '').toLowerCase().trim(),
+          categoria: r.categoria || '', natureza: r.natureza || 'PROFISSIONAL',
+          prioridade: r.prioridade || 0, origem: r.origem || 'manual',
+          acertos: r.acertos || 0, erros: r.erros || 0,
+        };
+        const { error } = await _sb.from('fiscal_regras').upsert(row, { onConflict: 'id' });
+        if (error) throw error;
+        return row.id;
+      },
+      async delete(id) {
+        _guard();
+        const { error } = await _sb.from('fiscal_regras').delete().eq('id', String(id));
+        if (error) throw error;
+      },
+    },
+  },
 };
+
+// ── Mapeadores fiscal_transacoes_raw ──────────────────────────────
+function _rawFromDb(r) {
+  return {
+    id: String(r.id),
+    importacaoId: r.importacao_id || '',
+    banco: r.banco || '', conta: r.conta || '',
+    data: r.data || '',
+    descricao: r.descricao || '',
+    valor: r.valor != null ? Number(r.valor) : 0,
+    tipoMov: r.tipo_mov || 'DEBITO',
+    hash: r.hash || '',
+    status: r.status || 'PENDENTE',
+    categoriaSugerida: r.categoria_sugerida || '',
+    naturezaSugerida: r.natureza_sugerida || 'PENDENTE',
+    confiancaIa: r.confianca_ia != null ? Number(r.confianca_ia) : null,
+    saidaId: r.saida_id || null,
+    saidaExistenteId: r.saida_existente_id || null,
+    despesaId: r.despesa_id || null,
+    rawData: r.raw_data || null,
+    createdAt: r.created_at || '',
+  };
+}
+function _rawToDb(t) {
+  const row = {
+    id: String(t.id || Date.now()),
+    importacao_id: t.importacaoId || null,
+    banco: t.banco || null, conta: t.conta || null,
+    data: t.data || null,
+    descricao: t.descricao || '',
+    valor: t.valor != null && t.valor !== '' ? parseFloat(t.valor) : 0,
+    tipo_mov: t.tipoMov || 'DEBITO',
+    hash: t.hash || null,
+    status: t.status || 'PENDENTE',
+    categoria_sugerida: t.categoriaSugerida || null,
+    natureza_sugerida: t.naturezaSugerida || null,
+    confianca_ia: t.confiancaIa != null ? parseFloat(t.confiancaIa) : null,
+    saida_id: t.saidaId || null,
+    saida_existente_id: t.saidaExistenteId || null,
+    despesa_id: t.despesaId || null,
+    raw_data: t.rawData || null,
+  };
+  return row;
+}
+
+// ── Mapeadores fiscal_despesas ────────────────────────────────────
+function _despFromDb(r) {
+  return {
+    id: String(r.id),
+    saidaId: r.saida_id || null,
+    data: r.data || '',
+    descricao: r.descricao || '',
+    valor: r.valor != null ? Number(r.valor) : 0,
+    categoria: r.categoria || '',
+    natureza: r.natureza || 'PROFISSIONAL',
+    dedutivel: !!r.dedutivel,
+    origem: r.origem || 'manual',
+    transacaoRawId: r.transacao_raw_id || null,
+    comprovanteUrl: r.comprovante_url || '',
+    obs: r.obs || '',
+    createdAt: r.created_at || '',
+  };
+}
+function _despToDb(d) {
+  return {
+    id: String(d.id || Date.now()),
+    saida_id: d.saidaId || null,
+    data: d.data || null,
+    descricao: d.descricao || null,
+    valor: d.valor != null && d.valor !== '' ? parseFloat(d.valor) : 0,
+    categoria: d.categoria || null,
+    natureza: d.natureza || 'PROFISSIONAL',
+    dedutivel: !!d.dedutivel,
+    origem: d.origem || 'manual',
+    transacao_raw_id: d.transacaoRawId || null,
+    comprovante_url: d.comprovanteUrl || null,
+    obs: d.obs || null,
+  };
+}

@@ -212,12 +212,21 @@ function openEditSaida(id) {
     if (!s) return;
     _pick = {};
     document.getElementById('modal-bg').style.display='flex';
+    const natAtual = s.natureza || 'PROFISSIONAL';
+    const tiposProf = getTiposProfissionais();
     document.getElementById('modal-inner').innerHTML=`
     <div class="modal-title">Editar Saída</div>
-    <div class="fg"><label class="fl">Data</label><input class="fi" type="date" id="es-data" value="${s.dataPag||''}"></div>
-    <div class="fg"><label class="fl">Tipo de Despesa</label><div class="bg" style="flex-wrap:wrap">
-        ${SAIDA_TIPOS.map(t=>`<button class="bt ${s.tipo===t?'on':''}" onclick="edPick('stipo','${t}',this)" style="font-size:.78rem">${t}</button>`).join('')}
+    <div class="fg"><label class="fl">Natureza</label><div class="bg">
+        <button class="bt ${natAtual==='PROFISSIONAL'?'on':''}" onclick="edPickNatureza('PROFISSIONAL',this)">Profissional</button>
+        <button class="bt ${natAtual==='PESSOAL'?'on':''}" onclick="edPickNatureza('PESSOAL',this)">Pessoal</button>
+        <button class="bt ${natAtual==='MISTA'?'on':''}" onclick="edPickNatureza('MISTA',this)">Mista</button>
     </div></div>
+    <div class="fg"><label class="fl">Data</label><input class="fi" type="date" id="es-data" value="${s.dataPag||''}"></div>
+    <div id="es-tipo-wrap" style="display:${natAtual==='PESSOAL'?'none':'block'}">
+      <div class="fg"><label class="fl">Tipo de Despesa</label><div class="bg" style="flex-wrap:wrap" id="es-tipo-bg">
+        ${tiposProf.map(t=>`<button class="bt ${s.tipo===t?'on':''}" onclick="edPick('stipo','${t}',this)" style="font-size:.78rem">${t}</button>`).join('')}
+      </div></div>
+    </div>
     <div class="fg"><label class="fl">Valor (R$)</label><div class="vwrap"><span class="vpfx">R$</span><input class="fi" type="number" id="es-valor" value="${s.valor||''}" step="0.01" min="0" inputmode="decimal"></div></div>
     <div class="fg"><label class="fl">Forma</label><div class="bg">
         ${['PIX','Crédito','Dinheiro'].map(f=>`<button class="bt ${s.forma===f?'on':''}" onclick="edPick('sforma','${f}',this)">${f}</button>`).join('')}
@@ -237,21 +246,36 @@ function openEditSaida(id) {
     </div></div>`:''}
     <button class="bsub" style="margin-bottom:8px" onclick="saveEditSaida('${id}')">Salvar</button>
     <button class="skip" onclick="closeModal()">Cancelar</button>`;
-    _pick['stipo']  = s.tipo  || '';
-    _pick['sforma'] = s.forma || 'PIX';
+    _pick['stipo']    = s.tipo  || '';
+    _pick['sforma']   = s.forma || 'PIX';
+    _pick['snatureza']= natAtual;
     if (s.grupoId) _pick['escopo'] = 'so-esta';
+}
+
+// Toggle natureza no modal de edição (esconde tipo se Pessoal)
+function edPickNatureza(value, btn) {
+    _pick['snatureza'] = value;
+    if (btn && btn.parentElement) {
+        btn.parentElement.querySelectorAll('.bt').forEach(b => b.classList.remove('on'));
+        btn.classList.add('on');
+    }
+    const wrap = document.getElementById('es-tipo-wrap');
+    if (wrap) wrap.style.display = value === 'PESSOAL' ? 'none' : 'block';
 }
 function saveEditSaida(id) {
     const s = saidas.find(x=>String(x.id)===String(id));
     if (!s) return;
     const valor = document.getElementById('es-valor').value;
     if (!valor||Number(valor)<=0) { toast('⚠️ Informe o valor!'); return; }
+    const natChosen = _pick['snatureza'] || s.natureza || 'PROFISSIONAL';
+    const tipoChosen = natChosen === 'PESSOAL' ? 'Pessoal' : (_pick['stipo'] || s.tipo);
     const changes = {
-        tipo:   _pick['stipo']  || s.tipo,
-        forma:  _pick['sforma'] || s.forma,
-        status: document.getElementById('ed-status').value,
-        valor:  String(valor),
-        obs:    document.getElementById('es-obs').value
+        tipo:     tipoChosen,
+        forma:    _pick['sforma'] || s.forma,
+        status:   document.getElementById('ed-status').value,
+        valor:    String(valor),
+        obs:      document.getElementById('es-obs').value,
+        natureza: natChosen,
     };
     const scope = s.grupoId ? (_pick['escopo'] || 'so-esta') : 'so-esta';
     let toEdit;

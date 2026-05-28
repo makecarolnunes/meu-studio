@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Fiscal">
+  <title>Fiscal · Meu Studio</title>
+  <link rel="stylesheet" href="../shared/css/tokens.css">
+  <link rel="stylesheet" href="../shared/css/base.css">
+  <link rel="stylesheet" href="./styles/fiscal.css">
+</head>
+<body>
+
+<!-- ── APP (oculto até autenticar) ── -->
+<div id="fiscal-app" style="display:none">
+
+  <button class="btn-back-float" onclick="window.location.href='./index.html'" aria-label="Voltar ao Financeiro">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+  </button>
+
+  <header class="fs-hdr">
+    <div></div>
+    <div class="fs-hdr-center">
+      <h1>Fiscal</h1>
+      <div class="fs-hdr-sub" id="fs-sub">Acompanhamento MEI</div>
+    </div>
+    <div class="fs-hdr-right">
+      <button class="fs-iconbtn" onclick="fiscalRefresh()" title="Atualizar" aria-label="Atualizar">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+      </button>
+      <button class="fs-iconbtn" onclick="fiscalOpenConfig()" title="Configurações fiscais" aria-label="Configurações">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 0 1-4 0v-.1a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 0 1 0-4h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3h0a1.7 1.7 0 0 0 1-1.5V3a2 2 0 0 1 4 0v.1a1.7 1.7 0 0 0 1 1.5h0a1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8v0a1.7 1.7 0 0 0 1.5 1H21a2 2 0 0 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <main class="fs-content" id="fs-content"></main>
+
+  <nav class="fs-bnav">
+    <button class="fs-ni active" id="fs-nav-painel" onclick="fiscalGo('painel')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+      Painel
+    </button>
+    <button class="fs-ni" id="fs-nav-despesas" onclick="fiscalGo('despesas')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-1"/><path d="M16 12h6"/><circle cx="18" cy="12" r="2"/></svg>
+      Despesas
+    </button>
+    <button class="fs-ni" id="fs-nav-ir" disabled title="Em breve">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></svg>
+      IR
+    </button>
+  </nav>
+
+</div><!-- /fiscal-app -->
+
+<div class="fs-toast" id="fs-toast"></div>
+
+<div class="fs-loading" id="fs-loading">
+  <div class="fs-spinner"></div>
+  <p>Carregando...</p>
+</div>
+
+<!-- Modal genérico (config / onboarding) -->
+<div class="fs-modal-bg" id="fs-modal-bg" style="display:none">
+  <div class="fs-modal" id="fs-modal-inner"></div>
+</div>
+
+<!-- ── Dependências externas + infra compartilhada ── -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="../config.js"></script>
+<script src="../shared/js/db.js"></script>
+<script src="../shared/js/icons.js"></script>
+
+<!-- ── Módulo Fiscal (ordem importa) ── -->
+<script src="./scripts/fiscal/fiscal-state.js"></script>
+<script src="./scripts/fiscal/fiscal-categorias.js"></script>
+<script src="./scripts/fiscal/fiscal-mei.js"></script>
+<script src="./scripts/fiscal/fiscal-parser.js"></script>
+<script src="./scripts/fiscal/fiscal-categorizer.js"></script>
+<script src="./scripts/fiscal/fiscal-import.js"></script>
+<script src="./scripts/fiscal/fiscal-despesas.js"></script>
+<script src="./scripts/fiscal/fiscal-main.js"></script>
+
+</body>
+</html>

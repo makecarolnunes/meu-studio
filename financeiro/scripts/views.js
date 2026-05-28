@@ -292,24 +292,48 @@ function renderListaDesktop() {
 
 // ── SCREEN: SAÍDAS ──
 function renderSaidas() {
-    const list = saidas.filter(s=>{const my=getMonthYear(s.dataPag);return my&&my.m===selMonth&&my.y===selYear;})
-                       .sort((a,b)=>(b.dataPag||'').localeCompare(a.dataPag||''));
+    const monthList = saidas.filter(s=>{const my=getMonthYear(s.dataPag);return my&&my.m===selMonth&&my.y===selYear;});
+    const list = monthList
+        .filter(s=> saidasNaturezaFilter==='todas' || (s.natureza||'PROFISSIONAL')===saidasNaturezaFilter)
+        .sort((a,b)=>(b.dataPag||'').localeCompare(a.dataPag||''));
     const totPago = list.filter(s=>s.status==='Pago').reduce((t,s)=>t+Number(s.valor||0),0);
     const totPrev = list.filter(s=>s.status==='Previsto').reduce((t,s)=>t+Number(s.valor||0),0);
+
+    // Contagens p/ pills de filtro
+    const cntProf = monthList.filter(s=>(s.natureza||'PROFISSIONAL')==='PROFISSIONAL').length;
+    const cntPess = monthList.filter(s=>s.natureza==='PESSOAL').length;
+    const cntMista= monthList.filter(s=>s.natureza==='MISTA').length;
+
+    const natFs = Fs.natureza || 'PROFISSIONAL';
+    const tiposProf = getTiposProfissionais();
+
     return `
     <div class="msel">
         <button class="mnbtn" onclick="chm(-1)">‹</button>
         <div class="mlab">${MONTHS[selMonth]} ${selYear}${list.length?`<div class="msub">${list.length} saída${list.length!==1?'s':''} · ${brl(totPago+totPrev)}</div>`:''}</div>
         <button class="mnbtn" onclick="chm(1)">›</button>
     </div>
+
+    <div class="natfilter" style="display:flex;gap:6px;margin:0 0 10px;flex-wrap:wrap">
+        <button class="bt ${saidasNaturezaFilter==='todas'?'on':''}" onclick="setSaidaNatureza('todas')" style="font-size:.78rem">Todas (${monthList.length})</button>
+        <button class="bt ${saidasNaturezaFilter==='PROFISSIONAL'?'on':''}" onclick="setSaidaNatureza('PROFISSIONAL')" style="font-size:.78rem">Profissional (${cntProf})</button>
+        <button class="bt ${saidasNaturezaFilter==='PESSOAL'?'on':''}" onclick="setSaidaNatureza('PESSOAL')" style="font-size:.78rem">Pessoal (${cntPess})</button>
+        ${cntMista>0?`<button class="bt ${saidasNaturezaFilter==='MISTA'?'on':''}" onclick="setSaidaNatureza('MISTA')" style="font-size:.78rem">Mista (${cntMista})</button>`:''}
+    </div>
+
     <button class="add-btn ${saidasFormOpen?'open':''}" onclick="toggleSaidasForm()">${saidasFormOpen?'✕ Fechar':'＋ Nova Saída'}</button>
     ${saidasFormOpen?`
     <div class="card">
+        <div class="fg"><label class="fl">Natureza</label><div class="bg">
+            <button class="bt ${natFs==='PROFISSIONAL'?'on':''}" onclick="pickSaidaNatureza('PROFISSIONAL')">Profissional</button>
+            <button class="bt ${natFs==='PESSOAL'?'on':''}" onclick="pickSaidaNatureza('PESSOAL')">Pessoal</button>
+            <button class="bt ${natFs==='MISTA'?'on':''}" onclick="pickSaidaNatureza('MISTA')">Mista</button>
+        </div></div>
         <div class="two">
             <div class="fg"><label class="fl">Data</label><input class="fi" type="date" id="si-dp" value="${Fs.dataPag}"></div>
             <div class="fg"><label class="fl">Valor</label><div class="vwrap"><span class="vpfx">R$</span><input class="fi" type="number" id="si-v" placeholder="0,00" step="0.01" min="0" value="${Fs.valor}" inputmode="decimal"></div></div>
         </div>
-        <div class="fg"><label class="fl">Tipo de Despesa</label><select class="fi" id="si-tipo">${SAIDA_TIPOS.map(t=>`<option value="${t}" ${Fs.tipo===t?'selected':''}>${t}</option>`).join('')}</select></div>
+        ${natFs!=='PESSOAL'?`<div class="fg"><label class="fl">Tipo de Despesa</label><select class="fi" id="si-tipo">${tiposProf.map(t=>`<option value="${t}" ${Fs.tipo===t?'selected':''}>${t}</option>`).join('')}</select></div>`:''}
         <div class="fg"><label class="fl">Status</label><div class="stog">
             <button class="stbtn ${Fs.status==='Pago'?'on-g':''}"    data-f="status" data-v="Pago"    data-form="s" onclick="pick('status','Pago','s')">Pago</button>
             <button class="stbtn ${Fs.status==='Previsto'?'on-r':''}" data-f="status" data-v="Previsto" data-form="s" onclick="pick('status','Previsto','s')">Previsto</button>
@@ -327,9 +351,15 @@ function renderSaidas() {
     ${list.length===0?`<div class="empty"><div class="ico">${SVG.upload}</div><p>Nenhuma saída em<br><strong>${MONTHS[selMonth]} ${selYear}</strong></p></div>`
     :list.map(s=>{
         const st=saidaStyle(s.tipo);
+        const nat = s.natureza || 'PROFISSIONAL';
+        const natBadge = nat==='PESSOAL'
+            ? `<span class="natchip natchip-pess">Pessoal</span>`
+            : nat==='MISTA'
+                ? `<span class="natchip natchip-mista">Mista</span>`
+                : '';
         return `<div class="eitem">
             <div class="eico" style="background:${st.bg};color:${st.col}">${st.ico}</div>
-            <div class="einf"><div class="ecli">${s.tipo}</div>
+            <div class="einf"><div class="ecli">${s.tipo}${natBadge}</div>
                 <div class="emta">${fmtDate(s.dataPag)} · ${s.forma}${s.grupoId?` · ${s.recorrencia==='fixa'?'↺ Fixa':'↺ Recorrente'}`:''}
                 </div>
                 ${s.obs?`<div class="emta">${s.obs}</div>`:''}
@@ -348,13 +378,20 @@ function renderSaidas() {
 // ── SCREEN: RESUMO ──
 function renderResumo() {
     const me = entries.filter(e=>{const my=getMonthYear(e.dataPag);return my&&my.m===selMonth&&my.y===selYear;});
-    const ms = saidas.filter(s=>{const my=getMonthYear(s.dataPag);return my&&my.m===selMonth&&my.y===selYear;});
+    const msAll = saidas.filter(s=>{const my=getMonthYear(s.dataPag);return my&&my.m===selMonth&&my.y===selYear;});
+    // Filtro de natureza (mesmo do tab Saídas) — aplica ao resumo de despesas e lucro
+    const ms = msAll.filter(s=> saidasNaturezaFilter==='todas' || (s.natureza||'PROFISSIONAL')===saidasNaturezaFilter);
     const fatReal = me.filter(e=>e.status==='Realizado').reduce((t,e)=>t+Number(e.valor||0),0);
     const fatPrev = me.filter(e=>e.status==='Previsto').reduce((t,e)=>t+Number(e.valor||0),0);
     const fatTotal= fatReal + fatPrev;
     const despPago= ms.filter(s=>s.status==='Pago').reduce((t,s)=>t+Number(s.valor||0),0);
     const despPrev= ms.filter(s=>s.status==='Previsto').reduce((t,s)=>t+Number(s.valor||0),0);
     const despTotal=despPago+despPrev;
+    // Breakdown por natureza (sempre sobre msAll — total bruto do mês)
+    const despProf  = msAll.filter(s=>(s.natureza||'PROFISSIONAL')==='PROFISSIONAL').reduce((t,s)=>t+Number(s.valor||0),0);
+    const despPess  = msAll.filter(s=>s.natureza==='PESSOAL').reduce((t,s)=>t+Number(s.valor||0),0);
+    const despMista = msAll.filter(s=>s.natureza==='MISTA').reduce((t,s)=>t+Number(s.valor||0),0);
+    const despMesTotal = despProf + despPess + despMista;
     const lucroReal=fatReal-despPago, lucroTotal=fatTotal-despTotal;
     const margem=fatTotal>0?Math.round(lucroTotal/fatTotal*100):0;
     const byOri={}, bySai={};
@@ -413,12 +450,24 @@ function renderResumo() {
     </div>
     <div class="card">
         <div class="card-title">Saídas</div>
+        <div class="natfilter" style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
+            <button class="bt ${saidasNaturezaFilter==='todas'?'on':''}" onclick="setSaidaNatureza('todas')" style="font-size:.75rem">Todas</button>
+            <button class="bt ${saidasNaturezaFilter==='PROFISSIONAL'?'on':''}" onclick="setSaidaNatureza('PROFISSIONAL')" style="font-size:.75rem">Profissional</button>
+            <button class="bt ${saidasNaturezaFilter==='PESSOAL'?'on':''}" onclick="setSaidaNatureza('PESSOAL')" style="font-size:.75rem">Pessoal</button>
+            ${despMista>0?`<button class="bt ${saidasNaturezaFilter==='MISTA'?'on':''}" onclick="setSaidaNatureza('MISTA')" style="font-size:.75rem">Mista</button>`:''}
+        </div>
         <div class="rsum-grid" style="margin-bottom:11px">
             <div class="rsum-card" style="border-left:3px solid var(--red)"><div class="rsum-lbl">Pago</div><div class="rsum-val" style="color:var(--red)">${brl(despPago)}</div></div>
             <div class="rsum-card" style="border-left:3px solid var(--muted)"><div class="rsum-lbl">Previsto</div><div class="rsum-val" style="color:var(--muted)">${brl(despPrev)}</div></div>
         </div>
+        ${despMesTotal>0?`
+        <div class="natbreak" style="display:grid;grid-template-columns:1fr 1fr${despMista>0?' 1fr':''};gap:8px;margin-bottom:11px">
+            <div style="background:#faf3ee;padding:9px 11px;border-radius:9px"><div style="font-size:.65rem;color:#6b4a36;letter-spacing:.1em;text-transform:uppercase;margin-bottom:3px">Profissional</div><div style="font-weight:700;color:#3e2c20">${brl(despProf)}</div></div>
+            <div style="background:#efe5dd;padding:9px 11px;border-radius:9px"><div style="font-size:.65rem;color:#6b4a36;letter-spacing:.1em;text-transform:uppercase;margin-bottom:3px">Pessoal</div><div style="font-weight:700;color:#3e2c20">${brl(despPess)}</div></div>
+            ${despMista>0?`<div style="background:#fbeed3;padding:9px 11px;border-radius:9px"><div style="font-size:.65rem;color:#7a5408;letter-spacing:.1em;text-transform:uppercase;margin-bottom:3px">Mista</div><div style="font-weight:700;color:#3e2c20">${brl(despMista)}</div></div>`:''}
+        </div>`:''}
         ${Object.entries(bySai).map(([k,v])=>bar(saidaStyle(k).ico+' '+k,v,despTotal,'var(--red)')).join('')}
-        <div class="rrow total" style="margin-top:8px;padding-top:10px;border-top:2px solid #f0f0f0"><span class="rlbl">TOTAL</span><span class="rval" style="font-size:1.05rem;color:var(--red)">${brl(despTotal)}</span></div>
+        <div class="rrow total" style="margin-top:8px;padding-top:10px;border-top:2px solid #f0f0f0"><span class="rlbl">TOTAL${saidasNaturezaFilter!=='todas'?' (filtrado)':''}</span><span class="rval" style="font-size:1.05rem;color:var(--red)">${brl(despTotal)}</span></div>
     </div>
     <div class="card" style="background:linear-gradient(135deg,${lucroReal>=0?'#f1faf1,#e8f5e9':'#fff0f0,#ffebee'})">
         <div class="card-title">Resultado do Mês</div>

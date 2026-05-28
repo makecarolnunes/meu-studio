@@ -823,3 +823,19 @@ body { max-width: var(--fin-container); margin: 0 auto; }
     .mnbtn:hover   { background: var(--brown-l); border-radius: 8px; }
     .gear-btn:hover{ background: rgba(255,255,255,.22); }
 }
+
+/* ── Natureza (Sprint 1.5) ─────────────────────────────────── */
+.natchip {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 1px 7px;
+    border-radius: 999px;
+    font-size: .65rem;
+    font-weight: 600;
+    letter-spacing: .03em;
+    vertical-align: middle;
+}
+.natchip-pess  { background: #efe5dd; color: #6b4a36; }
+.natchip-mista { background: #fbeed3; color: #7a5408; }
+.natfilter .bt.on { background: var(--brown); color: #fff; border-color: var(--brown); }
+
