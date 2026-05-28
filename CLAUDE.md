@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-28 00:37 | main | fix(db): persiste roteiro e legenda no DB.conteudo -->
+<!-- AUTO: 2026-05-28 00:37 | main | docs: sync CLAUDE.md [auto] -->
 
