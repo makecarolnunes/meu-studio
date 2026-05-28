@@ -380,17 +380,23 @@ function renderSaidas() {
 
 // ── SCREEN: RESUMO ──
 function renderResumo() {
-    const me = entries.filter(e=>{const my=getMonthYear(e.dataPag);return my&&my.m===selMonth&&my.y===selYear;});
-    const msAll = saidas.filter(s=>{const my=getMonthYear(s.dataPag);return my&&my.m===selMonth&&my.y===selYear;});
-    // Filtro de natureza (mesmo do tab Saídas) — aplica ao resumo de despesas e lucro
-    const ms = msAll.filter(s=> saidasNaturezaFilter==='todas' || (s.natureza||'PROFISSIONAL')===saidasNaturezaFilter);
+    // Resolve range a partir do filtro de período
+    const range = resumoRange();
+    const ini = range.ini, fim = range.fim, tituloPeriodo = range.titulo;
+    const yearMin = ini.getFullYear(), yearMax = fim.getFullYear();
+    const anoVisaoAnual = yearMin === yearMax ? yearMin : yearMax;
+
+    // ── Filtra entradas/saidas pelo range ──
+    const me = entries.filter(e => inResumoRange(e.dataPag, ini, fim));
+    const msAll = saidas.filter(s => inResumoRange(s.dataPag, ini, fim));
+    const ms = msAll.filter(s => saidasNaturezaFilter==='todas' || (s.natureza||'PROFISSIONAL')===saidasNaturezaFilter);
+
     const fatReal = me.filter(e=>e.status==='Realizado').reduce((t,e)=>t+Number(e.valor||0),0);
     const fatPrev = me.filter(e=>e.status==='Previsto').reduce((t,e)=>t+Number(e.valor||0),0);
     const fatTotal= fatReal + fatPrev;
     const despPago= ms.filter(s=>s.status==='Pago').reduce((t,s)=>t+Number(s.valor||0),0);
     const despPrev= ms.filter(s=>s.status==='Previsto').reduce((t,s)=>t+Number(s.valor||0),0);
     const despTotal=despPago+despPrev;
-    // Breakdown por natureza (sempre sobre msAll — total bruto do mês)
     const despProf  = msAll.filter(s=>(s.natureza||'PROFISSIONAL')==='PROFISSIONAL').reduce((t,s)=>t+Number(s.valor||0),0);
     const despPess  = msAll.filter(s=>s.natureza==='PESSOAL').reduce((t,s)=>t+Number(s.valor||0),0);
     const despMista = msAll.filter(s=>s.natureza==='MISTA').reduce((t,s)=>t+Number(s.valor||0),0);
@@ -400,39 +406,65 @@ function renderResumo() {
     const byOri={}, bySai={};
     ['Produção Social','Noiva','Assistência'].forEach(o=>byOri[o]=me.filter(e=>e.origem===o).reduce((t,e)=>t+Number(e.valor||0),0));
     ms.forEach(s=>bySai[s.tipo]=(bySai[s.tipo]||0)+Number(s.valor||0));
-    // FONTE ÚNICA — shared/js/calc-fiscal.js (mesma usada no painel Fiscal)
-    const meiAno = (window.mkFiscal && window.mkFiscal.faturamentoRealizadoAno)
-        ? window.mkFiscal.faturamentoRealizadoAno(entries, selYear)
-        : entries.filter(e=>!e.auto && e.status==='Realizado' && (getMonthYear(e.dataPag)||{}).y===selYear)
-                 .reduce((t,e)=>t+Number(e.valor||0),0);
-    const meiPct = Math.min(100,Math.round(meiAno/MEI_LIMITE*100));
-    const meiCor = meiPct<60?'var(--ok)':meiPct<85?'#f59e0b':'var(--red)';
-    const meiRest= MEI_LIMITE-meiAno;
-    const mesNow = selYear===new Date().getFullYear()?new Date().getMonth():11;
-    const mesesR = 11-mesNow;
+
     function bar(lbl,val,tot,cor) {
         const pct=tot>0?Math.min(100,Math.round(val/tot*100)):0;
         if(!val) return '';
         return `<div class="barrow"><div class="barhdr"><span>${lbl}</span><span>${brl(val)}</span></div><div class="btrk"><div class="bfil" style="width:${pct}%;background:${cor||'var(--ok)'}"></div></div></div>`;
     }
-    const fatAno=entries.filter(e=>{const my=getMonthYear(e.dataPag);return my&&my.y===selYear;}).reduce((t,e)=>t+Number(e.valor||0),0);
-    const desAno=saidas.filter(s=>{const my=getMonthYear(s.dataPag);return my&&my.y===selYear;}).reduce((t,s)=>t+Number(s.valor||0),0);
+
+    // Visão anual: sempre referente ao ano do FIM do range (ou range único)
+    const fatAno=entries.filter(e=>{const my=getMonthYear(e.dataPag);return my&&my.y===anoVisaoAnual;}).reduce((t,e)=>t+Number(e.valor||0),0);
+    const desAno=saidas.filter(s=>{const my=getMonthYear(s.dataPag);return my&&my.y===anoVisaoAnual;}).reduce((t,s)=>t+Number(s.valor||0),0);
     const anoRows=MONTHS_SHORT.map((m,i)=>{
-        const em=entries.filter(e=>{const my=getMonthYear(e.dataPag);return my&&my.m===i&&my.y===selYear;});
-        const sm=saidas.filter(s=>{const my=getMonthYear(s.dataPag);return my&&my.m===i&&my.y===selYear;});
+        const em=entries.filter(e=>{const my=getMonthYear(e.dataPag);return my&&my.m===i&&my.y===anoVisaoAnual;});
+        const sm=saidas.filter(s=>{const my=getMonthYear(s.dataPag);return my&&my.m===i&&my.y===anoVisaoAnual;});
         const fat=em.reduce((t,e)=>t+Number(e.valor||0),0);
         const des=sm.reduce((t,s)=>t+Number(s.valor||0),0);
         const luc=fat-des;
-        const isCur=i===selMonth&&selYear===new Date().getFullYear();
+        const isCur=i===selMonth&&anoVisaoAnual===new Date().getFullYear();
         if(!fat&&!des) return `<tr${isCur?' class="cur"':''}><td>${m}</td><td>—</td><td>—</td><td>—</td></tr>`;
         return `<tr${isCur?' class="cur"':''}><td>${m}</td><td class="pos">${brl(fat).replace('R$ ','')}</td><td class="neg">${brl(des).replace('R$ ','')}</td><td class="${luc>=0?'pos':'neg'}">${brl(luc).replace('R$ ','')}</td></tr>`;
     });
+
+    // Título do "Resultado" muda conforme o período
+    const tituloResultado =
+        resumoPeriodo === 'mes' ? 'Resultado do Mês' :
+        resumoPeriodo === 'ano' ? `Resultado de ${selYear}` :
+        resumoPeriodo === 'ultimos3' ? 'Resultado · Últimos 3 meses' :
+        resumoPeriodo === 'ultimos6' ? 'Resultado · Últimos 6 meses' :
+        resumoPeriodo === 'acumulado' ? 'Resultado · Acumulado do ano' :
+        'Resultado do período';
+
     return `
+    <!-- Filtros de período -->
+    <div class="resumo-filter">
+        <div class="rf-pills">
+            <button class="rf-pill ${resumoPeriodo==='mes'?'on':''}" onclick="setResumoPeriodo('mes')">Mês</button>
+            <button class="rf-pill ${resumoPeriodo==='ultimos3'?'on':''}" onclick="setResumoPeriodo('ultimos3')">3 meses</button>
+            <button class="rf-pill ${resumoPeriodo==='ultimos6'?'on':''}" onclick="setResumoPeriodo('ultimos6')">6 meses</button>
+            <button class="rf-pill ${resumoPeriodo==='acumulado'?'on':''}" onclick="setResumoPeriodo('acumulado')">Ano até hoje</button>
+            <button class="rf-pill ${resumoPeriodo==='ano'?'on':''}" onclick="setResumoPeriodo('ano')">Ano inteiro</button>
+            <button class="rf-pill ${resumoPeriodo==='personalizado'?'on':''}" onclick="setResumoPeriodo('personalizado')">Personalizado</button>
+        </div>
+        ${resumoPeriodo==='personalizado'?`
+        <div class="rf-custom">
+            <input type="date" class="fi" value="${resumoDataIni}" onchange="setResumoDataIni(this.value)">
+            <span>→</span>
+            <input type="date" class="fi" value="${resumoDataFim}" onchange="setResumoDataFim(this.value)">
+            <button class="bt on" onclick="aplicarResumoPersonalizado()" style="padding:8px 14px">Aplicar</button>
+        </div>`:''}
+    </div>
+
+    ${range.mostrarNav?`
     <div class="msel">
         <button class="mnbtn" onclick="chm(-1)">‹</button>
         <span class="mlab">${MONTHS[selMonth]} ${selYear}</span>
         <button class="mnbtn" onclick="chm(1)">›</button>
-    </div>
+    </div>`:`
+    <div class="msel" style="justify-content:center"><span class="mlab" style="font-size:.95rem">${tituloPeriodo}</span></div>
+    `}
+
     <div class="card">
         <div class="card-title">Faturamento</div>
         <div class="rsum-grid" style="margin-bottom:11px">
@@ -441,19 +473,6 @@ function renderResumo() {
         </div>
         ${['Produção Social','Noiva','Assistência'].map(o=>bar(o,byOri[o],fatTotal,'var(--ok)')).join('')}
         <div class="rrow total" style="margin-top:8px;padding-top:10px;border-top:2px solid #f0f0f0"><span class="rlbl">TOTAL</span><span class="rval" style="font-size:1.05rem;color:var(--ok)">${brl(fatTotal)}</span></div>
-    </div>
-    <div class="card">
-        <div class="card-title">Limite MEI ${selYear}</div>
-        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:2px">
-            <span style="font-size:.83rem;color:var(--muted)">Faturado: <strong style="color:${meiCor}">${brl(meiAno)}</strong></span>
-            <span style="font-size:.83rem;font-weight:700;color:${meiCor}">${meiPct}%</span>
-        </div>
-        <div class="mei-track"><div class="mei-fill" style="width:${meiPct}%;background:${meiCor}"></div></div>
-        <div style="display:flex;justify-content:space-between;font-size:.68rem;color:var(--muted);margin-bottom:8px"><span>R$ 0</span><span>R$ 81.000</span></div>
-        <div class="rrow"><span class="rlbl">Restante</span><span class="rval" style="color:${meiCor}">${brl(Math.max(0,meiRest))}</span></div>
-        <div class="rrow"><span class="rlbl">Meta mensal (÷12)</span><span class="rval">${brl(MEI_LIMITE/12)}</span></div>
-        ${mesesR>0&&selYear===new Date().getFullYear()?`<div class="rrow"><span class="rlbl">Margem p/ ${mesesR} meses restantes</span><span class="rval" style="color:${meiCor}">${brl(meiRest/mesesR)}/mês</span></div>`:''}
-        ${meiPct>=85?`<div style="background:var(--red-l);color:var(--red);border-radius:9px;padding:9px 11px;font-size:.79rem;font-weight:600;margin-top:8px">⚠️ Atenção: ${meiPct}% do limite MEI atingido!</div>`:''}
     </div>
     <div class="card">
         <div class="card-title">Saídas</div>
@@ -477,7 +496,7 @@ function renderResumo() {
         <div class="rrow total" style="margin-top:8px;padding-top:10px;border-top:2px solid #f0f0f0"><span class="rlbl">TOTAL${saidasNaturezaFilter!=='todas'?' (filtrado)':''}</span><span class="rval" style="font-size:1.05rem;color:var(--red)">${brl(despTotal)}</span></div>
     </div>
     <div class="card" style="background:linear-gradient(135deg,${lucroReal>=0?'#f1faf1,#e8f5e9':'#fff0f0,#ffebee'})">
-        <div class="card-title">Resultado do Mês</div>
+        <div class="card-title">${tituloResultado}</div>
         <div class="rrow"><span class="rlbl">Faturamento total</span><span class="rval">${brl(fatTotal)}</span></div>
         <div class="rrow"><span class="rlbl">Saídas totais</span><span class="rval" style="color:var(--red)">- ${brl(despTotal)}</span></div>
         <div class="rrow total" style="margin-top:6px;padding-top:10px;border-top:2px solid rgba(0,0,0,.08)"><span class="rlbl">LUCRO PREVISTO</span><span class="rval" style="font-size:1.1rem;color:${lucroTotal>=0?'var(--ok)':'var(--red)'}">${brl(lucroTotal)}</span></div>
@@ -485,7 +504,7 @@ function renderResumo() {
         <div style="text-align:center;margin-top:8px;font-size:1.5rem;font-weight:800;color:${lucroTotal>=0?'var(--ok)':'var(--red)'}">${margem}% margem</div>
     </div>
     <div class="card">
-        <div class="card-title">Visão Anual ${selYear}</div>
+        <div class="card-title">Visão Anual ${anoVisaoAnual}</div>
         <div style="overflow-x:auto">
         <table class="year-table">
             <tr><th>Mês</th><th>Faturamento</th><th>Saídas</th><th>Lucro</th></tr>
@@ -495,14 +514,14 @@ function renderResumo() {
     </div>
     ${(()=>{
         const byOri={};
-        entries.filter(e=>{const my=getMonthYear(e.dataPag);return my&&my.y===selYear;})
+        entries.filter(e=>{const my=getMonthYear(e.dataPag);return my&&my.y===anoVisaoAnual;})
             .forEach(e=>{ const o=e.origem||'Outros'; byOri[o]=(byOri[o]||0)+Number(e.valor||0); });
         const total=Object.values(byOri).reduce((a,b)=>a+b,0)||1;
         const cores={'Produção Social':'var(--brown)','Noiva':'#e91e63','Assistência':'#0d47a1','Curso de Automaquiagem':'#00796b','Outros':'var(--muted)'};
         const items=Object.entries(byOri).sort((a,b)=>b[1]-a[1]);
         if(!items.length) return '';
         return `<div class="card">
-            <div class="card-title">Faturamento por Origem — ${selYear}</div>
+            <div class="card-title">Faturamento por Origem — ${anoVisaoAnual}</div>
             ${items.map(([o,v])=>{
                 const pct=Math.round(v/total*100);
                 const cor=cores[o]||'var(--brown)';

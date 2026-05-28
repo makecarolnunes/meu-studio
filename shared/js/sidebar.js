@@ -21,8 +21,8 @@
   else if (_p.indexOf('/conteudo/concorrentes')      !== -1) { ACTIVE = 'radar';       BASE = '../'; }
   else if (_p.indexOf('/estrategia')            !== -1) { ACTIVE = 'cdc';          BASE = '../'; }
   else if (_p.indexOf('/instagram')             !== -1) { BASE = '../'; ACTIVE = _qs.indexOf('tab=validador') !== -1 ? 'validador' : 'instagram'; }
-  // Fiscal: sub-página de financeiro — testa ANTES de financeiro
-  else if (_p.indexOf('/financeiro/fiscal')     !== -1) { ACTIVE = 'fiscal';       BASE = '../'; }
+  // Fiscal vive DENTRO de Financeiro — destaca Financeiro na sidebar
+  else if (_p.indexOf('/financeiro/fiscal')     !== -1) { ACTIVE = 'financeiro';   BASE = '../'; }
   else {
     var _mapa = [
       ['financeiro',  '/financeiro'],
@@ -72,7 +72,6 @@
     // Operação diária
     { id: 'orcamentos',   label: 'Orçamentos',            path: 'orcamentos/orcamentos_novo.html',    icon: IC.doc   },
     { id: 'financeiro',   label: 'Financeiro',            path: 'financeiro/',                        icon: IC.fin   },
-    { id: 'fiscal',       label: 'Fiscal MEI',            path: 'financeiro/fiscal.html',             icon: IC.fis   },
     { id: 'clientes',     label: 'Clientes',              path: 'clientes/',                          icon: IC.usr   },
     // Organização
     { id: 'tarefas',      label: 'Tarefas',               path: 'tarefas/',                           icon: IC.task  },

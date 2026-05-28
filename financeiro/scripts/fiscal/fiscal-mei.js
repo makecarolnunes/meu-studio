@@ -213,8 +213,10 @@ function fsRenderPainel() {
 
   root.innerHTML = `
     ${fsRenderResumoTopo(p, mesNome, deltaHtml)}
-    ${fsRenderTetoCard(p)}
-    ${fsRenderCenarios(p)}
+    <div class="fs-card-row">
+      ${fsRenderTetoCard(p)}
+      ${fsRenderCenarios(p)}
+    </div>
     ${fsRenderMesesCard(p)}
   `;
 }

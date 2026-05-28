@@ -59,6 +59,15 @@ function setF(f) { listFilter=f; render(); }
 function setEquipeFilter(f) { listEquipeFilter=f; render(); }
 function setSaidaNatureza(n) { saidasNaturezaFilter = n; render(); }
 function pickSaidaNatureza(n) { Fs.natureza = n; render(); }
+// Filtro de período do Resumo
+function setResumoPeriodo(p) { resumoPeriodo = p; render(); }
+function setResumoDataIni(v) { resumoDataIni = v; if (resumoPeriodo==='personalizado') render(); }
+function setResumoDataFim(v) { resumoDataFim = v; if (resumoPeriodo==='personalizado') render(); }
+function aplicarResumoPersonalizado() {
+    if (!resumoDataIni || !resumoDataFim) { toast('Selecione data inicial e final'); return; }
+    resumoPeriodo = 'personalizado';
+    render();
+}
 function toggleEquipeInput(checked) {
     const inp = document.getElementById('i-eq');
     if (!inp) return;

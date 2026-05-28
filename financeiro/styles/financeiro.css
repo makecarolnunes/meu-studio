@@ -839,3 +839,41 @@ body { max-width: var(--fin-container); margin: 0 auto; }
 .natchip-mista { background: #fbeed3; color: #7a5408; }
 .natfilter .bt.on { background: var(--brown); color: #fff; border-color: var(--brown); }
 
+
+/* ── Filtro de período do Resumo (Sprint pós-fiscal) ─────── */
+.resumo-filter { margin-bottom: 12px; }
+.rf-pills {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+}
+.rf-pill {
+    padding: 7px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: white;
+    color: var(--muted);
+    font-size: .78rem;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all .15s;
+}
+.rf-pill.on {
+    background: var(--brown);
+    color: white;
+    border-color: var(--brown);
+}
+.rf-pill:hover:not(.on) { border-color: var(--brown); color: var(--brown); }
+.rf-custom {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+    padding: 10px;
+    background: var(--surface-2);
+    border-radius: 9px;
+}
+.rf-custom .fi { flex: 1; min-width: 130px; padding: 8px 10px; font-size: .82rem; }
+.rf-custom span { color: var(--muted); font-weight: 600; }

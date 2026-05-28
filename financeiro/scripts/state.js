@@ -38,6 +38,69 @@ let listEquipeFilter = 'todos';
 let saidasFormOpen = false;
 let saidasNaturezaFilter = 'todas';  // 'todas' | 'PROFISSIONAL' | 'PESSOAL' | 'MISTA'
 let noivaDetail    = null;
+
+// ── Resumo: filtro de período ─────────────────────────────
+// Tipos: 'mes' | 'ultimos3' | 'ultimos6' | 'ano' | 'acumulado' | 'personalizado'
+let resumoPeriodo  = 'mes';
+let resumoDataIni  = '';   // ISO yyyy-mm-dd quando 'personalizado'
+let resumoDataFim  = '';
+
+function resumoRange() {
+    const now  = new Date();
+    const yNow = now.getFullYear();
+    const mNow = now.getMonth();
+    const fmt = (d) => {
+        return new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'short' }).format(d).replace('.','');
+    };
+    if (resumoPeriodo === 'mes') {
+        const ini = new Date(selYear, selMonth, 1);
+        const fim = new Date(selYear, selMonth + 1, 0, 23, 59, 59);
+        return { ini, fim, titulo: `${MONTHS[selMonth]} ${selYear}`, mostrarNav: true };
+    }
+    if (resumoPeriodo === 'ultimos3') {
+        const ini = new Date(yNow, mNow - 2, 1);
+        const fim = new Date(yNow, mNow + 1, 0, 23, 59, 59);
+        return { ini, fim, titulo: `Últimos 3 meses · ${fmt(ini)}–${fmt(fim)}`, mostrarNav: false };
+    }
+    if (resumoPeriodo === 'ultimos6') {
+        const ini = new Date(yNow, mNow - 5, 1);
+        const fim = new Date(yNow, mNow + 1, 0, 23, 59, 59);
+        return { ini, fim, titulo: `Últimos 6 meses · ${fmt(ini)}–${fmt(fim)}`, mostrarNav: false };
+    }
+    if (resumoPeriodo === 'ano') {
+        const ini = new Date(selYear, 0, 1);
+        const fim = new Date(selYear, 11, 31, 23, 59, 59);
+        return { ini, fim, titulo: `Ano de ${selYear}`, mostrarNav: false };
+    }
+    if (resumoPeriodo === 'acumulado') {
+        const ini = new Date(yNow, 0, 1);
+        const fim = new Date(yNow, mNow + 1, 0, 23, 59, 59);
+        return { ini, fim, titulo: `Acumulado ${yNow}`, mostrarNav: false };
+    }
+    if (resumoPeriodo === 'personalizado' && resumoDataIni && resumoDataFim) {
+        const ini = new Date(resumoDataIni);
+        const fim = new Date(resumoDataFim);
+        fim.setHours(23,59,59);
+        return { ini, fim, titulo: `${fmt(ini)} → ${fmt(fim)}`, mostrarNav: false };
+    }
+    // fallback: mês
+    const ini = new Date(selYear, selMonth, 1);
+    const fim = new Date(selYear, selMonth + 1, 0, 23, 59, 59);
+    return { ini, fim, titulo: `${MONTHS[selMonth]} ${selYear}`, mostrarNav: true };
+}
+
+// Helper: registro está no intervalo? (recebe yyyy-mm-dd ou Date)
+function inResumoRange(dataStr, ini, fim) {
+    if (!dataStr) return false;
+    const d = new Date(dataStr);
+    if (isNaN(d)) return false;
+    return d >= ini && d <= fim;
+}
+
+// Quantos meses (incluindo bordas) o range cobre — pra anualizações e médias
+function rangeMeses(ini, fim) {
+    return (fim.getFullYear() - ini.getFullYear()) * 12 + (fim.getMonth() - ini.getMonth()) + 1;
+}
 let isSyncing        = false;
 let selectedEntryId  = null;   // master-detail desktop: entrada selecionada
 let F = {}, Fs = {};

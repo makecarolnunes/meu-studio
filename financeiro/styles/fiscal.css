@@ -892,3 +892,176 @@ body {
 /* ── Botão de entrada (no financeiro/index.html) ────────────── */
 /* Estilo opt-in: classe .gear-btn já existe no financeiro.css.
    Aqui não definimos nada — usamos o mesmo .gear-btn lá. */
+
+/* ═══════════════════════════════════════════════════════════════
+   DESKTOP — ≥1024px
+   Reconfiguração completa: sidebar vertical, grid 2 colunas,
+   cards arejados, melhor uso da largura.
+   Mobile (<1024px) permanece intacto.
+   ═══════════════════════════════════════════════════════════════ */
+@media (min-width: 1024px) {
+    :root {
+        --fs-sidebar: 232px;
+        --fs-shell:   1180px;
+        --fs-shell-pad: 24px;
+    }
+
+    body {
+        background: linear-gradient(180deg, #efe7e0 0%, var(--surface-2) 100%);
+    }
+
+    #fiscal-app {
+        position: relative;
+        max-width: var(--fs-shell);
+        margin: 0 auto;
+        min-height: 100vh;
+        background: var(--bg);
+        box-shadow: 0 1px 0 var(--border), 0 8px 32px rgba(56,25,11,.06);
+        padding-left: var(--fs-sidebar);
+    }
+
+    /* ── BOTTOM NAV vira sidebar vertical ── */
+    .fs-bnav {
+        position: absolute;
+        top: 0; bottom: 0; left: 0;
+        width: var(--fs-sidebar);
+        height: auto;
+        min-height: 100vh;
+        flex-direction: column;
+        align-items: stretch;
+        justify-content: flex-start;
+        gap: 4px;
+        padding: 88px 14px 24px;
+        background: linear-gradient(180deg, #fbf6f1, #f5ede5);
+        border-top: none;
+        border-right: 1px solid var(--border);
+        box-shadow: none;
+        transform: none;
+        z-index: 50;
+        padding-bottom: 24px;
+    }
+    .fs-ni {
+        flex: 0 0 auto;
+        flex-direction: row;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 12px;
+        padding: 11px 14px;
+        border-radius: 11px;
+        font-size: .92rem;
+        font-weight: 600;
+        text-align: left;
+        color: var(--text);
+    }
+    .fs-ni svg { width: 19px; height: 19px; flex-shrink: 0; }
+    .fs-ni.active {
+        background: linear-gradient(135deg, var(--brand-dark), var(--brand));
+        color: #fff;
+        box-shadow: 0 4px 12px rgba(109,76,65,.28);
+    }
+    .fs-ni.active svg { stroke: #fff; }
+    .fs-ni:not(.active):not(:disabled):hover {
+        background: rgba(255,255,255,.65);
+        color: var(--brand-dark);
+    }
+
+    /* ── HEADER ── */
+    .fs-hdr {
+        position: static;
+        grid-template-columns: 1fr auto;
+        padding: 22px 32px;
+        background: linear-gradient(135deg, var(--brand-dark), var(--brand));
+        border-radius: 0;
+        box-shadow: inset 0 -1px 0 rgba(255,255,255,.08);
+    }
+    .fs-hdr > div:first-child { display: none; }
+    .fs-hdr-center { text-align: left; }
+    .fs-hdr-center h1 { font-size: 1.4rem; letter-spacing: -.01em; }
+    .fs-hdr-sub { font-size: .82rem; margin-top: 4px; opacity: .8; }
+    .fs-iconbtn { width: 38px; height: 38px; }
+
+    /* Back float só faz sentido em mobile */
+    #fiscal-app .btn-back-float { display: none; }
+
+    /* ── CONTENT ── */
+    .fs-content {
+        max-width: none;
+        padding: 32px 36px 64px;
+    }
+
+    /* ── PAINEL: grid 12 colunas ── */
+    .fs-content .fs-grid-2 {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+        margin-bottom: 16px;
+    }
+    .fs-mini { padding: 22px 24px; }
+    .fs-mini-value { font-size: 26px; }
+    .fs-mini-label { font-size: 11px; }
+
+    /* Cards arejados */
+    .fs-card { padding: 24px 28px; margin-bottom: 16px; }
+    .fs-card-title { font-size: 11px; margin-bottom: 16px; }
+
+    /* Teto + Cenários lado a lado */
+    .fs-card-row {
+        display: grid;
+        grid-template-columns: 1.2fr 1fr;
+        gap: 16px;
+        margin-bottom: 16px;
+    }
+    .fs-card-row > .fs-card { margin-bottom: 0; }
+
+    /* Bignum / teto-pct mais imponentes no desktop */
+    .fs-teto-pct { font-size: 36px; }
+    .fs-bignum   { font-size: 42px; }
+
+    /* Barra mensal — mais alta */
+    .fs-mb-bars { height: 160px; }
+    .fs-mb-label { font-size: 11px; }
+
+    /* ── DESPESAS ── */
+    .fs-desp-filters .fs-pill-row { gap: 8px; }
+    .fs-pill { padding: 8px 16px; font-size: 13px; }
+
+    /* Lista 2 colunas no desktop */
+    .fs-desp-list-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+    }
+    .fs-desp-item { padding: 14px 16px; }
+    .fs-desp-titulo { font-size: 14px; }
+    .fs-desp-meta { font-size: 12px; }
+    .fs-desp-valor { font-size: 15px; }
+
+    /* Modal mais centralizado (não slide-up) */
+    .fs-modal-bg {
+        align-items: center;
+    }
+    .fs-modal {
+        max-width: 560px;
+        border-radius: var(--radius-xl);
+        max-height: 85vh;
+        animation: fs-fade-in 0.2s ease;
+    }
+    @keyframes fs-fade-in {
+        from { opacity: 0; transform: translateY(8px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Categorias em 3 colunas na revisão */
+    .fs-cat-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   DESKTOP LARGE — ≥1440px
+   ═══════════════════════════════════════════════════════════════ */
+@media (min-width: 1440px) {
+    .fs-content { padding: 40px 56px 80px; }
+    .fs-card-row { grid-template-columns: 1.3fr 1fr; gap: 20px; }
+    .fs-content .fs-grid-2 { gap: 20px; }
+    .fs-card { padding: 28px 32px; }
+}
