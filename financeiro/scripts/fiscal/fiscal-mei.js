@@ -23,26 +23,30 @@ function fsParseDate(s) {
 function fsSameYear(d, ano)  { return d && d.getFullYear() === ano; }
 function fsClampMonth(m)     { return Math.max(0, Math.min(11, m)); }
 
-// ── Teto efetivo (proporcional no 1º ano) ───────────────────
+// ── Teto efetivo: delega à fonte única ──────────────────────
 function fsTetoEfetivo(cfg, ano) {
+  if (window.mkFiscal && window.mkFiscal.tetoEfetivo) {
+    return window.mkFiscal.tetoEfetivo(cfg, ano);
+  }
+  // Fallback (não deveria ocorrer — calc-fiscal.js sempre carregado)
   const teto = Number(cfg && cfg.tetoAnual) || 81000;
   const abertura = fsParseDate(cfg && cfg.dataAbertura);
   if (!abertura || abertura.getFullYear() !== ano) return teto;
-  const mesesAtivos = 12 - abertura.getMonth();
-  return Math.round((teto / 12) * mesesAtivos * 100) / 100;
+  return Math.round((teto / 12) * (12 - abertura.getMonth()) * 100) / 100;
 }
 
 // ── Coleta de movimentos por cenário ────────────────────────
-// Retorna lista de { data, valor, fonte } para o ano selecionado.
+// Realizado: 100% mesma regra do Resumo (fonte única calc-fiscal.js)
 function fsMovimentosRealizado(entries, ano) {
   const out = [];
+  if (!Array.isArray(entries)) return out;
   for (const e of entries) {
     if (!e || e.auto) continue;
     if (e.status !== 'Realizado') continue;
     const d = fsParseDate(e.dataPag);
     if (!fsSameYear(d, ano)) continue;
     const v = parseFloat(e.valor) || 0;
-    if (v <= 0) continue;
+    if (v === 0) continue;
     out.push({ data: d, valor: v, fonte: 'realizado' });
   }
   return out;
@@ -51,13 +55,14 @@ function fsMovimentosRealizado(entries, ano) {
 function fsMovimentosPrevistos(entries, ano) {
   // status=Previsto, qualquer auto (auto=true são restantes de noivas)
   const out = [];
+  if (!Array.isArray(entries)) return out;
   for (const e of entries) {
     if (!e) continue;
     if (e.status !== 'Previsto') continue;
     const d = fsParseDate(e.dataPag);
     if (!fsSameYear(d, ano)) continue;
     const v = parseFloat(e.valor) || 0;
-    if (v <= 0) continue;
+    if (v === 0) continue;
     out.push({ data: d, valor: v, fonte: e.auto ? 'previsto-noiva' : 'previsto-manual' });
   }
   return out;

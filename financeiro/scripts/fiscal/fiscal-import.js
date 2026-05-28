@@ -85,7 +85,11 @@ async function fsImportDedupAndPreview() {
 
   // Pré-conciliação contra `saidas` existentes (apenas débitos)
   // Match: mesma data ±2 dias + mesmo |valor| (±R$0,01)
-  const saidasAll = FS.saidas || [];
+  // Em financeiro: usa window.saidas (global do módulo).
+  // Em fiscal: usa FS.saidas (carregado em fiscalRefresh).
+  const saidasAll = (FS.saidas && FS.saidas.length)
+    ? FS.saidas
+    : (Array.isArray(window.saidas) ? window.saidas : []);
   const possiveis = [];
   for (const t of novas) {
     if (t.valor >= 0) continue; // só débitos pra conciliação com saidas
@@ -469,14 +473,21 @@ async function fsImportSalvar() {
   }
 
   // 3) Atualiza state e fecha modal
-  FS.saidas = [...(FS.saidas || []), ...novasSaidas];
+  FS.saidas   = [...(FS.saidas   || []), ...novasSaidas];
   FS.despesas = [...(FS.despesas || []), ...novasDespesas];
   fiscalModalClose();
   fsToast(`${novasSaidas.length} saída(s) importada(s)!`);
-  // Re-render despesas
-  if (FS.screen === 'despesas') fiscalRender();
-  // Refresh full
-  fiscalRefresh();
+
+  // Refresh sensível ao contexto da página atual
+  const ehPaginaFiscal     = !!document.getElementById('fiscal-app');
+  const ehPaginaFinanceiro = !!document.getElementById('app') && !ehPaginaFiscal;
+
+  if (ehPaginaFinanceiro && typeof window.loadFromSupabase === 'function') {
+    // Recarrega tudo do financeiro (saidas, entries, noivas) — fonte da verdade
+    try { await window.loadFromSupabase(); } catch(_) {}
+  } else if (ehPaginaFiscal && typeof window.fiscalRefresh === 'function') {
+    try { await window.fiscalRefresh(); } catch(_) {}
+  }
 }
 
 // Helper: fmt data BR

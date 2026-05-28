@@ -160,9 +160,15 @@ async function fiscalSaveConfig() {
   }
 }
 
-// ── Auto-boot quando o DOM estiver pronto ───────────────────
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', fiscalBoot);
-} else {
+// ── Auto-boot apenas quando estiver na página fiscal ────────
+// Em outros contextos (financeiro), os mesmos scripts são carregados
+// só pra suportar o fluxo de import — fiscalBoot não roda.
+function _fsAutoBoot() {
+  if (!document.getElementById('fiscal-app')) return;
   fiscalBoot();
+}
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', _fsAutoBoot);
+} else {
+  _fsAutoBoot();
 }

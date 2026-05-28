@@ -103,12 +103,10 @@ function fsRenderDespesas() {
       </div>`:''}
     </div>
 
-    <!-- Botão importar -->
-    <button class="fs-btn fs-btn-primary fs-import-btn" onclick="fsImportAbrir()">
-      <span style="font-size:18px">📥</span> Importar extrato bancário
-    </button>
-
     <!-- Lista -->
+    <p style="font-size:var(--text-xs);color:var(--text-subtle);margin:0 0 var(--space-3);text-align:center">
+      Pra importar extrato, vá ao <b>Financeiro → Saídas</b>.
+    </p>
     ${filtradas.length === 0 ? `
       <div class="fs-empty">
         <h3>Sem despesas nessa visão</h3>

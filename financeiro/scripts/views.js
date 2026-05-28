@@ -321,7 +321,10 @@ function renderSaidas() {
         ${cntMista>0?`<button class="bt ${saidasNaturezaFilter==='MISTA'?'on':''}" onclick="setSaidaNatureza('MISTA')" style="font-size:.78rem">Mista (${cntMista})</button>`:''}
     </div>
 
-    <button class="add-btn ${saidasFormOpen?'open':''}" onclick="toggleSaidasForm()">${saidasFormOpen?'✕ Fechar':'＋ Nova Saída'}</button>
+    <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">
+        <button class="add-btn ${saidasFormOpen?'open':''}" style="flex:1;min-width:0" onclick="toggleSaidasForm()">${saidasFormOpen?'✕ Fechar':'＋ Nova Saída'}</button>
+        <button class="add-btn" style="flex:1;min-width:0;background:var(--brown-soft);color:var(--brown);border:1px solid var(--brown)" onclick="fsImportAbrir()">📥 Importar extrato</button>
+    </div>
     ${saidasFormOpen?`
     <div class="card">
         <div class="fg"><label class="fl">Natureza</label><div class="bg">
@@ -397,7 +400,11 @@ function renderResumo() {
     const byOri={}, bySai={};
     ['Produção Social','Noiva','Assistência'].forEach(o=>byOri[o]=me.filter(e=>e.origem===o).reduce((t,e)=>t+Number(e.valor||0),0));
     ms.forEach(s=>bySai[s.tipo]=(bySai[s.tipo]||0)+Number(s.valor||0));
-    const meiAno = entries.filter(e=>{const my=getMonthYear(e.dataPag);return my&&my.y===selYear&&e.status==='Realizado';}).reduce((t,e)=>t+Number(e.valor||0),0);
+    // FONTE ÚNICA — shared/js/calc-fiscal.js (mesma usada no painel Fiscal)
+    const meiAno = (window.mkFiscal && window.mkFiscal.faturamentoRealizadoAno)
+        ? window.mkFiscal.faturamentoRealizadoAno(entries, selYear)
+        : entries.filter(e=>!e.auto && e.status==='Realizado' && (getMonthYear(e.dataPag)||{}).y===selYear)
+                 .reduce((t,e)=>t+Number(e.valor||0),0);
     const meiPct = Math.min(100,Math.round(meiAno/MEI_LIMITE*100));
     const meiCor = meiPct<60?'var(--ok)':meiPct<85?'#f59e0b':'var(--red)';
     const meiRest= MEI_LIMITE-meiAno;
