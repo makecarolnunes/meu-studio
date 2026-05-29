@@ -601,6 +601,37 @@ function renderResumo() {
     <div class="msel" style="justify-content:center"><span class="mlab" style="font-size:.95rem">${tituloPeriodo}</span></div>
     `}
 
+    ${resumoPeriodo === 'mes' ? (() => {
+        const meta = getMetaMensal();
+        if (meta <= 0) {
+            return `<button onclick="promptMetaMensal()" style="width:100%;padding:11px;background:white;color:var(--brown);border:1.5px dashed var(--brown);border-radius:12px;font-size:.85rem;font-weight:600;cursor:pointer;margin-bottom:11px;display:flex;align-items:center;justify-content:center;gap:6px">🎯 Definir meta mensal</button>`;
+        }
+        const pct = Math.min(100, (fatTotal / meta) * 100);
+        const pctNum = Math.round(pct);
+        const sobra = meta - fatTotal;
+        const atingiu = fatTotal >= meta;
+        const corBar = atingiu ? 'var(--ok)' : pct >= 80 ? '#f59e0b' : 'var(--brown)';
+        const status = atingiu
+            ? `<strong style="color:var(--ok)">Meta atingida!</strong> Excedente: ${brl(fatTotal - meta)}`
+            : `Faltam <strong>${brl(sobra)}</strong> para atingir`;
+        return `
+        <div class="card" style="background:linear-gradient(135deg,#fbf6f1,#fff)">
+            <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px">
+                <div>
+                    <div class="card-title" style="margin:0">Meta do mês</div>
+                    <div style="font-size:.75rem;color:var(--muted);margin-top:3px">${status}</div>
+                </div>
+                <div style="text-align:right">
+                    <div style="font-size:1.05rem;font-weight:800;color:${corBar}">${pctNum}%</div>
+                    <div style="font-size:.7rem;color:var(--muted)">${brl(fatTotal)} / ${brl(meta)}</div>
+                </div>
+            </div>
+            <div style="background:#e8ddd8;border-radius:6px;height:10px;overflow:hidden">
+                <div style="width:${pct}%;background:${corBar};height:10px;border-radius:6px;transition:width .4s"></div>
+            </div>
+            <button onclick="promptMetaMensal()" style="background:none;border:none;color:var(--brown);font-size:.7rem;cursor:pointer;padding:6px 0 0;display:block;margin-left:auto">Editar meta</button>
+        </div>`;
+    })() : ''}
     <div class="card">
         <div class="card-title">Faturamento</div>
         <div class="rsum-grid" style="margin-bottom:11px">
@@ -638,6 +669,12 @@ function renderResumo() {
         <div class="rrow total" style="margin-top:6px;padding-top:10px;border-top:2px solid rgba(0,0,0,.08)"><span class="rlbl">LUCRO PREVISTO</span><span class="rval" style="font-size:1.1rem;color:${lucroTotal>=0?'var(--ok)':'var(--red)'}">${brl(lucroTotal)}</span></div>
         <div class="rrow total"><span class="rlbl">LUCRO REALIZADO</span><span class="rval" style="font-size:1.1rem;color:${lucroReal>=0?'var(--ok)':'var(--red)'}">${brl(lucroReal)}</span></div>
         <div style="text-align:center;margin-top:8px;font-size:1.5rem;font-weight:800;color:${lucroTotal>=0?'var(--ok)':'var(--red)'}">${margem}% margem</div>
+        ${lucroReal > 0 ? `
+        <div style="margin-top:10px;padding:10px 12px;background:rgba(255,255,255,.55);border-radius:10px;text-align:center;font-size:.78rem;color:var(--text)">
+            <span style="color:var(--muted)">Equivale a um salário CLT de</span>
+            <strong style="color:var(--ok);font-size:.95rem;display:block;margin-top:2px">${brl(lucroReal / 0.72)} bruto</strong>
+            <span style="font-size:.68rem;color:var(--muted);display:block;margin-top:2px">Considerando INSS + IRRF típicos (fator 0,72)</span>
+        </div>` : ''}
     </div>
     <div class="card">
         <div class="card-title">Visão Anual ${anoVisaoAnual}</div>

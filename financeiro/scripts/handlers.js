@@ -124,20 +124,32 @@ async function saveEntry() {
 
 async function delEntry(id) {
     const target = entries.find(e=>String(e.id)===String(id));
-    const filhoPrev = target && target.tipo==='Sinal'
+    if (!target) return;
+    const filhoPrev = target.tipo==='Sinal'
         ? entries.find(e => String(e.parentSinalId||'')===String(target.id))
         : null;
-    const msg = filhoPrev
-        ? 'Excluir este Sinal? O Previsto auto vinculado também será removido.'
-        : 'Excluir este lançamento?';
-    if (!confirm(msg)) return;
     const idsParaApagar = new Set([String(id)]);
     if (filhoPrev) idsParaApagar.add(String(filhoPrev.id));
+    const removidos = entries.filter(e => idsParaApagar.has(String(e.id)));
+
+    // Soft delete: remove da UI agora, commita no Supabase após 5s sem undo
     entries = entries.filter(e => !idsParaApagar.has(String(e.id)));
-    cacheEntries();
-    idsParaApagar.forEach(delId => sbCall({action:'delete', table:'entries', id: delId}));
-    if (target?.noivaId) recalcRestaNoiva(target.noivaId);
-    render(); toast(filhoPrev ? 'Sinal + Previsto excluídos' : 'Excluído');
+    cacheEntries(); render();
+
+    const msg = filhoPrev ? 'Sinal + Previsto removidos' : 'Lançamento removido';
+    showUndoToast(msg,
+        // restore
+        () => {
+            // Restaura na ordem original
+            removidos.forEach(item => entries.unshift(item));
+            cacheEntries(); render();
+        },
+        // commit (após 5s sem undo)
+        () => {
+            idsParaApagar.forEach(delId => sbCall({action:'delete', table:'entries', id: delId}));
+            if (target.noivaId) recalcRestaNoiva(target.noivaId);
+        }
+    );
 }
 
 async function toggleStatus(id) {
@@ -196,6 +208,7 @@ async function delSaida(id) {
     const s = saidas.find(x=>String(x.id)===String(id));
     if (!s) return;
     if (s.grupoId) {
+        // Saídas recorrentes: mantém modal de escopo (decisão explícita do usuário)
         _pendingDelSaidaId = id;
         document.getElementById('modal-bg').style.display='flex';
         document.getElementById('modal-inner').innerHTML=`
@@ -207,10 +220,13 @@ async function delSaida(id) {
         <button class="skip" onclick="closeModal()">Cancelar</button>`;
         return;
     }
-    if (!confirm('Excluir?')) return;
-    saidas=saidas.filter(x=>String(x.id)!==String(id));
-    cacheSaidas(); render(); toast('Excluído');
-    sbCall({action:'delete', table:'saidas', id});
+    // Soft delete com undo
+    saidas = saidas.filter(x => String(x.id) !== String(id));
+    cacheSaidas(); render();
+    showUndoToast('Saída removida',
+        () => { saidas.unshift(s); cacheSaidas(); render(); },
+        () => sbCall({action:'delete', table:'saidas', id})
+    );
 }
 
 function execDelSaida(scope) {

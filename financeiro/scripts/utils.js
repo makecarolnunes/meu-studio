@@ -40,6 +40,68 @@ function toast(msg, dur) {
     setTimeout(() => t.classList.remove('show'), dur || 2400);
 }
 
+// ── Undo toast (soft delete) ──
+// Mantém 1 ação pendente por vez. Se outra chegar, a anterior é committada.
+let _pendingUndo = null;  // { commitFn, restoreFn, timerId }
+
+function showUndoToast(msg, restoreFn, commitFn, durMs) {
+    // Se já tem uma pendente, commita ela imediatamente
+    if (_pendingUndo) {
+        clearTimeout(_pendingUndo.timerId);
+        try { _pendingUndo.commitFn(); } catch (_) {}
+        _pendingUndo = null;
+    }
+    const t = document.getElementById('undo-toast');
+    if (!t) {
+        // Sem elemento: comporta como delete imediato
+        try { commitFn(); } catch (_) {}
+        return;
+    }
+    t.innerHTML = `<span class="undo-msg"></span><button class="undo-btn" onclick="undoSoftDelete()">Desfazer</button>`;
+    t.querySelector('.undo-msg').textContent = msg;
+    t.classList.add('show');
+    const timerId = setTimeout(() => {
+        t.classList.remove('show');
+        try { commitFn(); } catch (_) {}
+        _pendingUndo = null;
+    }, durMs || 5000);
+    _pendingUndo = { commitFn, restoreFn, timerId };
+}
+
+function undoSoftDelete() {
+    if (!_pendingUndo) return;
+    clearTimeout(_pendingUndo.timerId);
+    const restore = _pendingUndo.restoreFn;
+    _pendingUndo = null;
+    const t = document.getElementById('undo-toast');
+    if (t) t.classList.remove('show');
+    try { restore(); } catch (_) {}
+    toast('Restaurado');
+}
+
+// ── Meta mensal de faturamento (localStorage) ──
+function getMetaMensal() {
+    const v = localStorage.getItem('mk_meta_mensal');
+    const n = v ? Number(v) : 0;
+    return isFinite(n) && n > 0 ? n : 0;
+}
+function setMetaMensal(v) {
+    if (!v || v <= 0) localStorage.removeItem('mk_meta_mensal');
+    else localStorage.setItem('mk_meta_mensal', String(v));
+}
+function promptMetaMensal() {
+    const atual = getMetaMensal();
+    const v = prompt('Meta de faturamento mensal (R$):\nDeixe vazio para desativar.', atual || '');
+    if (v === null) return;
+    const trimmed = v.trim();
+    if (trimmed === '') { setMetaMensal(0); toast('Meta desativada'); render(); return; }
+    const n = parseFloat(trimmed.replace(/\./g,'').replace(',', '.'));
+    if (!isFinite(n) || n < 0) { toast('Valor inválido'); return; }
+    setMetaMensal(n);
+    toast(n > 0 ? `Meta definida: ${brl(n)}/mês` : 'Meta desativada');
+    render();
+}
+
 function typeStyle(t) {
     return { Sinal:{bg:'#fff3e0',col:'#bf360c',ico:SVG.lock}, Pagamento:{bg:'#efebe9',col:'#4e342e',ico:SVG.money}, Parcela:{bg:'#e3f2fd',col:'#0d47a1',ico:SVG.calendar} }[t]
         || { bg:'#f5f5f5', col:'#666', ico:SVG.money };

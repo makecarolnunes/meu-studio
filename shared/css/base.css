@@ -34,3 +34,30 @@ body {
   white-space: nowrap; pointer-events: none;
 }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* Undo toast (soft delete) — fica acima do bottom-nav e aceita botão Desfazer */
+.undo-toast {
+  position: fixed; bottom: 96px; left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: #222; color: white;
+  padding: 10px 14px 10px 18px; border-radius: 14px;
+  font-size: .82rem; font-weight: 500;
+  z-index: 998;
+  opacity: 0; transition: opacity .2s, transform .2s;
+  pointer-events: none;
+  display: flex; align-items: center; gap: 14px;
+  box-shadow: 0 6px 18px rgba(0,0,0,.25);
+  max-width: 92vw;
+}
+.undo-toast.show {
+  opacity: 1; transform: translateX(-50%) translateY(0);
+  pointer-events: auto;
+}
+.undo-toast .undo-msg { flex: 1; min-width: 0; }
+.undo-toast .undo-btn {
+  background: none; border: 1.5px solid rgba(255,255,255,.45);
+  color: white; padding: 5px 12px; border-radius: 8px;
+  cursor: pointer; font-size: .8rem; font-weight: 700;
+  white-space: nowrap;
+}
+.undo-toast .undo-btn:active { background: rgba(255,255,255,.15); }

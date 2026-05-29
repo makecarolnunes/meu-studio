@@ -160,6 +160,37 @@ function fsCalcPainel(entries, orcamentos, cfg) {
   const mesesRestantes = ehAnoCorrente ? Math.max(12 - mesAtual, 1) : 0;
   const margemMensal = mesesRestantes > 0 ? restanteAteTeto / mesesRestantes : 0;
 
+  // ── Simulador: projeção por ritmo atual ──
+  // Média mensal dos meses já decorridos no ano corrente
+  const mesesDecorridos = ehAnoCorrente ? (mesAtual + 1) : 12;
+  const mediaMensalRitmo = mesesDecorridos > 0 ? realizadoAno / mesesDecorridos : 0;
+  const projecaoRitmo = ehAnoCorrente
+    ? realizadoAno + (mediaMensalRitmo * mesesRestantes)
+    : realizadoAno;
+  const pctRitmo = teto > 0 ? (projecaoRitmo / teto) * 100 : 0;
+
+  // Média ponderada pelos últimos 3 meses (peso maior em meses recentes)
+  let mediaPonderada = 0;
+  if (ehAnoCorrente && mesAtual >= 2) {
+    // Pega mesAtual, mesAtual-1, mesAtual-2 com pesos 3,2,1
+    const w = [3, 2, 1];
+    let soma = 0, peso = 0;
+    for (let i = 0; i < 3; i++) {
+      const idx = mesAtual - i;
+      if (idx >= 0) {
+        soma += mesesRealizado[idx] * w[i];
+        peso += w[i];
+      }
+    }
+    mediaPonderada = peso > 0 ? soma / peso : 0;
+  } else {
+    mediaPonderada = mediaMensalRitmo;
+  }
+  const projecaoPonderada = ehAnoCorrente
+    ? realizadoAno + (mediaPonderada * mesesRestantes)
+    : realizadoAno;
+  const pctPonderada = teto > 0 ? (projecaoPonderada / teto) * 100 : 0;
+
   // Nível de alerta baseado no PROVÁVEL
   let nivel = 'ok';
   if (pctProvavel >= 100 || pctRealizado >= 95) nivel = 'danger';
@@ -174,6 +205,8 @@ function fsCalcPainel(entries, orcamentos, cfg) {
     pctRealizado, pctConservador, pctProvavel, pctOtimista,
     estouroConservador, estouroProvavel, estouroOtimista,
     margemMensal, restanteAteTeto, mesesRestantes,
+    mediaMensalRitmo, projecaoRitmo, pctRitmo,
+    mediaPonderada, projecaoPonderada, pctPonderada,
     nivel,
     mesesRealizado, mesesPrevisto, mesesOrc,
   };
@@ -217,7 +250,46 @@ function fsRenderPainel() {
       ${fsRenderTetoCard(p)}
       ${fsRenderCenarios(p)}
     </div>
+    ${p.ehAnoCorrente && p.mesesRestantes > 0 && p.realizadoAno > 0 ? fsRenderSimulador(p) : ''}
     ${fsRenderMesesCard(p)}
+  `;
+}
+
+function fsRenderSimulador(p) {
+  const cor = (pct) => pct >= 100 ? 'danger' : pct >= 85 ? 'warn' : 'ok';
+  const corRitmo    = cor(p.pctRitmo);
+  const corPonderada = cor(p.pctPonderada);
+  const pctRitmoClamp = Math.min(p.pctRitmo, 100);
+  const pctPondClamp  = Math.min(p.pctPonderada, 100);
+
+  return `
+    <div class="fs-card">
+      <div class="fs-card-title">Simulador · ritmo atual</div>
+      <p class="fs-cen-help">Projeções automáticas baseadas no que você já faturou — sem contar previstos nem orçamentos.</p>
+
+      <div class="fs-cen-row">
+        <div class="fs-cen-head">
+          <span class="fs-cen-label">Mantendo a média mensal</span>
+          <span class="fs-cen-val">${fsBrl(p.projecaoRitmo)} <span class="fs-cen-pct ${corRitmo}">${p.pctRitmo.toFixed(0)}%</span></span>
+        </div>
+        <div class="fs-cen-bar"><div class="fs-cen-fill ${corRitmo}" style="width:${pctRitmoClamp}%"></div></div>
+        <div class="fs-cen-foot" style="margin-top:6px;padding-top:0;border-top:none">
+          <span>Média de R$ ${p.mediaMensalRitmo.toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0})}/mês × ${p.mesesRestantes} ${p.mesesRestantes === 1 ? 'mês restante' : 'meses restantes'}</span>
+        </div>
+      </div>
+
+      ${p.mesAtual >= 2 ? `
+      <div class="fs-cen-row">
+        <div class="fs-cen-head">
+          <span class="fs-cen-label">Pelo ritmo dos últimos 3 meses</span>
+          <span class="fs-cen-val">${fsBrl(p.projecaoPonderada)} <span class="fs-cen-pct ${corPonderada}">${p.pctPonderada.toFixed(0)}%</span></span>
+        </div>
+        <div class="fs-cen-bar"><div class="fs-cen-fill ${corPonderada}" style="width:${pctPondClamp}%"></div></div>
+        <div class="fs-cen-foot" style="margin-top:6px;padding-top:0;border-top:none">
+          <span>Média ponderada de R$ ${p.mediaPonderada.toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0})}/mês (peso maior nos meses recentes)</span>
+        </div>
+      </div>` : ''}
+    </div>
   `;
 }
 
