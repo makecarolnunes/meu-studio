@@ -229,5 +229,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-29 03:44 | main | chore: remove m├│dulo confirmacao + amplia BACKLOG com sugest├Áes por m├│dulo -->
+<!-- AUTO: 2026-05-29 03:49 | main | fix(financeiro): exp├Áe erro real do Supabase no toast (debug mobile) -->
 
