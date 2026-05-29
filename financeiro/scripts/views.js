@@ -167,10 +167,14 @@ function selectEntry(id) {
 
 // ── DESKTOP: painel de detalhe/edição inline ──
 function renderEntryDetailPanel(e) {
+    const pixBtnDetail = e.status === 'Previsto' && Number(e.valor) > 0
+        ? `<button class="pixbtn" style="margin-left:8px" onclick="openPixModal('${e.id}')" title="Gerar QR PIX">PIX</button>`
+        : '';
     return `
     <div class="detail-hdr">
         <span class="detail-name">${e.cliente||'(sem nome)'}</span>
         <span class="sbadge ${e.status==='Realizado'?'sb-g':'sb-r'}">${e.status==='Realizado'?'Realizado':'Previsto'}</span>
+        ${pixBtnDetail}
     </div>
     <div class="fg"><label class="fl">Cliente</label><input class="fi" type="text" id="ee-cliente" value="${(e.cliente||'').replace(/"/g,'&quot;')}" autocomplete="off"></div>
     <div class="two">
@@ -276,6 +280,9 @@ function renderListaDesktop() {
                     const isSel=String(e.id)===String(selectedEntryId);
                     const auto=e.auto?`<span class="auto-tag">auto</span>`:'';
                     const equipe=e.equipe?`<span class="equipe-tag">↑ ${e.equipe}</span>`:'';
+                    const pixBtnD = e.status === 'Previsto' && Number(e.valor) > 0
+                        ? `<button class="pixbtn" onclick="event.stopPropagation();openPixModal('${e.id}')" title="Gerar QR PIX">PIX</button>`
+                        : '';
                     return `<div class="entry-row${isSel?' selected':''}" onclick="selectEntry('${e.id}')">
                         <div class="entry-ico" style="background:${s.bg};color:${s.col}">${s.ico}</div>
                         <div class="entry-inf">
@@ -287,6 +294,7 @@ function renderListaDesktop() {
                             <div class="entry-val" style="color:${e.status==='Realizado'?'var(--ok)':'var(--red)'}">${brl(e.valor)}</div>
                             <span class="sbadge ${e.status==='Realizado'?'sb-g':'sb-r'}" onclick="event.stopPropagation();toggleStatus('${e.id}')">${e.status==='Realizado'?'Realizado':'Previsto'}</span>
                         </div>
+                        ${pixBtnD}
                     </div>`;
                 }).join('')}
         </div>
