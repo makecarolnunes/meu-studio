@@ -227,6 +227,30 @@
       font-size: 0.62rem; font-weight: 800;
     }
 
+    /* 6.G.1 · Botão WhatsApp inline no card */
+    .wa-btn {
+      width: 26px; height: 26px;
+      border-radius: 8px;
+      border: 1.5px solid transparent;
+      display: inline-flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      transition: background .15s, border-color .15s, color .15s;
+      padding: 0;
+    }
+    .wa-btn-ok {
+      background: #e8f5e9;
+      color: #25D366;
+      border-color: #25D366;
+    }
+    .wa-btn-ok:active { background: #25D366; color: white; }
+    .wa-btn-empty {
+      background: var(--surface-2, #f5efea);
+      color: var(--text-muted, #6F6660);
+      border: 1.5px dashed var(--border-strong, #D9CDC4);
+    }
+    .wa-btn-empty:active { background: var(--brand-soft, rgba(163,104,68,0.10)); }
+    .wa-btn svg { display: block; }
+
     /* ── FOLLOW UP — overlay ── */
     .fu-overlay {
       position: fixed; inset: 0; z-index: 300;

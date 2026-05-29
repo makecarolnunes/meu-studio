@@ -151,6 +151,15 @@ body { max-width: var(--fin-container); margin: 0 auto; }
 .sb-b { background: var(--blue-l); color: var(--blue); }
 .delbtn  { background: var(--red-l);   border: none; border-radius: 8px; color: var(--red);   width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; font-size: .85rem; }
 .editbtn { background: var(--brown-l); border: none; border-radius: 8px; color: var(--brown); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; font-size: .85rem; }
+.pixbtn  {
+    background: #e0f7fa; border: 1.5px solid #00796b;
+    color: #00796b; border-radius: 8px;
+    height: 32px; padding: 0 10px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; flex-shrink: 0;
+    font-size: .68rem; font-weight: 800; letter-spacing: .04em;
+}
+.pixbtn:active { background: #00796b; color: white; }
 
 /* ── EMPTY / LOADING ── */
 .empty { text-align: center; padding: 44px 16px; color: var(--muted); }

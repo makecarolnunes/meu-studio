@@ -55,6 +55,28 @@ function renderConfigModal() {
     ];
     const LOCS = ['Studio','Em Domicílio'];
 
+    const pixCfg = getPixConfig();
+    const tabPix = _cfgTab === 'pix' ? `
+    <div style="font-size:.78rem;color:var(--muted);margin-bottom:12px;line-height:1.5">
+        Configure seus dados PIX para gerar QR Codes nas entradas Previstas.
+        O QR é gerado no seu dispositivo a cada uso (não fica salvo).
+    </div>
+    <div class="fg">
+        <label class="fl">Chave PIX</label>
+        <input class="fi" type="text" id="cfg-pix-chave" placeholder="CPF, e-mail, telefone ou aleatória" value="${pixCfg.chave || ''}" autocomplete="off">
+    </div>
+    <div class="fg">
+        <label class="fl">Nome do recebedor</label>
+        <input class="fi" type="text" id="cfg-pix-nome" placeholder="Como aparece no extrato" value="${pixCfg.nome || ''}" maxlength="25" autocomplete="off">
+        <div style="font-size:.7rem;color:var(--muted);margin-top:4px">Máximo 25 caracteres, sem acentos</div>
+    </div>
+    <div class="fg">
+        <label class="fl">Cidade</label>
+        <input class="fi" type="text" id="cfg-pix-cidade" placeholder="Ex: Rio de Janeiro" value="${pixCfg.cidade || ''}" maxlength="15" autocomplete="off">
+    </div>
+    <button class="bsub" onclick="savePixConfig()">Salvar PIX</button>
+    ` : '';
+
     const tabServicos = _cfgTab === 'servicos' ? `
     <div style="font-size:.78rem;color:var(--muted);margin-bottom:12px;line-height:1.5">Configure os valores padrão por serviço. Ao selecionar um serviço no formulário, o valor será preenchido automaticamente.</div>
     <table style="width:100%;border-collapse:collapse;font-size:.82rem">
@@ -91,9 +113,10 @@ function renderConfigModal() {
     <button class="bsub" style="margin-bottom:14px;display:flex;align-items:center;justify-content:center;gap:8px" onclick="syncNow()">${SVG.refresh} Sincronizar agora</button>
     <div class="modal-tabs" style="margin-bottom:14px">
         <button class="modal-tab ${_cfgTab==='servicos'?'on':''}" onclick="openConfigTab('servicos')">Preços</button>
+        <button class="modal-tab ${_cfgTab==='pix'?'on':''}" onclick="openConfigTab('pix')">PIX</button>
         <button class="modal-tab ${_cfgTab==='ia'?'on':''}" onclick="openConfigTab('ia')">Claude IA</button>
     </div>
-    ${tabServicos}
+    ${_cfgTab === 'pix' ? tabPix : tabServicos}
     <div style="height:12px"></div>
     <button class="skip" onclick="closeModal()">Fechar</button>
     <button class="logout-btn" style="display:flex;align-items:center;justify-content:center;gap:8px" onclick="doLogout()">${SVG.logout} Sair da conta</button>
@@ -127,6 +150,73 @@ function saveCfgKey() {
     DB.config.set('claude_api_key', k).catch(e => console.warn('[config] erro ao salvar no Supabase:', e));
     closeModal();
     toast('Chave Claude salva!');
+}
+
+// 6.G.2 · PIX config
+function savePixConfig() {
+    const chave  = document.getElementById('cfg-pix-chave').value.trim();
+    const nome   = document.getElementById('cfg-pix-nome').value.trim();
+    const cidade = document.getElementById('cfg-pix-cidade').value.trim();
+    if (!chave) { toast('Informe sua chave PIX'); return; }
+    if (!nome)  { toast('Informe o nome do recebedor'); return; }
+    setPixConfig({ chave, nome, cidade: cidade || 'BRASIL' });
+    toast('PIX salvo!');
+    closeModal();
+}
+
+// 6.G.2 · Abre modal com QR Code da entrada
+function openPixModal(entryId) {
+    const e = entries.find(x => String(x.id) === String(entryId));
+    if (!e) return;
+    const cfg = getPixConfig();
+    if (!cfg.chave) {
+        if (confirm('Antes de gerar o QR, configure sua chave PIX. Abrir configurações agora?')) {
+            _cfgTab = 'pix';
+            openConfig();
+        }
+        return;
+    }
+    const valor = Number(e.valor) || 0;
+    const txid  = String(e.id || '').replace(/[^A-Za-z0-9]/g,'').slice(0, 25) || '***';
+    let payload;
+    try {
+        payload = buildPixPayload({
+            chave: cfg.chave, nome: cfg.nome, cidade: cfg.cidade,
+            valor, txid,
+        });
+    } catch(err) {
+        toast('Erro ao gerar PIX: ' + err.message);
+        return;
+    }
+    const qrUrl = pixQrUrl(payload, 280);
+    document.getElementById('modal-bg').style.display='flex';
+    document.getElementById('modal-inner').innerHTML = `
+    <div class="modal-title" style="margin-bottom:8px">PIX · ${e.cliente || 'Cliente'}</div>
+    <div style="text-align:center;font-size:1.6rem;font-weight:800;color:var(--brown);margin-bottom:4px">${brl(valor)}</div>
+    <div style="text-align:center;color:var(--muted);font-size:.8rem;margin-bottom:14px">Para ${cfg.nome} · ${cfg.cidade || 'BRASIL'}</div>
+
+    <div style="background:white;border:1.5px solid var(--border);border-radius:14px;padding:14px;display:flex;justify-content:center;align-items:center;min-height:280px">
+        <img src="${qrUrl}" alt="QR Code PIX" width="280" height="280" style="display:block;max-width:100%;height:auto"
+             onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+        <div style="display:none;color:var(--muted);font-size:.85rem;text-align:center">Não foi possível gerar o QR.<br>Use o código copia-cola abaixo.</div>
+    </div>
+
+    <div style="font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin:14px 0 6px">PIX Copia e Cola</div>
+    <textarea id="pix-payload" readonly style="width:100%;height:80px;font-family:monospace;font-size:.7rem;padding:8px;border:1.5px solid var(--border);border-radius:10px;resize:none;background:var(--surface-2,#f5efea);color:var(--text);word-break:break-all">${payload}</textarea>
+    <button class="bsub" style="margin-top:10px" onclick="copyPixPayload()">📋 Copiar código</button>
+    <button class="skip" style="margin-top:8px" onclick="closeModal()">Fechar</button>`;
+}
+
+function copyPixPayload() {
+    const ta = document.getElementById('pix-payload');
+    if (!ta) return;
+    ta.select();
+    try {
+        navigator.clipboard.writeText(ta.value).then(() => toast('Código copiado!'));
+    } catch(_) {
+        document.execCommand('copy');
+        toast('Código copiado!');
+    }
 }
 
 // ── Seletor de botão em grupo (modais de edição/pagamento) ──

@@ -138,6 +138,9 @@ function renderLista() {
         const extra=e.valorTotal?` · ${brl(e.valorTotal)}`:'';
         const auto=e.auto?`<span style="font-size:.6rem;background:var(--amber-l);color:#7c4a00;border-radius:7px;padding:1px 5px;margin-left:4px">auto</span>`:'';
         const equipeTag=e.equipe?`<span style="background:#e0f7fa;color:#006064;border-radius:8px;padding:1px 7px;font-size:.68rem;margin-left:5px;font-weight:500">↑ ${e.equipe}</span>`:'';
+        const pixBtn = e.status === 'Previsto' && Number(e.valor) > 0
+            ? `<button class="pixbtn" onclick="openPixModal('${e.id}')" title="Gerar QR PIX">PIX</button>`
+            : '';
         return `<div class="eitem">
             <div class="eico" style="background:${s.bg};color:${s.col}">${s.ico}</div>
             <div class="einf"><div class="ecli">${e.cliente||'(sem nome)'}${auto}</div>
@@ -147,6 +150,7 @@ function renderLista() {
                 <div class="eval" style="color:${e.status==='Realizado'?'var(--ok)':'var(--red)'}">${brl(e.valor)}</div>
                 <span class="sbadge ${e.status==='Realizado'?'sb-g':'sb-r'}" onclick="toggleStatus('${e.id}')">${e.status==='Realizado'?'Realizado':'Previsto'}</span>
             </div>
+            ${pixBtn}
             <button class="editbtn" onclick="openEditEntry('${e.id}')">${SVG.edit}</button>
             <button class="delbtn" onclick="delEntry('${e.id}')">${SVG.trash}</button>
         </div>`;

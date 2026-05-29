@@ -324,6 +324,49 @@ window.DB = {
     },
   },
 
+  // ── Contatos de clientes (telefone para WhatsApp) ──
+  // Chave: nome_normalizado (lowercase + trim) bate com entries.cliente.
+  clienteContatos: {
+    async list() {
+      _guard();
+      const { data, error } = await _sb
+        .from('cliente_contatos').select('*');
+      if (error) throw error;
+      // Retorna map { nome_normalizado: { telefone, obs, nomeOriginal } }
+      const map = {};
+      (data || []).forEach(r => {
+        map[r.nome_normalizado] = {
+          telefone: r.telefone || '',
+          obs: r.obs || '',
+          nomeOriginal: r.nome_original || r.nome_normalizado,
+          updatedAt: r.updated_at || '',
+        };
+      });
+      return map;
+    },
+    async upsert(nomeOriginal, telefone, obs) {
+      _guard();
+      const nomeNorm = String(nomeOriginal || '').trim().toLowerCase();
+      if (!nomeNorm) throw new Error('Nome vazio');
+      const row = {
+        nome_normalizado: nomeNorm,
+        nome_original: nomeOriginal,
+        telefone: String(telefone || '').replace(/\D/g, ''),
+        obs: obs || null,
+        updated_at: new Date().toISOString(),
+      };
+      const { error } = await _sb.from('cliente_contatos').upsert(row, { onConflict: 'nome_normalizado' });
+      if (error) throw error;
+      return nomeNorm;
+    },
+    async delete(nomeNorm) {
+      _guard();
+      const { error } = await _sb
+        .from('cliente_contatos').delete().eq('nome_normalizado', String(nomeNorm).toLowerCase());
+      if (error) throw error;
+    },
+  },
+
   storage: {
     // Bucket "comprovantes" deve ser criado no Supabase Dashboard → Storage
     async uploadComprovante(orcaId, file, categoria, base64Data, mimeType) {

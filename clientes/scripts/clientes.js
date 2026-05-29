@@ -21,6 +21,13 @@ let selYear        = new Date().getFullYear();
 let curFilter      = 'todos';
 let curEquipeFilter= 'todos';
 
+// 6.G.1 · Contatos de clientes (telefone WhatsApp)
+// Map { nome_normalizado: { telefone, obs, nomeOriginal } }
+let contatos = (() => {
+  try { return JSON.parse(localStorage.getItem('mk_cliente_contatos') || '{}'); }
+  catch(_) { return {}; }
+})();
+
 // ── FOLLOW UP ─────────────────────────────────────────────
 let fuEntryMap  = {};   // id → entry (populado em render)
 let fuActiveId  = null; // id do entry aberto no modal
@@ -96,17 +103,111 @@ function syncAll() {
 async function loadFromSupabase() {
   try {
     dot('syncing');
-    const result = await DB.entries.list();
-    if (Array.isArray(result)) {
-      entries = result;
+    const [entriesResult, contatosResult] = await Promise.all([
+      DB.entries.list(),
+      DB.clienteContatos.list().catch(() => ({})),
+    ]);
+    if (Array.isArray(entriesResult)) {
+      entries = entriesResult;
       localStorage.setItem('mk_entries', JSON.stringify(entries));
-      dot('ok');
-    } else {
-      dot('offline');
     }
+    if (contatosResult && typeof contatosResult === 'object') {
+      contatos = contatosResult;
+      try { localStorage.setItem('mk_cliente_contatos', JSON.stringify(contatos)); } catch(_) {}
+    }
+    dot('ok');
   } catch(e) {
     dot('offline');
   }
+  render();
+}
+
+// ══════════════════════════════════════════════════════════
+//  6.G.1 · WhatsApp — telefone por cliente + mensagem rápida
+// ══════════════════════════════════════════════════════════
+function clientePhone(nomeCliente) {
+  const key = String(nomeCliente || '').trim().toLowerCase();
+  const c = contatos[key];
+  return c ? c.telefone : '';
+}
+
+function _waMessageFor(entry) {
+  const nome    = (entry.cliente || 'oi').split(' ')[0]; // primeiro nome
+  const horario = matchHorario(entry) || '';
+  const dateStr = entry.dataServ || entry.dataPag;
+  const isToday = dateStr === todayStr();
+  const amanha  = new Date(); amanha.setDate(amanha.getDate() + 1);
+  const amanhaStr = amanha.toISOString().split('T')[0];
+  const isAmanha = dateStr === amanhaStr;
+  const srv = entry.servico || 'atendimento';
+
+  let dataLabel = '';
+  if (isToday)       dataLabel = 'hoje';
+  else if (isAmanha) dataLabel = 'amanhã';
+  else if (dateStr) {
+    const [y,m,d] = dateStr.split('-');
+    dataLabel = `dia ${d}/${m}`;
+  }
+
+  const h = horario ? `, às ${horario}` : '';
+  return `Oi, ${nome}! 🤍\n\nPassando para confirmar seu ${srv.toLowerCase()} ${dataLabel}${h}.\n\nSe tiver alguma dúvida, me chama por aqui. Até já!`;
+}
+
+async function waOpen(eid) {
+  const entry = fuEntryMap[eid];
+  if (!entry) { console.warn('waOpen: entry não encontrada', eid); return; }
+  let phone = clientePhone(entry.cliente);
+  if (!phone) {
+    // Sem telefone — pergunta agora e salva
+    const novo = prompt(
+      `Telefone de ${entry.cliente} para WhatsApp:\n(com DDD, ex: 21987654321)`,
+      ''
+    );
+    if (novo === null) return;
+    const digits = String(novo).replace(/\D/g, '');
+    if (digits.length < 10) { alert('Telefone inválido. Use DDD + número.'); return; }
+    phone = digits.length === 11 ? '55' + digits : (digits.startsWith('55') ? digits : '55' + digits);
+    // UI otimista — salva localmente e dispara save no Supabase
+    const key = entry.cliente.trim().toLowerCase();
+    contatos[key] = { telefone: phone, obs: '', nomeOriginal: entry.cliente };
+    try { localStorage.setItem('mk_cliente_contatos', JSON.stringify(contatos)); } catch(_) {}
+    DB.clienteContatos.upsert(entry.cliente, phone, '').catch(err =>
+      console.warn('[contatos] save falhou:', err)
+    );
+    render();
+  }
+
+  const msg = _waMessageFor(entry);
+  const url = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
+  window.open(url, '_blank', 'noopener');
+}
+
+function waEditPhone(eid) {
+  const entry = fuEntryMap[eid];
+  if (!entry) return;
+  const key = entry.cliente.trim().toLowerCase();
+  const atual = contatos[key] ? contatos[key].telefone : '';
+  const v = prompt(
+    `Telefone de ${entry.cliente}:\n(deixe vazio para remover)`,
+    atual ? atual.replace(/^55/, '') : ''
+  );
+  if (v === null) return;
+  const trimmed = String(v).trim();
+  if (!trimmed) {
+    delete contatos[key];
+    try { localStorage.setItem('mk_cliente_contatos', JSON.stringify(contatos)); } catch(_) {}
+    DB.clienteContatos.delete(key).catch(err => console.warn('[contatos] delete falhou:', err));
+    render();
+    return;
+  }
+  const digits = trimmed.replace(/\D/g, '');
+  if (digits.length < 10) { alert('Telefone inválido. Use DDD + número.'); return; }
+  const phone = digits.length === 11 ? '55' + digits : (digits.startsWith('55') ? digits : '55' + digits);
+  contatos[key] = { telefone: phone, obs: (contatos[key] && contatos[key].obs) || '', nomeOriginal: entry.cliente };
+  try { localStorage.setItem('mk_cliente_contatos', JSON.stringify(contatos)); } catch(_) {}
+  DB.clienteContatos.upsert(entry.cliente, phone, '').catch(err =>
+    console.warn('[contatos] save falhou:', err)
+  );
   render();
 }
 
@@ -306,6 +407,11 @@ function render() {
       const amanhaStr = amanha.toISOString().split('T')[0];
       const fuLabel  = (e.dataServ || e.dataPag) === amanhaStr ? '📅 Confirmar amanhã' : '📲 Follow Up';
 
+      const hasPhone = !!clientePhone(e.cliente);
+      const waBtn = `<button class="wa-btn ${hasPhone ? 'wa-btn-ok' : 'wa-btn-empty'}" title="${hasPhone ? 'Abrir WhatsApp' : 'Adicionar telefone'}" oncontextmenu="event.preventDefault(); waEditPhone('${eid.replace(/'/g, "\\'")}'); return false;" onclick="event.stopPropagation(); waOpen('${eid.replace(/'/g, "\\'")}')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.5 14.4c-.3-.1-1.8-.9-2-1-.3-.1-.5-.1-.7.1l-.7.9c-.2.2-.4.3-.7.1-.3-.1-1.3-.5-2.4-1.5-.9-.8-1.5-1.8-1.7-2.1-.2-.3 0-.5.1-.6.1-.1.3-.4.4-.5.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5-.1-.1-.7-1.7-1-2.3-.3-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 .9-1 2.3 0 1.3.9 2.6 1.1 2.8.1.2 1.8 2.8 4.5 3.9.6.3 1.1.4 1.5.5.6.2 1.2.2 1.7.1.5-.1 1.8-.7 2-1.4.3-.7.3-1.3.2-1.5-.1-.1-.3-.2-.6-.3z M12 2.5C6.7 2.5 2.5 6.8 2.5 12c0 1.7.4 3.3 1.3 4.7L2 22l5.4-1.6c1.4.8 2.9 1.2 4.5 1.2 5.3 0 9.5-4.3 9.5-9.6 0-2.5-1-4.9-2.8-6.7C16.9 3.5 14.5 2.5 12 2.5zm0 17.4c-1.4 0-2.8-.4-4.1-1.1l-.3-.2-3.1.9.9-2.9-.2-.3c-.8-1.3-1.2-2.8-1.2-4.3 0-4.5 3.7-8.1 8.1-8.1 2.2 0 4.2.8 5.7 2.4 1.5 1.5 2.4 3.6 2.4 5.7 0 4.4-3.7 8-8.2 8z"/></svg>
+      </button>`;
+
       return `
         <div class="entry ${isReal ? 'real' : 'prev'} ${isNoiva ? 'noiva' : ''} entry-fu">
           ${isNoiva ? `<div class="noiva-emoji">👰</div>` : ''}
@@ -320,6 +426,7 @@ function render() {
             </div>
           </div>
           <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0">
+            ${waBtn}
             ${isNoiva ? `<span class="noiva-tag">💍 Noiva</span>` : ''}
             <span class="badge ${isReal ? 'badge-real' : 'badge-prev'}">${isReal ? 'Realizado' : 'Previsto'}</span>
           </div>

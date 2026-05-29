@@ -79,6 +79,68 @@ function undoSoftDelete() {
     toast('Restaurado');
 }
 
+// ── PIX (6.G.2): config + gerador de BR Code (payload + QR) ──
+function getPixConfig() {
+    try {
+        const raw = localStorage.getItem('mk_pix_config');
+        return raw ? JSON.parse(raw) : { chave: '', nome: '', cidade: '' };
+    } catch(_) { return { chave: '', nome: '', cidade: '' }; }
+}
+function setPixConfig(cfg) {
+    localStorage.setItem('mk_pix_config', JSON.stringify(cfg || {}));
+}
+
+// EMV BR Code builder. Padrão oficial BACEN/EMVCo.
+// Estrutura: campos TLV (id 2 dígitos + tamanho 2 dígitos + valor).
+// Campo 63 (CRC16) calculado por último com polinômio 0x1021.
+function buildPixPayload({ chave, nome, cidade, valor, txid }) {
+    if (!chave) throw new Error('Chave PIX vazia');
+    nome = String(nome || 'PAGADOR').toUpperCase().slice(0, 25);
+    cidade = String(cidade || 'BRASIL').toUpperCase().slice(0, 15);
+    txid = String(txid || '***').slice(0, 25);
+
+    const tlv = (id, val) => {
+        const s = String(val);
+        return id + String(s.length).padStart(2, '0') + s;
+    };
+
+    // Campo 26: Merchant Account Info (GUI + chave)
+    const mai = tlv('00', 'BR.GOV.BCB.PIX') + tlv('01', String(chave).trim());
+
+    // Campo 62: Additional Data (txid)
+    const adf = tlv('05', txid);
+
+    let payload =
+        tlv('00', '01') +           // Payload format indicator
+        tlv('26', mai) +
+        tlv('52', '0000') +         // MCC
+        tlv('53', '986') +          // BRL
+        (valor != null && valor > 0 ? tlv('54', Number(valor).toFixed(2)) : '') +
+        tlv('58', 'BR') +
+        tlv('59', nome) +
+        tlv('60', cidade) +
+        tlv('62', adf);
+
+    // CRC16/CCITT-FALSE com polinômio 0x1021, init 0xFFFF
+    const dataForCrc = payload + '6304';
+    let crc = 0xFFFF;
+    for (let i = 0; i < dataForCrc.length; i++) {
+        crc ^= dataForCrc.charCodeAt(i) << 8;
+        for (let j = 0; j < 8; j++) {
+            crc = (crc & 0x8000) ? ((crc << 1) ^ 0x1021) : (crc << 1);
+            crc &= 0xFFFF;
+        }
+    }
+    const crcHex = crc.toString(16).toUpperCase().padStart(4, '0');
+    return payload + '6304' + crcHex;
+}
+
+// URL pra gerar QR code (api.qrserver.com — sem dep externa no bundle)
+function pixQrUrl(payload, size) {
+    const s = size || 280;
+    return `https://api.qrserver.com/v1/create-qr-code/?size=${s}x${s}&margin=2&data=${encodeURIComponent(payload)}`;
+}
+
 // ── Meta mensal de faturamento (localStorage) ──
 function getMetaMensal() {
     const v = localStorage.getItem('mk_meta_mensal');
