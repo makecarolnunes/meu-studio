@@ -38,7 +38,9 @@ async function loadFromSupabase() {
         }
         if (lastErr) {
             updateDot('offline');
-            toast('Supabase indisponível — usando dados locais');
+            const detalhe = (lastErr && lastErr.message) ? String(lastErr.message) : String(lastErr || 'erro desconhecido');
+            const code = lastErr && (lastErr.code || lastErr.status || lastErr.statusCode);
+            toast('Supabase falhou: ' + (code ? '[' + code + '] ' : '') + detalhe.slice(0, 120), 8000);
         }
     } finally {
         isSyncing = false;
