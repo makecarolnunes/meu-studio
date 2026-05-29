@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-29 00:55 | main | feat(import): icone cartao credito, receitas em lote, erro extrato duplicado -->
+<!-- AUTO: 2026-05-29 01:11 | main | feat(saidas): badge prof/pessoal com cores distintas e historico por categoria -->
 
