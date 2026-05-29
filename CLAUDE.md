@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-29 00:39 | main | fix(fiscal): exibe DAS no seletor de categoria do import -->
+<!-- AUTO: 2026-05-29 00:55 | main | feat(import): icone cartao credito, receitas em lote, erro extrato duplicado -->
 
