@@ -363,9 +363,12 @@ function renderSaidas() {
             : nat==='MISTA'
                 ? `<span class="natchip natchip-mista">Mista</span>`
                 : '';
+        const creditTag = s.forma === 'Crédito'
+            ? `<span style="font-size:.65rem;background:#e3f2fd;color:#0d47a1;border-radius:7px;padding:1px 6px;margin-left:4px">💳</span>`
+            : '';
         return `<div class="eitem">
             <div class="eico" style="background:${st.bg};color:${st.col}">${st.ico}</div>
-            <div class="einf"><div class="ecli">${s.tipo}${natBadge}</div>
+            <div class="einf"><div class="ecli">${s.tipo}${natBadge}${creditTag}</div>
                 <div class="emta">${fmtDate(s.dataPag)} · ${s.forma}${s.grupoId?` · ${s.recorrencia==='fixa'?'↺ Fixa':'↺ Recorrente'}`:''}
                 </div>
                 ${s.obs?`<div class="emta">${s.obs}</div>`:''}

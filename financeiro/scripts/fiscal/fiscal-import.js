@@ -212,6 +212,22 @@ function fsImportRenderPreview() {
   const { novas, duplicadas, possiveis } = FS_IMPORT.preview;
   const p = FS_IMPORT.parsed;
 
+  // Detecta extrato já importado (todas as transações são duplicatas)
+  if (novas.length === 0 && duplicadas.length > 0) {
+    document.getElementById('fs-modal-inner').innerHTML = `
+      <h2>Extrato já importado</h2>
+      <div class="fs-import-warn" style="border-color:#e53935;background:#fff5f5">
+        <b>Todas as ${duplicadas.length} transações</b> deste extrato já existem no sistema — este extrato provavelmente já foi importado antes.
+      </div>
+      <p style="color:var(--text-muted);font-size:var(--text-sm);margin-top:8px">Se precisar reimportar, exclua as transações existentes no painel Fiscal primeiro.</p>
+      <div class="fs-modal-actions">
+        <button class="fs-btn fs-btn-ghost" onclick="fiscalModalClose()">Fechar</button>
+        <button class="fs-btn fs-btn-primary" onclick="fsImportAbrir()">Importar outro arquivo</button>
+      </div>
+    `;
+    return;
+  }
+
   const periodo = (p.periodoIni && p.periodoFim)
     ? `${fsFmtDataBr(p.periodoIni)} → ${fsFmtDataBr(p.periodoFim)}`
     : '—';
@@ -281,12 +297,14 @@ async function fsImportCategorizar() {
 // ── Tela de revisão ─────────────────────────────────────────
 window.FS_REV = {
   idx: 0,
-  decisoes: {},  // hash → { acao, categoria, natureza, vincularSaidaId? }
+  decisoes: {},       // hash → { acao, categoria, natureza, vincularSaidaId? }
+  despesas: [],       // só transações com valor < 0 (revisadas uma a uma)
+  receitasConfirmadas: false,
 };
 
 function fsImportRenderRevisao() {
-  // Inicializa estado da revisão a partir das sugestões da IA
   FS_REV.decisoes = {};
+  FS_REV.receitasConfirmadas = false;
   FS_IMPORT.categorizadas.forEach(c => {
     if (c.naturezaSugerida === 'IGNORAR' || c.valor >= 0) {
       FS_REV.decisoes[c.hash] = { acao: c.valor >= 0 ? 'receita' : 'ignorar', categoria: c.categoriaSugerida, natureza: c.naturezaSugerida };
@@ -299,20 +317,73 @@ function fsImportRenderRevisao() {
       };
     }
   });
+  // Despesas revisadas uma a uma (receitas vão para tela de lote)
+  FS_REV.despesas = FS_IMPORT.categorizadas.filter(t => t.valor < 0);
   FS_REV.idx = 0;
-  fsImportRenderItem();
+  const receitas = FS_IMPORT.categorizadas.filter(t => t.valor >= 0);
+  if (receitas.length) {
+    fsImportRenderReceitasLote(receitas);
+  } else {
+    fsImportRenderItem();
+  }
+}
+
+function fsImportRenderReceitasLote(receitas) {
+  const nDesp = FS_REV.despesas.length;
+  document.getElementById('fs-modal-inner').innerHTML = `
+    <h2>Receitas identificadas</h2>
+    <p style="font-size:var(--text-sm);color:var(--text-muted);margin-bottom:12px">
+      Receitas <b>não são lançadas automaticamente</b> — ficam guardadas só para conciliação. Verifique se já estão no Financeiro.
+    </p>
+    <div class="fs-import-stat" style="margin-bottom:12px">
+      <div><span class="fs-stat-num">${receitas.length}</span><span class="fs-stat-lbl">receita${receitas.length!==1?'s':''}</span></div>
+      <div><span class="fs-stat-num">${nDesp}</span><span class="fs-stat-lbl">despesa${nDesp!==1?'s':''} a revisar</span></div>
+    </div>
+    <div style="max-height:280px;overflow-y:auto;border:1px solid var(--border,#e5ddd8);border-radius:10px">
+      ${receitas.map(t => `
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid #f5f0ec">
+          <div style="flex:1;min-width:0">
+            <div style="font-size:.83rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.descricao || '(sem descrição)'}</div>
+            <div style="font-size:.72rem;color:var(--text-muted)">${fsFmtDataBr(t.data)} · ${t.banco}</div>
+          </div>
+          <div style="font-weight:700;color:var(--ok,#27ae60);white-space:nowrap">+${fsBrl(t.valor)}</div>
+        </div>
+      `).join('')}
+    </div>
+    <div class="fs-modal-actions" style="margin-top:16px">
+      <button class="fs-btn fs-btn-primary" onclick="fsImportConfirmarReceitas()">
+        ${nDesp > 0 ? `Ok, revisar ${nDesp} despesa${nDesp!==1?'s':''}` : 'Concluir'}
+      </button>
+    </div>
+  `;
+}
+
+function fsImportConfirmarReceitas() {
+  FS_REV.receitasConfirmadas = true;
+  FS_REV.idx = 0;
+  if (FS_REV.despesas.length === 0) {
+    fsImportRenderResumoFinal();
+  } else {
+    fsImportRenderItem();
+  }
+}
+
+function fsImportVoltarDoResumo() {
+  if (FS_REV.despesas.length > 0) {
+    FS_REV.idx = 0;
+    fsImportRenderItem();
+  } else {
+    const receitas = FS_IMPORT.categorizadas.filter(t => t.valor >= 0);
+    if (receitas.length) fsImportRenderReceitasLote(receitas);
+    else fiscalModalClose();
+  }
 }
 
 function fsImportRenderItem() {
-  const total = FS_IMPORT.categorizadas.length;
+  const total = FS_REV.despesas.length;
   if (FS_REV.idx >= total) return fsImportRenderResumoFinal();
-  const t = FS_IMPORT.categorizadas[FS_REV.idx];
+  const t = FS_REV.despesas[FS_REV.idx];
   const dec = FS_REV.decisoes[t.hash];
-
-  // Receitas só são marcadas pra conciliação reversa (não criam nada)
-  if (t.valor >= 0) {
-    return fsImportRenderItemReceita(t);
-  }
 
   // Despesas: tela de aprovação
   const confLabel = t.confiancaIa >= 0.85 ? 'Alta confiança' : t.confiancaIa >= 0.6 ? 'Sugestão' : 'Pouca certeza';
@@ -420,8 +491,8 @@ function fsImportDecidir(hash, acao, vincularId, avancar) {
   else fsImportRenderItem();
 }
 function fsImportItem(dir) {
-  FS_REV.idx = Math.max(0, Math.min(FS_IMPORT.categorizadas.length, FS_REV.idx + dir));
-  if (FS_REV.idx >= FS_IMPORT.categorizadas.length) fsImportRenderResumoFinal();
+  FS_REV.idx = Math.max(0, Math.min(FS_REV.despesas.length, FS_REV.idx + dir));
+  if (FS_REV.idx >= FS_REV.despesas.length) fsImportRenderResumoFinal();
   else fsImportRenderItem();
 }
 
@@ -451,7 +522,7 @@ function fsImportRenderResumoFinal() {
       ${receitas?`<br>${receitas} receita(s) serão guardadas só para conciliação.`:''}
     </p>
     <div class="fs-modal-actions">
-      <button class="fs-btn fs-btn-ghost" onclick="FS_REV.idx=0;fsImportRenderItem()">Voltar</button>
+      <button class="fs-btn fs-btn-ghost" onclick="fsImportVoltarDoResumo()">Voltar</button>
       <button class="fs-btn fs-btn-primary" onclick="fsImportSalvar()">Confirmar</button>
     </div>
   `;
