@@ -229,5 +229,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-29 11:45 | main | feat: Fase 3 ÔÇö notas r├ípidas + busca global + dashboard convers├úo -->
+<!-- AUTO: 2026-05-29 12:32 | main | feat: notas e busca viram globais + PIX verde brilhante -->
 
