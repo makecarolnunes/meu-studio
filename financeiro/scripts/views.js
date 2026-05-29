@@ -313,9 +313,6 @@ function renderSaidas() {
     const cntPess = monthList.filter(s=>s.natureza==='PESSOAL').length;
     const cntMista= monthList.filter(s=>s.natureza==='MISTA').length;
 
-    const natFs = Fs.natureza || 'PROFISSIONAL';
-    const tiposProf = getTiposProfissionais();
-
     return `
     <div class="msel">
         <button class="mnbtn" onclick="chm(-1)">‹</button>
@@ -578,20 +575,20 @@ function renderResumo() {
     return `
     <!-- Filtros de período -->
     <div class="resumo-filter">
-        <div class="rf-pills">
-            <button class="rf-pill ${resumoPeriodo==='mes'?'on':''}" onclick="setResumoPeriodo('mes')">Mês</button>
-            <button class="rf-pill ${resumoPeriodo==='ultimos3'?'on':''}" onclick="setResumoPeriodo('ultimos3')">3 meses</button>
-            <button class="rf-pill ${resumoPeriodo==='ultimos6'?'on':''}" onclick="setResumoPeriodo('ultimos6')">6 meses</button>
-            <button class="rf-pill ${resumoPeriodo==='acumulado'?'on':''}" onclick="setResumoPeriodo('acumulado')">Ano até hoje</button>
-            <button class="rf-pill ${resumoPeriodo==='ano'?'on':''}" onclick="setResumoPeriodo('ano')">Ano inteiro</button>
-            <button class="rf-pill ${resumoPeriodo==='personalizado'?'on':''}" onclick="setResumoPeriodo('personalizado')">Personalizado</button>
+        <div class="ftabs ftabs--wrap">
+            <button class="ftab ${resumoPeriodo==='mes'?'on':''}" onclick="setResumoPeriodo('mes')">Mês</button>
+            <button class="ftab ${resumoPeriodo==='ultimos3'?'on':''}" onclick="setResumoPeriodo('ultimos3')">3 meses</button>
+            <button class="ftab ${resumoPeriodo==='ultimos6'?'on':''}" onclick="setResumoPeriodo('ultimos6')">6 meses</button>
+            <button class="ftab ${resumoPeriodo==='acumulado'?'on':''}" onclick="setResumoPeriodo('acumulado')">Ano até hoje</button>
+            <button class="ftab ${resumoPeriodo==='ano'?'on':''}" onclick="setResumoPeriodo('ano')">Ano inteiro</button>
+            <button class="ftab ${resumoPeriodo==='personalizado'?'on':''}" onclick="setResumoPeriodo('personalizado')">Personalizado</button>
         </div>
         ${resumoPeriodo==='personalizado'?`
         <div class="rf-custom">
             <input type="date" class="fi" value="${resumoDataIni}" onchange="setResumoDataIni(this.value)">
             <span>→</span>
             <input type="date" class="fi" value="${resumoDataFim}" onchange="setResumoDataFim(this.value)">
-            <button class="bt on" onclick="aplicarResumoPersonalizado()" style="padding:8px 14px">Aplicar</button>
+            <button class="bt on" onclick="aplicarResumoPersonalizado()" style="padding:8px 14px;flex:0 0 auto">Aplicar</button>
         </div>`:''}
     </div>
 
@@ -615,11 +612,11 @@ function renderResumo() {
     </div>
     <div class="card">
         <div class="card-title">Saídas</div>
-        <div class="natfilter" style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
-            <button class="bt ${saidasNaturezaFilter==='todas'?'on':''}" onclick="setSaidaNatureza('todas')" style="font-size:.75rem">Todas</button>
-            <button class="bt ${saidasNaturezaFilter==='PROFISSIONAL'?'on':''}" onclick="setSaidaNatureza('PROFISSIONAL')" style="font-size:.75rem">Profissional</button>
-            <button class="bt ${saidasNaturezaFilter==='PESSOAL'?'on':''}" onclick="setSaidaNatureza('PESSOAL')" style="font-size:.75rem">Pessoal</button>
-            ${despMista>0?`<button class="bt ${saidasNaturezaFilter==='MISTA'?'on':''}" onclick="setSaidaNatureza('MISTA')" style="font-size:.75rem">Mista</button>`:''}
+        <div class="ftabs ftabs--wrap" style="margin-bottom:10px">
+            <button class="ftab ${saidasNaturezaFilter==='todas'?'on':''}" onclick="setSaidaNatureza('todas')">Todas</button>
+            <button class="ftab ${saidasNaturezaFilter==='PROFISSIONAL'?'on':''}" onclick="setSaidaNatureza('PROFISSIONAL')">Profissional</button>
+            <button class="ftab ${saidasNaturezaFilter==='PESSOAL'?'on':''}" onclick="setSaidaNatureza('PESSOAL')">Pessoal</button>
+            ${despMista>0?`<button class="ftab ${saidasNaturezaFilter==='MISTA'?'on':''}" onclick="setSaidaNatureza('MISTA')">Mista</button>`:''}
         </div>
         <div class="rsum-grid" style="margin-bottom:11px">
             <div class="rsum-card" style="border-left:3px solid var(--red)"><div class="rsum-lbl">Pago</div><div class="rsum-val" style="color:var(--red)">${brl(despPago)}</div></div>

@@ -128,7 +128,10 @@ body { max-width: var(--fin-container); margin: 0 auto; }
 /* ── FILTER TABS ── */
 .ftabs { display: flex; gap: 5px; margin-bottom: 11px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
 .ftabs::-webkit-scrollbar { display: none; }
-.ftab { padding: 6px 12px; border-radius: 20px; border: 1.5px solid var(--border); background: white; font-size: .75rem; font-weight: 500; cursor: pointer; white-space: nowrap; color: var(--text); }
+/* Variante: quebra em múltiplas linhas em vez de scroll horizontal */
+.ftabs--wrap { flex-wrap: wrap; overflow-x: visible; padding-bottom: 0; }
+.ftab { padding: 6px 12px; border-radius: 20px; border: 1.5px solid var(--border); background: white; font-size: .75rem; font-weight: 500; cursor: pointer; white-space: nowrap; color: var(--text); transition: border-color .15s, background .15s, color .15s; }
+.ftab:hover:not(.on) { border-color: var(--brown); color: var(--brown); }
 .ftab.on { background: var(--brown); border-color: var(--brown); color: white; font-weight: 600; }
 
 /* ── ENTRY ITEM ── */
@@ -892,7 +895,9 @@ body { max-width: var(--fin-container); margin: 0 auto; }
 .natfilter .bt.on { background: var(--brown); color: #fff; border-color: var(--brown); }
 
 
-/* ── Filtro de período do Resumo (Sprint pós-fiscal) ─────── */
+/* ── Filtro de período do Resumo ─────────────────────────
+   Os filtros migraram para .ftabs / .ftab (padrão único do sistema).
+   .rf-pill / .rf-pills mantidos como alias para retrocompatibilidade. */
 .resumo-filter { margin-bottom: 12px; }
 .rf-pills {
     display: flex;
