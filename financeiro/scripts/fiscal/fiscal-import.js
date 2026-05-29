@@ -318,7 +318,7 @@ function fsImportRenderItem() {
   const confLabel = t.confiancaIa >= 0.85 ? 'Alta confiança' : t.confiancaIa >= 0.6 ? 'Sugestão' : 'Pouca certeza';
   const confCls = t.confiancaIa >= 0.85 ? 'ok' : t.confiancaIa >= 0.6 ? 'warn' : 'danger';
 
-  const cats = window.FS_CATEGORIAS.filter(c => c.nat !== 'IGNORAR' && c.id !== 'das').map(c => c.nome);
+  const cats = window.FS_CATEGORIAS.filter(c => c.nat !== 'IGNORAR').map(c => c.nome);
 
   // Possível duplicata?
   const dup = t._possivelDuplicata;
