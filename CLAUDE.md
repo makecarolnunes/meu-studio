@@ -229,5 +229,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-29 03:25 | main | docs: adiciona BACKLOG.md como fonte da verdade de pend├¬ncias -->
+<!-- AUTO: 2026-05-29 03:44 | main | chore: remove m├│dulo confirmacao + amplia BACKLOG com sugest├Áes por m├│dulo -->
 
