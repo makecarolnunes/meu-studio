@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-29 01:41 | main | feat(financeiro): ├¡cones por categoria, nav Resumo como padr├úo, bot├úo Novo no header -->
+<!-- AUTO: 2026-05-29 02:04 | main | refactor(financeiro): unifica CTAs Entradas/Sa├¡das e padroniza layout -->
 
