@@ -57,8 +57,9 @@ function syncF() {
 function chm(d) { selMonth+=d; if(selMonth<0){selMonth=11;selYear--;}if(selMonth>11){selMonth=0;selYear++;} render(); }
 function setF(f) { listFilter=f; render(); }
 function setEquipeFilter(f) { listEquipeFilter=f; render(); }
-function setSaidaNatureza(n) { saidasNaturezaFilter = n; render(); }
+function setSaidaNatureza(n) { saidasNaturezaFilter = n; saidasTipoFilter = 'todas'; render(); }
 function pickSaidaNatureza(n) { Fs.natureza = n; render(); }
+function setSaidaTipoFilter(val) { saidasTipoFilter = val; render(); }
 // Filtro de período do Resumo
 function setResumoPeriodo(p) { resumoPeriodo = p; render(); }
 function setResumoDataIni(v) { resumoDataIni = v; if (resumoPeriodo==='personalizado') render(); }

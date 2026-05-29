@@ -18,6 +18,9 @@ window.FS_CATEGORIAS = [
   { id: 'das',              nome: 'DAS',              icone: '🧾', nat: 'PROFISSIONAL', dedutivel: false },
   { id: 'assistente',       nome: 'Assistente',       icone: '👥', nat: 'PROFISSIONAL', dedutivel: true  },
   { id: 'reposicao',        nome: 'Reposição de Material', icone: '🛒', nat: 'PROFISSIONAL', dedutivel: true },
+  { id: 'modelos',          nome: 'Modelos',              icone: '💆', nat: 'PROFISSIONAL', dedutivel: true  },
+  { id: 'assinaturas',      nome: 'Assinaturas',          icone: '📋', nat: 'PROFISSIONAL', dedutivel: true  },
+  { id: 'equipe',           nome: 'Equipe',               icone: '🤝', nat: 'PROFISSIONAL', dedutivel: true  },
 
   // PESSOAL — único bucket, sem subcategorias (combinado com a usuária)
   { id: 'pessoal',          nome: 'Pessoal',          icone: '👤', nat: 'PESSOAL',      dedutivel: false },

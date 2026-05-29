@@ -71,9 +71,13 @@ function fsParseOfx(text) {
     return out;
   };
 
+  // Detecta se é fatura de cartão de crédito
+  const isCreditCard = /<CREDITCARDMSGSRSV1>/i.test(body) || /<CCSTMTRS>/i.test(body) ||
+                       /ACCTTYPE>\s*CREDIT(LINE|CARD)/i.test(body);
+
   // Banco (BANKID) + conta (ACCTID)
   const banco = fsBancoNomeDoBankId(get('BANKID')) || get('ORG') || 'Banco';
-  const conta = get('ACCTID');
+  const conta = get('ACCTID') || get('ACCTTYPE');
   const periodoIni = fsNormDataOfx(get('DTSTART'));
   const periodoFim = fsNormDataOfx(get('DTEND'));
 
@@ -101,7 +105,7 @@ function fsParseOfx(text) {
     };
   }).filter(t => t.data && t.valor !== 0);
 
-  return { transacoes, banco, conta, periodoIni, periodoFim };
+  return { transacoes, banco, conta, periodoIni, periodoFim, isCreditCard };
 }
 
 function fsBancoNomeDoBankId(bankId) {

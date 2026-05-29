@@ -223,13 +223,15 @@ function openEditSaida(id) {
     </div></div>
     <div class="fg"><label class="fl">Data</label><input class="fi" type="date" id="es-data" value="${s.dataPag||''}"></div>
     <div id="es-tipo-wrap" style="display:${natAtual==='PESSOAL'?'none':'block'}">
-      <div class="fg"><label class="fl">Tipo de Despesa</label><div class="bg" style="flex-wrap:wrap" id="es-tipo-bg">
-        ${tiposProf.map(t=>`<button class="bt ${s.tipo===t?'on':''}" onclick="edPick('stipo','${t}',this)" style="font-size:.78rem">${t}</button>`).join('')}
-      </div></div>
+      <div class="fg"><label class="fl">Tipo de Despesa</label>
+        <select class="fi" id="es-tipo-sel">
+          ${tiposProf.map(t=>`<option value="${t}" ${s.tipo===t?'selected':''}>${t}</option>`).join('')}
+        </select>
+      </div>
     </div>
     <div class="fg"><label class="fl">Valor (R$)</label><div class="vwrap"><span class="vpfx">R$</span><input class="fi" type="number" id="es-valor" value="${s.valor||''}" step="0.01" min="0" inputmode="decimal"></div></div>
-    <div class="fg"><label class="fl">Forma</label><div class="bg">
-        ${['PIX','Crédito','Dinheiro'].map(f=>`<button class="bt ${s.forma===f?'on':''}" onclick="edPick('sforma','${f}',this)">${f}</button>`).join('')}
+    <div class="fg"><label class="fl">Forma</label><div class="bg" style="flex-wrap:wrap">
+        ${['PIX','Débito','Transferência','Crédito','Dinheiro'].map(f=>`<button class="bt ${s.forma===f?'on':''}" onclick="edPick('sforma','${f}',this)">${f}</button>`).join('')}
     </div></div>
     <div class="fg"><label class="fl">Status</label>
         <div class="stog">
@@ -268,7 +270,8 @@ function saveEditSaida(id) {
     const valor = document.getElementById('es-valor').value;
     if (!valor||Number(valor)<=0) { toast('⚠️ Informe o valor!'); return; }
     const natChosen = _pick['snatureza'] || s.natureza || 'PROFISSIONAL';
-    const tipoChosen = natChosen === 'PESSOAL' ? 'Pessoal' : (_pick['stipo'] || s.tipo);
+    const tipoSel = document.getElementById('es-tipo-sel');
+    const tipoChosen = natChosen === 'PESSOAL' ? 'Pessoal' : (tipoSel ? tipoSel.value : (_pick['stipo'] || s.tipo));
     const changes = {
         tipo:     tipoChosen,
         forma:    _pick['sforma'] || s.forma,

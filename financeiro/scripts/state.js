@@ -13,7 +13,8 @@ const SAIDA_TIPOS = ['Reposição de Material','Curso','DAS','Assistente','Segur
 // Pessoais NÃO têm categorias — basta natureza='PESSOAL'.
 const SAIDA_TIPOS_PROF_EXTRA = [
   'Deslocamento','Combustível','Estacionamento','Alimentação trabalho',
-  'Produtos','Equipamentos','Fornecedores','Marketing','Cursos'
+  'Produtos','Equipamentos','Fornecedores','Marketing','Cursos',
+  'Modelos','Assinaturas','Equipe'
 ];
 
 // Lista dinâmica de tipos profissionais já usados + sugestões.
@@ -37,6 +38,7 @@ let listFilter     = 'todos';
 let listEquipeFilter = 'todos';
 let saidasFormOpen = false;
 let saidasNaturezaFilter = 'todas';  // 'todas' | 'PROFISSIONAL' | 'PESSOAL' | 'MISTA'
+let saidasTipoFilter    = 'todas';  // 'todas' | nome da categoria
 let noivaDetail    = null;
 
 // ── Resumo: filtro de período ─────────────────────────────

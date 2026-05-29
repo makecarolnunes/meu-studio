@@ -295,6 +295,7 @@ function renderSaidas() {
     const monthList = saidas.filter(s=>{const my=getMonthYear(s.dataPag);return my&&my.m===selMonth&&my.y===selYear;});
     const list = monthList
         .filter(s=> saidasNaturezaFilter==='todas' || (s.natureza||'PROFISSIONAL')===saidasNaturezaFilter)
+        .filter(s=> saidasTipoFilter==='todas' || s.tipo===saidasTipoFilter)
         .sort((a,b)=>(b.dataPag||'').localeCompare(a.dataPag||''));
     const totPago = list.filter(s=>s.status==='Pago').reduce((t,s)=>t+Number(s.valor||0),0);
     const totPrev = list.filter(s=>s.status==='Previsto').reduce((t,s)=>t+Number(s.valor||0),0);
@@ -314,12 +315,14 @@ function renderSaidas() {
         <button class="mnbtn" onclick="chm(1)">›</button>
     </div>
 
-    <div class="natfilter" style="display:flex;gap:6px;margin:0 0 10px;flex-wrap:wrap">
+    <div class="natfilter" style="display:flex;gap:6px;margin:0 0 6px;flex-wrap:wrap">
         <button class="bt ${saidasNaturezaFilter==='todas'?'on':''}" onclick="setSaidaNatureza('todas')" style="font-size:.78rem">Todas (${monthList.length})</button>
         <button class="bt ${saidasNaturezaFilter==='PROFISSIONAL'?'on':''}" onclick="setSaidaNatureza('PROFISSIONAL')" style="font-size:.78rem">Profissional (${cntProf})</button>
         <button class="bt ${saidasNaturezaFilter==='PESSOAL'?'on':''}" onclick="setSaidaNatureza('PESSOAL')" style="font-size:.78rem">Pessoal (${cntPess})</button>
         ${cntMista>0?`<button class="bt ${saidasNaturezaFilter==='MISTA'?'on':''}" onclick="setSaidaNatureza('MISTA')" style="font-size:.78rem">Mista (${cntMista})</button>`:''}
     </div>
+
+    ${(()=>{ const tipos=[...new Set(monthList.filter(s=>saidasNaturezaFilter==='todas'||(s.natureza||'PROFISSIONAL')===saidasNaturezaFilter).map(s=>s.tipo).filter(Boolean))].sort(); return tipos.length>1?`<div style="margin-bottom:8px"><select class="fi" style="font-size:.82rem;padding:7px 10px" onchange="setSaidaTipoFilter(this.value)"><option value="todas">Todos os tipos</option>${tipos.map(t=>`<option value="${t}" ${saidasTipoFilter===t?'selected':''}>${t}</option>`).join('')}</select></div>`:''; })()}
 
     <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">
         <button class="add-btn ${saidasFormOpen?'open':''}" style="flex:1;min-width:0" onclick="toggleSaidasForm()">${saidasFormOpen?'✕ Fechar':'＋ Nova Saída'}</button>
@@ -341,7 +344,7 @@ function renderSaidas() {
             <button class="stbtn ${Fs.status==='Pago'?'on-g':''}"    data-f="status" data-v="Pago"    data-form="s" onclick="pick('status','Pago','s')">Pago</button>
             <button class="stbtn ${Fs.status==='Previsto'?'on-r':''}" data-f="status" data-v="Previsto" data-form="s" onclick="pick('status','Previsto','s')">Previsto</button>
         </div></div>
-        <div class="fg"><label class="fl">Forma de Pagamento</label>${bgroup('forma',['PIX','Crédito','Dinheiro'],'s')}</div>
+        <div class="fg"><label class="fl">Forma de Pagamento</label><div class="bg" style="flex-wrap:wrap">${['PIX','Débito','Transferência','Crédito','Dinheiro'].map(f=>`<button class="bt ${Fs.forma===f?'on':''}" data-f="forma" data-v="${f}" data-form="s" onclick="pick('forma','${f}','s')">${f}</button>`).join('')}</div></div>
         <div class="fg"><label class="fl">Observações</label><textarea class="fi ta" id="si-ob" placeholder="Detalhe...">${Fs.obs}</textarea></div>
         <div class="fg"><label class="fl">Recorrência</label><div class="bg" style="flex-wrap:wrap">
             <button class="bt ${Fs.recorrencia==='unica'?'on':''}" data-f="recorrencia" data-v="unica" data-form="s" onclick="pick('recorrencia','unica','s')">Única</button>

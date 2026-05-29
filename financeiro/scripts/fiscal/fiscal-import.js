@@ -13,23 +13,41 @@
 
 window.FS_IMPORT = {
   estado: 'idle',     // idle|parseando|categorizando|revisando|salvando
-  parsed: null,       // { transacoes, banco, conta, periodoIni, periodoFim }
+  parsed: null,       // { transacoes, banco, conta, periodoIni, periodoFim, isCreditCard }
   comHash: [],        // transacoes com hash calculado
   preview: null,      // { novas: [], duplicadas: [], possiveis: [] }
   categorizadas: [],  // após IA
   importacaoId: '',
   fileName: '',
+  tipoExtrato: 'conta',  // 'conta' | 'cartao'
+  faturaData: '',         // data de pagamento da fatura (quando tipoExtrato='cartao')
 };
 
 // Entrada principal — chamada pelo botão "Importar extrato"
 function fsImportAbrir() {
+  FS_IMPORT.tipoExtrato = 'conta';
+  FS_IMPORT.faturaData = '';
   document.getElementById('fs-modal-inner').innerHTML = `
     <h2>Importar extrato</h2>
-    <p>Aceita arquivos <b>OFX</b> ou <b>CSV</b> do seu banco. As receitas ficam só pra conciliação — não criam nada no Financeiro. As saídas viram saídas no Financeiro + despesas no Fiscal.</p>
+    <p>Aceita arquivos <b>OFX</b> ou <b>CSV</b>. As saídas viram lançamentos no Financeiro. As receitas ficam só para conciliação.</p>
     <div class="fs-field">
-      <label>Arquivo do extrato</label>
+      <label>Arquivo</label>
       <input type="file" id="fs-import-file" accept=".ofx,.csv,.txt" class="fs-file-input">
       <div class="fs-field-hint">Nubank, Inter, Itaú, Banco do Brasil etc.</div>
+    </div>
+    <div class="fs-field">
+      <label>Tipo de extrato</label>
+      <div class="fs-regime-pills">
+        <button class="fs-regime-pill selected" id="fs-tipo-conta" onclick="fsImportSetTipoExt('conta')">Conta corrente / débito</button>
+        <button class="fs-regime-pill" id="fs-tipo-cartao" onclick="fsImportSetTipoExt('cartao')">Fatura de cartão de crédito</button>
+      </div>
+    </div>
+    <div id="fs-fatura-wrap" style="display:none">
+      <div class="fs-field">
+        <label>Data de pagamento da fatura</label>
+        <input type="date" class="fi" id="fs-fatura-data" onchange="FS_IMPORT.faturaData=this.value">
+        <div class="fs-field-hint">Todas as compras desta fatura serão datadas com esta data — o mês em que a fatura saiu da sua conta.</div>
+      </div>
     </div>
     <div class="fs-modal-actions">
       <button class="fs-btn fs-btn-ghost" onclick="fiscalModalClose()">Cancelar</button>
@@ -37,6 +55,13 @@ function fsImportAbrir() {
     </div>
   `;
   document.getElementById('fs-modal-bg').style.display = 'flex';
+}
+
+function fsImportSetTipoExt(tipo) {
+  FS_IMPORT.tipoExtrato = tipo;
+  document.getElementById('fs-tipo-conta').classList.toggle('selected', tipo === 'conta');
+  document.getElementById('fs-tipo-cartao').classList.toggle('selected', tipo === 'cartao');
+  document.getElementById('fs-fatura-wrap').style.display = tipo === 'cartao' ? '' : 'none';
 }
 
 async function fsImportProcessar() {
@@ -54,7 +79,22 @@ async function fsImportProcessar() {
     return;
   }
 
-  // Calcula hash de cada transação
+  // Auto-detecta cartão de crédito (OFX sinaliza via isCreditCard)
+  if (FS_IMPORT.parsed.isCreditCard && FS_IMPORT.tipoExtrato === 'conta') {
+    FS_IMPORT.tipoExtrato = 'cartao';
+  }
+
+  // Valida data da fatura se for cartão
+  if (FS_IMPORT.tipoExtrato === 'cartao' && !FS_IMPORT.faturaData) {
+    fsImportRenderPedirFaturaData();
+    return;
+  }
+
+  await fsImportHashEPreview();
+}
+
+async function fsImportHashEPreview() {
+  fsImportRenderLoading('Processando...');
   const banco = FS_IMPORT.parsed.banco || 'Banco';
   const comHash = [];
   for (const t of FS_IMPORT.parsed.transacoes) {
@@ -62,8 +102,6 @@ async function fsImportProcessar() {
     comHash.push({ ...t, hash, banco });
   }
   FS_IMPORT.comHash = comHash;
-
-  // Dedup contra hashes já no banco (carrega lista de hashes existentes)
   await fsImportDedupAndPreview();
   fsImportRenderPreview();
 }
@@ -109,6 +147,45 @@ async function fsImportDedupAndPreview() {
   }
 
   FS_IMPORT.preview = { novas, duplicadas, possiveis };
+}
+
+function fsImportRenderPedirFaturaData() {
+  const p = FS_IMPORT.parsed;
+  document.getElementById('fs-modal-inner').innerHTML = `
+    <h2>Fatura de cartão detectada</h2>
+    <p>Detectei que este arquivo é uma <b>fatura de cartão de crédito</b>.</p>
+    <p>Para o lançamento ficar no mês certo, informe a data em que a fatura foi paga (débito na conta corrente).</p>
+    <div class="fs-import-meta" style="margin-bottom:16px">
+      <div><b>Banco:</b> ${p.banco}</div>
+      <div><b>Período da fatura:</b> ${fsFmtDataBr(p.periodoIni)} → ${fsFmtDataBr(p.periodoFim)}</div>
+    </div>
+    <div class="fs-field">
+      <label>Data de pagamento da fatura</label>
+      <input type="date" class="fi" id="fs-fatura-data2" value="${FS_IMPORT.faturaData}">
+      <div class="fs-field-hint">Todas as ${p.transacoes.length} compras serão datadas neste dia.</div>
+    </div>
+    <div class="fs-modal-actions">
+      <button class="fs-btn fs-btn-ghost" onclick="fsImportAbrir()">Voltar</button>
+      <button class="fs-btn fs-btn-primary" onclick="fsImportConfirmarFaturaData()">Continuar</button>
+    </div>
+  `;
+}
+
+async function fsImportConfirmarFaturaData() {
+  const inp = document.getElementById('fs-fatura-data2');
+  if (!inp || !inp.value) { fsToast('Informe a data de pagamento'); return; }
+  FS_IMPORT.faturaData = inp.value;
+  await fsImportHashEPreview();
+}
+
+function fsDetectarForma(t) {
+  if (FS_IMPORT.tipoExtrato === 'cartao') return 'Crédito';
+  const desc = (t.descricao || '').toLowerCase();
+  if (/\bpix\b/.test(desc)) return 'Transferência';
+  if (/transfer|ted\b|doc\b/.test(desc)) return 'Transferência';
+  if (t._ofxTipo === 'POS') return 'Débito';
+  if (t._ofxTipo === 'DEBIT' && !/pix/i.test(desc)) return 'Débito';
+  return 'Transferência';
 }
 
 function fsImportRenderLoading(msg) {
@@ -424,12 +501,16 @@ async function fsImportSalvar() {
     const saidaId = 'sai_' + Date.now() + '_' + Math.random().toString(36).slice(2,7);
     const despId = 'desp_' + Date.now() + '_' + Math.random().toString(36).slice(2,7);
 
+    const dataSaida = (FS_IMPORT.tipoExtrato === 'cartao' && FS_IMPORT.faturaData)
+      ? FS_IMPORT.faturaData
+      : t.data;
+
     novasSaidas.push({
       id: saidaId,
-      dataPag: t.data,
+      dataPag: dataSaida,
       tipo: categoria,
       valor: String(valorAbs),
-      forma: 'Crédito',     // banco; usuário pode editar depois
+      forma: fsDetectarForma(t),
       status: 'Pago',
       obs: 'Importado: ' + (t.descricao || ''),
       recorrencia: 'unica',
@@ -442,7 +523,7 @@ async function fsImportSalvar() {
     novasDespesas.push({
       id: despId,
       saidaId,
-      data: t.data,
+      data: dataSaida,
       descricao: t.descricao,
       valor: valorAbs,
       categoria,
