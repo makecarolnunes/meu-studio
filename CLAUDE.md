@@ -229,5 +229,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-29 11:37 | main | feat: Fase 2 ÔÇö WhatsApp em Clientes + PIX QR Code em entradas -->
+<!-- AUTO: 2026-05-29 11:45 | main | feat: Fase 3 ÔÇö notas r├ípidas + busca global + dashboard convers├úo -->
 
