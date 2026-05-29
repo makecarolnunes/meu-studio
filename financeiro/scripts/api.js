@@ -7,12 +7,42 @@ function normalizeE(e) { return { ...e, id: String(e.id||''), auto: e.auto==='tr
 function normalizeS(s) { return { ...s, id: String(s.id||'') }; }
 function normalizeN(n) { return { ...n, id: String(n.id||''), contratos: Array.isArray(n.contratos)?n.contratos:[] }; }
 
+// Salva no localStorage tolerando quota (iOS Safari ≈ 2.5MB).
+// Loga tamanhos pra ajudar a identificar o vilão. Não derruba o sync.
+function _safeCacheAll() {
+    const items = [
+        { key: 'mk_entries', payload: entries },
+        { key: 'mk_saidas',  payload: saidas  },
+        { key: 'mk_noivas',  payload: noivas  },
+    ];
+    for (const { key, payload } of items) {
+        try {
+            const str = JSON.stringify(payload);
+            localStorage.setItem(key, str);
+        } catch(e) {
+            const sizes = {};
+            try {
+                for (let i = 0; i < localStorage.length; i++) {
+                    const k = localStorage.key(i);
+                    sizes[k] = (localStorage.getItem(k) || '').length;
+                }
+            } catch(_) {}
+            const top = Object.entries(sizes).sort((a,b) => b[1]-a[1]).slice(0, 6)
+                .map(([k,v]) => `${k}:${(v/1024).toFixed(1)}KB`).join(' ');
+            console.warn(`[cache] localStorage cheio ao salvar ${key} — top: ${top}`, e.message);
+            return { ok: false, fullKey: key, top };
+        }
+    }
+    return { ok: true };
+}
+
 async function loadFromSupabase() {
     updateDot('syncing');
     isSyncing = true;
     // Retry com backoff — cold start em mobile/4G falha na 1ª; 2 retries cobrem o caso
     const delays = [0, 1500, 4000];
     let lastErr = null;
+    let cacheErr = null;
     try {
         for (let i = 0; i < delays.length; i++) {
             if (delays[i]) await new Promise(r => setTimeout(r, delays[i]));
@@ -25,7 +55,9 @@ async function loadFromSupabase() {
                 entries = ents.map(normalizeE);
                 saidas  = sais.map(normalizeS);
                 noivas  = novs.map(normalizeN);
-                cacheEntries(); cacheSaidas(); cacheNoivas();
+                // Cache isolado — se localStorage estourar, sync ainda é sucesso
+                const cacheRes = _safeCacheAll();
+                if (!cacheRes.ok) cacheErr = cacheRes;
                 updateDot('ok');
                 lastErr = null;
                 // Preços em paralelo (não bloqueia render)
@@ -41,6 +73,8 @@ async function loadFromSupabase() {
             const detalhe = (lastErr && lastErr.message) ? String(lastErr.message) : String(lastErr || 'erro desconhecido');
             const code = lastErr && (lastErr.code || lastErr.status || lastErr.statusCode);
             toast('Supabase falhou: ' + (code ? '[' + code + '] ' : '') + detalhe.slice(0, 120), 8000);
+        } else if (cacheErr) {
+            toast('Dados carregados, mas cache local cheio (' + cacheErr.fullKey + '). Veja console.', 6000);
         }
     } finally {
         isSyncing = false;
