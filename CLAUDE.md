@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-29 02:15 | main | refactor(financeiro): Resumo adota .ftab/.ftabs unificado (design system) -->
+<!-- AUTO: 2026-05-29 02:24 | main | refactor(noivas): card extra├¡do em componentes CSS + tokens locais -->
 
