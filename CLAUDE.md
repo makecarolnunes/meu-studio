@@ -229,5 +229,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-29 03:49 | main | docs: sync CLAUDE.md [auto] -->
+<!-- AUTO: 2026-05-29 03:58 | main | fix(financeiro): isola cache do sync ÔÇö quota cheia n├úo derruba load -->
 
