@@ -841,6 +841,115 @@ function abrirEventosNoNavegador(eventos, statusEl) {
 }
 
 // ══════════════════════════════════════════════════════════
+//  6.C.2 · DASHBOARD DE CONVERSÃO
+//  Mostra mês corrente vs mês anterior vs últimos 3 meses
+// ══════════════════════════════════════════════════════════
+function _convStatsFor(start, end) {
+  // start/end: 'YYYY-MM' inclusivos
+  const ano = (e) => (e.DataPedido || '').slice(0, 7);
+  const inPeriod = (e) => {
+    const m = ano(e);
+    return m >= start && m <= end;
+  };
+  const list = entries.filter(inPeriod);
+  const enviados   = list.length;
+  const fechados   = list.filter(e => e.Status === 'Fechado').length;
+  const perdidos   = list.filter(e => ['Perdido - Sem Resposta','Perdido - Sem Disponibilidade'].includes(e.Status)).length;
+  const abertos    = enviados - fechados - perdidos;
+  const receita    = list.filter(e => e.Status === 'Fechado')
+    .reduce((s,e) => s + (parseFloat(e.ValorFechado) || parseFloat(e.ValorProp) || 0), 0);
+  const ticketMedio = fechados > 0 ? receita / fechados : 0;
+  const conv = enviados > 0 ? Math.round(fechados / enviados * 100) : 0;
+  return { enviados, fechados, perdidos, abertos, receita, ticketMedio, conv };
+}
+
+function openConversaoDashboard() {
+  const hoje = new Date();
+  const mY = hoje.getFullYear();
+  const mM = hoje.getMonth(); // 0-based
+  const pad = (n) => String(n).padStart(2, '0');
+  const mesAtualKey = `${mY}-${pad(mM+1)}`;
+  const mesAntDate = new Date(mY, mM - 1, 1);
+  const mesAntKey  = `${mesAntDate.getFullYear()}-${pad(mesAntDate.getMonth()+1)}`;
+  const inicio3Date = new Date(mY, mM - 2, 1);
+  const inicio3Key  = `${inicio3Date.getFullYear()}-${pad(inicio3Date.getMonth()+1)}`;
+  const anoAtualKey = `${mY}-01`;
+
+  const mesAtual  = _convStatsFor(mesAtualKey, mesAtualKey);
+  const mesAnt    = _convStatsFor(mesAntKey, mesAntKey);
+  const ult3      = _convStatsFor(inicio3Key, mesAtualKey);
+  const ano       = _convStatsFor(anoAtualKey, `${mY}-12`);
+
+  const deltaConv = mesAnt.enviados > 0
+    ? mesAtual.conv - mesAnt.conv
+    : null;
+  const deltaRec  = mesAnt.receita > 0
+    ? Math.round(((mesAtual.receita - mesAnt.receita) / mesAnt.receita) * 100)
+    : null;
+
+  const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const fmt = (v) => 'R$ ' + Number(v||0).toLocaleString('pt-BR', {minimumFractionDigits:0, maximumFractionDigits:0});
+
+  const card = (titulo, sub, st, opts) => {
+    const o = opts || {};
+    const corConv = st.conv >= 50 ? '#3B6D11' : st.conv >= 30 ? '#BA7517' : '#C62828';
+    const deltaHtml = o.deltaConv !== undefined && o.deltaConv !== null
+      ? `<span style="font-size:.7rem;font-weight:700;color:${o.deltaConv >= 0 ? '#3B6D11' : '#C62828'};margin-left:6px">${o.deltaConv >= 0 ? '+' : ''}${o.deltaConv}pp</span>`
+      : '';
+    return `
+      <div style="background:white;border:1px solid #EDE4DF;border-radius:14px;padding:14px 16px;margin-bottom:10px">
+        <div style="font-size:.7rem;font-weight:700;color:#6F6660;text-transform:uppercase;letter-spacing:.08em;margin-bottom:2px">${titulo}</div>
+        ${sub ? `<div style="font-size:.68rem;color:#A8A199;margin-bottom:10px">${sub}</div>` : '<div style="height:10px"></div>'}
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;text-align:center;margin-bottom:10px">
+          <div><div style="font-size:1.2rem;font-weight:800;color:#2C2420">${st.enviados}</div><div style="font-size:.62rem;color:#6F6660">Enviados</div></div>
+          <div><div style="font-size:1.2rem;font-weight:800;color:#3B6D11">${st.fechados}</div><div style="font-size:.62rem;color:#6F6660">Fechados</div></div>
+          <div><div style="font-size:1.2rem;font-weight:800;color:#C62828">${st.perdidos}</div><div style="font-size:.62rem;color:#6F6660">Perdidos</div></div>
+          <div><div style="font-size:1.2rem;font-weight:800;color:#BA7517">${st.abertos}</div><div style="font-size:.62rem;color:#6F6660">Em aberto</div></div>
+        </div>
+        <div style="display:flex;align-items:baseline;justify-content:space-between;padding-top:10px;border-top:1px dashed #EDE4DF">
+          <div>
+            <span style="font-size:.75rem;color:#6F6660">Conversão</span>
+            <strong style="font-size:1.05rem;color:${corConv};margin-left:5px">${st.conv}%</strong>
+            ${deltaHtml}
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:.95rem;font-weight:800;color:#38190b">${fmt(st.receita)}</div>
+            ${o.deltaRec !== undefined && o.deltaRec !== null ? `<div style="font-size:.65rem;color:${o.deltaRec >= 0 ? '#3B6D11' : '#C62828'};font-weight:600">${o.deltaRec >= 0 ? '+' : ''}${o.deltaRec}% vs anterior</div>` : ''}
+            ${st.fechados > 0 ? `<div style="font-size:.65rem;color:#A8A199">Ticket médio ${fmt(st.ticketMedio)}</div>` : ''}
+          </div>
+        </div>
+      </div>
+    `;
+  };
+
+  const html = `
+    <div style="font-size:1.05rem;font-weight:800;color:#38190b;margin-bottom:14px">📊 Conversão · ${meses[mM]} ${mY}</div>
+    ${card(meses[mM] + ' ' + mY, 'mês corrente', mesAtual, { deltaConv, deltaRec })}
+    ${card(meses[mesAntDate.getMonth()] + ' ' + mesAntDate.getFullYear(), 'mês anterior · comparação', mesAnt)}
+    ${card('Últimos 3 meses', `${meses[inicio3Date.getMonth()]} → ${meses[mM]}`, ult3)}
+    ${card('Ano ' + mY, 'janeiro até dezembro', ano)}
+    <button onclick="closeConversaoDashboard()" style="width:100%;margin-top:6px;padding:11px;background:none;border:1.5px solid #EDE4DF;border-radius:12px;font-family:inherit;font-size:.85rem;font-weight:600;color:#6F6660;cursor:pointer">Fechar</button>
+  `;
+
+  // Cria overlay próprio (não usa o modal de orçamento)
+  let bg = document.getElementById('conv-bg');
+  if (!bg) {
+    bg = document.createElement('div');
+    bg.id = 'conv-bg';
+    bg.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:400;display:flex;align-items:center;justify-content:center;padding:16px';
+    bg.onclick = (e) => { if (e.target === bg) closeConversaoDashboard(); };
+    document.body.appendChild(bg);
+  }
+  bg.innerHTML = `<div style="background:#FAF8F6;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;border-radius:20px;padding:22px 18px;box-shadow:0 12px 40px rgba(0,0,0,.25)">${html}</div>`;
+  bg.style.display = 'flex';
+}
+
+function closeConversaoDashboard() {
+  const bg = document.getElementById('conv-bg');
+  if (bg) bg.style.display = 'none';
+}
+
+// ══════════════════════════════════════════════════════════
 //  RENDER — lista de orçamentos
 // ══════════════════════════════════════════════════════════
 function render() {

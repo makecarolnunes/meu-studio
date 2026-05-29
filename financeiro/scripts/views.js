@@ -636,6 +636,30 @@ function renderResumo() {
             <button onclick="promptMetaMensal()" style="background:none;border:none;color:var(--brown);font-size:.7rem;cursor:pointer;padding:6px 0 0;display:block;margin-left:auto">Editar meta</button>
         </div>`;
     })() : ''}
+    ${(() => {
+        const notes = qnGetNotes();
+        const top = notes.slice(0, 4);
+        return `
+        <div class="card qn-card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+                <div class="card-title" style="margin:0">📝 Notas rápidas</div>
+                ${notes.length > 4 ? `<a href="../anotacoes/" style="font-size:.7rem;color:var(--brown);text-decoration:none;font-weight:600">Ver todas (${notes.length}) →</a>` : ''}
+            </div>
+            <div style="display:flex;gap:6px;margin-bottom:${top.length ? '10' : '0'}px">
+                <input class="fi" id="qn-input" type="text" placeholder="Adicionar nota rápida..." autocomplete="off" onkeydown="qnSubmit(event)" style="flex:1;font-size:.85rem;padding:9px 11px">
+                <button onclick="qnSubmit()" style="background:var(--brown);color:white;border:none;border-radius:10px;padding:0 14px;font-size:1.1rem;font-weight:700;cursor:pointer">+</button>
+            </div>
+            ${top.length ? `
+            <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:5px">
+                ${top.map(n => `
+                <li style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--brown-soft);border-radius:8px;font-size:.83rem;color:var(--text)">
+                    <span style="flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${n.titulo}</span>
+                    <button onclick="qnDelete('${n.id}')" title="Concluir" style="background:none;border:none;color:var(--muted);font-size:1rem;cursor:pointer;padding:0 4px;line-height:1">✕</button>
+                </li>
+                `).join('')}
+            </ul>` : ''}
+        </div>`;
+    })()}
     <div class="card">
         <div class="card-title">Faturamento</div>
         <div class="rsum-grid" style="margin-bottom:11px">

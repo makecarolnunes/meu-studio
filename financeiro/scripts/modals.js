@@ -164,6 +164,96 @@ function savePixConfig() {
     closeModal();
 }
 
+// 6.A.3 · Busca global — modal único pra entradas, saídas, noivas
+let _gsQuery = '';
+function openGlobalSearch() {
+    _gsQuery = '';
+    document.getElementById('modal-bg').style.display = 'flex';
+    document.getElementById('modal-inner').innerHTML = `
+    <div class="modal-title" style="margin-bottom:10px">Buscar</div>
+    <input type="text" id="gs-input" class="fi" placeholder="Cliente, noiva, despesa, observação..." autocomplete="off"
+        oninput="onGlobalSearchInput(this.value)" style="margin-bottom:14px;font-size:.95rem">
+    <div id="gs-results">
+        <div style="font-size:.78rem;color:var(--muted);text-align:center;padding:24px 8px;line-height:1.5">
+            Digite ao menos 2 caracteres.<br>Busca em entradas, saídas e noivas.
+        </div>
+    </div>
+    <button class="skip" style="margin-top:12px" onclick="closeModal()">Fechar</button>`;
+    setTimeout(() => {
+        const inp = document.getElementById('gs-input');
+        if (inp) inp.focus();
+    }, 60);
+}
+
+function onGlobalSearchInput(v) {
+    _gsQuery = v;
+    const el = document.getElementById('gs-results');
+    if (!el) return;
+    if (!v || v.trim().length < 2) {
+        el.innerHTML = `<div style="font-size:.78rem;color:var(--muted);text-align:center;padding:24px 8px;line-height:1.5">Digite ao menos 2 caracteres.<br>Busca em entradas, saídas e noivas.</div>`;
+        return;
+    }
+    const r = runGlobalSearch(v);
+    if (r.total === 0) {
+        el.innerHTML = `<div style="font-size:.78rem;color:var(--muted);text-align:center;padding:24px 8px">Nada encontrado para <strong>"${v}"</strong>.</div>`;
+        return;
+    }
+
+    const section = (titulo, total, items) => items.length ? `
+        <div style="margin-bottom:14px">
+            <div style="font-size:.65rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;display:flex;justify-content:space-between;align-items:baseline">
+                <span>${titulo}</span>
+                ${total > items.length ? `<span style="color:var(--brown);font-weight:600">+${total - items.length} a mais</span>` : ''}
+            </div>
+            <div style="display:flex;flex-direction:column;gap:5px">${items.join('')}</div>
+        </div>` : '';
+
+    const entryRow = e => `
+        <button onclick="gsOpenEntry('${e.id}')" style="text-align:left;background:white;border:1px solid var(--border);border-radius:10px;padding:9px 11px;cursor:pointer;display:flex;align-items:center;gap:9px;font-family:inherit;color:var(--text)">
+            <div style="flex:1;min-width:0">
+                <div style="font-size:.85rem;font-weight:700">${e.cliente || '(sem nome)'}</div>
+                <div style="font-size:.7rem;color:var(--muted);margin-top:2px">${fmtDate(e.dataPag)} · ${e.tipo} · ${e.servico || e.origem || ''}</div>
+            </div>
+            <div style="font-weight:800;font-size:.85rem;color:${e.status === 'Realizado' ? 'var(--ok)' : 'var(--red)'}">${brl(e.valor)}</div>
+        </button>`;
+
+    const saidaRow = s => `
+        <button onclick="gsOpenSaida('${s.id}')" style="text-align:left;background:white;border:1px solid var(--border);border-radius:10px;padding:9px 11px;cursor:pointer;display:flex;align-items:center;gap:9px;font-family:inherit;color:var(--text)">
+            <div style="flex:1;min-width:0">
+                <div style="font-size:.85rem;font-weight:700">${s.tipo}</div>
+                <div style="font-size:.7rem;color:var(--muted);margin-top:2px">${fmtDate(s.dataPag)} · ${s.forma}${s.obs ? ' · ' + s.obs.slice(0,30) : ''}</div>
+            </div>
+            <div style="font-weight:800;font-size:.85rem;color:var(--red)">${brl(s.valor)}</div>
+        </button>`;
+
+    const noivaRow = n => `
+        <button onclick="gsOpenNoiva('${n.id}')" style="text-align:left;background:white;border:1px solid var(--border);border-radius:10px;padding:9px 11px;cursor:pointer;display:flex;align-items:center;gap:9px;font-family:inherit;color:var(--text)">
+            <div style="flex:1;min-width:0">
+                <div style="font-size:.85rem;font-weight:700">${n.nome}</div>
+                <div style="font-size:.7rem;color:var(--muted);margin-top:2px">${n.dataCasamento ? '👰 ' + fmtDate(n.dataCasamento) : 'Sem data'} · Contrato ${brl(n.valorContrato)}</div>
+            </div>
+        </button>`;
+
+    el.innerHTML =
+        section(`Entradas (${r.totalEntries})`, r.totalEntries, r.entries.map(entryRow)) +
+        section(`Saídas (${r.totalSaidas})`,   r.totalSaidas,   r.saidas.map(saidaRow)) +
+        section(`Noivas (${r.totalNoivas})`,    r.totalNoivas,   r.noivas.map(noivaRow));
+}
+
+function gsOpenEntry(id) {
+    closeModal();
+    setTimeout(() => openEditEntry(id), 50);
+}
+function gsOpenSaida(id) {
+    closeModal();
+    setTimeout(() => openEditSaida(id), 50);
+}
+function gsOpenNoiva(id) {
+    closeModal();
+    noivaDetail = id;
+    go('noivas');
+}
+
 // 6.G.2 · Abre modal com QR Code da entrada
 function openPixModal(entryId) {
     const e = entries.find(x => String(x.id) === String(entryId));

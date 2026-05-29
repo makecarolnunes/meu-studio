@@ -1,6 +1,6 @@
 # Backlog · Meu Studio
 
-> Última revisão: 2026-05-29 (sessão Sprint 4 + delete confirmacao + sugestões por módulo)
+> Última revisão: 2026-05-29 (9 quick wins concluídos em 3 fases)
 > Fonte da verdade do que está pendente, em ordem de prioridade.
 > Atualize ao concluir um item, mover prioridade ou adicionar novo escopo.
 
@@ -29,6 +29,17 @@
 
 ### Limpezas
 - [x] Módulo `confirmacao/` (Agendamentos) deletado — não estava em uso. Refs removidas de hub.js, sidebar.js, CLAUDE.md.
+
+### Quick wins entregues (2026-05-29)
+- [x] **6.H.1** · Soft delete + undo (entries + saidas não-grupo) — toast com botão Desfazer 5s
+- [x] **6.E.4** · Salário-equivalente CLT no card Resultado do Resumo
+- [x] **6.E.1** · Simulador teto MEI no Painel Fiscal (ritmo atual + ponderada 3 meses)
+- [x] **6.E.2** · Meta mensal personalizável no Resumo (barra de progresso + cores semânticas)
+- [x] **6.G.1** · WhatsApp em Clientes (tabela `cliente_contatos` + botão verde nos cards)
+- [x] **6.G.2** · PIX QR Code (config em Financeiro + botão em entradas Previsto + BR Code EMV padrão BACEN)
+- [x] **6.A.4** · Notas rápidas (widget no Resumo, reaproveita anotacoes/ via caderno auto-criado)
+- [x] **6.A.3** · Busca global no Financeiro (tecla `/` ou botão lupa no header)
+- [x] **6.C.2** · Dashboard de conversão em Orçamentos (mês atual vs anterior vs últimos 3m vs ano + delta)
 
 ---
 
@@ -159,8 +170,8 @@ Pool de melhorias pequenas (esforço ≤ 3h cada) baseadas em inspeção dos mó
 
 - [ ] **6.A.1** · **Duplicar lançamento** (✨ sua ideia) — botão "Duplicar" no modal de editar entrada/saída. Esforço: ~30min
 - [ ] **6.A.2** · **Lançar novamente neste mês** (✨ sua ideia) — botão pequeno em cada item da lista que copia o lançamento com data de hoje. Esforço: ~45min
-- [ ] **6.A.3** · **Busca global** (✨ sua ideia) — ícone de lupa no header + tecla `/` → caixa única busca em entradas, saídas, noivas, orçamentos, clientes. Esforço: ~2h
-- [ ] **6.A.4** · **Notas rápidas** (✨ sua ideia) — bloco simples ("comprar pincel", "renovar domínio") sem prazo nem complexidade. Nova tabela `notas_rapidas` ou tela dedicada. Esforço: ~1h30
+- [x] **6.A.3** · ✅ Busca global · `/` ou ícone lupa · busca em entries/saidas/noivas
+- [x] **6.A.4** · ✅ Notas rápidas · widget no Resumo · grava em anotacoes/ caderno "Notas rápidas"
 - [ ] **6.A.5** · **Atalhos de teclado** — `/` busca, `N` nova entrada, `S` nova saída, `Esc` fecha modal. Esforço: ~30min
 - [ ] **6.A.6** · **Templates de saída fixa** — "DAS de novembro", "Equipe Julia · sábado" — 1 clique preenche tudo. Esforço: ~1h
 - [ ] **6.A.7** · **Long-press na lista** → menu rápido (duplicar / refazer no mês / pin). Esforço: ~1h
@@ -181,7 +192,7 @@ Pool de melhorias pequenas (esforço ≤ 3h cada) baseadas em inspeção dos mó
 ### 6.C · Orçamentos
 
 - [ ] **6.C.1** · **Disable button durante submit** (já no roadmap antigo) — evita criar entries duplicadas se Carol clicar 2x rápido. Esforço: ~10min · **Bug fix**
-- [ ] **6.C.2** · **Dashboard de conversão mensal** — total enviados × fechados × perdidos × taxa de conversão. Esforço: ~2h
+- [x] **6.C.2** · ✅ Dashboard de conversão · botão 📊 nos chips · mês atual vs anterior vs últimos 3m vs ano
 - [ ] **6.C.3** · **Filtro por serviço** (já no roadmap) — maquiagem, cabelo, noiva. Esforço: ~30min
 - [ ] **6.C.4** · **Campo "como conheceu"** (já no roadmap) — Instagram, indicação, Google. Permite calcular ROI por canal. Esforço: ~1h
 - [ ] **6.C.5** · **Tempo médio de resposta** — desde criação do orçamento até fechamento (ou perda). Esforço: ~45min
@@ -202,10 +213,10 @@ Pool de melhorias pequenas (esforço ≤ 3h cada) baseadas em inspeção dos mó
 
 ### 6.E · Insights de dinheiro (Financeiro/Fiscal)
 
-- [ ] **6.E.1** · **Simulador de teto MEI** (✨ sua ideia) — "Mantendo a média atual você atingirá X% do limite". Esforço: ~1h
-- [ ] **6.E.2** · **Meta mensal personalizável** — Carol define "quero faturar R$ 8k", barra de progresso no painel. Esforço: ~1h30
+- [x] **6.E.1** · ✅ Simulador de teto MEI · ritmo atual + ponderada 3 meses no Painel Fiscal
+- [x] **6.E.2** · ✅ Meta mensal · barra de progresso no Resumo com cores semânticas
 - [ ] **6.E.3** · **What-if no Fiscal** — "Se eu cobrar R$ X esse mês, sobro com R$ Y de margem". Esforço: ~1h
-- [ ] **6.E.4** · **Salário-equivalente CLT** — "Esse mês equivaleu a um CLT de R$ Z" (cálculo descontando INSS hipotético). Esforço: ~1h
+- [x] **6.E.4** · ✅ Salário-equivalente CLT · card Resultado do Resumo (fator 0,72)
 - [ ] **6.E.5** · **Comparativo mesmo mês ano anterior** — "Maio 2026 vs Maio 2025: +18%". Esforço: ~45min
 - [ ] **6.E.6** · **Streak de meses positivos** — "8 meses seguidos no lucro" (motivacional). Esforço: ~45min
 - [ ] **6.E.7** · **Custo por atendimento** — despesas profissionais ÷ qtd entradas. Mostra "custo unitário R$ Z". Esforço: ~30min
@@ -219,13 +230,13 @@ Pool de melhorias pequenas (esforço ≤ 3h cada) baseadas em inspeção dos mó
 
 ### 6.G · Comunicação rápida
 
-- [ ] **6.G.1** · **Mensagem WhatsApp pronta** — botão "Lembrar cliente" gera link `wa.me/...` com texto editável. Esforço: ~45min
-- [ ] **6.G.2** · **Link PIX com QR Code** — gera QR Code do valor + chave PIX direto na entrada. Cliente paga na hora. Esforço: ~1h30
+- [x] **6.G.1** · ✅ WhatsApp em Clientes · botão verde nos cards · telefone salvo em `cliente_contatos`
+- [x] **6.G.2** · ✅ PIX QR Code · config Financeiro + botão em entradas Previsto · BR Code EMV BACEN
 - [ ] **6.G.3** · **Recibo PDF simples** — botão na entrada → gera PDF "Recibo de pagamento" pra enviar pra cliente. Esforço: ~1h
 
 ### 6.H · Confiança / audit
 
-- [ ] **6.H.1** · **Soft delete com undo** — toast "Entrada excluída · Desfazer" durante 5s antes do delete real. Esforço: ~1h · **Alto valor (medo de perder dado)**
+- [x] **6.H.1** · ✅ Soft delete com undo · toast 5s · entries e saídas não-grupo
 - [ ] **6.H.2** · **Histórico de versões da entrada** — vê quem mudou o quê e quando (audit log básico). Esforço: ~3h
 - [ ] **6.H.3** · **Indicador de sincronização visível** — "Sincronizado · 14:32" no header. Esforço: ~30min
 - [ ] **6.H.4** · **Backup manual** — botão "Baixar tudo (JSON)" no config (peace of mind). Esforço: ~30min

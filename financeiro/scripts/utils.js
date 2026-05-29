@@ -79,6 +79,130 @@ function undoSoftDelete() {
     toast('Restaurado');
 }
 
+// ── 6.A.3 · Busca global ──
+// Normaliza string (lowercase + remove acentos)
+function gsNorm(s) {
+    return String(s || '').toLowerCase()
+        .normalize('NFD').replace(/[̀-ͯ]/g, '');
+}
+
+// Busca query em entries/saidas/noivas. Retorna { entries[], saidas[], noivas[] }.
+function runGlobalSearch(query, limit) {
+    const q = gsNorm(query).trim();
+    if (!q || q.length < 2) return { entries: [], saidas: [], noivas: [], total: 0 };
+    const lim = limit || 6;
+    const match = (s) => gsNorm(s).includes(q);
+
+    const eMatches = (entries || []).filter(e =>
+        match(e.cliente) || match(e.obs) || match(e.tipo) ||
+        match(e.servico) || match(e.origem)
+    ).sort((a,b) => (b.dataPag||'').localeCompare(a.dataPag||''));
+
+    const sMatches = (saidas || []).filter(s =>
+        match(s.tipo) || match(s.obs)
+    ).sort((a,b) => (b.dataPag||'').localeCompare(a.dataPag||''));
+
+    const nMatches = (noivas || []).filter(n =>
+        match(n.nome) || match(n.obs)
+    ).sort((a,b) => (b.dataCasamento||'').localeCompare(a.dataCasamento||''));
+
+    return {
+        entries: eMatches.slice(0, lim),
+        saidas:  sMatches.slice(0, lim),
+        noivas:  nMatches.slice(0, lim),
+        total:   eMatches.length + sMatches.length + nMatches.length,
+        totalEntries: eMatches.length,
+        totalSaidas:  sMatches.length,
+        totalNoivas:  nMatches.length,
+    };
+}
+
+// ── 6.A.4 · Notas rápidas (reaproveita módulo anotacoes/) ──
+// Mantém um caderno "Notas rápidas" auto-criado e um cache localStorage.
+const _QN_CADERNO_NOME = 'Notas rápidas';
+let _qnCadernoId = localStorage.getItem('mk_qn_caderno_id') || '';
+let _qnNotes     = (() => {
+    try { return JSON.parse(localStorage.getItem('mk_qn_notes') || '[]'); }
+    catch(_) { return []; }
+})();
+
+function qnGetNotes() { return _qnNotes.slice(); }
+
+async function _qnEnsureCaderno() {
+    if (_qnCadernoId) return _qnCadernoId;
+    // Procura caderno existente
+    try {
+        const cads = await DB.cadernos.list();
+        const existente = cads.find(c => c.nome === _QN_CADERNO_NOME);
+        if (existente) {
+            _qnCadernoId = existente.id;
+            localStorage.setItem('mk_qn_caderno_id', _qnCadernoId);
+            return _qnCadernoId;
+        }
+        // Cria
+        const novo = { id: 'qn_' + Date.now(), nome: _QN_CADERNO_NOME, emoji: '📝', cor: '#a36844' };
+        await DB.cadernos.upsert(novo);
+        _qnCadernoId = novo.id;
+        localStorage.setItem('mk_qn_caderno_id', _qnCadernoId);
+        return _qnCadernoId;
+    } catch (err) {
+        console.warn('[qn] ensureCaderno falhou:', err);
+        return '';
+    }
+}
+
+async function qnLoadNotes() {
+    try {
+        const cadId = await _qnEnsureCaderno();
+        if (!cadId) return;
+        const notes = await DB.anotacoes.listByCaderno(cadId);
+        _qnNotes = (notes || []).map(n => ({
+            id: n.id, titulo: n.titulo, updatedAt: n.updatedAt
+        }));
+        try { localStorage.setItem('mk_qn_notes', JSON.stringify(_qnNotes)); } catch(_) {}
+    } catch (err) {
+        console.warn('[qn] load falhou:', err);
+    }
+}
+
+async function qnAdd(titulo) {
+    const t = String(titulo || '').trim();
+    if (!t) return;
+    const cadId = await _qnEnsureCaderno();
+    if (!cadId) { toast('Erro ao carregar caderno'); return; }
+    const nota = {
+        id: 'qn_' + Date.now(),
+        cadernoId: cadId,
+        titulo: t,
+        conteudo: '',
+        tags: [],
+        imagens: [],
+        createdAt: new Date().toISOString(),
+    };
+    // UI otimista
+    _qnNotes.unshift({ id: nota.id, titulo: nota.titulo, updatedAt: nota.createdAt });
+    try { localStorage.setItem('mk_qn_notes', JSON.stringify(_qnNotes)); } catch(_) {}
+    render();
+    try { await DB.anotacoes.upsert(nota); }
+    catch (err) { console.warn('[qn] add falhou:', err); toast('Nota salva localmente — sincroniza depois'); }
+}
+
+async function qnDelete(id) {
+    _qnNotes = _qnNotes.filter(n => n.id !== id);
+    try { localStorage.setItem('mk_qn_notes', JSON.stringify(_qnNotes)); } catch(_) {}
+    render();
+    try { await DB.anotacoes.delete(id); } catch(_) {}
+}
+
+function qnSubmit(ev) {
+    if (ev && ev.key && ev.key !== 'Enter') return;
+    const inp = document.getElementById('qn-input');
+    if (!inp) return;
+    const v = inp.value;
+    inp.value = '';
+    qnAdd(v);
+}
+
 // ── PIX (6.G.2): config + gerador de BR Code (payload + QR) ──
 function getPixConfig() {
     try {
