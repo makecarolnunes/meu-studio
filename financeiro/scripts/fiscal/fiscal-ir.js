@@ -12,6 +12,49 @@ const FS_IR_TIPOS = [
   { v: 'OUTRO',       l: 'Outro',       ico: '📄' },
 ];
 
+// 7 itens canônicos do checklist IR para MEI prestador de serviços.
+// Sequência reflete a ordem natural de preparação anual.
+const FS_IR_CHECKLIST = [
+  {
+    key:   'conferir_receita',
+    titulo: 'Conferir receita bruta gerada',
+    hint:   'Confira o total do ano no cartão acima. Deve bater com seus extratos bancários.',
+  },
+  {
+    key:   'categorizar_pendentes',
+    titulo: 'Categorizar transações pendentes',
+    hint:   'Vá em Despesas → filtre PENDENTE e classifique cada uma como profissional/pessoal.',
+  },
+  {
+    key:   'upload_dasn',
+    titulo: 'Baixar e anexar DASN-SIMEI',
+    hint:   'Declaração anual MEI no portal Gov.br até 31/05. Anexe abaixo após emitir.',
+  },
+  {
+    key:   'recibos_atividade',
+    titulo: 'Recibos de cursos e equipamentos',
+    hint:   'Comprovam que você exerceu atividade profissional. Bom ter mesmo se MEI não exige.',
+  },
+  {
+    key:   'informe_clt',
+    titulo: 'Informe de rendimentos CLT (se houve)',
+    hint:   'Se trabalhou registrada em parte do ano, pegue com o empregador até 28/02.',
+  },
+  {
+    key:   'comprovantes_bens',
+    titulo: 'Comprovantes de bens > R$ 5.000',
+    hint:   'Carro, imóvel, investimentos. Necessários se você declarar IRPF como PF.',
+  },
+  {
+    key:   'dedutiveis_irpf',
+    titulo: 'Dedutíveis: plano de saúde, INSS, dependentes',
+    hint:   'Recibos de plano de saúde, contribuição INSS além do MEI, despesas com dependentes.',
+  },
+];
+
+const FS_IR_STATUS_CYCLE = { pendente: 'em_progresso', em_progresso: 'concluido', concluido: 'pendente' };
+const FS_IR_STATUS_LABEL = { pendente: 'Pendente', em_progresso: 'Em progresso', concluido: 'Concluído' };
+
 function _fsIrTipoLabel(v) {
   const t = FS_IR_TIPOS.find(x => x.v === v);
   return t ? t.l : v;
@@ -143,6 +186,8 @@ function fsRenderIR() {
         Imprimir / Salvar como PDF
       </button>
     </div>
+
+    ${_fsIrRenderChecklist(ano)}
 
     <div class="fs-card fs-no-print-bg">
       <div class="fs-ir-docs-head">
@@ -346,6 +391,133 @@ async function fsIrSaveUpload() {
     console.error('[fiscal-ir] upload falhou:', err);
     fsToast('Erro ao enviar: ' + (err.message || err));
     if (btn) { btn.disabled = false; btn.textContent = 'Anexar'; }
+  }
+}
+
+// ── Checklist (Sprint 4 fase 2) ──────────────────────────────
+function _fsIrChecklistItems(ano) {
+  // Garante shape: {item_key: {status, nota}} para todos os 7 itens canônicos
+  const stored = (FS.checklist && FS.checklist[ano]) || {};
+  const out = {};
+  FS_IR_CHECKLIST.forEach(item => {
+    const s = stored[item.key] || {};
+    out[item.key] = {
+      status: s.status || 'pendente',
+      nota:   s.nota   || '',
+    };
+  });
+  return out;
+}
+
+function _fsIrRenderChecklist(ano) {
+  const items = _fsIrChecklistItems(ano);
+  const concluidos = Object.values(items).filter(i => i.status === 'concluido').length;
+  const total = FS_IR_CHECKLIST.length;
+
+  return `
+  <div class="fs-card fs-checklist-card">
+    <div class="fs-card-title fs-checklist-head">
+      <span>Checklist IR ${ano}</span>
+      <span class="fs-checklist-progress">${concluidos}/${total} concluídos</span>
+    </div>
+
+    <div class="fs-checklist">
+      ${FS_IR_CHECKLIST.map(item => {
+        const it = items[item.key];
+        const editing = FS.checklistEditing === item.key;
+        const safeNota = (it.nota || '').replace(/"/g,'&quot;');
+        return `
+        <div class="fs-check-item fs-check-item--${it.status}">
+          <button class="fs-check-status fs-check-status--${it.status} fs-no-print"
+                  onclick="fsIrCycleCheck('${item.key}')"
+                  title="${FS_IR_STATUS_LABEL[it.status]} — clique para mudar">
+            ${it.status === 'concluido' ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`
+              : it.status === 'em_progresso' ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2 A10 10 0 0 1 22 12 L12 12 Z" fill="currentColor"/></svg>`
+              : ''}
+          </button>
+          <div class="fs-check-body">
+            <div class="fs-check-titulo">${item.titulo}</div>
+            <div class="fs-check-hint">${item.hint}</div>
+            ${editing ? `
+              <div class="fs-check-nota-edit fs-no-print">
+                <textarea id="fs-check-nota-${item.key}" placeholder="Adicione uma nota...">${it.nota}</textarea>
+                <div class="fs-check-nota-actions">
+                  <button class="fs-mini-btn" onclick="fsIrCancelNota()">Cancelar</button>
+                  <button class="fs-mini-btn on" onclick="fsIrSaveNota('${item.key}')">Salvar</button>
+                </div>
+              </div>
+            ` : it.nota ? `
+              <div class="fs-check-nota">
+                <span>${it.nota}</span>
+                <button class="fs-check-nota-edit-btn fs-no-print" onclick="fsIrEditNota('${item.key}')" title="Editar nota">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                </button>
+              </div>
+            ` : `
+              <button class="fs-check-add-nota fs-no-print" onclick="fsIrEditNota('${item.key}')">+ nota</button>
+            `}
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+  </div>`;
+}
+
+async function fsIrCycleCheck(itemKey) {
+  const ano = FS.selYearIR || new Date().getFullYear();
+  const items = _fsIrChecklistItems(ano);
+  const cur = items[itemKey] || { status: 'pendente', nota: '' };
+  const next = FS_IR_STATUS_CYCLE[cur.status] || 'pendente';
+
+  // UI otimista
+  FS.checklist = FS.checklist || {};
+  FS.checklist[ano] = { ...(FS.checklist[ano] || {}) };
+  FS.checklist[ano][itemKey] = { status: next, nota: cur.nota };
+  try { localStorage.setItem(FS.CK_CHECKLIST, JSON.stringify(FS.checklist)); } catch(_) {}
+  fsRenderIR();
+
+  try {
+    await DB.fiscal.checklist.save(ano, FS.checklist[ano]);
+  } catch (err) {
+    console.error('[fiscal-ir] save checklist falhou:', err);
+    fsToast('Erro ao salvar — tentando novamente em breve');
+  }
+}
+
+function fsIrEditNota(itemKey) {
+  FS.checklistEditing = itemKey;
+  fsRenderIR();
+  // Foca o textarea
+  setTimeout(() => {
+    const ta = document.getElementById('fs-check-nota-' + itemKey);
+    if (ta) { ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }
+  }, 50);
+}
+
+function fsIrCancelNota() {
+  FS.checklistEditing = null;
+  fsRenderIR();
+}
+
+async function fsIrSaveNota(itemKey) {
+  const ano = FS.selYearIR || new Date().getFullYear();
+  const ta  = document.getElementById('fs-check-nota-' + itemKey);
+  const nota = ta ? ta.value.trim() : '';
+  const items = _fsIrChecklistItems(ano);
+  const cur = items[itemKey];
+
+  FS.checklist = FS.checklist || {};
+  FS.checklist[ano] = { ...(FS.checklist[ano] || {}) };
+  FS.checklist[ano][itemKey] = { status: cur.status, nota };
+  FS.checklistEditing = null;
+  try { localStorage.setItem(FS.CK_CHECKLIST, JSON.stringify(FS.checklist)); } catch(_) {}
+  fsRenderIR();
+
+  try {
+    await DB.fiscal.checklist.save(ano, FS.checklist[ano]);
+  } catch (err) {
+    console.error('[fiscal-ir] save nota falhou:', err);
+    fsToast('Erro ao salvar nota');
   }
 }
 

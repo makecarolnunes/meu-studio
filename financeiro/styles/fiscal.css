@@ -1015,6 +1015,153 @@ body {
 }
 .fs-doc-del:hover { background: #f5cccc; }
 
+/* ── Checklist IR (Sprint 4 fase 2) ─────────────────────────── */
+.fs-checklist-head {
+  display: flex; justify-content: space-between; align-items: baseline;
+  margin-bottom: var(--space-3);
+}
+.fs-checklist-progress {
+  font-size: 11px;
+  color: var(--text);
+  background: var(--brand-soft);
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.fs-checklist {
+  display: flex; flex-direction: column;
+  gap: var(--space-2);
+}
+.fs-check-item {
+  display: flex; align-items: flex-start; gap: var(--space-3);
+  padding: var(--space-3);
+  background: var(--surface);
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius-md);
+  transition: background var(--t-fast), border-color var(--t-fast);
+}
+.fs-check-item--concluido {
+  background: var(--success-soft);
+  border-color: rgba(59, 109, 17, 0.2);
+}
+.fs-check-item--em_progresso {
+  background: var(--warning-soft);
+  border-color: rgba(186, 117, 23, 0.2);
+}
+
+.fs-check-status {
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  border: 2px solid var(--border-strong);
+  background: var(--surface);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  cursor: pointer;
+  padding: 0;
+  margin-top: 1px;
+  transition: border-color var(--t-fast), background var(--t-fast);
+  color: white;
+}
+.fs-check-status svg { width: 14px; height: 14px; }
+.fs-check-status--em_progresso {
+  border-color: var(--warning);
+  color: var(--warning);
+}
+.fs-check-status--em_progresso svg { width: 18px; height: 18px; }
+.fs-check-status--concluido {
+  background: var(--success);
+  border-color: var(--success);
+}
+.fs-check-status--pendente:hover { border-color: var(--brand); }
+
+.fs-check-body { flex: 1; min-width: 0; }
+.fs-check-titulo {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--text);
+}
+.fs-check-item--concluido .fs-check-titulo { text-decoration: line-through; opacity: .8; }
+
+.fs-check-hint {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  margin-top: 4px;
+  line-height: var(--leading-normal);
+}
+
+.fs-check-nota {
+  display: flex; align-items: center; gap: 6px;
+  margin-top: 8px;
+  padding: 6px 10px;
+  background: rgba(255,255,255,0.7);
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  color: var(--text);
+  font-style: italic;
+}
+.fs-check-nota span { flex: 1; min-width: 0; word-wrap: break-word; }
+.fs-check-nota-edit-btn {
+  background: none; border: none; cursor: pointer;
+  color: var(--text-muted);
+  padding: 2px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: var(--radius-xs);
+  transition: color var(--t-fast), background var(--t-fast);
+}
+.fs-check-nota-edit-btn svg { width: 12px; height: 12px; }
+.fs-check-nota-edit-btn:hover { color: var(--brand); background: var(--brand-soft); }
+
+.fs-check-add-nota {
+  background: none; border: none; cursor: pointer;
+  color: var(--brand);
+  font-size: 11px;
+  font-weight: var(--weight-medium);
+  font-family: inherit;
+  padding: 4px 0;
+  margin-top: 4px;
+  text-align: left;
+}
+.fs-check-add-nota:hover { text-decoration: underline; }
+
+.fs-check-nota-edit {
+  margin-top: 8px;
+}
+.fs-check-nota-edit textarea {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+  font-size: 13px;
+  background: var(--surface);
+  color: var(--text);
+  resize: vertical;
+  min-height: 56px;
+  transition: border-color var(--t-fast);
+}
+.fs-check-nota-edit textarea:focus {
+  outline: none;
+  border-color: var(--brand);
+  box-shadow: var(--focus-ring);
+}
+.fs-check-nota-actions {
+  display: flex; gap: 6px; justify-content: flex-end;
+  margin-top: 6px;
+}
+
+/* No print: checklist concluído fica chapado, sem efeito visual chamativo */
+@media print {
+  .fs-check-status { display: none; }
+  .fs-check-item { background: white !important; border: 1px solid #eee !important; page-break-inside: avoid; }
+  .fs-check-item--concluido .fs-check-titulo::before { content: "✓ "; color: #3B6D11; }
+  .fs-check-item--em_progresso .fs-check-titulo::before { content: "◐ "; color: #BA7517; }
+  .fs-check-item--pendente .fs-check-titulo::before { content: "○ "; color: #999; }
+  .fs-check-hint { display: none; }
+}
+
 /* ── Print styles ───────────────────────────────────────────── */
 @media print {
   body { background: white; }

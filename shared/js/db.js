@@ -965,6 +965,31 @@ window.DB = {
         if (error) throw error;
       },
     },
+
+    // Sprint 4 fase 2 — checklist IR por ano
+    // Formato items: { item_key: { status, nota } }
+    //   status ∈ 'pendente' | 'em_progresso' | 'concluido'
+    checklist: {
+      async list() {
+        _guard();
+        const { data, error } = await _sb.from('fiscal_checklist').select('*');
+        if (error) throw error;
+        // Retorna map { 2025: {items}, 2026: {items} }
+        const map = {};
+        (data || []).forEach(r => { map[r.ano] = r.items || {}; });
+        return map;
+      },
+      async save(ano, items) {
+        _guard();
+        const row = {
+          ano: parseInt(ano),
+          items: items || {},
+          updated_at: new Date().toISOString(),
+        };
+        const { error } = await _sb.from('fiscal_checklist').upsert(row, { onConflict: 'ano' });
+        if (error) throw error;
+      },
+    },
   },
 };
 

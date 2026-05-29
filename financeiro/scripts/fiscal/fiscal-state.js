@@ -30,6 +30,9 @@ window.FS = {
   // Sprint 4 — documentos fiscais (DASN-SIMEI, recibos, informes, NFs...)
   documentos: [],
 
+  // Sprint 4 fase 2 — checklist IR por ano: { 2025: {item_key: {status, nota}}, ... }
+  checklist: {},
+
   // DAS pagos (Sprint 2 — usado também no resumo IR)
   das: [],
 
@@ -51,6 +54,7 @@ window.FS = {
   CK_REGRAS:    'mk_fiscal_regras',
   CK_DOCS:      'mk_fiscal_documentos',
   CK_DAS:       'mk_fiscal_das',
+  CK_CHECKLIST: 'mk_fiscal_checklist',
 };
 
 // ── Helpers próprios ────────────────────────────────────────
@@ -131,4 +135,11 @@ function fsLoadCachedDas() {
     const raw = localStorage.getItem(FS.CK_DAS);
     return raw ? JSON.parse(raw) : [];
   } catch(_) { return []; }
+}
+
+function fsLoadCachedChecklist() {
+  try {
+    const raw = localStorage.getItem(FS.CK_CHECKLIST);
+    return raw ? JSON.parse(raw) : {};
+  } catch(_) { return {}; }
 }
