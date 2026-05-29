@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-29 02:04 | main | refactor(financeiro): unifica CTAs Entradas/Sa├¡das e padroniza layout -->
+<!-- AUTO: 2026-05-29 02:15 | main | refactor(financeiro): Resumo adota .ftab/.ftabs unificado (design system) -->
 
