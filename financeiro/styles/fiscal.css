@@ -40,7 +40,7 @@ body {
   grid-template-columns: 44px 1fr auto;
   align-items: center;
   padding: var(--space-5) var(--space-4) var(--space-4);
-  background: var(--brand-dark);
+  background: linear-gradient(135deg, var(--brand-dark), var(--brand));
   color: var(--text-on-dark);
   border-radius: var(--header-radius);
   position: relative;
@@ -133,6 +133,10 @@ body {
   border-radius: var(--radius-lg);
   padding: var(--space-5);
   margin-bottom: var(--space-3);
+  box-shadow: var(--shadow-sm);
+}
+.fs-mini {
+  box-shadow: var(--shadow-sm);
 }
 
 .fs-card-title {
@@ -310,14 +314,15 @@ body {
 .fs-field input,
 .fs-field select {
   width: 100%;
-  padding: 12px 14px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  padding: 11px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-md);
   font-size: var(--text-base);
   font-family: inherit;
   background: var(--surface);
   color: var(--text);
   -webkit-appearance: none;
+  transition: border-color var(--t-fast);
 }
 .fs-field input:focus,
 .fs-field select:focus {
@@ -347,8 +352,12 @@ body {
   font-family: inherit;
   transition: background var(--t-base);
 }
-.fs-btn-primary { background: var(--brand); color: var(--text-on-dark); }
-.fs-btn-primary:hover { background: var(--brand-dark); }
+.fs-btn-primary {
+  background: var(--brand); color: var(--text-on-dark);
+  box-shadow: 0 3px 10px rgba(56,25,11,.18);
+}
+.fs-btn-primary:hover  { background: var(--brand-dark); }
+.fs-btn-primary:active { transform: translateY(1px); }
 .fs-btn-ghost   { background: var(--surface-2); color: var(--text); }
 .fs-btn-ghost:hover { background: var(--bg); }
 
@@ -600,29 +609,33 @@ body {
 .fs-pill {
   padding: 6px 12px;
   border-radius: var(--radius-full);
-  border: 1px solid var(--border);
+  border: 1.5px solid var(--border);
   background: var(--surface);
-  color: var(--text-muted);
+  color: var(--text);
   font-size: var(--text-xs);
   font-weight: var(--weight-medium);
   font-family: inherit;
   cursor: pointer;
-  transition: all var(--t-base);
+  transition: border-color var(--t-fast), background var(--t-fast), color var(--t-fast);
+  white-space: nowrap;
 }
+.fs-pill:hover:not(.on) { border-color: var(--brand); color: var(--brand); }
 .fs-pill.on {
   background: var(--brand);
   color: var(--text-on-dark);
   border-color: var(--brand);
+  font-weight: var(--weight-semibold);
 }
 .fs-search {
   width: 100%;
   padding: 10px 14px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-md);
   font-size: var(--text-sm);
   font-family: inherit;
   background: var(--surface);
   color: var(--text);
+  transition: border-color var(--t-fast);
 }
 .fs-search:focus {
   outline: none;
