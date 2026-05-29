@@ -30,7 +30,7 @@ function getTiposProfissionais() {
 let entries        = JSON.parse(localStorage.getItem('mk_entries') || '[]');
 let saidas         = JSON.parse(localStorage.getItem('mk_saidas')  || '[]');
 let noivas         = JSON.parse(localStorage.getItem('mk_noivas')  || '[]');
-let screen         = 'nova';
+let screen         = 'resumo';
 let selMonth       = new Date().getMonth();
 let selYear        = new Date().getFullYear();
 let listFilter     = 'todos';

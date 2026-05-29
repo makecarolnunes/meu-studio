@@ -370,7 +370,7 @@ function saidaItemHtml(s) {
         ? `<span class="natchip natchip-pess">Pessoal</span>`
         : nat==='MISTA'
             ? `<span class="natchip natchip-mista">Mista</span>`
-            : `<span class="natchip natchip-prof">Prof.</span>`;
+            : `<span class="natchip natchip-prof">Profissional</span>`;
     const creditTag = s.forma === 'Crédito'
         ? `<span style="font-size:.65rem;background:#e3f2fd;color:#0d47a1;border-radius:7px;padding:1px 6px;margin-left:4px">💳</span>`
         : '';

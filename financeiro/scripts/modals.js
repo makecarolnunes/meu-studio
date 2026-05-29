@@ -199,7 +199,6 @@ function saveEditEntry(id) {
     };
     const idx = entries.findIndex(x=>String(x.id)===String(id));
     entries[idx] = updated; cacheEntries();
-    sbCall({action:'delete', table:'entries', id});
     sbCall({action:'save', table:'entries', data:encodeURIComponent(JSON.stringify(updated))});
     if (updated.noivaId) recalcRestaNoiva(updated.noivaId);
     else if (updated.origem==='Noiva') recalcRestaNoiva(updated.cliente);
@@ -294,7 +293,6 @@ function saveEditSaida(id) {
         const updated = { ...item, ...changes };
         if (scope === 'so-esta') updated.dataPag = document.getElementById('es-data').value || item.dataPag;
         saidas[idx] = updated;
-        sbCall({action:'delete', table:'saidas', id:item.id});
         sbCall({action:'save', table:'saidas', data:encodeURIComponent(JSON.stringify(updated))});
     });
     cacheSaidas(); closeModal(); render();

@@ -41,8 +41,7 @@ function recalcRestaNoiva(noivaIdOrNome) {
                 obs: `Restante do contrato — total pago até agora: ${brl(totalPagos)}`};
             entries[autoIdx] = updated;
             cacheEntries();
-            sbCall({action:'delete', table:'entries', id: autoEntry.id});
-            sbCall({action:'save',   table:'entries', data: encodeURIComponent(JSON.stringify(updated))});
+            sbCall({action:'save', table:'entries', data: encodeURIComponent(JSON.stringify(updated))});
         }
     } else if (restante > 0.01) {
         const nova = {
@@ -162,6 +161,7 @@ function deleteNoiva(id) {
 }
 
 function openNoivaPgto(noivaId, nomeCli) {
+    _pick = {};
     document.getElementById('modal-bg').style.display='flex';
     document.getElementById('modal-inner').innerHTML=`
     <div class="modal-title">Registrar Pagamento</div>

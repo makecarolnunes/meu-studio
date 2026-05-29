@@ -30,7 +30,7 @@ body { max-width: var(--fin-container); margin: 0 auto; }
 .hdr {
     background: linear-gradient(135deg, var(--brown-d), var(--brown));
     color: white; padding: 10px 14px; position: sticky; top: 0; z-index: 100;
-    display: grid; grid-template-columns: 44px 1fr 44px; align-items: center;
+    display: grid; grid-template-columns: 44px 1fr auto; align-items: center;
 }
 .hdr-center { text-align: center; }
 .hdr h1 { font-size: 1.05rem; font-weight: 700; }
@@ -51,6 +51,15 @@ body { max-width: var(--fin-container); margin: 0 auto; }
     cursor: pointer; transition: background .15s; padding: 0;
 }
 .gear-btn:active { background: rgba(255,255,255,.25); }
+.hdr-novo-btn {
+    display: flex; align-items: center; gap: 4px;
+    background: rgba(255,255,255,.22); color: white;
+    border: 1.5px solid rgba(255,255,255,.38);
+    border-radius: 18px; padding: 5px 11px;
+    font-size: .76rem; font-weight: 700; cursor: pointer;
+    letter-spacing: .02em; white-space: nowrap; margin-right: 4px;
+}
+.hdr-novo-btn:active { background: rgba(255,255,255,.38); }
 
 /* ── BACK FLOAT ──
    Em mobile fica colado na esquerda do viewport; quando o container fica

@@ -7,9 +7,10 @@
 function go(s) {
     screen = s;
     document.querySelectorAll('.ni').forEach(el => el.classList.remove('active'));
-    document.getElementById('nav-'+s).classList.add('active');
+    const navEl = document.getElementById('nav-'+s);
+    if (navEl) navEl.classList.add('active');
     document.getElementById('hsub').textContent =
-        { nova:'Novo lançamento', lista:'Entradas', saidas:'Saídas', resumo:'Resumo', noivas:'Noivas' }[s];
+        { nova:'Novo lançamento', lista:'Entradas', saidas:'Saídas', resumo:'Resumo', noivas:'Noivas' }[s] || '';
     render();
 }
 
