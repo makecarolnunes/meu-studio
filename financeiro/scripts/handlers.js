@@ -57,9 +57,10 @@ function syncF() {
 function chm(d) { selMonth+=d; if(selMonth<0){selMonth=11;selYear--;}if(selMonth>11){selMonth=0;selYear++;} render(); }
 function setF(f) { listFilter=f; render(); }
 function setEquipeFilter(f) { listEquipeFilter=f; render(); }
-function setSaidaNatureza(n) { saidasNaturezaFilter = n; saidasTipoFilter = 'todas'; render(); }
+function setSaidaNatureza(n) { saidasNaturezaFilter = n; saidasTipoFilter = 'todas'; saidasVerTodosMeses = false; render(); }
 function pickSaidaNatureza(n) { Fs.natureza = n; render(); }
-function setSaidaTipoFilter(val) { saidasTipoFilter = val; render(); }
+function setSaidaTipoFilter(val) { saidasTipoFilter = val; saidasVerTodosMeses = false; render(); }
+function toggleSaidasTodosMeses() { saidasVerTodosMeses = !saidasVerTodosMeses; render(); }
 // Filtro de período do Resumo
 function setResumoPeriodo(p) { resumoPeriodo = p; render(); }
 function setResumoDataIni(v) { resumoDataIni = v; if (resumoPeriodo==='personalizado') render(); }
@@ -292,5 +293,24 @@ function exportSaidasCSV() {
     const h=['Data','Valor','Tipo de Despesa','Status','Forma Pgto','Observações'];
     const r=ms.map(s=>[s.dataPag?s.dataPag.split('-').reverse().join('/'):'',Number(s.valor||0).toFixed(2).replace('.',','),s.tipo,s.status,s.forma,(s.obs||'').replace(/"/g,'""')]);
     dl([h,...r].map(row=>row.map(c=>`"${c}"`).join(';')).join('\n'),`saidas_${MONTHS[selMonth].toLowerCase()}_${selYear}.csv`);
+    toast('CSV baixado!');
+}
+function exportSaidasHistoricoCSV() {
+    const ms = saidas
+        .filter(s => saidasTipoFilter === 'todas' || s.tipo === saidasTipoFilter)
+        .filter(s => saidasNaturezaFilter === 'todas' || (s.natureza || 'PROFISSIONAL') === saidasNaturezaFilter)
+        .sort((a,b) => (a.dataPag||'').localeCompare(b.dataPag||''));
+    if (!ms.length) { toast('Nenhuma saída para exportar!'); return; }
+    const h = ['Data','Valor','Tipo de Despesa','Natureza','Status','Forma Pgto','Observações'];
+    const r = ms.map(s => [
+        s.dataPag ? s.dataPag.split('-').reverse().join('/') : '',
+        Number(s.valor||0).toFixed(2).replace('.',','),
+        s.tipo, s.natureza || 'PROFISSIONAL', s.status, s.forma,
+        (s.obs||'').replace(/"/g,'""')
+    ]);
+    const fname = saidasTipoFilter !== 'todas'
+        ? `saidas_${saidasTipoFilter.toLowerCase().replace(/[^a-z0-9]/g,'_')}_historico.csv`
+        : 'saidas_historico.csv';
+    dl([h,...r].map(row=>row.map(c=>`"${c}"`).join(';')).join('\n'), fname);
     toast('CSV baixado!');
 }

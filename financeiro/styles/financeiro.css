@@ -837,6 +837,7 @@ body { max-width: var(--fin-container); margin: 0 auto; }
 }
 .natchip-pess  { background: #efe5dd; color: #6b4a36; }
 .natchip-mista { background: #fbeed3; color: #7a5408; }
+.natchip-prof  { background: #e0f2f1; color: #00695c; }
 .natfilter .bt.on { background: var(--brown); color: #fff; border-color: var(--brown); }
 
 

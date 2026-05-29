@@ -38,6 +38,7 @@ let listEquipeFilter = 'todos';
 let saidasFormOpen = false;
 let saidasNaturezaFilter = 'todas';  // 'todas' | 'PROFISSIONAL' | 'PESSOAL' | 'MISTA'
 let saidasTipoFilter    = 'todas';  // 'todas' | nome da categoria
+let saidasVerTodosMeses = false;    // ver categoria selecionada em todos os meses
 let noivaDetail    = null;
 
 // ── Resumo: filtro de período ─────────────────────────────

@@ -323,6 +323,7 @@ function renderSaidas() {
     </div>
 
     ${(()=>{ const tipos=[...new Set(monthList.filter(s=>saidasNaturezaFilter==='todas'||(s.natureza||'PROFISSIONAL')===saidasNaturezaFilter).map(s=>s.tipo).filter(Boolean))].sort(); return tipos.length>1?`<div style="margin-bottom:8px"><select class="fi" style="font-size:.82rem;padding:7px 10px" onchange="setSaidaTipoFilter(this.value)"><option value="todas">Todos os tipos</option>${tipos.map(t=>`<option value="${t}" ${saidasTipoFilter===t?'selected':''}>${t}</option>`).join('')}</select></div>`:''; })()}
+    ${saidasTipoFilter !== 'todas' ? `<button class="bt ${saidasVerTodosMeses?'on':''}" onclick="toggleSaidasTodosMeses()" style="font-size:.78rem;margin-bottom:8px;width:100%;text-align:left">📅 ${saidasVerTodosMeses ? '✕ Voltar ao mês atual' : 'Ver em todos os meses'}</button>` : ''}
 
     <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">
         <button class="add-btn ${saidasFormOpen?'open':''}" style="flex:1;min-width:0" onclick="toggleSaidasForm()">${saidasFormOpen?'✕ Fechar':'＋ Nova Saída'}</button>
@@ -354,34 +355,71 @@ function renderSaidas() {
         ${Fs.recorrencia==='recorrente'?`<div class="fg"><label class="fl">Quantos meses?</label><div class="vwrap"><span class="vpfx">#</span><input class="fi" type="number" id="si-meses" min="2" max="60" value="${Fs.meses||2}" inputmode="numeric"></div></div>`:''}
         <button class="bsub red" onclick="saveSaida()">Salvar Saída</button>
     </div>`:''}
-    ${list.length===0?`<div class="empty"><div class="ico">${SVG.upload}</div><p>Nenhuma saída em<br><strong>${MONTHS[selMonth]} ${selYear}</strong></p></div>`
-    :list.map(s=>{
-        const st=saidaStyle(s.tipo);
-        const nat = s.natureza || 'PROFISSIONAL';
-        const natBadge = nat==='PESSOAL'
-            ? `<span class="natchip natchip-pess">Pessoal</span>`
-            : nat==='MISTA'
-                ? `<span class="natchip natchip-mista">Mista</span>`
-                : '';
-        const creditTag = s.forma === 'Crédito'
-            ? `<span style="font-size:.65rem;background:#e3f2fd;color:#0d47a1;border-radius:7px;padding:1px 6px;margin-left:4px">💳</span>`
-            : '';
-        return `<div class="eitem">
-            <div class="eico" style="background:${st.bg};color:${st.col}">${st.ico}</div>
-            <div class="einf"><div class="ecli">${s.tipo}${natBadge}${creditTag}</div>
-                <div class="emta">${fmtDate(s.dataPag)} · ${s.forma}${s.grupoId?` · ${s.recorrencia==='fixa'?'↺ Fixa':'↺ Recorrente'}`:''}
-                </div>
-                ${s.obs?`<div class="emta">${s.obs}</div>`:''}
+    ${(()=>{
+      if (saidasVerTodosMeses && saidasTipoFilter !== 'todas') return renderSaidasHistorico();
+      if (!list.length) return `<div class="empty"><div class="ico">${SVG.upload}</div><p>Nenhuma saída em<br><strong>${MONTHS[selMonth]} ${selYear}</strong></p></div>`;
+      const items = list.map(s => saidaItemHtml(s)).join('');
+      return items + `<button class="bexp" onclick="exportSaidasCSV()" style="display:flex;align-items:center;justify-content:center;gap:7px">${SVG.download} Exportar CSV</button>`;
+    })()}`;
+}
+
+function saidaItemHtml(s) {
+    const st=saidaStyle(s.tipo);
+    const nat = s.natureza || 'PROFISSIONAL';
+    const natBadge = nat==='PESSOAL'
+        ? `<span class="natchip natchip-pess">Pessoal</span>`
+        : nat==='MISTA'
+            ? `<span class="natchip natchip-mista">Mista</span>`
+            : `<span class="natchip natchip-prof">Prof.</span>`;
+    const creditTag = s.forma === 'Crédito'
+        ? `<span style="font-size:.65rem;background:#e3f2fd;color:#0d47a1;border-radius:7px;padding:1px 6px;margin-left:4px">💳</span>`
+        : '';
+    return `<div class="eitem">
+        <div class="eico" style="background:${st.bg};color:${st.col}">${st.ico}</div>
+        <div class="einf"><div class="ecli">${s.tipo}${natBadge}${creditTag}</div>
+            <div class="emta">${fmtDate(s.dataPag)} · ${s.forma}${s.grupoId?` · ${s.recorrencia==='fixa'?'↺ Fixa':'↺ Recorrente'}`:''}
             </div>
-            <div class="erig">
-                <div class="eval" style="color:${s.status==='Pago'?'var(--red)':'var(--muted)'}">${brl(s.valor)}</div>
-                <span class="sbadge ${s.status==='Pago'?'sb-r':'sb-b'}" onclick="toggleSaidaStatus('${s.id}')">${s.status==='Pago'?'Pago':'Previsto'}</span>
-            </div>
-            <button class="editbtn" onclick="openEditSaida('${s.id}')">${SVG.edit}</button>
-            <button class="delbtn" onclick="delSaida('${s.id}')">${SVG.trash}</button>
-        </div>`;
+            ${s.obs?`<div class="emta">${s.obs}</div>`:''}
+        </div>
+        <div class="erig">
+            <div class="eval" style="color:${s.status==='Pago'?'var(--red)':'var(--muted)'}">${brl(s.valor)}</div>
+            <span class="sbadge ${s.status==='Pago'?'sb-r':'sb-b'}" onclick="toggleSaidaStatus('${s.id}')">${s.status==='Pago'?'Pago':'Previsto'}</span>
+        </div>
+        <button class="editbtn" onclick="openEditSaida('${s.id}')">${SVG.edit}</button>
+        <button class="delbtn" onclick="delSaida('${s.id}')">${SVG.trash}</button>
+    </div>`;
+}
+
+function renderSaidasHistorico() {
+    const filtradas = saidas
+        .filter(s => saidasTipoFilter === 'todas' || s.tipo === saidasTipoFilter)
+        .filter(s => saidasNaturezaFilter === 'todas' || (s.natureza || 'PROFISSIONAL') === saidasNaturezaFilter)
+        .sort((a,b) => (b.dataPag||'').localeCompare(a.dataPag||''));
+    if (!filtradas.length) return `<div class="empty"><div class="ico">${SVG.upload}</div><p>Nenhuma saída de <strong>${saidasTipoFilter}</strong></p></div>`;
+    const total = filtradas.reduce((t,s) => t + Number(s.valor||0), 0);
+    const byMonth = {};
+    filtradas.forEach(s => {
+        const key = s.dataPag ? s.dataPag.slice(0,7) : 'sem-data';
+        if (!byMonth[key]) byMonth[key] = [];
+        byMonth[key].push(s);
+    });
+    const monthKeys = Object.keys(byMonth).sort().reverse();
+    return `
+    <div style="display:flex;justify-content:space-between;align-items:center;background:var(--brown-soft,#faf3ee);border-radius:10px;padding:10px 13px;margin-bottom:10px">
+        <span style="font-size:.8rem;color:var(--muted)">${filtradas.length} saída${filtradas.length!==1?'s':''} · todos os meses</span>
+        <span style="font-weight:700;color:var(--red)">${brl(total)}</span>
+    </div>
+    ${monthKeys.map(key => {
+        const items = byMonth[key];
+        const [yr, mo] = key !== 'sem-data' ? key.split('-') : ['',''];
+        const header = key === 'sem-data' ? 'Sem data' : `${MONTHS[parseInt(mo)-1]} ${yr}`;
+        const monthTotal = items.reduce((t,s) => t + Number(s.valor||0), 0);
+        return `<div style="padding:6px 2px 2px;font-size:.72rem;font-weight:700;color:var(--brown);text-transform:uppercase;letter-spacing:.05em;display:flex;justify-content:space-between;border-bottom:1px solid #f0ebe6;margin-bottom:4px">
+            <span>${header}</span><span>${brl(monthTotal)}</span>
+        </div>
+        ${items.map(s => saidaItemHtml(s)).join('')}`;
     }).join('')}
-    ${list.length?`<button class="bexp" onclick="exportSaidasCSV()" style="display:flex;align-items:center;justify-content:center;gap:7px">${SVG.download} Exportar CSV</button>`:''}`;
+    <button class="bexp" onclick="exportSaidasHistoricoCSV()" style="display:flex;align-items:center;justify-content:center;gap:7px;margin-top:8px">${SVG.download} Exportar CSV</button>`;
 }
 
 // ── SCREEN: RESUMO ──
