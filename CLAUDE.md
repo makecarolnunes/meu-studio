@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-29 02:30 | main | refactor(fiscal): alinha visualmente ao design system do Financeiro -->
+<!-- AUTO: 2026-05-29 02:57 | main | feat(fiscal): Sprint 4 ÔÇö aba IR com resumo anual + documentos -->
 
