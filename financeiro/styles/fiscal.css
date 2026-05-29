@@ -877,6 +877,159 @@ body {
   color: var(--text-on-dark);
 }
 
+/* ════════════════════════════════════════════════════════════════
+   SPRINT 4 — IR (resumo anual + documentos fiscais)
+   ════════════════════════════════════════════════════════════════ */
+.fs-ir-yearbar {
+  display: flex; gap: 6px; flex-wrap: wrap;
+  margin-bottom: var(--space-3);
+}
+
+.fs-ir-resumo .fs-card-title { margin-bottom: var(--space-3); }
+
+.fs-ir-row {
+  display: flex; justify-content: space-between; align-items: baseline;
+  padding: 8px 0;
+  border-bottom: 0.5px solid var(--border);
+  font-size: var(--text-sm);
+}
+.fs-ir-row:last-of-type { border-bottom: none; }
+.fs-ir-row--sub {
+  padding: 2px 0 6px;
+  margin-top: -6px;
+  border-bottom: none;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+.fs-ir-row--big {
+  padding: 12px 0;
+  font-size: var(--text-md);
+}
+.fs-ir-lbl { color: var(--text-muted); }
+.fs-ir-row--big .fs-ir-lbl { color: var(--text); font-weight: var(--weight-medium); }
+.fs-ir-val { font-weight: var(--weight-semibold); color: var(--text); }
+.fs-ir-val.ok     { color: var(--success); }
+.fs-ir-val.danger { color: var(--danger); }
+.fs-ir-row--big .fs-ir-val { font-size: var(--text-lg); }
+
+.fs-ir-divider {
+  height: 1px;
+  background: var(--border);
+  margin: var(--space-3) 0;
+}
+
+.fs-ir-help {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  line-height: var(--leading-normal);
+  margin: 2px 0 8px;
+  padding-left: 0;
+}
+
+/* Cabeçalho do bloco Documentos */
+.fs-ir-docs-head {
+  display: flex; justify-content: space-between; align-items: center;
+  gap: 8px;
+  margin-bottom: var(--space-3);
+}
+
+.fs-ir-filters {
+  display: flex; gap: 6px; flex-wrap: wrap;
+  margin-bottom: var(--space-3);
+}
+
+/* Grid de pills de tipo no modal de upload */
+.fs-ir-tipo-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+.fs-ir-tipo-grid .fs-pill { text-align: left; padding: 9px 12px; }
+
+/* Item de documento na lista */
+.fs-doc-item {
+  display: flex; align-items: center; gap: var(--space-3);
+  padding: var(--space-3);
+  background: var(--surface);
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-2);
+}
+.fs-doc-ico {
+  width: 36px; height: 36px;
+  background: var(--brand-soft);
+  border-radius: var(--radius-md);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+.fs-doc-body { flex: 1; min-width: 0; }
+.fs-doc-title {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--text);
+}
+.fs-doc-title a {
+  color: inherit;
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: block;
+}
+.fs-doc-title a:hover { color: var(--brand); }
+.fs-doc-meta {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  margin-top: 2px;
+  display: flex; align-items: center; gap: 4px; flex-wrap: wrap;
+}
+.fs-doc-tipo {
+  background: var(--brand-soft);
+  color: var(--brand-dark);
+  padding: 1px 7px;
+  border-radius: var(--radius-xs);
+  font-size: 10px;
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.fs-doc-right {
+  display: flex; align-items: center; gap: 8px;
+  flex-shrink: 0;
+}
+.fs-doc-valor {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--text);
+}
+.fs-doc-del {
+  width: 30px; height: 30px;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: var(--danger-soft);
+  color: var(--danger);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background var(--t-fast);
+}
+.fs-doc-del:hover { background: #f5cccc; }
+
+/* ── Print styles ───────────────────────────────────────────── */
+@media print {
+  body { background: white; }
+  .fs-hdr, .fs-bnav, .btn-back-float, .fs-toast,
+  .fs-modal-bg, .fs-no-print { display: none !important; }
+  .fs-content { padding: 0 !important; max-width: none !important; }
+  .fs-card {
+    box-shadow: none !important;
+    border: 1px solid #ddd !important;
+    page-break-inside: avoid;
+  }
+  .fs-doc-item { page-break-inside: avoid; }
+}
+body.fs-printing { background: white; }
+
 /* ── Grid de categorias na revisão ──────────────────────────── */
 .fs-cat-grid {
   display: grid;

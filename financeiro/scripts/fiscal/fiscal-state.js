@@ -27,8 +27,20 @@ window.FS = {
   // regras aprendidas
   regras: [],
 
+  // Sprint 4 — documentos fiscais (DASN-SIMEI, recibos, informes, NFs...)
+  documentos: [],
+
+  // DAS pagos (Sprint 2 — usado também no resumo IR)
+  das: [],
+
   // ano selecionado no painel (default: ano atual)
   selYear: new Date().getFullYear(),
+
+  // ano selecionado na aba IR
+  selYearIR: new Date().getFullYear(),
+
+  // filtro de tipo na aba IR ('todos' | 'DASN_SIMEI' | 'RECIBO' | ...)
+  irTipoFilter: 'todos',
 
   // cache localStorage (independente do financeiro)
   CK_CONFIG:    'mk_fiscal_config',
@@ -37,6 +49,8 @@ window.FS = {
   CK_SAIDAS:    'mk_saidas',      // mesma chave do financeiro
   CK_DESPESAS:  'mk_fiscal_despesas',
   CK_REGRAS:    'mk_fiscal_regras',
+  CK_DOCS:      'mk_fiscal_documentos',
+  CK_DAS:       'mk_fiscal_das',
 };
 
 // ── Helpers próprios ────────────────────────────────────────
@@ -101,6 +115,20 @@ function fsLoadCachedSaidas() {
 function fsLoadCachedDespesas() {
   try {
     const raw = localStorage.getItem(FS.CK_DESPESAS);
+    return raw ? JSON.parse(raw) : [];
+  } catch(_) { return []; }
+}
+
+function fsLoadCachedDocs() {
+  try {
+    const raw = localStorage.getItem(FS.CK_DOCS);
+    return raw ? JSON.parse(raw) : [];
+  } catch(_) { return []; }
+}
+
+function fsLoadCachedDas() {
+  try {
+    const raw = localStorage.getItem(FS.CK_DAS);
     return raw ? JSON.parse(raw) : [];
   } catch(_) { return []; }
 }

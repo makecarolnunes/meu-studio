@@ -388,6 +388,32 @@ window.DB = {
       const { data } = _sb.storage.from('anotacoes').getPublicUrl(path);
       return { ok: true, fileId: path, link: data.publicUrl, nome: file.name };
     },
+
+    // Sprint 4 — documentos fiscais (DASN-SIMEI, recibos, informes, NFs etc.)
+    async uploadFiscalDoc(ano, tipo, file, base64Data, mimeType) {
+      const ts  = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+      const ext = (file.name.split('.').pop() || 'bin').toLowerCase();
+      const slug = String(tipo || 'OUTRO').toLowerCase();
+      const path = `${ano}/${slug}_${ts}.${ext}`;
+
+      const byteChars = atob(base64Data);
+      const bytes = new Uint8Array(byteChars.length);
+      for (let i = 0; i < byteChars.length; i++) bytes[i] = byteChars.charCodeAt(i);
+      const blob = new Blob([bytes], { type: mimeType || file.type });
+
+      const { error } = await _sb.storage.from('fiscal-documentos').upload(path, blob, {
+        cacheControl: '3600', upsert: false,
+      });
+      if (error) throw error;
+
+      const { data } = _sb.storage.from('fiscal-documentos').getPublicUrl(path);
+      return { ok: true, fileId: path, link: data.publicUrl, nome: file.name };
+    },
+    async deleteFiscalDoc(fileId) {
+      if (!fileId || !fileId.includes('/')) return;
+      const { error } = await _sb.storage.from('fiscal-documentos').remove([fileId]);
+      if (error) throw error;
+    },
   },
 
   conteudo: {
@@ -914,8 +940,62 @@ window.DB = {
         if (error) throw error;
       },
     },
+
+    // Sprint 4 — documentos fiscais por ano
+    documentos: {
+      async list(filtro) {
+        _guard();
+        let q = _sb.from('fiscal_documentos').select('*').order('uploaded_at', { ascending: false });
+        if (filtro && filtro.ano)  q = q.eq('ano', filtro.ano);
+        if (filtro && filtro.tipo) q = q.eq('tipo', filtro.tipo);
+        const { data, error } = await q;
+        if (error) throw error;
+        return (data || []).map(_docFromDb);
+      },
+      async upsert(d) {
+        _guard();
+        const row = _docToDb(d);
+        const { error } = await _sb.from('fiscal_documentos').upsert(row, { onConflict: 'id' });
+        if (error) throw error;
+        return row.id;
+      },
+      async delete(id) {
+        _guard();
+        const { error } = await _sb.from('fiscal_documentos').delete().eq('id', String(id));
+        if (error) throw error;
+      },
+    },
   },
 };
+
+// ── Mapeadores fiscal_documentos ──────────────────────────────────
+function _docFromDb(r) {
+  return {
+    id:          String(r.id),
+    tipo:        r.tipo         || 'OUTRO',
+    ano:         r.ano          != null ? Number(r.ano) : null,
+    mes:         r.mes          != null ? Number(r.mes) : null,
+    descricao:   r.descricao    || '',
+    arquivoUrl:  r.arquivo_url  || '',
+    arquivoNome: r.arquivo_nome || '',
+    valor:       r.valor        != null ? Number(r.valor) : null,
+    emitente:    r.emitente     || '',
+    uploadedAt:  r.uploaded_at  || '',
+  };
+}
+function _docToDb(d) {
+  return {
+    id:           String(d.id || Date.now()),
+    tipo:         d.tipo || 'OUTRO',
+    ano:          d.ano != null && d.ano !== '' ? parseInt(d.ano) : null,
+    mes:          d.mes != null && d.mes !== '' ? parseInt(d.mes) : null,
+    descricao:    d.descricao    || null,
+    arquivo_url:  d.arquivoUrl   || '',
+    arquivo_nome: d.arquivoNome  || null,
+    valor:        d.valor != null && d.valor !== '' ? parseFloat(d.valor) : null,
+    emitente:     d.emitente     || null,
+  };
+}
 
 // ── Mapeadores fiscal_transacoes_raw ──────────────────────────────
 function _rawFromDb(r) {

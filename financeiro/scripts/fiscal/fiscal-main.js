@@ -18,6 +18,8 @@ async function fiscalBoot() {
   FS.orcamentos = fsLoadCachedOrcamentos();
   FS.saidas     = fsLoadCachedSaidas();
   FS.despesas   = fsLoadCachedDespesas();
+  FS.documentos = fsLoadCachedDocs();
+  FS.das        = fsLoadCachedDas();
   fiscalRender();
 
   // Sincroniza com Supabase
@@ -29,13 +31,15 @@ async function fiscalBoot() {
 
 async function fiscalRefresh() {
   try {
-    const [cfg, entries, orcamentos, saidas, despesas, regras] = await Promise.all([
+    const [cfg, entries, orcamentos, saidas, despesas, regras, documentos, das] = await Promise.all([
       DB.fiscal.config.get(),
       DB.entries.list(),
       DB.orcamentos.list().catch(() => []),
       DB.saidas.list().catch(() => []),
       DB.fiscal.despesas.list().catch(() => []),
       DB.fiscal.regras.list().catch(() => []),
+      DB.fiscal.documentos.list().catch(() => []),
+      DB.fiscal.das.list().catch(() => []),
     ]);
     FS.config     = cfg;
     FS.entries    = entries || [];
@@ -43,11 +47,15 @@ async function fiscalRefresh() {
     FS.saidas     = saidas || [];
     FS.despesas   = despesas || [];
     FS.regras     = regras || [];
+    FS.documentos = documentos || [];
+    FS.das        = das || [];
     if (cfg) fsCacheConfig(cfg);
     try { localStorage.setItem(FS.CK_ENTRIES,  JSON.stringify(FS.entries)); } catch(_) {}
     try { localStorage.setItem(FS.CK_ORC,      JSON.stringify(FS.orcamentos)); } catch(_) {}
     try { localStorage.setItem(FS.CK_SAIDAS,   JSON.stringify(FS.saidas)); } catch(_) {}
     try { localStorage.setItem(FS.CK_DESPESAS, JSON.stringify(FS.despesas)); } catch(_) {}
+    try { localStorage.setItem(FS.CK_DOCS,     JSON.stringify(FS.documentos)); } catch(_) {}
+    try { localStorage.setItem(FS.CK_DAS,      JSON.stringify(FS.das)); } catch(_) {}
     fiscalRender();
   } catch (err) {
     console.error('[fiscal] refresh falhou:', err);
@@ -68,6 +76,7 @@ function fiscalGo(tab) {
 function fiscalRender() {
   if (FS.screen === 'painel')   return fsRenderPainel();
   if (FS.screen === 'despesas') return fsRenderDespesas();
+  if (FS.screen === 'ir')       return fsRenderIR();
 }
 
 // ── Modal helpers ───────────────────────────────────────────
