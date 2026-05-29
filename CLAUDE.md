@@ -229,5 +229,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-29 12:32 | main | docs: sync CLAUDE.md [auto] -->
+<!-- AUTO: 2026-05-29 12:52 | main | fix(financeiro): bot├úo PIX tamb├®m na lista e detail panel do desktop -->
 
