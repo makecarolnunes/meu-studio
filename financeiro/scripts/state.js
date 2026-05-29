@@ -7,25 +7,24 @@
 const MEI_LIMITE = 81000;
 const MONTHS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const MONTHS_SHORT = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
-const SAIDA_TIPOS = ['Reposição de Material','Curso','DAS','Assistente','Seguro de Celular','Investimento Produto','Investimento Material','Outro'];
-
-// Categorias profissionais sugeridas (Sprint 1.5).
-// Pessoais NÃO têm categorias — basta natureza='PESSOAL'.
-const SAIDA_TIPOS_PROF_EXTRA = [
-  'Deslocamento','Combustível','Estacionamento','Alimentação trabalho',
-  'Produtos','Equipamentos','Fornecedores','Marketing','Cursos',
-  'Modelos','Assinaturas','Equipe'
+// Lista canônica de tipos de despesa profissional — única fonte da verdade
+const SAIDA_TIPOS_PROF = [
+  'Assistente',
+  'Cursos',
+  'DAS',
+  'Reposição/Investimento de material',
+  'Deslocamento',
+  'Alimentação trabalho',
+  'Equipamentos',
+  'Modelos',
+  'Assinaturas',
+  'Marketing',
+  'Equipe',
+  'Outro',
 ];
 
-// Lista dinâmica de tipos profissionais já usados + sugestões.
 function getTiposProfissionais() {
-    const usados = new Set();
-    saidas.forEach(s => {
-        if ((s.natureza || 'PROFISSIONAL') === 'PROFISSIONAL' && s.tipo) usados.add(s.tipo);
-    });
-    SAIDA_TIPOS.forEach(t => usados.add(t));
-    SAIDA_TIPOS_PROF_EXTRA.forEach(t => usados.add(t));
-    return Array.from(usados);
+    return SAIDA_TIPOS_PROF;
 }
 
 let entries        = JSON.parse(localStorage.getItem('mk_entries') || '[]');
@@ -118,7 +117,7 @@ function initF()  {
            forma: 'PIX', status: 'Realizado', origem: 'Produção Social', obs: '', equipe: '' };
 }
 function initFs() {
-    Fs = { dataPag: today(), valor: '', tipo: 'Reposição de Material',
+    Fs = { dataPag: today(), valor: '', tipo: 'Reposição/Investimento de material',
            status: 'Pago', forma: 'PIX', obs: '', recorrencia: 'unica', meses: 2,
            natureza: 'PROFISSIONAL' };
 }
