@@ -118,6 +118,8 @@ body { max-width: var(--fin-container); margin: 0 auto; }
 .bsub { width: 100%; padding: 14px; background: var(--brown); color: white; border: none; border-radius: 16px; font-size: .97rem; font-weight: 700; cursor: pointer; box-shadow: 0 3px 10px rgba(109,76,65,.3); }
 .bsub:active { background: var(--brown-d); }
 .bsub.red { background: var(--red); box-shadow: 0 3px 10px rgba(198,40,40,.3); }
+.bsub.bsub-muted { background: var(--muted); box-shadow: 0 3px 10px rgba(0,0,0,.12); }
+.bsub.bsub-muted:active { background: var(--text); }
 
 /* ── MONTH SELECTOR ── */
 .msel { display: flex; align-items: center; justify-content: space-between; background: white; border-radius: 16px; padding: 11px 15px; margin-bottom: 11px; box-shadow: 0 1px 4px rgba(0,0,0,.07); }
@@ -158,7 +160,111 @@ body { max-width: var(--fin-container); margin: 0 auto; }
 .eico svg { width: 18px; height: 18px; display: block; }
 .editbtn svg, .delbtn svg { width: 14px; height: 14px; display: block; }
 
-/* ── NOIVAS — section titles & realizadas styling ── */
+/* ═════════════════════════════════════════════════════════
+   NOIVAS — design tokens locais + componentes do card
+   ═════════════════════════════════════════════════════════ */
+:root {
+    --noiva-accent:   #e91e63;
+    --noiva-accent-d: #c2185b;
+    --noiva-soft:     #fce4ec;
+    --noiva-track:    #e8ddd8;
+    --noiva-prev:     #f9d5a7;
+}
+
+/* Caixa do ícone (gem) à esquerda do card */
+.noiva-gem-box {
+    width: 42px; height: 42px;
+    background: var(--noiva-soft);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--noiva-accent); flex-shrink: 0;
+}
+.noiva-gem-box--concluida { background: var(--surface-2); color: var(--muted); }
+
+/* Estrutura do card */
+.noiva-card-head { display: flex; align-items: flex-start; gap: 11px; cursor: pointer; }
+.noiva-card-info { flex: 1; min-width: 0; }
+.noiva-card-name { font-weight: 700; font-size: .97rem; }
+.noiva-card-meta {
+    font-size: .71rem; color: var(--muted); margin-top: 2px;
+    display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+}
+.noiva-edit-btn {
+    background: none; border: none; padding: 0; cursor: pointer;
+    color: var(--noiva-accent);
+    display: inline-flex; align-items: center;
+}
+.noiva-chevron { color: var(--muted); margin-top: 4px; }
+
+/* Progress bar reusável (track + 2 camadas: realizado + total) */
+.progress { margin: 8px 0 3px; }
+.progress-track {
+    background: var(--noiva-track);
+    border-radius: 6px; height: 9px;
+    overflow: hidden; position: relative;
+}
+.progress-fill { height: 9px; border-radius: 6px; transition: width .4s; }
+.progress-fill--real {
+    position: absolute;
+    border-radius: 6px 0 0 6px;
+    background: var(--ok);
+}
+.progress-fill--total { background: var(--noiva-prev); }
+
+/* Stats horizontais (Pago / Previsto / Falta) */
+.noiva-stats { display: flex; gap: 12px; font-size: .71rem; flex-wrap: wrap; }
+.noiva-stat { font-weight: 700; }
+.noiva-stat--pago     { color: var(--ok); }
+.noiva-stat--previsto { color: #f59e0b; }
+.noiva-stat--falta    { color: var(--red); }
+
+/* Status badges (Quitada / dias restantes) */
+.noiva-status-badge {
+    font-size: .62rem; font-weight: 700;
+    padding: 2px 7px; border-radius: 10px;
+    margin-left: 6px;
+}
+.noiva-status-badge--quitada { background: var(--ok-l); color: var(--ok); }
+.noiva-status-badge--urgente { background: var(--red-l); color: var(--red); }
+
+/* Painel expandido + ações */
+.noiva-detail-panel {
+    margin-top: 14px; padding-top: 14px;
+    border-top: 1px solid var(--border);
+}
+.noiva-empty-pgtos {
+    text-align: center; color: var(--muted);
+    font-size: .82rem; padding: 8px 0;
+}
+.noiva-actions { display: flex; gap: 8px; margin-top: 12px; }
+.noiva-actions .bsub { flex: 1; padding: 11px; font-size: .87rem; }
+.noiva-actions .delbtn { width: 42px; height: 42px; }
+.noiva-obs {
+    font-size: .74rem; color: var(--muted);
+    margin-top: 10px; font-style: italic; line-height: 1.4;
+}
+
+/* Itens da lista de pagamentos */
+.noiva-pgto-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 0; border-bottom: 1px solid #f5f5f5;
+}
+.noiva-pgto-info  { flex: 1; min-width: 0; }
+.noiva-pgto-title { font-size: .83rem; font-weight: 600; }
+.noiva-pgto-obs   { font-size: .7rem; color: var(--muted); }
+.noiva-pgto-comp {
+    font-size: .68rem; color: #1976d2;
+    display: inline-flex; align-items: center; gap: 3px;
+    margin-top: 2px; text-decoration: none;
+}
+.noiva-pgto-right { text-align: right; flex-shrink: 0; }
+.noiva-pgto-valor { font-weight: 700; font-size: .9rem; }
+.noiva-pgto-valor--real { color: var(--ok); }
+.noiva-pgto-valor--prev { color: var(--muted); }
+.noiva-pgto-item .editbtn,
+.noiva-pgto-item .delbtn { width: 28px; height: 28px; }
+
+/* Section titles & realizadas styling */
 .noiva-section-title {
     display: flex;
     align-items: center;
@@ -210,11 +316,11 @@ body { max-width: var(--fin-container); margin: 0 auto; }
 /* ── NOIVAS — date badge & month headers ── */
 .noiva-date-badge {
     width: 42px; height: 42px;
-    background: #fce4ec;
+    background: var(--noiva-soft);
     border-radius: 10px;
     display: flex; flex-direction: column;
     align-items: center; justify-content: center;
-    color: #e91e63; flex-shrink: 0;
+    color: var(--noiva-accent); flex-shrink: 0;
     line-height: 1; gap: 1px;
 }
 .noiva-date-day  { font-size: 1.1rem; font-weight: 800; }
@@ -224,10 +330,13 @@ body { max-width: var(--fin-container); margin: 0 auto; }
     display: flex; align-items: center; gap: 8px;
     margin: 18px 0 8px;
     font-size: .72rem; font-weight: 800;
-    color: #e91e63; text-transform: uppercase; letter-spacing: .08em;
+    color: var(--noiva-accent); text-transform: uppercase; letter-spacing: .08em;
 }
 .noiva-month-hdr:first-of-type { margin-top: 4px; }
-.noiva-month-hdr .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.noiva-month-hdr .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--noiva-accent); flex-shrink: 0;
+}
 .noiva-month-year { color: var(--text-muted); font-weight: 600; font-size: .65rem; margin-left: 2px; }
 
 /* ── NOIVAS — documents area ── */
@@ -238,7 +347,7 @@ body { max-width: var(--fin-container); margin: 0 auto; }
 }
 .noiva-doc-tipo {
     font-size: .6rem; font-weight: 700; text-transform: uppercase;
-    background: #fce4ec; color: #e91e63;
+    background: var(--noiva-soft); color: var(--noiva-accent);
     border-radius: 6px; padding: 2px 6px; flex-shrink: 0;
 }
 .noiva-doc-link {
@@ -248,11 +357,11 @@ body { max-width: var(--fin-container); margin: 0 auto; }
 }
 .noiva-doc-link:hover { text-decoration: underline; }
 .noiva-doc-add-btn {
-    background: none; border: 1.5px dashed #e91e63; color: #e91e63;
+    background: none; border: 1.5px dashed var(--noiva-accent); color: var(--noiva-accent);
     border-radius: 8px; padding: 6px 12px; font-size: .76rem; font-weight: 700;
     cursor: pointer; transition: background .15s;
 }
-.noiva-doc-add-btn:hover { background: #fce4ec; }
+.noiva-doc-add-btn:hover { background: var(--noiva-soft); }
 
 /* ── SINAL BOX ── */
 .sinal-box { background: var(--amber-l); border: 1.5px dashed var(--amber); border-radius: 11px; padding: 12px 13px; margin-top: 9px; font-size: .8rem; color: #7c4a00; line-height: 1.5; display: none; }
@@ -311,8 +420,8 @@ body { max-width: var(--fin-container); margin: 0 auto; }
 .add-btn--entrada:active { background: var(--brown-d); }
 .add-btn--saida   { background: var(--red);   box-shadow: 0 3px 10px rgba(198,40,40,.28); }
 .add-btn--saida:active   { background: #a31818; }
-.add-btn--noiva   { background: #e91e63; box-shadow: 0 3px 10px rgba(233,30,99,.28); }
-.add-btn--noiva:active   { background: #c2185b; }
+.add-btn--noiva   { background: var(--noiva-accent); box-shadow: 0 3px 10px rgba(233,30,99,.28); }
+.add-btn--noiva:active   { background: var(--noiva-accent-d); }
 .add-btn--import {
     background: white; color: var(--brown);
     border: 1.5px solid var(--brown);
@@ -897,32 +1006,8 @@ body { max-width: var(--fin-container); margin: 0 auto; }
 
 /* ── Filtro de período do Resumo ─────────────────────────
    Os filtros migraram para .ftabs / .ftab (padrão único do sistema).
-   .rf-pill / .rf-pills mantidos como alias para retrocompatibilidade. */
+   .resumo-filter mantém só o wrapper e o .rf-custom (datepickers). */
 .resumo-filter { margin-bottom: 12px; }
-.rf-pills {
-    display: flex;
-    gap: 6px;
-    flex-wrap: wrap;
-    margin-bottom: 8px;
-}
-.rf-pill {
-    padding: 7px 12px;
-    border-radius: 999px;
-    border: 1px solid var(--border);
-    background: white;
-    color: var(--muted);
-    font-size: .78rem;
-    font-weight: 500;
-    cursor: pointer;
-    font-family: inherit;
-    transition: all .15s;
-}
-.rf-pill.on {
-    background: var(--brown);
-    color: white;
-    border-color: var(--brown);
-}
-.rf-pill:hover:not(.on) { border-color: var(--brown); color: var(--brown); }
 .rf-custom {
     display: flex;
     gap: 8px;

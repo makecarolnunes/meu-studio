@@ -87,7 +87,7 @@ function openAddNoiva() {
             <input type="hidden" id="nv-sinal-status" value="Realizado">
         </div>
     </div>
-    <button class="bsub" style="margin-bottom:8px" onclick="saveNoiva()">Cadastrar</button>
+    <button class="bsub" onclick="saveNoiva()">Cadastrar</button>
     <button class="skip" onclick="closeModal()">Cancelar</button>`;
     setTimeout(()=>document.getElementById('nv-nome')?.focus(),80);
 }
@@ -184,7 +184,7 @@ function openNoivaPgto(noivaId, nomeCli) {
         ${['PIX','Crédito','Dinheiro'].map((t,i)=>`<button class="bt ${i===0?'on':''}" onclick="edPick('npForma','${t}',this)">${t}</button>`).join('')}
     </div></div>
     <div class="fg"><label class="fl">Observações</label><textarea class="fi ta" id="np-obs" placeholder="Ex: 1ª parcela, sinal inicial..."></textarea></div>
-    <button class="bsub" style="margin-bottom:8px" onclick="saveNoivaPgto('${noivaId}','${nomeCli.replace(/'/g,"\\'").replace(/"/g,'&quot;')}')">Salvar Pagamento</button>
+    <button class="bsub" onclick="saveNoivaPgto('${noivaId}','${nomeCli.replace(/'/g,"\\'").replace(/"/g,'&quot;')}')">Salvar Pagamento</button>
     <button class="skip" onclick="closeModal()">Cancelar</button>`;
     setTimeout(()=>document.getElementById('np-valor')?.focus(),80);
 }
@@ -202,7 +202,7 @@ function openEditNoivaContrato(noivaId) {
     <div class="fg"><label class="fl">Observações</label>
         <textarea class="fi ta" id="ec-obs" placeholder="Ex: Aditivo: make da mãe incluída...">${noiva.obs||''}</textarea>
     </div>
-    <button class="bsub" style="margin-bottom:8px" onclick="saveEditNoivaContrato('${noivaId}')">Salvar Alteração</button>
+    <button class="bsub" onclick="saveEditNoivaContrato('${noivaId}')">Salvar Alteração</button>
     <button class="skip" onclick="closeModal()">Cancelar</button>`;
     setTimeout(()=>document.getElementById('ec-valor')?.focus(),80);
 }

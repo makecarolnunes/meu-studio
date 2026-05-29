@@ -201,9 +201,9 @@ async function delSaida(id) {
         document.getElementById('modal-inner').innerHTML=`
         <div class="modal-title">Excluir saída recorrente</div>
         <p style="color:var(--muted);font-size:.85rem;margin:0 0 16px">Esta saída faz parte de um grupo. O que deseja excluir?</p>
-        <button class="bsub" style="margin-bottom:8px" onclick="execDelSaida('so-esta')">Só esta</button>
-        <button class="bsub" style="background:var(--muted);margin-bottom:8px" onclick="execDelSaida('futuras')">Esta e as futuras</button>
-        <button class="bsub red" style="margin-bottom:8px" onclick="execDelSaida('todas')">Todas do grupo</button>
+        <button class="bsub" onclick="execDelSaida('so-esta')">Só esta</button>
+        <button class="bsub bsub-muted" onclick="execDelSaida('futuras')">Esta e as futuras</button>
+        <button class="bsub red" onclick="execDelSaida('todas')">Todas do grupo</button>
         <button class="skip" onclick="closeModal()">Cancelar</button>`;
         return;
     }

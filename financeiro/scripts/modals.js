@@ -174,7 +174,7 @@ function openEditEntry(id) {
     </div>
     <div class="fg"><label class="fl">Atendimento pela equipe <span style="color:var(--muted);font-size:.75rem">(opcional)</span></label><input class="fi" type="text" id="ee-equipe" value="${e.equipe||''}" placeholder="Ex: Julia" autocomplete="off"></div>
     <div class="fg"><label class="fl">Observações</label><textarea class="fi ta" id="ee-obs">${e.obs||''}</textarea></div>
-    <button class="bsub" style="margin-bottom:8px" onclick="saveEditEntry('${id}')">Salvar</button>
+    <button class="bsub" onclick="saveEditEntry('${id}')">Salvar</button>
     <button class="skip" onclick="closeModal()">Cancelar</button>`;
     _pick['tipo']   = e.tipo   || 'Pagamento';
     _pick['origem'] = e.origem || 'Produção Social';
@@ -245,7 +245,7 @@ function openEditSaida(id) {
         <button class="bt" onclick="edPick('escopo','futuras',this)">Esta e futuras</button>
         <button class="bt" onclick="edPick('escopo','todas',this)">Todas</button>
     </div></div>`:''}
-    <button class="bsub" style="margin-bottom:8px" onclick="saveEditSaida('${id}')">Salvar</button>
+    <button class="bsub" onclick="saveEditSaida('${id}')">Salvar</button>
     <button class="skip" onclick="closeModal()">Cancelar</button>`;
     _pick['stipo']    = s.tipo  || '';
     _pick['sforma']   = s.forma || 'PIX';
