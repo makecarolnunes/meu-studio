@@ -1,6 +1,6 @@
 # Backlog · Meu Studio
 
-> Última revisão: 2026-05-29
+> Última revisão: 2026-05-29 (sessão Sprint 4 + delete confirmacao + sugestões por módulo)
 > Fonte da verdade do que está pendente, em ordem de prioridade.
 > Atualize ao concluir um item, mover prioridade ou adicionar novo escopo.
 
@@ -26,6 +26,9 @@
 ### Bugs corrigidos
 - [x] Race condition `delete + save` no Supabase (entradas sumiam após edição)
 - [x] `_pick` global vazando entre modais (tipo errado em 2ª parcela de noiva)
+
+### Limpezas
+- [x] Módulo `confirmacao/` (Agendamentos) deletado — não estava em uso. Refs removidas de hub.js, sidebar.js, CLAUDE.md.
 
 ---
 
@@ -143,6 +146,89 @@ Paginação se passar de 5.000 registros. Hoje ~290. Vale fazer quando ultrapass
 Setup Vitest/Playwright cobrindo fluxos críticos (Noiva, Import OFX, Save Entry).
 
 **Esforço**: ~1 semana setup razoável · **Por que P3**: usuária única, mas valeria pra dormir tranquila.
+
+---
+
+## 🟢 P1 · Sugestões pequenas por módulo
+
+Pool de melhorias pequenas (esforço ≤ 3h cada) baseadas em inspeção dos módulos e nas suas próprias sugestões. **Marque com `[x]` o que quer fazer próximo** — eu implemento na sequência marcada.
+
+---
+
+### 6.A · Velocidade e atalhos (cross-cutting)
+
+- [ ] **6.A.1** · **Duplicar lançamento** (✨ sua ideia) — botão "Duplicar" no modal de editar entrada/saída. Esforço: ~30min
+- [ ] **6.A.2** · **Lançar novamente neste mês** (✨ sua ideia) — botão pequeno em cada item da lista que copia o lançamento com data de hoje. Esforço: ~45min
+- [ ] **6.A.3** · **Busca global** (✨ sua ideia) — ícone de lupa no header + tecla `/` → caixa única busca em entradas, saídas, noivas, orçamentos, clientes. Esforço: ~2h
+- [ ] **6.A.4** · **Notas rápidas** (✨ sua ideia) — bloco simples ("comprar pincel", "renovar domínio") sem prazo nem complexidade. Nova tabela `notas_rapidas` ou tela dedicada. Esforço: ~1h30
+- [ ] **6.A.5** · **Atalhos de teclado** — `/` busca, `N` nova entrada, `S` nova saída, `Esc` fecha modal. Esforço: ~30min
+- [ ] **6.A.6** · **Templates de saída fixa** — "DAS de novembro", "Equipe Julia · sábado" — 1 clique preenche tudo. Esforço: ~1h
+- [ ] **6.A.7** · **Long-press na lista** → menu rápido (duplicar / refazer no mês / pin). Esforço: ~1h
+- [ ] **6.A.8** · **Repetir último PIX** — formulário de entrada pré-preenche valor + cliente da última realizada do mesmo serviço. Esforço: ~45min
+
+### 6.B · Clientes (módulo somente-leitura hoje)
+
+- [ ] **6.B.1** · **Migrar fonte de GAS → `DB.entries.list()`** — remover dependência do Apps Script. Esforço: ~2h. Risco baixo.
+- [ ] **6.B.2** · **Adicionar `checkAuth()` no boot** — hoje qualquer URL acessa o módulo. Esforço: ~15min
+- [ ] **6.B.3** · **Busca por nome do cliente** — caixa no topo, filtra a lista em tempo real. Esforço: ~30min
+- [ ] **6.B.4** · **Tela de detalhe do cliente** — toca no nome → vê histórico completo (X atendimentos, R$ Y total, último em DD/MM, ticket médio). Esforço: ~2h
+- [ ] **6.B.5** · **Top clientes do ano** — ranking por frequência e por receita. Esforço: ~1h
+- [ ] **6.B.6** · **Cliente sem atender há X meses** — alerta no painel ("Ana não agenda há 4 meses"). Esforço: ~1h
+- [ ] **6.B.7** · **Anotações por cliente** — campo livre (preferências: cor batom, alérgica a Y, gosta de chá). Esforço: ~1h30
+- [ ] **6.B.8** · **Tags por cliente** — VIP, social, casamento, formatura. Filtro por tag. Esforço: ~1h30
+- [ ] **6.B.9** · **Botão WhatsApp formatado** — gera link `wa.me/...` com mensagem pré-pronta ("Oi Maria! Confirmando seu atendimento amanhã 10h"). Esforço: ~45min
+
+### 6.C · Orçamentos
+
+- [ ] **6.C.1** · **Disable button durante submit** (já no roadmap antigo) — evita criar entries duplicadas se Carol clicar 2x rápido. Esforço: ~10min · **Bug fix**
+- [ ] **6.C.2** · **Dashboard de conversão mensal** — total enviados × fechados × perdidos × taxa de conversão. Esforço: ~2h
+- [ ] **6.C.3** · **Filtro por serviço** (já no roadmap) — maquiagem, cabelo, noiva. Esforço: ~30min
+- [ ] **6.C.4** · **Campo "como conheceu"** (já no roadmap) — Instagram, indicação, Google. Permite calcular ROI por canal. Esforço: ~1h
+- [ ] **6.C.5** · **Tempo médio de resposta** — desde criação do orçamento até fechamento (ou perda). Esforço: ~45min
+- [ ] **6.C.6** · **Orçamento abandonado** — sem resposta há > 7 dias → alerta com botão de follow-up automático. Esforço: ~1h30
+- [ ] **6.C.7** · **Reapresentar orçamento** — botão "reenviar com novo valor" reusa template, gera novo `id`. Esforço: ~1h
+- [ ] **6.C.8** · **Histórico de preços por cliente** — "Maria pagou R$ 350 nesse serviço da última vez". Esforço: ~1h
+
+### 6.D · Estoque
+
+- [ ] **6.D.1** · **Busca por nome/obs** (já no roadmap) — input no topo. Esforço: ~20min · **Quick win**
+- [ ] **6.D.2** · **Ordenação por status** (já no roadmap) — zerado → acabando → ok → wishlist. Esforço: ~30min
+- [ ] **6.D.3** · **Quantidade + qtd mínima** (já no roadmap) — alerta automático ao atingir o mínimo. Esforço: ~2h
+- [ ] **6.D.4** · **Exportar lista de compras WhatsApp** — botão gera texto "Lista de compras: 1. Base MAC, 2. Pincel BdellÚm..." → copia clipboard. Esforço: ~45min · **Quick win alto valor**
+- [ ] **6.D.5** · **Foto do produto** (já no roadmap) — upload no card, vê thumb na lista. Esforço: ~2h
+- [ ] **6.D.6** · **Link de compra externo** — URL no card (Amazon, Mercado Livre). 1 clique abre a página. Esforço: ~20min
+- [ ] **6.D.7** · **Soma do estoque + soma da wishlist** — totais no header ("Custo do estoque: R$ X · Comprar tudo da wishlist: R$ Y"). Esforço: ~30min
+- [ ] **6.D.8** · **Última compra + data** — vê quando foi a última reposição de cada produto. Esforço: ~45min
+
+### 6.E · Insights de dinheiro (Financeiro/Fiscal)
+
+- [ ] **6.E.1** · **Simulador de teto MEI** (✨ sua ideia) — "Mantendo a média atual você atingirá X% do limite". Esforço: ~1h
+- [ ] **6.E.2** · **Meta mensal personalizável** — Carol define "quero faturar R$ 8k", barra de progresso no painel. Esforço: ~1h30
+- [ ] **6.E.3** · **What-if no Fiscal** — "Se eu cobrar R$ X esse mês, sobro com R$ Y de margem". Esforço: ~1h
+- [ ] **6.E.4** · **Salário-equivalente CLT** — "Esse mês equivaleu a um CLT de R$ Z" (cálculo descontando INSS hipotético). Esforço: ~1h
+- [ ] **6.E.5** · **Comparativo mesmo mês ano anterior** — "Maio 2026 vs Maio 2025: +18%". Esforço: ~45min
+- [ ] **6.E.6** · **Streak de meses positivos** — "8 meses seguidos no lucro" (motivacional). Esforço: ~45min
+- [ ] **6.E.7** · **Custo por atendimento** — despesas profissionais ÷ qtd entradas. Mostra "custo unitário R$ Z". Esforço: ~30min
+
+### 6.F · Proatividade / lembretes
+
+- [ ] **6.F.1** · **Pagamentos previstos vencendo essa semana** — badge no painel ("3 previstos · R$ 1.200"). Esforço: ~1h
+- [ ] **6.F.2** · **Noivas com casamento ≤ 30d e contrato pendente** — alerta vermelho ("Maria casa em 22d, falta R$ 1.500"). Esforço: ~1h
+- [ ] **6.F.3** · **Aniversário de clientes/noivas** — lembrete pra mandar mensagem (precisa adicionar campo aniversário). Esforço: ~1h30
+- [ ] **6.F.4** · **Cobrança atrasada** — entrada Previsto com `dataServ` no passado → muda pra vermelho na lista. Esforço: ~30min
+
+### 6.G · Comunicação rápida
+
+- [ ] **6.G.1** · **Mensagem WhatsApp pronta** — botão "Lembrar cliente" gera link `wa.me/...` com texto editável. Esforço: ~45min
+- [ ] **6.G.2** · **Link PIX com QR Code** — gera QR Code do valor + chave PIX direto na entrada. Cliente paga na hora. Esforço: ~1h30
+- [ ] **6.G.3** · **Recibo PDF simples** — botão na entrada → gera PDF "Recibo de pagamento" pra enviar pra cliente. Esforço: ~1h
+
+### 6.H · Confiança / audit
+
+- [ ] **6.H.1** · **Soft delete com undo** — toast "Entrada excluída · Desfazer" durante 5s antes do delete real. Esforço: ~1h · **Alto valor (medo de perder dado)**
+- [ ] **6.H.2** · **Histórico de versões da entrada** — vê quem mudou o quê e quando (audit log básico). Esforço: ~3h
+- [ ] **6.H.3** · **Indicador de sincronização visível** — "Sincronizado · 14:32" no header. Esforço: ~30min
+- [ ] **6.H.4** · **Backup manual** — botão "Baixar tudo (JSON)" no config (peace of mind). Esforço: ~30min
 
 ---
 

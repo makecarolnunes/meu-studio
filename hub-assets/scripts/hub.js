@@ -8,7 +8,6 @@
     { nome: 'Orçamentos',   descricao: 'Início do fluxo — feche tudo em um clique', icone: '💰', url: 'orcamentos/',   cor: 'purple'       },
     { nome: 'Financeiro',   descricao: 'Entradas, saídas e resumo do mês',          icone: '💵', url: 'financeiro/',   cor: 'green'        },
     { nome: 'Clientes',     descricao: 'Atendimentos realizados e previstos',       icone: '👥', url: 'clientes/',     cor: 'brown'        },
-    { nome: 'Agendamentos', descricao: 'Confirmação avulsa de agenda',              icone: '📅', url: 'confirmacao/',  cor: 'purple-light' },
     { nome: 'Conteúdo',     descricao: 'Planejamento de posts e ideias',            icone: '📱', url: 'conteudo/',     cor: 'amber'        },
   ];
 
@@ -187,12 +186,10 @@
       } else {
         var cls =
           k === 'financeiro'   ? 'card-fin'    :
-          k === 'clientes'     ? 'card-client' :
-          k === 'agendamentos' ? 'card-conf'   : '';
+          k === 'clientes'     ? 'card-client' : '';
         var defaultDesc =
           k === 'financeiro'   ? 'Entradas e saídas do mês'     :
-          k === 'clientes'     ? 'Atendimentos previstos'       :
-          k === 'agendamentos' ? 'Confirmação avulsa de agenda' : '';
+          k === 'clientes'     ? 'Atendimentos previstos'       : '';
         opsHtml +=
           '<a href="' + esc(item.url) + '" class="sys-card ' + cls + '">' +
             '<div class="sys-icon-wrap">' + iconSvg(k) + '</div>' +
@@ -289,7 +286,6 @@
   function buildGestao() {
     var GESTAO = [
       { key: 'estoque',      nome: 'Estoque',      desc: 'Produtos, equipamentos e wishlist', url: 'estoque/',     cls: 'card-estoque' },
-      { key: 'agendamentos', nome: 'Agendamentos', desc: 'Confirmação avulsa de agenda',      url: 'confirmacao/', cls: 'card-conf'    },
     ];
     document.getElementById('gestao-grid').innerHTML = GESTAO.map(function(c) {
       return '<a href="' + esc(c.url) + '" class="sys-card ' + c.cls + '">' +

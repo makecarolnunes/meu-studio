@@ -29,7 +29,6 @@
       ['financeiro',  '/financeiro'],
       ['orcamentos',  '/orcamentos'],
       ['clientes',    '/clientes'],
-      ['confirmacao', '/confirmacao'],
       ['conteudo',    '/conteudo'],
       ['anotacoes',   '/anotacoes'],
       ['tarefas',     '/tarefas'],
@@ -109,7 +108,6 @@
       label: 'Gestão',
       items: [
         { id: 'estoque',    label: 'Estoque',      path: 'estoque/',     icon: IC.box },
-        { id: 'confirmacao',label: 'Agendamentos', path: 'confirmacao/', icon: IC.cal },
       ]
     },
   ];

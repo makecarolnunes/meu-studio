@@ -27,7 +27,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | **Financeiro** | `/financeiro/` | Supabase `entries`, `noivas`, `saidas` |
 | **Orçamentos** | `/orcamentos/` | Supabase `orcamentos` + Storage `comprovantes` |
 | **Clientes** | `/clientes/` | HTML estático |
-| **Agendamentos** | `/confirmacao/` | HTML estático |
 | **Conteúdo** | `/conteudo/` | HTML estático |
 
 > `hub.html` é o arquivo **editável** do hub. `index.html` é sempre uma cópia (`cp hub.html index.html`). Pastas sem `index.html` próprio têm um redirect para o arquivo ativo.
@@ -178,7 +177,6 @@ globais ordenados (sem build step, sem ES modules).
 │   ├── styles/orcamentos.css
 │   └── scripts/orcamentos.js
 ├── clientes/      ↳ styles/clientes.css      scripts/clientes.js
-├── confirmacao/   ↳ styles/confirmacao.css   scripts/confirmacao.js
 └── conteudo/      ↳ styles/conteudo.css      scripts/conteudo.js
 ```
 
