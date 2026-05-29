@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-29 03:11 | main | feat(fiscal): Sprint 4 fase 2 ÔÇö Checklist IR (7 itens, 3 estados, nota) -->
+<!-- AUTO: 2026-05-29 03:20 | main | feat(nav): sidebar com grupos colaps├íveis e quick note em dire├º├úo criativa -->
 
