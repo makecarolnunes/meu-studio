@@ -742,6 +742,10 @@
 
 </div><!-- /bb-app -->
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="../config.js"></script>
+<script src="../shared/js/db.js"></script>
+
 <script>
 // ══════════════════════════════════════════════════════════════
 // Brand Brain — Análise Estratégica de Reels
@@ -1221,6 +1225,7 @@ function saveAsIdea() {
     createdAt: now.toISOString(),
   });
   localStorage.setItem('mk_content_ideas', JSON.stringify(ideas));
+  if (window.DB && DB.conteudo) DB.conteudo.upsert(ideas[0]).catch(function(){});
   toast('Salvo em Conteúdo!');
 }
 
@@ -1343,6 +1348,7 @@ function sendIdeia() {
     createdAt: now.toISOString(),
   });
   localStorage.setItem('mk_content_ideas', JSON.stringify(ideas));
+  if (window.DB && DB.conteudo) DB.conteudo.upsert(ideas[0]).catch(function(){});
 
   // Reset panel
   document.getElementById('ideia-title').value = '';

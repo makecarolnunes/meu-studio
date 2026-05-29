@@ -326,6 +326,22 @@
       border: none; font-family: inherit; font-size: .84rem; cursor: pointer;
     }
 
+    /* ── FAB QUICK NOTE ── */
+    .qn-fab {
+      position: fixed; bottom: 24px; right: 16px; z-index: 400;
+      width: 52px; height: 52px; border-radius: 50%;
+      background: linear-gradient(135deg, #1a0a2e, #6b1e4e);
+      color: #fff; border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 16px rgba(107,30,78,.45);
+      -webkit-tap-highlight-color: transparent;
+      transition: transform .15s, box-shadow .15s;
+    }
+    .qn-fab:active { transform: scale(.93); box-shadow: 0 2px 8px rgba(107,30,78,.35); }
+    @media (min-width: 768px) {
+      .qn-fab { right: calc(50% - 240px + 16px); }
+    }
+
     /* ── DESKTOP ── */
     @media (min-width: 768px) {
       body { max-width: none; }
@@ -506,6 +522,11 @@
 
   <div class="toast" id="dc-toast"></div>
 
+  <!-- FAB: anotação rápida -->
+  <button class="qn-fab" onclick="openQuickNoteStandalone()" aria-label="Anotação rápida" title="Anotação rápida">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+  </button>
+
   <!-- QUICK NOTE PANEL -->
   <div class="qn-overlay" id="qn-overlay" onclick="if(event.target===this)closeQuickNote()">
     <div class="qn-panel">
@@ -549,6 +570,10 @@
   </div>
 
 </div><!-- /dc-app -->
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="../config.js"></script>
+<script src="../shared/js/db.js"></script>
 
 <script>
 // ════════════════════════════════════════════════════════════════
@@ -970,6 +995,7 @@ function copyResult() {
 
 // ── QUICK NOTE ────────────────────────────────────────────────
 var qnFmts = [];
+var qnMode = 'direction'; // 'direction' | 'standalone'
 
 document.querySelectorAll('#qn-fmt-row .qn-fmt-btn').forEach(function(b) {
   b.addEventListener('click', function() {
@@ -984,14 +1010,29 @@ document.querySelectorAll('#qn-fmt-row .qn-fmt-btn').forEach(function(b) {
   });
 });
 
+function openQuickNoteStandalone() {
+  qnMode = 'standalone';
+  document.getElementById('qn-title').value = '';
+  document.getElementById('qn-note').value = '';
+  qnFmts = [];
+  document.querySelectorAll('#qn-fmt-row .qn-fmt-btn').forEach(function(b) { b.classList.remove('on'); });
+  document.querySelector('.qn-header-title').textContent = 'Anotação Rápida';
+  document.querySelector('.qn-header-sub').textContent = 'A ideia vai direto para a Lista de Conteúdos';
+  document.getElementById('qn-overlay').classList.add('show');
+  setTimeout(function() { document.getElementById('qn-title').focus(); }, 120);
+}
+
 function saveToIdeas() {
   if (!lastResultText) { toast('Gere uma direção criativa primeiro'); return; }
+  qnMode = 'direction';
   var intencao = (document.getElementById('dc-intencao').value || '').trim();
   var suggestion = intencao.length > 70 ? intencao.substring(0, 67) + '...' : (intencao || 'Ideia da Direção Criativa');
   document.getElementById('qn-title').value = suggestion;
   document.getElementById('qn-note').value = '';
   qnFmts = [];
   document.querySelectorAll('#qn-fmt-row .qn-fmt-btn').forEach(function(b) { b.classList.remove('on'); });
+  document.querySelector('.qn-header-title').textContent = 'Salvar no Planejamento';
+  document.querySelector('.qn-header-sub').textContent = 'A ideia vai direto para a Lista de Conteúdos';
   document.getElementById('qn-overlay').classList.add('show');
   setTimeout(function() { document.getElementById('qn-title').focus(); }, 120);
 }
@@ -1001,9 +1042,14 @@ function closeQuickNote() {
 }
 
 function confirmSaveToIdeas() {
-  var title = (document.getElementById('qn-title').value || '').trim() || 'Ideia da Direção Criativa';
+  var title = (document.getElementById('qn-title').value || '').trim() || 'Anotação Rápida';
   var note  = (document.getElementById('qn-note').value  || '').trim();
-  var notes = note ? note + '\n\n---\n' + lastResultText.substring(0, 600) : lastResultText.substring(0, 600);
+  var notes;
+  if (qnMode === 'standalone') {
+    notes = note;
+  } else {
+    notes = note ? note + '\n\n---\n' + lastResultText.substring(0, 600) : lastResultText.substring(0, 600);
+  }
   var existing = [];
   try { existing = JSON.parse(localStorage.getItem('mk_content_ideas') || '[]'); } catch(e) {}
   existing.unshift({
@@ -1018,6 +1064,7 @@ function confirmSaveToIdeas() {
     createdAt: new Date().toISOString(),
   });
   localStorage.setItem('mk_content_ideas', JSON.stringify(existing));
+  if (window.DB && DB.conteudo) DB.conteudo.upsert(existing[0]).catch(function(){});
   closeQuickNote();
   toast('Ideia salva no planejamento!');
 }

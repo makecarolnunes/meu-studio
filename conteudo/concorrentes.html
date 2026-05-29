@@ -660,6 +660,10 @@
 
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="../config.js"></script>
+<script src="../shared/js/db.js"></script>
+
 <script>
 // ══════════════════════════════════════════════════════════════
 // Concorrentes — Inteligência Estratégica Competitiva
@@ -1294,6 +1298,7 @@ function sendQN() {
     createdAt: now.toISOString(),
   });
   localStorage.setItem('mk_content_ideas', JSON.stringify(ideas));
+  if (window.DB && DB.conteudo) DB.conteudo.upsert(ideas[0]).catch(function(){});
 
   document.getElementById('qn-title').value = '';
   document.getElementById('qn-notes').value = '';

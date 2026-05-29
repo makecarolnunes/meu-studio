@@ -8,24 +8,38 @@ function normalizeS(s) { return { ...s, id: String(s.id||'') }; }
 function normalizeN(n) { return { ...n, id: String(n.id||''), contratos: Array.isArray(n.contratos)?n.contratos:[] }; }
 
 async function loadFromSupabase() {
+    updateDot('syncing');
+    isSyncing = true;
+    // Retry com backoff — cold start em mobile/4G falha na 1ª; 2 retries cobrem o caso
+    const delays = [0, 1500, 4000];
+    let lastErr = null;
     try {
-        updateDot('syncing');
-        isSyncing = true;
-        const [ents, sais, novs] = await Promise.all([
-            DB.entries.list(),
-            DB.saidas.list(),
-            DB.noivas.list(),
-        ]);
-        entries = ents.map(normalizeE);
-        saidas  = sais.map(normalizeS);
-        noivas  = novs.map(normalizeN);
-        cacheEntries(); cacheSaidas(); cacheNoivas();
-        updateDot('ok');
-        // Preços em paralelo (não bloqueia render)
-        loadServicePricesFromSupabase().catch(() => {});
-    } catch(e) {
-        updateDot('offline');
-        toast('Supabase indisponível — usando dados locais');
+        for (let i = 0; i < delays.length; i++) {
+            if (delays[i]) await new Promise(r => setTimeout(r, delays[i]));
+            try {
+                const [ents, sais, novs] = await Promise.all([
+                    DB.entries.list(),
+                    DB.saidas.list(),
+                    DB.noivas.list(),
+                ]);
+                entries = ents.map(normalizeE);
+                saidas  = sais.map(normalizeS);
+                noivas  = novs.map(normalizeN);
+                cacheEntries(); cacheSaidas(); cacheNoivas();
+                updateDot('ok');
+                lastErr = null;
+                // Preços em paralelo (não bloqueia render)
+                loadServicePricesFromSupabase().catch(() => {});
+                break;
+            } catch(e) {
+                lastErr = e;
+                console.warn(`[loadFromSupabase] tentativa ${i+1}/${delays.length} falhou:`, e && e.message || e);
+            }
+        }
+        if (lastErr) {
+            updateDot('offline');
+            toast('Supabase indisponível — usando dados locais');
+        }
     } finally {
         isSyncing = false;
         render();
