@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-29 00:28 | main | feat(fiscal): simplifica tipos de despesa profissional - lista canonica com 12 tipos, remove Combustivel/Estacionamento/Fornecedores, renomeia Reposicao, DAS no seletor -->
+<!-- AUTO: 2026-05-29 00:39 | main | fix(fiscal): exibe DAS no seletor de categoria do import -->
 
