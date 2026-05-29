@@ -20,12 +20,4 @@ noivas  = noivas.map(normalizeN);
 initF(); initFs();
 checkAuth();
 
-// 6.A.3 · Atalho de teclado para busca global ("/" abre)
-document.addEventListener('keydown', (ev) => {
-    if (ev.key !== '/' || ev.metaKey || ev.ctrlKey || ev.altKey) return;
-    const tag = (ev.target && ev.target.tagName) || '';
-    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
-    if (ev.target && ev.target.isContentEditable) return;
-    ev.preventDefault();
-    if (typeof openGlobalSearch === 'function') openGlobalSearch();
-});
+// 6.A.3 · Atalho "/" agora vive no shared/js/global-search.js (cross-módulo).

@@ -62,8 +62,8 @@ async function loadFromSupabase() {
                 lastErr = null;
                 // Preços em paralelo (não bloqueia render)
                 loadServicePricesFromSupabase().catch(() => {});
-                // 6.A.4 · Notas rápidas em paralelo (não bloqueia render)
-                if (typeof qnLoadNotes === 'function') qnLoadNotes().catch(() => {});
+                // 6.A.4 · Notas rápidas agora vivem no shared/js/global-notes.js
+                // (carregam on demand quando o FAB esquerdo abre)
                 break;
             } catch(e) {
                 lastErr = e;

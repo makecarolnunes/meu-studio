@@ -41,7 +41,7 @@ function fsMovimentosRealizado(entries, ano) {
   const out = [];
   if (!Array.isArray(entries)) return out;
   for (const e of entries) {
-    if (!e || e.auto) continue;
+    if (!e) continue;
     if (e.status !== 'Realizado') continue;
     const d = fsParseDate(e.dataPag);
     if (!fsSameYear(d, ano)) continue;

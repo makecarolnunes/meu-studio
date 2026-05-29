@@ -164,9 +164,18 @@ function savePixConfig() {
     closeModal();
 }
 
-// 6.A.3 · Busca global — modal único pra entradas, saídas, noivas
-let _gsQuery = '';
+// 6.A.3 · Busca global — delega para shared/js/global-search.js (cross-módulo).
 function openGlobalSearch() {
+    if (window.GlobalSearch && typeof GlobalSearch.open === 'function') {
+        GlobalSearch.open();
+        return;
+    }
+    // Fallback (shared/js/global-search.js não carregado): mantém modal local.
+    _openGlobalSearchLocal();
+}
+
+let _gsQuery = '';
+function _openGlobalSearchLocal() {
     _gsQuery = '';
     document.getElementById('modal-bg').style.display = 'flex';
     document.getElementById('modal-inner').innerHTML = `
