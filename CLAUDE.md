@@ -231,5 +231,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-29 03:22 | main | docs: sync CLAUDE.md [auto] -->
+<!-- AUTO: 2026-05-29 03:25 | main | docs: adiciona BACKLOG.md como fonte da verdade de pend├¬ncias -->
 
