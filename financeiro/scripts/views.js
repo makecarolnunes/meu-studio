@@ -126,6 +126,10 @@ function renderLista() {
         <div class="mlab">${MONTHS[selMonth]} ${selYear}${list.length?`<div class="msub">${list.length} lançamento${list.length!==1?'s':''} · ${brl(total)}</div>`:''}</div>
         <button class="mnbtn" onclick="chm(1)">›</button>
     </div>
+    <button class="add-btn add-btn--entrada" onclick="go('nova')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Nova Entrada
+    </button>
     <div class="ftabs">${filters.map(f=>`<button class="ftab ${listFilter===f.k?'on':''}" onclick="setF('${f.k}')">${f.l}</button>`).join('')}</div>
     ${equipeFiltersHtml}
     ${list.length===0?`<div class="empty"><div class="ico">${SVG.list}</div><p>Nenhuma entrada em<br><strong>${MONTHS[selMonth]} ${selYear}</strong></p></div>`
@@ -254,7 +258,10 @@ function renderListaDesktop() {
             <div class="ftabs">${filters.map(f=>`<button class="ftab ${listFilter===f.k?'on':''}" onclick="setF('${f.k}')">${f.l}</button>`).join('')}</div>
             ${equipeToolbar}
         </div>
-        <button class="d-btn-add" onclick="go('nova')">${SVG.money} Nova entrada</button>
+        <button class="d-btn-add d-btn-add--entrada" onclick="go('nova')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Nova Entrada
+        </button>
     </div>
     <div class="lista-split">
         <div class="list-col-d">
@@ -292,6 +299,7 @@ function renderListaDesktop() {
 
 // ── SCREEN: SAÍDAS ──
 function renderSaidas() {
+    if (window.innerWidth >= 1024) return renderSaidasDesktop();
     const monthList = saidas.filter(s=>{const my=getMonthYear(s.dataPag);return my&&my.m===selMonth&&my.y===selYear;});
     const list = monthList
         .filter(s=> saidasNaturezaFilter==='todas' || (s.natureza||'PROFISSIONAL')===saidasNaturezaFilter)
@@ -315,21 +323,36 @@ function renderSaidas() {
         <button class="mnbtn" onclick="chm(1)">›</button>
     </div>
 
-    <div class="natfilter" style="display:flex;gap:6px;margin:0 0 6px;flex-wrap:wrap">
-        <button class="bt ${saidasNaturezaFilter==='todas'?'on':''}" onclick="setSaidaNatureza('todas')" style="font-size:.78rem">Todas (${monthList.length})</button>
-        <button class="bt ${saidasNaturezaFilter==='PROFISSIONAL'?'on':''}" onclick="setSaidaNatureza('PROFISSIONAL')" style="font-size:.78rem">Profissional (${cntProf})</button>
-        <button class="bt ${saidasNaturezaFilter==='PESSOAL'?'on':''}" onclick="setSaidaNatureza('PESSOAL')" style="font-size:.78rem">Pessoal (${cntPess})</button>
-        ${cntMista>0?`<button class="bt ${saidasNaturezaFilter==='MISTA'?'on':''}" onclick="setSaidaNatureza('MISTA')" style="font-size:.78rem">Mista (${cntMista})</button>`:''}
+    <div class="add-row">
+        <button class="add-btn add-btn--saida ${saidasFormOpen?'open':''}" onclick="toggleSaidasForm()">
+            ${saidasFormOpen
+                ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg> Fechar`
+                : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Nova Saída`}
+        </button>
+        <button class="add-btn add-btn--import" onclick="fsImportAbrir()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Importar extrato
+        </button>
+    </div>
+
+    <div class="ftabs">
+        <button class="ftab ${saidasNaturezaFilter==='todas'?'on':''}" onclick="setSaidaNatureza('todas')">Todas (${monthList.length})</button>
+        <button class="ftab ${saidasNaturezaFilter==='PROFISSIONAL'?'on':''}" onclick="setSaidaNatureza('PROFISSIONAL')">Profissional (${cntProf})</button>
+        <button class="ftab ${saidasNaturezaFilter==='PESSOAL'?'on':''}" onclick="setSaidaNatureza('PESSOAL')">Pessoal (${cntPess})</button>
+        ${cntMista>0?`<button class="ftab ${saidasNaturezaFilter==='MISTA'?'on':''}" onclick="setSaidaNatureza('MISTA')">Mista (${cntMista})</button>`:''}
     </div>
 
     ${(()=>{ const tipos=[...new Set(monthList.filter(s=>saidasNaturezaFilter==='todas'||(s.natureza||'PROFISSIONAL')===saidasNaturezaFilter).map(s=>s.tipo).filter(Boolean))].sort(); return tipos.length>1?`<div style="margin-bottom:8px"><select class="fi" style="font-size:.82rem;padding:7px 10px" onchange="setSaidaTipoFilter(this.value)"><option value="todas">Todos os tipos</option>${tipos.map(t=>`<option value="${t}" ${saidasTipoFilter===t?'selected':''}>${t}</option>`).join('')}</select></div>`:''; })()}
-    ${saidasTipoFilter !== 'todas' ? `<button class="bt ${saidasVerTodosMeses?'on':''}" onclick="toggleSaidasTodosMeses()" style="font-size:.78rem;margin-bottom:8px;width:100%;text-align:left">📅 ${saidasVerTodosMeses ? '✕ Voltar ao mês atual' : 'Ver em todos os meses'}</button>` : ''}
+    ${saidasTipoFilter !== 'todas' ? `<button class="ftab ${saidasVerTodosMeses?'on':''}" onclick="toggleSaidasTodosMeses()" style="margin-bottom:10px;display:inline-flex;align-items:center;gap:6px">📅 ${saidasVerTodosMeses ? 'Voltar ao mês atual' : 'Ver em todos os meses'}</button>` : ''}
+    ${saidasFormOpen ? renderSaidaForm() : ''}
+    ${renderSaidaListContent(list)}`;
+}
 
-    <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">
-        <button class="add-btn ${saidasFormOpen?'open':''}" style="flex:1;min-width:0" onclick="toggleSaidasForm()">${saidasFormOpen?'✕ Fechar':'＋ Nova Saída'}</button>
-        <button class="add-btn" style="flex:1;min-width:0;background:var(--brown-soft);color:var(--brown);border:1px solid var(--brown)" onclick="fsImportAbrir()">📥 Importar extrato</button>
-    </div>
-    ${saidasFormOpen?`
+// Helper: form de nova saída (compartilhado entre mobile e desktop)
+function renderSaidaForm() {
+    const natFs = Fs.natureza || 'PROFISSIONAL';
+    const tiposProf = getTiposProfissionais();
+    return `
     <div class="card">
         <div class="fg"><label class="fl">Natureza</label><div class="bg">
             <button class="bt ${natFs==='PROFISSIONAL'?'on':''}" onclick="pickSaidaNatureza('PROFISSIONAL')">Profissional</button>
@@ -354,13 +377,85 @@ function renderSaidas() {
         </div></div>
         ${Fs.recorrencia==='recorrente'?`<div class="fg"><label class="fl">Quantos meses?</label><div class="vwrap"><span class="vpfx">#</span><input class="fi" type="number" id="si-meses" min="2" max="60" value="${Fs.meses||2}" inputmode="numeric"></div></div>`:''}
         <button class="bsub red" onclick="saveSaida()">Salvar Saída</button>
-    </div>`:''}
-    ${(()=>{
-      if (saidasVerTodosMeses && saidasTipoFilter !== 'todas') return renderSaidasHistorico();
-      if (!list.length) return `<div class="empty"><div class="ico">${SVG.upload}</div><p>Nenhuma saída em<br><strong>${MONTHS[selMonth]} ${selYear}</strong></p></div>`;
-      const items = list.map(s => saidaItemHtml(s)).join('');
-      return items + `<button class="bexp" onclick="exportSaidasCSV()" style="display:flex;align-items:center;justify-content:center;gap:7px">${SVG.download} Exportar CSV</button>`;
-    })()}`;
+    </div>`;
+}
+
+// Helper: corpo da lista (histórico, estado vazio ou items + export)
+function renderSaidaListContent(list) {
+    if (saidasVerTodosMeses && saidasTipoFilter !== 'todas') return renderSaidasHistorico();
+    if (!list.length) return `<div class="empty"><div class="ico">${SVG.upload}</div><p>Nenhuma saída em<br><strong>${MONTHS[selMonth]} ${selYear}</strong></p></div>`;
+    const items = list.map(s => saidaItemHtml(s)).join('');
+    return items + `<button class="bexp" onclick="exportSaidasCSV()" style="display:flex;align-items:center;justify-content:center;gap:7px;margin-top:10px">${SVG.download} Exportar CSV</button>`;
+}
+
+// ── DESKTOP: SAÍDAS — hero card com totais + toolbar com filtros e CTA ──
+function renderSaidasDesktop() {
+    const monthList = saidas.filter(s=>{const my=getMonthYear(s.dataPag);return my&&my.m===selMonth&&my.y===selYear;});
+    const list = monthList
+        .filter(s=> saidasNaturezaFilter==='todas' || (s.natureza||'PROFISSIONAL')===saidasNaturezaFilter)
+        .filter(s=> saidasTipoFilter==='todas' || s.tipo===saidasTipoFilter)
+        .sort((a,b)=>(b.dataPag||'').localeCompare(a.dataPag||''));
+    const totPago = list.filter(s=>s.status==='Pago').reduce((t,s)=>t+Number(s.valor||0),0);
+    const totPrev = list.filter(s=>s.status==='Previsto').reduce((t,s)=>t+Number(s.valor||0),0);
+    const cntPago = list.filter(s=>s.status==='Pago').length;
+    const cntPrev = list.filter(s=>s.status==='Previsto').length;
+    const cntProf = monthList.filter(s=>(s.natureza||'PROFISSIONAL')==='PROFISSIONAL').length;
+    const cntPess = monthList.filter(s=>s.natureza==='PESSOAL').length;
+    const cntMista= monthList.filter(s=>s.natureza==='MISTA').length;
+    const tipos = [...new Set(monthList
+        .filter(s=>saidasNaturezaFilter==='todas'||(s.natureza||'PROFISSIONAL')===saidasNaturezaFilter)
+        .map(s=>s.tipo).filter(Boolean))].sort();
+
+    return `
+    <div class="month-hero">
+        <div class="month-nav-d">
+            <button class="mnbtn" onclick="chm(-1)">‹</button>
+            <span class="mlab-d">${MONTHS[selMonth].toUpperCase()} · ${selYear}</span>
+            <button class="mnbtn" onclick="chm(1)">›</button>
+        </div>
+        <div class="stat-row-d">
+            <div class="stat-block-d">
+                <div class="stat-value-d" style="color:var(--red)">${brl(totPago+totPrev)}</div>
+                <div class="stat-label-d">Total de saídas no mês</div>
+                <div class="stat-sub-d"><strong>${brl(totPago)}</strong> pago · <strong>${brl(totPrev)}</strong> previsto</div>
+            </div>
+            <div class="stat-block-d">
+                <div class="stat-value-d">${list.length} saída${list.length!==1?'s':''}</div>
+                <div class="stat-label-d">Movimentações no mês</div>
+                <div class="stat-sub-d"><strong>${cntPago}</strong> pagos · <strong>${cntPrev}</strong> previstos</div>
+            </div>
+        </div>
+    </div>
+    <div class="d-toolbar">
+        <div style="flex:1;min-width:0">
+            <div class="ftabs">
+                <button class="ftab ${saidasNaturezaFilter==='todas'?'on':''}" onclick="setSaidaNatureza('todas')">Todas (${monthList.length})</button>
+                <button class="ftab ${saidasNaturezaFilter==='PROFISSIONAL'?'on':''}" onclick="setSaidaNatureza('PROFISSIONAL')">Profissional (${cntProf})</button>
+                <button class="ftab ${saidasNaturezaFilter==='PESSOAL'?'on':''}" onclick="setSaidaNatureza('PESSOAL')">Pessoal (${cntPess})</button>
+                ${cntMista>0?`<button class="ftab ${saidasNaturezaFilter==='MISTA'?'on':''}" onclick="setSaidaNatureza('MISTA')">Mista (${cntMista})</button>`:''}
+            </div>
+            ${tipos.length>1?`<div style="margin-top:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                <select class="fi" style="font-size:.85rem;padding:8px 12px;max-width:280px;width:auto" onchange="setSaidaTipoFilter(this.value)">
+                    <option value="todas">Todos os tipos</option>
+                    ${tipos.map(t=>`<option value="${t}" ${saidasTipoFilter===t?'selected':''}>${t}</option>`).join('')}
+                </select>
+                ${saidasTipoFilter!=='todas'?`<button class="ftab ${saidasVerTodosMeses?'on':''}" onclick="toggleSaidasTodosMeses()">📅 ${saidasVerTodosMeses ? 'Voltar ao mês' : 'Ver em todos os meses'}</button>`:''}
+            </div>`:''}
+        </div>
+        <div style="display:flex;gap:8px;flex-shrink:0;align-items:flex-start">
+            <button class="d-btn-add d-btn-add--saida ${saidasFormOpen?'open':''}" onclick="toggleSaidasForm()">
+                ${saidasFormOpen
+                    ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg> Fechar`
+                    : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Nova Saída`}
+            </button>
+            <button class="d-btn-add d-btn-add--import" onclick="fsImportAbrir()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                Importar extrato
+            </button>
+        </div>
+    </div>
+    ${saidasFormOpen ? renderSaidaForm() : ''}
+    ${renderSaidaListContent(list)}`;
 }
 
 function saidaItemHtml(s) {
@@ -694,7 +789,7 @@ function renderNoivas() {
 
     if (noivas.length === 0) {
         return `
-        <button class="add-btn" style="border-color:#e91e63;color:#e91e63;margin-bottom:11px;display:flex;align-items:center;justify-content:center;gap:7px" onclick="openAddNoiva()">${SVG.gem} + Nova Noiva</button>
+        <button class="add-btn add-btn--noiva" onclick="openAddNoiva()">${SVG.gem} Nova Noiva</button>
         <div class="empty"><div class="ico">${SVG.gem}</div><p>Nenhuma noiva cadastrada.<br>Adicione para acompanhar os pagamentos.</p></div>`;
     }
 
@@ -720,7 +815,7 @@ function renderNoivas() {
     };
 
     return `
-    <button class="add-btn" style="border-color:#e91e63;color:#e91e63;margin-bottom:11px;display:flex;align-items:center;justify-content:center;gap:7px" onclick="openAddNoiva()">${SVG.gem} + Nova Noiva</button>
+    <button class="add-btn add-btn--noiva" onclick="openAddNoiva()">${SVG.gem} Nova Noiva</button>
     ${monthKeys.map(renderMonthSection).join('')}
     ${realizadas.length ? `
         <div class="noiva-section-title realizadas-title">

@@ -30,7 +30,7 @@ body { max-width: var(--fin-container); margin: 0 auto; }
 .hdr {
     background: linear-gradient(135deg, var(--brown-d), var(--brown));
     color: white; padding: 10px 14px; position: sticky; top: 0; z-index: 100;
-    display: grid; grid-template-columns: 44px 1fr auto; align-items: center;
+    display: grid; grid-template-columns: 44px 1fr 44px; align-items: center;
 }
 .hdr-center { text-align: center; }
 .hdr h1 { font-size: 1.05rem; font-weight: 700; }
@@ -51,15 +51,6 @@ body { max-width: var(--fin-container); margin: 0 auto; }
     cursor: pointer; transition: background .15s; padding: 0;
 }
 .gear-btn:active { background: rgba(255,255,255,.25); }
-.hdr-novo-btn {
-    display: flex; align-items: center; gap: 4px;
-    background: rgba(255,255,255,.22); color: white;
-    border: 1.5px solid rgba(255,255,255,.38);
-    border-radius: 18px; padding: 5px 11px;
-    font-size: .76rem; font-weight: 700; cursor: pointer;
-    letter-spacing: .02em; white-space: nowrap; margin-right: 4px;
-}
-.hdr-novo-btn:active { background: rgba(255,255,255,.38); }
 
 /* ── BACK FLOAT ──
    Em mobile fica colado na esquerda do viewport; quando o container fica
@@ -294,9 +285,45 @@ body { max-width: var(--fin-container); margin: 0 auto; }
 .year-table .pos { color: var(--ok); }
 .year-table .neg { color: var(--red); }
 
-/* ── SAÍDAS ADD BTN ── */
-.add-btn { width: 100%; padding: 12px; background: white; color: var(--red); border: 2px dashed #f48fb1; border-radius: 16px; font-size: .9rem; font-weight: 700; cursor: pointer; margin-bottom: 11px; }
-.add-btn.open { border-style: solid; background: var(--red-l); }
+/* ── CTA BUTTONS (padrão unificado) ──
+   .add-btn é o botão primário de ação (Nova Entrada, Nova Saída, etc.)
+   Use variantes --entrada/--saida/--import/--noiva para definir cor.
+   .add-row coloca múltiplos botões lado a lado. */
+.add-btn {
+    width: 100%; padding: 13px;
+    border: none; border-radius: 14px;
+    font-size: .92rem; font-weight: 700;
+    color: white; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 7px;
+    margin-bottom: 11px;
+    box-shadow: 0 3px 10px rgba(0,0,0,.12);
+    transition: background .15s, transform .1s, box-shadow .15s;
+}
+.add-btn:active { transform: translateY(1px); }
+.add-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
+.add-row { display: flex; gap: 8px; margin-bottom: 11px; flex-wrap: wrap; }
+.add-row .add-btn { flex: 1; min-width: 0; margin-bottom: 0; }
+
+.add-btn--entrada { background: var(--brown); box-shadow: 0 3px 10px rgba(109,76,65,.28); }
+.add-btn--entrada:active { background: var(--brown-d); }
+.add-btn--saida   { background: var(--red);   box-shadow: 0 3px 10px rgba(198,40,40,.28); }
+.add-btn--saida:active   { background: #a31818; }
+.add-btn--noiva   { background: #e91e63; box-shadow: 0 3px 10px rgba(233,30,99,.28); }
+.add-btn--noiva:active   { background: #c2185b; }
+.add-btn--import {
+    background: white; color: var(--brown);
+    border: 1.5px solid var(--brown);
+    box-shadow: none;
+}
+.add-btn--import:active { background: var(--brown-l); }
+
+/* Quando o form está aberto, o CTA vira "fechar" — visual neutro */
+.add-btn.open {
+    background: white; color: var(--muted);
+    border: 1.5px solid var(--border);
+    box-shadow: none;
+}
+
 .bexp { width: 100%; padding: 13px; background: white; color: var(--brown); border: 2px solid var(--brown); border-radius: 16px; font-size: .88rem; font-weight: 700; cursor: pointer; margin-top: 4px; }
 
 /* ── CONFIG MODAL ── */
@@ -717,10 +744,25 @@ body { max-width: var(--fin-container); margin: 0 auto; }
         display: inline-flex; align-items: center; gap: 7px;
         box-shadow: 0 3px 10px rgba(109,76,65,.25);
         white-space: nowrap; flex-shrink: 0;
-        transition: background .15s;
+        transition: background .15s, transform .1s, box-shadow .15s;
     }
-    .d-btn-add:hover { background: var(--brown-d); }
-    .d-btn-add svg { width: 14px; height: 14px; }
+    .d-btn-add:hover  { background: var(--brown-d); }
+    .d-btn-add:active { transform: translateY(1px); }
+    .d-btn-add svg    { width: 14px; height: 14px; }
+    /* Variantes — sobrescrevem cor; --entrada é alias do default */
+    .d-btn-add--entrada { background: var(--brown); }
+    .d-btn-add--entrada:hover { background: var(--brown-d); }
+    .d-btn-add--saida   { background: var(--red);   box-shadow: 0 3px 10px rgba(198,40,40,.25); }
+    .d-btn-add--saida:hover   { background: #a31818; }
+    .d-btn-add--import {
+        background: #fff; color: var(--brown);
+        border: 1.5px solid var(--brown);
+    }
+    .d-btn-add--import:hover { background: var(--brown-l); }
+    .d-btn-add.open {
+        background: #fff; color: var(--muted);
+        border: 1.5px solid var(--border); box-shadow: none;
+    }
 
     /* ─── MASTER-DETAIL SPLIT ────────────────────── */
     .lista-split {
