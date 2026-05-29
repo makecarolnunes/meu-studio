@@ -229,5 +229,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-29 11:08 | main | feat(financeiro): Fase 1 ÔÇö soft delete + sal├írio CLT + simulador MEI + meta mensal -->
+<!-- AUTO: 2026-05-29 11:37 | main | feat: Fase 2 ÔÇö WhatsApp em Clientes + PIX QR Code em entradas -->
 
