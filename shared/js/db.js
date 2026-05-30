@@ -798,6 +798,42 @@ window.DB = {
     },
   },
 
+  // ── Alertas: estado das ações do usuário (resolvido/adiado/ignorado) ──
+  // Os alertas são DERIVADOS (recalculados pelo motor em shared/js/alerts.js).
+  // Aqui só persiste a AÇÃO sobre cada alerta, por chave estável (cross-device).
+  alertas: {
+    async list() {
+      _guard();
+      const { data, error } = await _sb.from('alertas_estado').select('*');
+      if (error) throw error;
+      const map = {};
+      (data || []).forEach(r => {
+        map[r.alert_key] = {
+          status:      r.status       || 'ativo',
+          snoozeUntil: r.snooze_until || null,
+          updatedAt:   r.updated_at   || '',
+        };
+      });
+      return map;
+    },
+    async setStatus(key, status, snoozeUntil) {
+      _guard();
+      const row = {
+        alert_key:    String(key),
+        status:       status || 'ativo',
+        snooze_until: snoozeUntil || null,
+        updated_at:   new Date().toISOString(),
+      };
+      const { error } = await _sb.from('alertas_estado').upsert(row, { onConflict: 'alert_key' });
+      if (error) throw error;
+    },
+    async remove(key) {
+      _guard();
+      const { error } = await _sb.from('alertas_estado').delete().eq('alert_key', String(key));
+      if (error) throw error;
+    },
+  },
+
   auth: {
     // Retorna { id, usuario, nivel } se válido, null se inválido, lança erro se offline
     async login(usuario, senha) {
