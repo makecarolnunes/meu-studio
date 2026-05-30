@@ -229,5 +229,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-30 00:19 | main | feat(alertas): sistema inteligente de alertas e lembretes (Fase 1) -->
+<!-- AUTO: 2026-05-30 00:19 | main | docs: sync CLAUDE.md [auto] -->
 
