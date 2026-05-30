@@ -56,7 +56,7 @@ body { max-width: var(--fin-container); margin: 0 auto; }
    Em mobile fica colado na esquerda do viewport; quando o container fica
    menor que a viewport (desktop), gruda na borda esquerda do container. */
 .btn-back-float {
-    position: fixed; bottom: 74px;
+    position: fixed; bottom: calc(74px + env(safe-area-inset-bottom, 0px));
     left: max(14px, calc(50vw - var(--fin-container) / 2 + 14px));
     z-index: 150;
     width: 42px; height: 42px; border-radius: 50%; border: none;
@@ -68,7 +68,7 @@ body { max-width: var(--fin-container); margin: 0 auto; }
 .btn-back-float:active { background: rgba(0,0,0,.18); }
 
 /* ── CONTENT ── */
-.content { padding: 13px 13px 86px; }
+.content { padding: 13px 13px calc(86px + env(safe-area-inset-bottom, 0px)); }
 
 /* ── BOTTOM NAV ── */
 .bnav {
@@ -76,6 +76,7 @@ body { max-width: var(--fin-container); margin: 0 auto; }
     width: 100%; max-width: var(--fin-container); background: white;
     border-top: 1px solid var(--border); display: flex; z-index: 100;
     box-shadow: 0 -2px 8px rgba(0,0,0,.07);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 .ni {
     flex: 1; display: flex; flex-direction: column; align-items: center;
@@ -531,7 +532,7 @@ body { max-width: var(--fin-container); margin: 0 auto; }
    Mesma lógica do back-float: gruda na borda direita do container quando
    a viewport for maior que o container. */
 .fab-chat {
-    position: fixed; bottom: 90px;
+    position: fixed; bottom: calc(90px + env(safe-area-inset-bottom, 0px));
     right: max(16px, calc(50vw - var(--fin-container) / 2 + 16px));
     width: 52px; height: 52px;
     border-radius: 50%; background: var(--brown-d); color: white;

@@ -575,6 +575,7 @@
     }
     .action-name { font-size: 1rem; font-weight: 700; }
     .action-phone { font-size: 0.75rem; color: var(--muted); margin-top: 2px; }
+    .action-request-date { font-size: 0.65rem; color: var(--muted); margin-top: 3px; }
     .action-status-row {
       display: flex; align-items: center; gap: 7px;
       padding: 2px 18px 12px;
@@ -585,10 +586,10 @@
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
     .fu-chip {
-      position: relative; display: inline-flex; align-items: center; gap: 4px;
-      padding: 4px 9px; border-radius: 999px;
-      background: var(--amber-l); color: #7c4a00;
-      font-size: 0.7rem; font-weight: 700;
+      position: relative; display: inline-flex; align-items: center; gap: 3px;
+      padding: 3px 7px; border-radius: 999px;
+      background: #fff8e1; color: #9e6c00;
+      font-size: 0.63rem; font-weight: 500;
       border: 1px solid #ffe082; cursor: pointer;
       flex-shrink: 0; user-select: none;
     }

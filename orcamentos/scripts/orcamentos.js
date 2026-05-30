@@ -110,8 +110,8 @@ function renderEntryCard(e) {
   const nfu    = needsFollowup(e);
   const val    = e.ValorFechado ? parseFloat(e.ValorFechado) : parseFloat(e.ValorProp) || 0;
   const valStr = val ? fmtVal(val) : '—';
-  const meta   = e.DataEvento    ? 'Evento: '      + fmtDate(e.DataEvento)
-               : e.ProxFollowup  ? 'Follow-up: '   + fmtDate(e.ProxFollowup)
+  const meta   = e.DataEvento    ? 'Evento: '  + fmtDate(e.DataEvento)
+               : e.ProxFollowup  ? 'FU: '      + fmtDate(e.ProxFollowup)
                : '';
   const compOk = hasComprovante(e);
   const statusRow = e.Status === 'Fechado'
@@ -127,7 +127,7 @@ function renderEntryCard(e) {
     '<div class="entry ' + cls + '" onclick="openAction(\'' + esc(e.ID) + '\')">' +
       '<div class="e-date">' + fmtDateCard(e.DataPedido) + '</div>' +
       '<div class="e-info">' +
-        '<div class="e-name">' + esc(e.Cliente || '—') + (e.Equipe ? ' <span style="display:inline-block;background:#e0f7fa;color:#006064;border-radius:8px;padding:1px 7px;font-size:.65rem;font-weight:600;vertical-align:middle">↑ ' + esc(e.Equipe) + '</span>' : '') + '</div>' +
+        '<div class="e-name">' + esc(e.Cliente || '—') + (e.Equipe ? ' <span style="display:inline-block;background:#e0f7fa;color:#006064;border-radius:8px;padding:1px 7px;font-size:.65rem;font-weight:600;vertical-align:middle">↑ Equipe ' + esc(e.Equipe) + '</span>' : '') + '</div>' +
         '<div class="e-srv">' + (nfu ? '<span class="fu-dot"></span>' : '') + esc(e.Servico || '—') + '</div>' +
         (meta ? '<div class="e-meta">' + esc(meta) + '</div>' : '') +
         statusRow +
@@ -468,6 +468,24 @@ async function syncAll() {
       DB.valoresServicos.load().catch(() => null),
     ]);
     entries = all.filter(e => !deletedIds.includes(String(e.ID)));
+
+    // Aplica atualizações pendentes (salvas offline durante confirmarFechamento)
+    const pending = safeJSON(localStorage.getItem('orca_pending_status'), {});
+    const pendingIds = Object.keys(pending);
+    if (pendingIds.length) {
+      const synced = [];
+      for (const [pid, fields] of Object.entries(pending)) {
+        const local = entries.find(e => String(e.ID) === String(pid));
+        if (local) Object.assign(local, fields);
+        try {
+          await DB.orcamentos.update(pid, fields);
+          synced.push(pid);
+        } catch(_) {}
+      }
+      synced.forEach(pid => delete pending[pid]);
+      localStorage.setItem('orca_pending_status', JSON.stringify(pending));
+    }
+
     cacheEntries();
     if (svcMap) {
       // Mescla com a lista local: prioriza ordem do localStorage para serviços que existem;
@@ -1036,7 +1054,7 @@ function render() {
   if (equipeTabsEl) {
     if (equipesDisp.length) {
       equipeTabsEl.style.display = '';
-      const items = [{eq:'todos',l:'Todas'},{eq:'__sem__',l:'Sem equipe'},...equipesDisp.map(eq=>({eq,l:eq}))];
+      const items = [{eq:'todos',l:'Todas'},{eq:'__sem__',l:'Sem equipe'},...equipesDisp.map(eq=>({eq,l:'Equipe ' + eq}))];
       equipeTabsEl.innerHTML = items.map(f=>`<button class="equipe-tab${curEquipe===f.eq?' on':''}" data-eq="${f.eq}" onclick="setEquipe('${f.eq}')">${f.l}</button>`).join('');
     } else {
       equipeTabsEl.style.display = 'none';
@@ -1045,7 +1063,7 @@ function render() {
   if (equipeTabsDsEl) {
     if (equipesDisp.length) {
       equipeTabsDsEl.style.display = '';
-      const items = [{eq:'todos',l:'Todas as equipes'},{eq:'__sem__',l:'Sem equipe'},...equipesDisp.map(eq=>({eq,l:eq}))];
+      const items = [{eq:'todos',l:'Todas as equipes'},{eq:'__sem__',l:'Sem equipe'},...equipesDisp.map(eq=>({eq,l:'Equipe ' + eq}))];
       equipeTabsDsEl.innerHTML = `<div class="dsb-lbl">Equipe</div>` + items.map(f=>`<button class="d-fil-item${curEquipe===f.eq?' active':''}" data-eq="${f.eq}" onclick="setEquipe('${f.eq}')"><span class="d-fil-dot" style="background:#006064"></span>${f.l}</button>`).join('');
     } else {
       equipeTabsDsEl.style.display = 'none';
@@ -1344,6 +1362,8 @@ function openAction(id) {
   document.getElementById('act-avatar').textContent = initials(e.Cliente);
   document.getElementById('act-name').textContent   = e.Cliente || '—';
   document.getElementById('act-phone').textContent  = e.Telefone || 'Sem telefone';
+  const reqDateEl = document.getElementById('act-request-date');
+  if (reqDateEl) reqDateEl.textContent = e.DataPedido ? 'Pedido em ' + fmtDateWeekFull(e.DataPedido) : '';
 
   const badge = document.getElementById('act-badge');
   badge.textContent = e.Status || '—';
@@ -1780,21 +1800,31 @@ async function confirmarFechamento() {
   e.AgendaCriada   = false;
   cacheEntries();
 
-  // 2) Sincroniza com a planilha de orçamentos
-  const updResult = await postEntry({
-    action: 'update', id: e.ID,
-    fields: {
-      Status:         e.Status,
-      ValorFechado:   e.ValorFechado,
-      ValorProp:      e.ValorProp,
-      DataFechamento: e.DataFechamento,
-      DataEvento:     e.DataEvento,
-      Servico:        e.Servico,
-      Obs:            e.Obs,
-      Origem:         e.Origem,
-      Propostas:      e.Propostas,
-    },
-  });
+  // 2) Sincroniza com o Supabase (com retry automático em caso de falha)
+  const fechFields = {
+    Status:         e.Status,
+    ValorFechado:   e.ValorFechado,
+    ValorProp:      e.ValorProp,
+    DataFechamento: e.DataFechamento,
+    DataEvento:     e.DataEvento,
+    Servico:        e.Servico,
+    Obs:            e.Obs,
+    Origem:         e.Origem,
+    Propostas:      e.Propostas,
+  };
+  let updResult = await postEntry({ action: 'update', id: e.ID, fields: fechFields });
+  if (!updResult.ok) {
+    await new Promise(r => setTimeout(r, 2500));
+    updResult = await postEntry({ action: 'update', id: e.ID, fields: fechFields });
+  }
+  if (!updResult.ok) {
+    // Salva como pendente — syncAll vai replicar ao reconectar
+    try {
+      const pending = safeJSON(localStorage.getItem('orca_pending_status'), {});
+      pending[String(e.ID)] = fechFields;
+      localStorage.setItem('orca_pending_status', JSON.stringify(pending));
+    } catch(_) {}
+  }
 
   setLoadingStep(1, 'Lançando no financeiro...', 'Registrando sinal e restante');
 
@@ -1894,7 +1924,7 @@ function abrirSucesso() {
   const items = [];
   if (f.sheetResult && f.sheetResult.ok) items.push({ tipo: 'ok', txt: '✅ Orçamento marcado como Fechado' });
   else if (f.sheetResult && f.sheetResult.error === 'no-url') items.push({ tipo: 'warn', txt: '⚠️ Sheet de orçamentos não configurado' });
-  else items.push({ tipo: 'warn', txt: '⚠️ Salvo localmente (sincronizar depois)' });
+  else items.push({ tipo: 'warn', txt: '⚠️ Orçamento salvo localmente — será sincronizado automaticamente ao reconectar' });
 
   if (false) { // removido: integração financeiro agora via Supabase direto
     items.push({ tipo: 'warn', txt: '' });
