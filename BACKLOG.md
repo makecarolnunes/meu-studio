@@ -1,6 +1,6 @@
 # Backlog · Meu Studio
 
-> Última revisão: 2026-05-29 (9 quick wins concluídos em 3 fases)
+> Última revisão: 2026-05-30 (Sistema de Alertas Fase 1+2; auditoria do código marcou +6 itens já prontos)
 > Fonte da verdade do que está pendente, em ordem de prioridade.
 > Atualize ao concluir um item, mover prioridade ou adicionar novo escopo.
 
@@ -40,6 +40,13 @@
 - [x] **6.A.4** · Notas rápidas (widget no Resumo, reaproveita anotacoes/ via caderno auto-criado)
 - [x] **6.A.3** · Busca global no Financeiro (tecla `/` ou botão lupa no header)
 - [x] **6.C.2** · Dashboard de conversão em Orçamentos (mês atual vs anterior vs últimos 3m vs ano + delta)
+
+### Sistema de Alertas Inteligentes (2026-05-30)
+- [x] **Fase 1** · Motor de regras extensível + sino global + central priorizada (🔴/🟠/🔵) + persistência cross-device (`alertas_estado`). 7 regras: evento passado, orçamento parado, entrada vencida, DAS, teto MEI, tarefa atrasada, cliente fechada sem sinal.
+- [x] **Fase 2** · +3 regras (fluxo do período, projeção teto MEI, faturamento abaixo da média) + alerta de agenda "dia cheio". Regra "despesa atípica" adiada (ruído contra dados reais).
+
+### Conteúdo
+- [x] Sincronização de categorias/plataformas personalizadas no Supabase (ideias já sincronizavam)
 
 ---
 
@@ -179,30 +186,30 @@ Pool de melhorias pequenas (esforço ≤ 3h cada) baseadas em inspeção dos mó
 
 ### 6.B · Clientes (módulo somente-leitura hoje)
 
-- [ ] **6.B.1** · **Migrar fonte de GAS → `DB.entries.list()`** — remover dependência do Apps Script. Esforço: ~2h. Risco baixo.
-- [ ] **6.B.2** · **Adicionar `checkAuth()` no boot** — hoje qualquer URL acessa o módulo. Esforço: ~15min
+- [x] **6.B.1** · ✅ Feito — Clientes lê de `DB.entries.list()` (clientes.js:103), sem GAS.
+- [x] **6.B.2** · ✅ Feito — `checkAuth()` no boot (clientes.js:84/781).
 - [ ] **6.B.3** · **Busca por nome do cliente** — caixa no topo, filtra a lista em tempo real. Esforço: ~30min
 - [ ] **6.B.4** · **Tela de detalhe do cliente** — toca no nome → vê histórico completo (X atendimentos, R$ Y total, último em DD/MM, ticket médio). Esforço: ~2h
 - [ ] **6.B.5** · **Top clientes do ano** — ranking por frequência e por receita. Esforço: ~1h
 - [ ] **6.B.6** · **Cliente sem atender há X meses** — alerta no painel ("Ana não agenda há 4 meses"). Esforço: ~1h
 - [ ] **6.B.7** · **Anotações por cliente** — campo livre (preferências: cor batom, alérgica a Y, gosta de chá). Esforço: ~1h30
 - [ ] **6.B.8** · **Tags por cliente** — VIP, social, casamento, formatura. Filtro por tag. Esforço: ~1h30
-- [ ] **6.B.9** · **Botão WhatsApp formatado** — gera link `wa.me/...` com mensagem pré-pronta ("Oi Maria! Confirmando seu atendimento amanhã 10h"). Esforço: ~45min
+- [x] **6.B.9** · ✅ Feito — painel "Follow Up": templates de mensagem, edição, copiar, enviar via `wa.me` + histórico de envios.
 
 ### 6.C · Orçamentos
 
-- [ ] **6.C.1** · **Disable button durante submit** (já no roadmap antigo) — evita criar entries duplicadas se Carol clicar 2x rápido. Esforço: ~10min · **Bug fix**
+- [x] **6.C.1** · ✅ Feito — `fechBtn.disabled` durante o fechamento (orcamentos.js:1772).
 - [x] **6.C.2** · ✅ Dashboard de conversão · botão 📊 nos chips · mês atual vs anterior vs últimos 3m vs ano
 - [ ] **6.C.3** · **Filtro por serviço** (já no roadmap) — maquiagem, cabelo, noiva. Esforço: ~30min
 - [ ] **6.C.4** · **Campo "como conheceu"** (já no roadmap) — Instagram, indicação, Google. Permite calcular ROI por canal. Esforço: ~1h
 - [ ] **6.C.5** · **Tempo médio de resposta** — desde criação do orçamento até fechamento (ou perda). Esforço: ~45min
-- [ ] **6.C.6** · **Orçamento abandonado** — sem resposta há > 7 dias → alerta com botão de follow-up automático. Esforço: ~1h30
+- [x] **6.C.6** · ✅ Coberto pelo Sistema de Alertas (regra "orçamento parado" 7d/14d).
 - [ ] **6.C.7** · **Reapresentar orçamento** — botão "reenviar com novo valor" reusa template, gera novo `id`. Esforço: ~1h
 - [ ] **6.C.8** · **Histórico de preços por cliente** — "Maria pagou R$ 350 nesse serviço da última vez". Esforço: ~1h
 
 ### 6.D · Estoque
 
-- [ ] **6.D.1** · **Busca por nome/obs** (já no roadmap) — input no topo. Esforço: ~20min · **Quick win**
+- [x] **6.D.1** · ✅ Feito — busca por nome/obs (estoque.js:178).
 - [ ] **6.D.2** · **Ordenação por status** (já no roadmap) — zerado → acabando → ok → wishlist. Esforço: ~30min
 - [ ] **6.D.3** · **Quantidade + qtd mínima** (já no roadmap) — alerta automático ao atingir o mínimo. Esforço: ~2h
 - [ ] **6.D.4** · **Exportar lista de compras WhatsApp** — botão gera texto "Lista de compras: 1. Base MAC, 2. Pincel BdellÚm..." → copia clipboard. Esforço: ~45min · **Quick win alto valor**
