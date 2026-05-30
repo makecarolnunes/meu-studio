@@ -52,8 +52,8 @@ Expõe `window.DB`:
 - `DB.storage.uploadComprovante()`, `DB.storage.deleteComprovante()` — Supabase Storage
 - `DB.auth.login(usuario, senha)` — SHA-256 da senha + RPC `autenticar()`
 
-Lê credenciais de `window.ENV` (definido em `config.js`, gitignored).
-Em produção, `config.js` é gerado pelo GitHub Action a partir dos Secrets do repositório.
+Lê credenciais de `window.ENV` (definido em `config.js`).
+`config.js` está versionado no repositório (a anon key é pública por design — segurança via RLS) e é servido direto pelo GitHub Pages.
 
 ---
 
@@ -193,9 +193,8 @@ globais ordenados (sem build step, sem ES modules).
 | `hub.html` / `index.html` | Hub — sempre sincronizar (`cp hub.html index.html`) |
 | `shared/js/db.js` | Cliente Supabase: CRUD, Storage, Auth |
 | `shared/js/icons.js` | SVG icons reutilizáveis (window.SVG) |
-| `config.js` | Credenciais locais — **gitignored, nunca commitar** |
+| `config.js` | Credenciais (anon key pública) — versionado no repo |
 | `config.example.js` | Template de credenciais |
-| `.github/workflows/deploy.yml` | CI/CD: injeta `config.js` via Secrets → publica Pages |
 | `supabase-migration.sql` | DDL: 4 tabelas de dados + RLS |
 | `supabase-auth.sql` | DDL: tabela `usuarios` + função `autenticar()` |
 | `supabase-bucket-setup.sql` | Storage: bucket `comprovantes` + políticas |
@@ -209,9 +208,8 @@ globais ordenados (sem build step, sem ES modules).
 ## Deploy
 
 - **Repositório**: GitHub privado — `makecarolnunes/meu-studio`
-- **Produção**: GitHub Pages — URL em Settings → Pages do repositório
-- **CI/CD**: push em `main` → Action cria `config.js` dos Secrets → publica
-- **Secrets**: `SUPABASE_URL` e `SUPABASE_ANON` — configurar em Settings → Secrets → Actions
+- **Produção**: GitHub Pages (project site) — https://makecarolnunes.github.io/meu-studio/
+- **Deploy**: push em `main` → builder embutido do Pages (`pages build and deployment`, modo *Deploy from a branch*) publica a partir da raiz. `config.js` já está no repo — não há injeção de Secrets nem workflow de Actions.
 
 ---
 
@@ -221,7 +219,7 @@ globais ordenados (sem build step, sem ES modules).
 |--------|------|
 | ✅ | Migração Google Sheets → Supabase |
 | ✅ | Comprovantes Google Drive → Supabase Storage |
-| ✅ | GitHub Pages + GitHub Actions (CI/CD) |
+| ✅ | GitHub Pages (deploy automático a partir da branch) |
 | ✅ | Roteamento por pasta (URLs limpas) |
 | ✅ | Auth centralizada no Hub — Supabase `usuarios` + SHA-256 |
 | 🔄 | Testar app completo em produção |
