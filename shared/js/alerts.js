@@ -28,6 +28,10 @@
     dasVenceEmDias: 7,     // DAS vencendo em ≤ N dias
     tetoMeiAlerta:  0.80,  // ≥80% do teto → importante
     tetoMeiCritico: 0.95,  // ≥95% → crítico
+    // ── Fase 2 ──
+    fluxoHorizonteDias:    30,    // janela p/ projeção de fluxo de caixa
+    faturamentoMediaMeses: 3,     // base de meses p/ a média
+    faturamentoQuedaPct:   0.70,  // mês < 70% da média → alerta
     maxPorRegra:    30,    // anti-spam: teto de itens por regra
   };
 
@@ -230,14 +234,89 @@
     return out;
   }});
 
+  // ── Fase 2 ──────────────────────────────────────────────────
+
+  // 8) Financeiro: saídas previstas superam entradas no período (fluxo)
+  registerRule({ id:'fin-fluxo-negativo', domain:'Financeiro', evaluate:function(ctx){
+    var today=ctx.today, horizon=new Date(today.getTime()+ctx.cfg.fluxoHorizonteDias*86400000);
+    var inflow=0, outflow=0;
+    (ctx.data.entries||[]).forEach(function(e){
+      if(e.status!=='Previsto') return;
+      var d=parseDate(e.dataPag); if(!d || d<today || d>horizon) return;
+      inflow += parseFloat(e.valor)||0;
+    });
+    (ctx.data.saidas||[]).forEach(function(s){
+      if(s.status==='Pago' || s.status==='Realizado') return; // já liquidadas não são saída futura
+      var d=parseDate(s.dataPag); if(!d || d<today || d>horizon) return;
+      outflow += parseFloat(s.valor)||0;
+    });
+    if(outflow<=0 || outflow<=inflow) return [];
+    return [{
+      key:'fin-fluxo-negativo:'+today.getFullYear()+'-'+(today.getMonth()+1), priority:'importante',
+      title:'Saídas previstas superam as entradas',
+      desc:'Próximos '+ctx.cfg.fluxoHorizonteDias+'d: saídas '+brl(outflow)+' vs entradas '+brl(inflow)+' · faltam '+brl(outflow-inflow),
+      href:'financeiro/',
+    }];
+  }});
+
+  // 9) Fiscal/MEI: ritmo atual projeta ultrapassar o teto (mesmo sem estar perto ainda)
+  registerRule({ id:'fiscal-projecao-teto', domain:'Fiscal/MEI', evaluate:function(ctx){
+    var year=ctx.today.getFullYear();
+    var fat=faturamentoAno(ctx.data.entries, year), teto=tetoAno(ctx.data.fiscalConfig, year);
+    if(!teto || teto<=0 || fat<=0) return [];
+    if(fat/teto >= ctx.cfg.tetoMeiAlerta) return []; // já coberto pela regra de teto (atual)
+    var start=new Date(year,0,1), end=new Date(year+1,0,1);
+    var frac=(ctx.today-start)/(end-start);
+    if(frac < 0.15) return []; // cedo demais p/ extrapolar
+    var proj=fat/frac;
+    if(proj < teto) return [];
+    return [{
+      key:'fiscal-projecao-teto:'+year, priority:'importante',
+      title:'Projeção pode ultrapassar o teto do MEI',
+      desc:'No ritmo atual, ~'+brl(proj)+' até dezembro — acima do teto de '+brl(teto)+' ('+brl(fat)+' até agora)',
+      href:'financeiro/fiscal.html',
+    }];
+  }});
+
+  // (Regra "despesa atípica" adiada: contra dados reais floda gastos pessoais
+  //  conhecidos — alta variância da natureza Pessoal. Refazer com filtro de
+  //  natureza profissional ou crescimento por categoria antes de reativar.)
+
+  // 10) Financeiro: faturamento do mês abaixo da média (só perto do fim do mês, informativo)
+  registerRule({ id:'fin-faturamento-baixo', domain:'Financeiro', evaluate:function(ctx){
+    var today=ctx.today, y=today.getFullYear(), m=today.getMonth();
+    var lastDay=new Date(y, m+1, 0).getDate();
+    if(today.getDate() < lastDay-4) return []; // só nos últimos 5 dias do mês
+    function fatMes(yy,mm){
+      var t=0;
+      (ctx.data.entries||[]).forEach(function(e){
+        if(!e || e.auto || e.status!=='Realizado') return;
+        var d=parseDate(e.dataPag); if(!d || d.getFullYear()!==yy || d.getMonth()!==mm) return;
+        t+=parseFloat(e.valor)||0;
+      });
+      return t;
+    }
+    var atual=fatMes(y,m), n=ctx.cfg.faturamentoMediaMeses, soma=0;
+    for(var i=1;i<=n;i++){ var dd=new Date(y,m-i,1); soma+=fatMes(dd.getFullYear(), dd.getMonth()); }
+    var media=soma/n;
+    if(media<=0 || atual >= media*ctx.cfg.faturamentoQuedaPct) return [];
+    return [{
+      key:'fin-faturamento-baixo:'+y+'-'+(m+1), priority:'informativo',
+      title:'Faturamento do mês abaixo da média',
+      desc:brl(atual)+' neste mês vs média de '+brl(media)+' (últimos '+n+' meses)',
+      href:'financeiro/',
+    }];
+  }});
+
   /* ── Dados (carregados via DB, em paralelo, tolerante a erro) ── */
-  var _data = { orcamentos:[], entries:[], tarefas:[], das:[], fiscalConfig:null };
+  var _data = { orcamentos:[], entries:[], saidas:[], tarefas:[], das:[], fiscalConfig:null };
   async function loadData(){
     if(!window.DB) return;
     function safe(p){ return (p && p.catch) ? p.catch(function(){ return null; }) : Promise.resolve(null); }
     var jobs=[];
     if(DB.orcamentos&&DB.orcamentos.list) jobs.push(safe(DB.orcamentos.list()).then(function(d){ if(d)_data.orcamentos=d; }));
     if(DB.entries&&DB.entries.list)       jobs.push(safe(DB.entries.list()).then(function(d){ if(d)_data.entries=d; }));
+    if(DB.saidas&&DB.saidas.list)         jobs.push(safe(DB.saidas.list()).then(function(d){ if(d)_data.saidas=d; }));
     if(DB.tarefas&&DB.tarefas.list)       jobs.push(safe(DB.tarefas.list()).then(function(d){ if(d)_data.tarefas=d; }));
     if(DB.fiscal&&DB.fiscal.das&&DB.fiscal.das.list)       jobs.push(safe(DB.fiscal.das.list()).then(function(d){ if(d)_data.das=d; }));
     if(DB.fiscal&&DB.fiscal.config&&DB.fiscal.config.get)  jobs.push(safe(DB.fiscal.config.get()).then(function(d){ _data.fiscalConfig=d; }));
