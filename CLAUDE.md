@@ -229,5 +229,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-29 23:18 | main | fix(sync): corrige PATCH 400 na tabela orcamentos (Propostas JSONB) -->
+<!-- AUTO: 2026-05-30 00:19 | main | feat(alertas): sistema inteligente de alertas e lembretes (Fase 1) -->
 
