@@ -229,5 +229,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-29 23:07 | main | fix(mobile): safe area, sync offline, equipe e data pedido -->
+<!-- AUTO: 2026-05-29 23:18 | main | fix(sync): corrige PATCH 400 na tabela orcamentos (Propostas JSONB) -->
 
