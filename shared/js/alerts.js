@@ -32,6 +32,7 @@
     fluxoHorizonteDias:    30,    // janela p/ projeção de fluxo de caixa
     faturamentoMediaMeses: 3,     // base de meses p/ a média
     faturamentoQuedaPct:   0.70,  // mês < 70% da média → alerta
+    agendaDiaCheio:        3,     // ≥ N atendimentos no mesmo dia → "dia cheio"
     maxPorRegra:    30,    // anti-spam: teto de itens por regra
   };
 
@@ -283,6 +284,8 @@
   //  natureza profissional ou crescimento por categoria antes de reativar.)
 
   // 10) Financeiro: faturamento do mês abaixo da média (só perto do fim do mês, informativo)
+  //  Usa a MESMA fórmula do Resumo do app (Realizado por dataPag, inclui auto) —
+  //  financeiro/scripts/views.js:542 — para o número bater com o que ela vê na tela.
   registerRule({ id:'fin-faturamento-baixo', domain:'Financeiro', evaluate:function(ctx){
     var today=ctx.today, y=today.getFullYear(), m=today.getMonth();
     var lastDay=new Date(y, m+1, 0).getDate();
@@ -290,7 +293,7 @@
     function fatMes(yy,mm){
       var t=0;
       (ctx.data.entries||[]).forEach(function(e){
-        if(!e || e.auto || e.status!=='Realizado') return;
+        if(!e || e.status!=='Realizado') return;
         var d=parseDate(e.dataPag); if(!d || d.getFullYear()!==yy || d.getMonth()!==mm) return;
         t+=parseFloat(e.valor)||0;
       });
@@ -306,6 +309,31 @@
       desc:brl(atual)+' neste mês vs média de '+brl(media)+' (últimos '+n+' meses)',
       href:'financeiro/',
     }];
+  }});
+
+  // 11) Agenda: dia cheio de atendimentos (deriva da lista de clientes = entries por data de serviço).
+  //  O Google Calendar não é acessível de forma confiável pelo app no mobile, então usamos os
+  //  atendimentos (cliente único por dia) como fonte — mesma base da tela de Clientes.
+  registerRule({ id:'agenda-dia-cheio', domain:'Agenda', evaluate:function(ctx){
+    var byDay={};
+    (ctx.data.entries||[]).forEach(function(e){
+      var ds=e.dataServ||e.dataPag; if(!ds) return;
+      var d=parseDate(ds); if(!d || d<ctx.today) return; // só hoje/futuro
+      var cli=norm(e.cliente); if(!cli) return;
+      (byDay[ds]=byDay[ds]||{})[cli]=1;
+    });
+    var out=[];
+    Object.keys(byDay).forEach(function(ds){
+      var n=Object.keys(byDay[ds]).length;
+      if(n < ctx.cfg.agendaDiaCheio) return;
+      out.push({
+        key:'agenda-dia-cheio:'+ds, priority:'informativo',
+        title:'Dia cheio de atendimentos',
+        desc:fmtBR(ds)+' · '+n+' atendimentos agendados',
+        href:'clientes/',
+      });
+    });
+    return out;
   }});
 
   /* ── Dados (carregados via DB, em paralelo, tolerante a erro) ── */
