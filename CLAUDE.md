@@ -227,5 +227,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-30 00:59 | main | feat(alertas): Fase 2 - fluxo, projecao teto MEI e faturamento abaixo da media -->
+<!-- AUTO: 2026-05-30 09:25 | main | feat(conteudo): sincroniza categorias/plataformas personalizadas no Supabase -->
 
