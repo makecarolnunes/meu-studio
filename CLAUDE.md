@@ -227,5 +227,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-30 09:25 | main | feat(conteudo): sincroniza categorias/plataformas personalizadas no Supabase -->
+<!-- AUTO: 2026-05-30 09:35 | main | docs(backlog): auditoria marca 6 itens ja prontos + registra Sistema de Alertas -->
 
