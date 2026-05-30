@@ -114,8 +114,10 @@ function writeLS(){
   try{localStorage.setItem('mk_content_cur_platform',curPlat);}catch(e){}
 }
 function saveIdeas(){try{localStorage.setItem('mk_content_ideas',JSON.stringify(ideas));}catch(e){} scheduleSync();}
-function saveCats() {try{localStorage.setItem('mk_content_cats', JSON.stringify(customCats));}catch(e){} scheduleSync();}
-function savePlats(){try{localStorage.setItem('mk_content_platforms',JSON.stringify(customPlats));}catch(e){} scheduleSync();}
+// Persiste categorias/plataformas personalizadas no Supabase (tabela configuracoes) p/ sync entre devices
+function syncCfg(chave,val){ if(typeof DB!=='undefined' && DB.config && DB.config.set && !window._SB_ERROR){ DB.config.set(chave, JSON.stringify(val)).catch(function(){}); } }
+function saveCats() {try{localStorage.setItem('mk_content_cats', JSON.stringify(customCats));}catch(e){} syncCfg('conteudo_custom_cats', customCats); scheduleSync();}
+function savePlats(){try{localStorage.setItem('mk_content_platforms',JSON.stringify(customPlats));}catch(e){} syncCfg('conteudo_custom_plats', customPlats); scheduleSync();}
 function saveCurPlat(){try{localStorage.setItem('mk_content_cur_platform',curPlat);}catch(e){} scheduleSync();}
 
 /* ============================================================
@@ -317,22 +319,35 @@ function loadData(){
   updateSyncDot('syncing');
   DB.conteudo.list()
     .then(function(data){
-      if(data.length > 0 || ideas.length === 0){
-        // Preserva ideias que só existem no localStorage (ainda não sincronizadas com Supabase)
-        var sbIds = {};
-        for(var i=0;i<data.length;i++) sbIds[data[i].id] = true;
-        var localOnly = ideas.filter(function(idea){ return !sbIds[idea.id]; });
-        ideas = data.concat(localOnly);
-        // Sincroniza as ideias locais pendentes com Supabase
-        for(var j=0;j<localOnly.length;j++){
-          (function(idea){ DB.conteudo.upsert(idea).catch(function(){}); })(localOnly[j]);
-        }
-        migrate(); validateCurPlat(); writeLS();
+      // Supabase é fonte de verdade; ideias locais ainda não enviadas sobem sempre.
+      var sbIds = {};
+      for(var i=0;i<data.length;i++) sbIds[data[i].id] = true;
+      var localOnly = ideas.filter(function(idea){ return !sbIds[idea.id]; });
+      ideas = data.concat(localOnly);
+      for(var j=0;j<localOnly.length;j++){
+        (function(idea){ DB.conteudo.upsert(idea).catch(function(){}); })(localOnly[j]);
       }
+      migrate(); validateCurPlat(); writeLS();
       updateSyncDot('ok'); render();
+      loadCustomFromCloud();   // categorias/plataformas personalizadas (cross-device)
     })
     .catch(function(){ updateSyncDot('offline'); });
 }
+
+// Mescla categorias/plataformas personalizadas vindas do Supabase (união — não perde nada)
+function loadCustomFromCloud(){
+  if(typeof DB==='undefined' || !DB.config || window._SB_ERROR) return;
+  DB.config.get('conteudo_custom_cats').then(function(v){
+    var arr=_parseArr(v); if(!arr) return;
+    var m=_unionArr(customCats,arr); if(m.length!==customCats.length){ customCats=m; writeLS(); render(); }
+  }).catch(function(){});
+  DB.config.get('conteudo_custom_plats').then(function(v){
+    var arr=_parseArr(v); if(!arr) return;
+    var m=_unionArr(customPlats,arr); if(m.length!==customPlats.length){ customPlats=m; writeLS(); validateCurPlat(); render(); }
+  }).catch(function(){});
+}
+function _parseArr(v){ try{ var a=JSON.parse(v); return Array.isArray(a)?a:null; }catch(e){ return null; } }
+function _unionArr(a,b){ var out=a.slice(),seen={}; a.forEach(function(x){seen[x]=1;}); b.forEach(function(x){ if(!seen[x]){seen[x]=1;out.push(x);} }); return out; }
 function migrateData(){ showMigrateBanner(false); showToast('Migrando...'); pushToSheets(); }
 
 /* ============================================================
