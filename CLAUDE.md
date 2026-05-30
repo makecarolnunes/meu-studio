@@ -229,5 +229,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-29 12:53 | main | docs: sync CLAUDE.md [auto] -->
+<!-- AUTO: 2026-05-29 23:07 | main | fix(mobile): safe area, sync offline, equipe e data pedido -->
 
