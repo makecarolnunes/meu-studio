@@ -227,5 +227,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-30 00:46 | main | chore(ci): remove deploy.yml redundante (Pages publica via branch builder) -->
+<!-- AUTO: 2026-05-30 00:59 | main | feat(alertas): Fase 2 - fluxo, projecao teto MEI e faturamento abaixo da media -->
 
