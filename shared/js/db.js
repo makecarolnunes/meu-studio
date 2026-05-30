@@ -166,6 +166,12 @@ function _orcToDb(o) {
     if (typeof comp === 'string') { try { comp = JSON.parse(comp); } catch(_) { comp = []; } }
     row.comprovantes = Array.isArray(comp) ? comp : [];
   }
+  // Propostas: campo JSONB — nunca pode ser string vazia (causa 400).
+  // Orçamentos criados localmente antes do primeiro sync não têm Propostas,
+  // o que faz _toDb mapear propostas: '' → rejeitado pelo banco.
+  if ('propostas' in row && !Array.isArray(row.propostas)) {
+    row.propostas = [];
+  }
   return row;
 }
 function _orcFromDb(r) {

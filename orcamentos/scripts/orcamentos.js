@@ -1479,7 +1479,7 @@ async function saveAction() {
     ValorFechado:  e.ValorFechado,
     ValorProp:     e.ValorProp,
     Obs:           e.Obs,
-    Propostas:     e.Propostas,
+    Propostas:     Array.isArray(e.Propostas) ? e.Propostas : [],
     Equipe:        e.Equipe || '',
   };
   const result = await postEntry({ action: 'update', id: e.ID, fields });
@@ -1810,7 +1810,7 @@ async function confirmarFechamento() {
     Servico:        e.Servico,
     Obs:            e.Obs,
     Origem:         e.Origem,
-    Propostas:      e.Propostas,
+    Propostas:      Array.isArray(e.Propostas) ? e.Propostas : [],
   };
   let updResult = await postEntry({ action: 'update', id: e.ID, fields: fechFields });
   if (!updResult.ok) {
