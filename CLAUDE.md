@@ -227,5 +227,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-31 20:15 | main | fix(financeiro): feedback de erro imediato quando offline no salvamento -->
+<!-- AUTO: 2026-05-31 20:29 | main | feat(financeiro): nova entrada calcula valor/sinal/restante e status pela data -->
 
