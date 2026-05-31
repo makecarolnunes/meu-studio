@@ -227,5 +227,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-31 01:35 | main | fix(financeiro): blinda filtro de tipo das Saidas contra filtro preso -->
+<!-- AUTO: 2026-05-31 08:02 | main | fix(financeiro): fila de escritas pendentes ÔÇö write que falha nao se perde mais -->
 
