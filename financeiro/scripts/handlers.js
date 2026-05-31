@@ -4,11 +4,35 @@
 // ════════════════════════════════════════════════════════════
 
 // ── TOGGLE / SYNC FORM ──
+// Aplica o preço pré-definido do serviço/local (tabela valores_servicos — a mesma
+// fonte do Orçamento) ao formulário de Nova Entrada.
+//  • tipo "Sinal": Valor Total = preço, Sinal = 30% (mesma regra do Orçamento) e
+//    o preview do Restante é atualizado.
+//  • demais tipos: Valor = preço.
+// Sobrescreve o que estiver no campo (selecionar o serviço sempre recalcula).
+function applyServicePrice() {
+    const p = getServicePrices()[priceKey(F.servico, F.local)];
+    if (!p) return;
+    if (F.tipo === 'Sinal') {
+        F.valorTotal = String(p);
+        F.valor      = (Number(p) * 0.30).toFixed(2);
+        const vt = document.getElementById('i-vt'); if (vt) vt.value = F.valorTotal;
+        const v  = document.getElementById('i-v');  if (v)  v.value  = F.valor;
+        updateSinalPreview();
+    } else {
+        F.valor = String(p);
+        const v = document.getElementById('i-v'); if (v) v.value = F.valor;
+    }
+}
+
 function pick(field, value, form) {
     syncF();
     if (form === 's') Fs[field] = value;
     else F[field] = value;
-    if (field === 'tipo' || field === 'recorrencia') { render(); return; }
+    if (field === 'tipo' || field === 'recorrencia') {
+        if (field === 'tipo' && !form) applyServicePrice();   // recalcula valor/sinal ao trocar de tipo
+        render(); return;
+    }
     // Auto-detect local quando serviço contém "domicílio" ou "studio"
     if (!form && field === 'servico') {
         const low = (value || '').toLowerCase();
@@ -23,17 +47,9 @@ function pick(field, value, form) {
             }
         }
     }
-    // Auto-fill price when service or local changes
+    // Ao trocar serviço/local, recalcula o valor (e Sinal/Restante se for Sinal)
     if (!form && (field === 'servico' || field === 'local')) {
-        const prices = getServicePrices();
-        const k = priceKey(F.servico, F.local);
-        const p = prices[k];
-        if (p) {
-            const vInput = document.getElementById('i-v');
-            const vtInput = document.getElementById('i-vt');
-            if (vInput && !vInput.value) { vInput.value = p; F.valor = String(p); }
-            if (vtInput && !vtInput.value) { vtInput.value = p; F.valorTotal = String(p); }
-        }
+        applyServicePrice();
     }
     document.querySelectorAll(`[data-f="${field}"][data-form="${form||'e'}"]`).forEach(btn => {
         const on = btn.dataset.v === value;

@@ -15,7 +15,7 @@ function render() {
 
 function bindAll() {
     const on = (id, ev, fn) => { const e=document.getElementById(id); if(e) e.addEventListener(ev,fn); };
-    on('i-dp','change',e=>F.dataPag=e.target.value);
+    on('i-dp','change',e=>{ F.dataPag=e.target.value; autoStatusFromDate(); });
     on('i-ds','change',e=>F.dataServ=e.target.value);
     on('i-cl','input', e=>F.cliente=e.target.value);
     on('i-v', 'input', e=>{F.valor=e.target.value; updateSinalPreview();});
@@ -42,6 +42,7 @@ function bindAll() {
             if (e.deltaY !== 0) { e.preventDefault(); ftabs.scrollLeft += e.deltaY; }
         }, { passive: false });
     }
+    updateSinalPreview();   // mantém o preview do Restante atualizado após cada render (no-op fora da tela Sinal)
 }
 
 function bgroup(field, opts, form) {
@@ -92,6 +93,14 @@ function renderNova() {
         <div class="fg"><label class="fl">Observações</label><textarea class="fi ta" id="i-ob" placeholder="Opcional...">${F.obs}</textarea></div>
     </div>
     <button class="bsub" onclick="saveEntry()">Salvar Lançamento</button>`;
+}
+
+// Dt. Pagamento no futuro ⇒ status "Previsto"; hoje ou passado ⇒ "Realizado".
+// Atualiza F.status e os botões via pick('status', ...).
+function autoStatusFromDate() {
+    if (!F.dataPag) return;
+    const novo = F.dataPag > today() ? 'Previsto' : 'Realizado';
+    if (F.status !== novo) pick('status', novo);
 }
 
 function updateSinalPreview() {
