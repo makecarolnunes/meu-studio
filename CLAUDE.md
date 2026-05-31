@@ -227,5 +227,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-31 20:29 | main | feat(financeiro): nova entrada calcula valor/sinal/restante e status pela data -->
+<!-- AUTO: 2026-05-31 20:37 | main | fix(financeiro): cache-busting nos scripts (?v=) para o navegador pegar o JS novo -->
 
