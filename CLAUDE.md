@@ -227,5 +227,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-30 09:35 | main | docs(backlog): auditoria marca 6 itens ja prontos + registra Sistema de Alertas -->
+<!-- AUTO: 2026-05-31 00:59 | main | fix(clientes): botao WhatsApp busca telefone do orcamento antes de perguntar -->
 
