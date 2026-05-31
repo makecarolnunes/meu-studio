@@ -227,5 +227,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-31 00:59 | main | docs: sync CLAUDE.md [auto] -->
+<!-- AUTO: 2026-05-31 01:35 | main | fix(financeiro): blinda filtro de tipo das Saidas contra filtro preso -->
 
