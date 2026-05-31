@@ -227,5 +227,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-31 20:06 | main | refactor(financeiro): escrita confirmada no Supabase (sem otimismo, sem fila) -->
+<!-- AUTO: 2026-05-31 20:15 | main | fix(financeiro): feedback de erro imediato quando offline no salvamento -->
 
