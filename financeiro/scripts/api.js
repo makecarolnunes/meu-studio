@@ -7,6 +7,71 @@ function normalizeE(e) { return { ...e, id: String(e.id||''), auto: e.auto==='tr
 function normalizeS(s) { return { ...s, id: String(s.id||'') }; }
 function normalizeN(n) { return { ...n, id: String(n.id||''), contratos: Array.isArray(n.contratos)?n.contratos:[] }; }
 
+// ── Fila de escritas pendentes (rede caiu, coluna ausente no PostgREST, etc.) ──
+// Bug real (jan/2026): um save falhava em silêncio (ex.: PGRST204 — coluna
+// `equipe` ainda não estava no schema cache do PostgREST) e o registro, vivo só
+// no localStorage, sumia no próximo load. A fila garante retry no próximo sync e
+// que nada criado/editado se perca por uma falha de escrita.
+const PENDING_KEY = 'mk_pending_writes';
+const PENDING_MAX_ATTEMPTS = 5;
+function _loadPending() { try { return JSON.parse(localStorage.getItem(PENDING_KEY) || '[]'); } catch(_) { return []; } }
+function _savePending(q) { try { localStorage.setItem(PENDING_KEY, JSON.stringify(q)); } catch(_) {} }
+function _writeKey(p) {
+    if (p.action === 'save' && p.data) {
+        try { return 'save|' + p.table + '|' + JSON.parse(decodeURIComponent(p.data)).id; } catch(_) { return 'save|' + p.table + '|?'; }
+    }
+    return p.action + '|' + p.table + '|' + (p.id || '');
+}
+// Remove da fila qualquer escrita equivalente (mesma ação+tabela+id)
+function _dequeue(params) {
+    const q = _loadPending();
+    const k = _writeKey(params);
+    const next = q.filter(p => _writeKey(p) !== k);
+    if (next.length !== q.length) _savePending(next);
+}
+// Enfileira (substituindo versão anterior do mesmo registro)
+function _enqueue(params) {
+    if (!['save','update','delete'].includes(params.action)) return;
+    const k = _writeKey(params);
+    const q = _loadPending().filter(p => _writeKey(p) !== k);
+    q.push({ action: params.action, table: params.table, data: params.data, id: params.id, field: params.field, value: params.value, _attempts: 0, _ts: Date.now() });
+    _savePending(q);
+}
+// Reinsere na memória um registro que voltou a persistir (caso o load não o tenha trazido)
+function _reinsertLocal(table, obj) {
+    const arr = table === 'entries' ? entries : table === 'saidas' ? saidas : table === 'noivas' ? noivas : null;
+    if (!arr || arr.some(x => String(x.id) === String(obj.id))) return;
+    const norm = table === 'entries' ? normalizeE(obj) : table === 'saidas' ? normalizeS(obj) : normalizeN(obj);
+    arr.unshift(norm);
+}
+// Reprocessa a fila — chamada após um load bem-sucedido (PostgREST de volta)
+async function flushPendingWrites() {
+    let q = _loadPending();
+    if (!q.length) return;
+    const remaining = [];
+    let reinserted = false;
+    for (const p of q) {
+        try {
+            if (p.action === 'save' && p.data) {
+                const obj = JSON.parse(decodeURIComponent(p.data));
+                await DB[p.table].upsert(obj);
+                _reinsertLocal(p.table, obj); reinserted = true;
+            } else if (p.action === 'update' && p.id && p.field) {
+                await DB[p.table].update(p.id, { [p.field]: p.value });
+            } else if (p.action === 'delete' && p.id) {
+                await DB[p.table].delete(p.id);
+            }
+        } catch(e) {
+            p._attempts = (p._attempts || 0) + 1;
+            if (p._attempts < PENDING_MAX_ATTEMPTS) remaining.push(p);
+            else console.warn('[pending] desisti de sincronizar após', PENDING_MAX_ATTEMPTS, 'tentativas:', _writeKey(p), e && e.message);
+        }
+    }
+    _savePending(remaining);
+    if (reinserted) { _safeCacheAll(); render(); }
+    if (remaining.length) toast('⚠️ ' + remaining.length + ' alteração(ões) ainda não sincronizada(s) — tentarei de novo no próximo sync.', 6000);
+}
+
 // Salva no localStorage tolerando quota (iOS Safari ≈ 2.5MB).
 // Loga tamanhos pra ajudar a identificar o vilão. Não derruba o sync.
 function _safeCacheAll() {
@@ -78,6 +143,8 @@ async function loadFromSupabase() {
         } else if (cacheErr) {
             toast('Dados carregados, mas cache local cheio (' + cacheErr.fullKey + '). Veja console.', 6000);
         }
+        // Load OK = servidor de volta: reprocessa escritas que ficaram pendentes
+        if (!lastErr) { try { await flushPendingWrites(); } catch(_) {} }
     } finally {
         isSyncing = false;
         render();
@@ -98,10 +165,12 @@ async function sbCall(params) {
             await DB[table].update(id, { [field]: value });
         }
         updateDot('ok');
+        _dequeue(params);   // persistiu — tira da fila se estava lá
     } catch(e) {
         updateDot('offline');
         console.warn('sbCall error:', e.message);
-        toast('⚠️ Não foi possível salvar no servidor: ' + (e.message || 'verifique a conexão'));
+        _enqueue(params);   // não perde: re-tenta no próximo sync
+        toast('⚠️ Sem conexão com o servidor — alteração salva localmente e será sincronizada no próximo acesso.');
     }
 }
 
