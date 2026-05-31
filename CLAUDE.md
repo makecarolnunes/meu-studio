@@ -227,5 +227,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-31 08:02 | main | docs: sync CLAUDE.md [auto] -->
+<!-- AUTO: 2026-05-31 20:06 | main | refactor(financeiro): escrita confirmada no Supabase (sem otimismo, sem fila) -->
 
