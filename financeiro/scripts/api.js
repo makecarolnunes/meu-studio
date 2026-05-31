@@ -90,18 +90,33 @@ async function loadFromSupabase() {
 // Escrita CONFIRMADA. Resolve `true` só se o Supabase aceitou; em falha mostra
 // erro e resolve `false`. Quem chama NÃO deve atualizar tela/cache como salvo
 // quando isto retornar false — assim nada é dado como salvo sem estar no Supabase.
+const SBCALL_TIMEOUT_MS = 15000;
 async function sbCall(params) {
     const { action, table, data, id, field, value } = params;
+    // Sem internet: falha NA HORA (não espera o fetch pendurar até o timeout do SO)
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+        updateDot('offline');
+        toast('❌ Sem internet — NÃO foi salvo. Conecte-se e tente de novo.', 7000);
+        return false;
+    }
     updateDot('syncing');
     try {
-        if (action === 'save' && data) {
-            const obj = JSON.parse(decodeURIComponent(data));
-            await DB[table].upsert(obj);
-        } else if (action === 'delete' && id) {
-            await DB[table].delete(id);
-        } else if (action === 'update' && id && field) {
-            await DB[table].update(id, { [field]: value });
-        }
+        const op = (async () => {
+            if (action === 'save' && data) {
+                await DB[table].upsert(JSON.parse(decodeURIComponent(data)));
+            } else if (action === 'delete' && id) {
+                await DB[table].delete(id);
+            } else if (action === 'update' && id && field) {
+                await DB[table].update(id, { [field]: value });
+            }
+        })();
+        // Timeout: nunca deixa o salvamento "pendurar" se a rede não responder
+        let to;
+        await Promise.race([
+            op,
+            new Promise((_, rej) => { to = setTimeout(() => rej(new Error('tempo esgotado — servidor não respondeu')), SBCALL_TIMEOUT_MS); }),
+        ]);
+        clearTimeout(to);
         updateDot('ok');
         return true;
     } catch(e) {
