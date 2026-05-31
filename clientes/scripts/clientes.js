@@ -153,12 +153,34 @@ function _waMessageFor(entry) {
   return `Oi, ${nome}! 🤍\n\nPassando para confirmar seu ${srv.toLowerCase()} ${dataLabel}${h}.\n\nSe tiver alguma dúvida, me chama por aqui. Até já!`;
 }
 
+// Normaliza para o formato wa.me: DDI 55 + DDD + número (só dígitos)
+function normalizeWaPhone(raw) {
+  const digits = String(raw || '').replace(/\D/g, '');
+  if (digits.length < 10) return '';
+  return digits.length === 11 ? '55' + digits : (digits.startsWith('55') ? digits : '55' + digits);
+}
+
 async function waOpen(eid) {
   const entry = fuEntryMap[eid];
   if (!entry) { console.warn('waOpen: entry não encontrada', eid); return; }
   let phone = clientePhone(entry.cliente);
   if (!phone) {
-    // Sem telefone — pergunta agora e salva
+    // Não está nos contatos — tenta buscar no cadastro de orçamentos
+    const fromOrca = normalizeWaPhone(guessPhone(entry.cliente));
+    if (fromOrca) {
+      phone = fromOrca;
+      // Salva no contato para abrir direto da próxima vez
+      const key = entry.cliente.trim().toLowerCase();
+      contatos[key] = { telefone: phone, obs: '', nomeOriginal: entry.cliente };
+      try { localStorage.setItem('mk_cliente_contatos', JSON.stringify(contatos)); } catch(_) {}
+      DB.clienteContatos.upsert(entry.cliente, phone, '').catch(err =>
+        console.warn('[contatos] save falhou:', err)
+      );
+      render();
+    }
+  }
+  if (!phone) {
+    // Sem telefone em nenhuma fonte — pergunta agora e salva
     const novo = prompt(
       `Telefone de ${entry.cliente} para WhatsApp:\n(com DDD, ex: 21987654321)`,
       ''
