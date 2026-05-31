@@ -253,7 +253,7 @@ FORMATO DAS RESPOSTAS:
     return res.json();
 }
 
-function executeChatTool(name, input) {
+async function executeChatTool(name, input) {
     try {
         if (name === 'add_entrada') {
             if (input.origem === 'Noiva' || input.noivaId) {
@@ -281,10 +281,10 @@ function executeChatTool(name, input) {
                 origem:input.origem||'Produção Social', obs:input.obs||'',
                 auto:false, createdAt:new Date().toISOString(), noivaId:input.noivaId||''
             };
+            if (!await sbCall({action:'save', table:'entries', data:encodeURIComponent(JSON.stringify(entry))})) return `ERRO: falha ao salvar no servidor — entrada NÃO criada. Avise a usuária para tentar de novo.`;
             entries.unshift(entry); cacheEntries();
-            sbCall({action:'save', table:'entries', data:encodeURIComponent(JSON.stringify(entry))});
-            if (entry.noivaId) recalcRestaNoiva(entry.noivaId);
-            else if (entry.origem==='Noiva') recalcRestaNoiva(entry.cliente);
+            if (entry.noivaId) await recalcRestaNoiva(entry.noivaId);
+            else if (entry.origem==='Noiva') await recalcRestaNoiva(entry.cliente);
             render();
             return `Entrada criada: id="${entry.id}" | ${entry.cliente} | ${entry.tipo} | ${brl(entry.valor)} | ${entry.status} | noivaId="${entry.noivaId}"`;
         }
@@ -295,8 +295,8 @@ function executeChatTool(name, input) {
                 forma:input.forma||'PIX', status:input.status||'Pago',
                 obs:input.obs||'', createdAt:new Date().toISOString()
             };
+            if (!await sbCall({action:'save', table:'saidas', data:encodeURIComponent(JSON.stringify(saida))})) return `ERRO: falha ao salvar no servidor — saída NÃO criada. Avise a usuária para tentar de novo.`;
             saidas.unshift(saida); cacheSaidas();
-            sbCall({action:'save', table:'saidas', data:encodeURIComponent(JSON.stringify(saida))});
             render();
             return `Saída criada: id="${saida.id}" | ${saida.tipo} | ${brl(saida.valor)} | ${saida.status}`;
         }
@@ -306,28 +306,27 @@ function executeChatTool(name, input) {
                 valorContrato:String(input.valorContrato||0), obs:input.obs||'',
                 createdAt:new Date().toISOString()
             };
-            noivas.unshift(noiva); cacheNoivas();
-            sbCall({action:'save', table:'noivas', data:encodeURIComponent(JSON.stringify(noiva))});
+            if (!await sbCall({action:'save', table:'noivas', data:encodeURIComponent(JSON.stringify(noiva))})) return `ERRO: falha ao salvar no servidor — noiva NÃO criada. Avise a usuária para tentar de novo.`;
             const contrato = Number(input.valorContrato||0);
             const sinalValor = Number(input.sinal_valor||0);
+            const restante = contrato - sinalValor;
             let msg = `Noiva cadastrada: noivaId="${noiva.id}" | ${noiva.nome} | contrato ${brl(contrato)}`;
-            if (sinalValor > 0) {
-                if (sinalValor > contrato) {
-                    return msg + ` | AVISO: sinal ${brl(sinalValor)} maior que contrato — sinal NÃO lançado.`;
-                }
+            let sinalEntry = null, restaEntry = null;
+            if (sinalValor > 0 && sinalValor <= contrato) {
                 const sinalIdChat = genId();
-                const sinalEntry = {
+                sinalEntry = {
                     id:sinalIdChat, dataPag:input.sinal_data||today(), dataServ:input.dataCasamento||'',
                     cliente:noiva.nome, tipo:'Sinal', valor:String(sinalValor),
                     valorTotal:String(contrato), servico:'Maquiagem', local:'Studio',
                     forma:input.sinal_forma||'PIX', status:input.sinal_status||'Realizado',
                     origem:'Noiva', obs:'', auto:false, createdAt:new Date().toISOString(), noivaId:noiva.id
                 };
-                entries.unshift(sinalEntry); cacheEntries();
-                sbCall({action:'save', table:'entries', data:encodeURIComponent(JSON.stringify(sinalEntry))});
-                const restante = contrato - sinalValor;
+                if (!await sbCall({action:'save', table:'entries', data:encodeURIComponent(JSON.stringify(sinalEntry))})) {
+                    await sbCall({action:'delete', table:'noivas', id:noiva.id});   // rollback
+                    return `ERRO: falha ao salvar o sinal — noiva desfeita. Tente de novo.`;
+                }
                 if (restante > 0.01) {
-                    const restaEntry = {
+                    restaEntry = {
                         id:genId(), dataPag:noiva.dataCasamento||today(), dataServ:noiva.dataCasamento||'',
                         cliente:noiva.nome, tipo:'Pagamento', valor:String(restante),
                         valorTotal:String(contrato), servico:'Maquiagem', local:'Studio',
@@ -336,11 +335,21 @@ function executeChatTool(name, input) {
                         auto:true, parentSinalId:sinalIdChat,
                         createdAt:new Date().toISOString(), noivaId:noiva.id
                     };
-                    entries.unshift(restaEntry); cacheEntries();
-                    sbCall({action:'save', table:'entries', data:encodeURIComponent(JSON.stringify(restaEntry))});
+                    if (!await sbCall({action:'save', table:'entries', data:encodeURIComponent(JSON.stringify(restaEntry))})) {
+                        await sbCall({action:'delete', table:'entries', id:sinalEntry.id});
+                        await sbCall({action:'delete', table:'noivas', id:noiva.id});
+                        return `ERRO: falha ao salvar o restante — noiva desfeita. Tente de novo.`;
+                    }
                 }
                 msg += ` | sinal ${brl(sinalValor)} lançado | restante previsto ${brl(Math.max(0,restante))}`;
+            } else if (sinalValor > contrato) {
+                msg += ` | AVISO: sinal ${brl(sinalValor)} maior que contrato — sinal NÃO lançado.`;
             }
+            // Tudo confirmado no Supabase → aplica na memória
+            noivas.unshift(noiva); cacheNoivas();
+            if (sinalEntry) entries.unshift(sinalEntry);
+            if (restaEntry) entries.unshift(restaEntry);
+            if (sinalEntry || restaEntry) cacheEntries();
             render();
             return msg;
         }
@@ -375,21 +384,20 @@ function executeChatTool(name, input) {
             if (input.status  !== undefined) updated.status  = input.status;
             if (input.origem  !== undefined) updated.origem  = input.origem;
             if (input.obs     !== undefined) updated.obs     = input.obs;
+            if (!await sbCall({action:'save', table:'entries', data:encodeURIComponent(JSON.stringify(updated))})) return `ERRO: falha ao salvar no servidor — entrada NÃO atualizada.`;
             entries[idx] = updated; cacheEntries();
-            sbCall({action:'delete', table:'entries', id:old.id});
-            sbCall({action:'save', table:'entries', data:encodeURIComponent(JSON.stringify(updated))});
-            if (updated.noivaId) recalcRestaNoiva(updated.noivaId);
-            else if (updated.origem==='Noiva') recalcRestaNoiva(updated.cliente);
+            if (updated.noivaId) await recalcRestaNoiva(updated.noivaId);
+            else if (updated.origem==='Noiva') await recalcRestaNoiva(updated.cliente);
             render();
             return `Entrada atualizada: id="${updated.id}" | ${updated.cliente} | ${brl(updated.valor)} | ${updated.status}`;
         }
         if (name === 'delete_entrada') {
             const e = entries.find(x=>String(x.id)===String(input.id));
             if (!e) return `ERRO: entrada id="${input.id}" não encontrada.`;
+            if (!await sbCall({action:'delete', table:'entries', id:input.id})) return `ERRO: falha ao excluir no servidor — entrada NÃO excluída.`;
             entries = entries.filter(x=>String(x.id)!==String(input.id)); cacheEntries();
-            sbCall({action:'delete', table:'entries', id:input.id});
-            if (e.noivaId) recalcRestaNoiva(e.noivaId);
-            else if (e.origem==='Noiva') recalcRestaNoiva(e.cliente);
+            if (e.noivaId) await recalcRestaNoiva(e.noivaId);
+            else if (e.origem==='Noiva') await recalcRestaNoiva(e.cliente);
             render();
             return `Entrada id="${input.id}" excluída.`;
         }
@@ -403,16 +411,15 @@ function executeChatTool(name, input) {
             if (input.forma   !== undefined) updated.forma   = input.forma;
             if (input.status  !== undefined) updated.status  = input.status;
             if (input.obs     !== undefined) updated.obs     = input.obs;
+            if (!await sbCall({action:'save', table:'saidas', data:encodeURIComponent(JSON.stringify(updated))})) return `ERRO: falha ao salvar no servidor — saída NÃO atualizada.`;
             saidas[idx] = updated; cacheSaidas();
-            sbCall({action:'delete', table:'saidas', id:input.id});
-            sbCall({action:'save', table:'saidas', data:encodeURIComponent(JSON.stringify(updated))});
             render();
             return `Saída atualizada: id="${updated.id}" | ${updated.tipo} | ${brl(updated.valor)}`;
         }
         if (name === 'delete_saida') {
             if (!saidas.find(s=>s.id===input.id)) return 'ERRO: saida id="'+input.id+'" nao encontrada.';
+            if (!await sbCall({action:'delete',table:'saidas',id:input.id})) return 'ERRO: falha ao excluir no servidor — saida NAO excluida.';
             saidas = saidas.filter(s=>s.id!==input.id); cacheSaidas();
-            sbCall({action:'delete',table:'saidas',id:input.id});
             render();
             return 'Saida id="'+input.id+'" excluida.';
         }
@@ -424,17 +431,16 @@ function executeChatTool(name, input) {
             if (input.dataCasamento != null) updated.dataCasamento = input.dataCasamento;
             if (input.valorContrato != null) updated.valorContrato = String(input.valorContrato);
             if (input.obs           != null) updated.obs           = input.obs;
+            if (!await sbCall({action:'save',table:'noivas',data:encodeURIComponent(JSON.stringify(updated))})) return 'ERRO: falha ao salvar no servidor — noiva NAO atualizada.';
             noivas[idx] = updated; cacheNoivas();
-            sbCall({action:'delete',table:'noivas',id:input.id});
-            sbCall({action:'save',table:'noivas',data:encodeURIComponent(JSON.stringify(updated))});
-            if (input.valorContrato != null) recalcRestaNoiva(updated.id);
+            if (input.valorContrato != null) await recalcRestaNoiva(updated.id);
             render();
             return 'Noiva atualizada: id="'+updated.id+'" | '+updated.nome+' | contrato '+brl(updated.valorContrato);
         }
         if (name === 'delete_noiva') {
             if (!noivas.find(n=>String(n.id)===String(input.id))) return 'ERRO: noiva id="'+input.id+'" nao encontrada.';
+            if (!await sbCall({action:'delete',table:'noivas',id:input.id})) return 'ERRO: falha ao excluir no servidor — noiva NAO excluida.';
             noivas = noivas.filter(n=>String(n.id)!==String(input.id)); cacheNoivas();
-            sbCall({action:'delete',table:'noivas',id:input.id});
             render();
             return 'Noiva id="'+input.id+'" excluida.';
         }
@@ -496,7 +502,10 @@ async function sendChat() {
         while (data.stop_reason==='tool_use' && rounds<5) {
             rounds++;
             const toolBlocks = data.content.filter(b=>b.type==='tool_use');
-            const toolResults = toolBlocks.map(b=>({type:'tool_result',tool_use_id:b.id,content:executeChatTool(b.name,b.input)}));
+            const toolResults = [];
+            for (const b of toolBlocks) {
+                toolResults.push({ type:'tool_result', tool_use_id:b.id, content: await executeChatTool(b.name, b.input) });
+            }
             messages = [...messages,{role:'assistant',content:data.content},{role:'user',content:toolResults}];
             data = await callClaudeAPI(messages);
         }

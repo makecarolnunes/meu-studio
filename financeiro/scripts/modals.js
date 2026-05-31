@@ -369,7 +369,7 @@ function openEditEntry(id) {
     _pick['origem'] = e.origem || 'Produção Social';
     _pick['forma']  = e.forma  || 'PIX';
 }
-function saveEditEntry(id) {
+async function saveEditEntry(id) {
     const e = entries.find(x=>String(x.id)===String(id));
     if (!e) return;
     const valor = document.getElementById('ee-valor').value;
@@ -386,11 +386,12 @@ function saveEditEntry(id) {
         equipe: document.getElementById('ee-equipe').value.trim(),
         obs:    document.getElementById('ee-obs').value
     };
+    // Confirma no Supabase ANTES de aplicar na tela/cache
+    if (!await sbCall({action:'save', table:'entries', data:encodeURIComponent(JSON.stringify(updated))})) return;
     const idx = entries.findIndex(x=>String(x.id)===String(id));
     entries[idx] = updated; cacheEntries();
-    sbCall({action:'save', table:'entries', data:encodeURIComponent(JSON.stringify(updated))});
-    if (updated.noivaId) recalcRestaNoiva(updated.noivaId);
-    else if (updated.origem==='Noiva') recalcRestaNoiva(updated.cliente);
+    if (updated.noivaId) await recalcRestaNoiva(updated.noivaId);
+    else if (updated.origem==='Noiva') await recalcRestaNoiva(updated.cliente);
     closeModal(); render(); toast('Entrada atualizada!');
 }
 
@@ -452,7 +453,7 @@ function edPickNatureza(value, btn) {
     const wrap = document.getElementById('es-tipo-wrap');
     if (wrap) wrap.style.display = value === 'PESSOAL' ? 'none' : 'block';
 }
-function saveEditSaida(id) {
+async function saveEditSaida(id) {
     const s = saidas.find(x=>String(x.id)===String(id));
     if (!s) return;
     const valor = document.getElementById('es-valor').value;
@@ -477,13 +478,17 @@ function saveEditSaida(id) {
     } else {
         toEdit = saidas.filter(x=>x.grupoId===s.grupoId);
     }
-    toEdit.forEach(item => {
+    const novaData = document.getElementById('es-data').value;
+    // Confirma cada alteração no Supabase; aplica na tela só as que o servidor aceitou
+    let okCount = 0;
+    for (const item of toEdit) {
         const idx = saidas.findIndex(x=>String(x.id)===String(item.id));
         const updated = { ...item, ...changes };
-        if (scope === 'so-esta') updated.dataPag = document.getElementById('es-data').value || item.dataPag;
-        saidas[idx] = updated;
-        sbCall({action:'save', table:'saidas', data:encodeURIComponent(JSON.stringify(updated))});
-    });
+        if (scope === 'so-esta') updated.dataPag = novaData || item.dataPag;
+        if (!await sbCall({action:'save', table:'saidas', data:encodeURIComponent(JSON.stringify(updated))})) break;
+        saidas[idx] = updated; okCount++;
+    }
+    if (!okCount) return;
     cacheSaidas(); closeModal(); render();
-    toast(toEdit.length>1 ? `${toEdit.length} saídas atualizadas!` : 'Saída atualizada!');
+    toast(okCount>1 ? `${okCount} saídas atualizadas!` : 'Saída atualizada!');
 }

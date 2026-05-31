@@ -10,7 +10,7 @@ function toggleNoivaDetail(id) {
 
 // Recalcula a entrada "Restante Previsto" de uma noiva.
 // Aceita ID ou nome da noiva como fallback.
-function recalcRestaNoiva(noivaIdOrNome) {
+async function recalcRestaNoiva(noivaIdOrNome) {
     if (!noivaIdOrNome) return;
     const noiva = noivas.find(n => n.id === noivaIdOrNome)
                || noivas.find(n => n.nome.trim().toLowerCase() === String(noivaIdOrNome).trim().toLowerCase());
@@ -33,15 +33,15 @@ function recalcRestaNoiva(noivaIdOrNome) {
     if (autoIdx >= 0) {
         const autoEntry = entries[autoIdx];
         if (restante <= 0.01) {
+            if (!await sbCall({action:'delete', table:'entries', id: autoEntry.id})) return;
             entries.splice(autoIdx, 1);
             cacheEntries();
-            sbCall({action:'delete', table:'entries', id: autoEntry.id});
         } else {
             const updated = {...autoEntry, valor: String(restante),
                 obs: `Restante do contrato — total pago até agora: ${brl(totalPagos)}`};
+            if (!await sbCall({action:'save', table:'entries', data: encodeURIComponent(JSON.stringify(updated))})) return;
             entries[autoIdx] = updated;
             cacheEntries();
-            sbCall({action:'save', table:'entries', data: encodeURIComponent(JSON.stringify(updated))});
         }
     } else if (restante > 0.01) {
         const nova = {
@@ -53,8 +53,8 @@ function recalcRestaNoiva(noivaIdOrNome) {
             obs: `Restante do contrato — total pago até agora: ${brl(totalPagos)}`,
             auto: true, createdAt: new Date().toISOString(), noivaId
         };
+        if (!await sbCall({action:'save', table:'entries', data: encodeURIComponent(JSON.stringify(nova))})) return;
         entries.unshift(nova); cacheEntries();
-        sbCall({action:'save', table:'entries', data: encodeURIComponent(JSON.stringify(nova))});
     }
 }
 
@@ -102,7 +102,7 @@ function nvPickStatus(val) {
     document.getElementById('nv-st-prev').className = 'stbtn'+(val==='Previsto'?' on-r':'');
 }
 
-function saveNoiva() {
+async function saveNoiva() {
     const nome       = document.getElementById('nv-nome').value.trim();
     const data       = document.getElementById('nv-data').value;
     const valor      = document.getElementById('nv-valor').value;
@@ -113,27 +113,30 @@ function saveNoiva() {
     const sinalSt    = document.getElementById('nv-sinal-status')?.value || 'Realizado';
     if (!nome)  { toast('⚠️ Informe o nome da noiva!'); return; }
     if (!valor||Number(valor)<=0) { toast('⚠️ Informe o valor do contrato!'); return; }
+    if (sinalValor > 0 && sinalValor > Number(valor)) { toast('⚠️ Sinal maior que o contrato!'); return; }
     const contrato = Number(valor);
     const noivaIdNew = genId();
     const noiva = { id:noivaIdNew, nome, dataCasamento:data, valorContrato:valor, obs, createdAt:new Date().toISOString() };
-    noivas.unshift(noiva); cacheNoivas();
-    sbCall({action:'save', table:'noivas', data:encodeURIComponent(JSON.stringify(noiva))});
+    // Confirma a noiva no Supabase ANTES de qualquer coisa
+    if (!await sbCall({action:'save', table:'noivas', data:encodeURIComponent(JSON.stringify(noiva))})) return;
 
+    let sinalEntry = null, restaEntry = null;
+    const restante = contrato - sinalValor;
     if (sinalValor > 0) {
-        if (sinalValor > contrato) { toast('⚠️ Sinal maior que o contrato!'); return; }
         const sinalIdNoiva = genId();
-        const sinalEntry = {
+        sinalEntry = {
             id: sinalIdNoiva, dataPag: sinalData, dataServ: data||'',
             cliente: nome, tipo: 'Sinal', valor: String(sinalValor),
             valorTotal: valor, servico: 'Maquiagem', local: 'Studio',
             forma: sinalForma, status: sinalSt, origem: 'Noiva', obs: '',
             auto: false, createdAt: new Date().toISOString(), noivaId: noiva.id
         };
-        entries.unshift(sinalEntry); cacheEntries();
-        sbCall({action:'save', table:'entries', data:encodeURIComponent(JSON.stringify(sinalEntry))});
-        const restante = contrato - sinalValor;
+        if (!await sbCall({action:'save', table:'entries', data:encodeURIComponent(JSON.stringify(sinalEntry))})) {
+            await sbCall({action:'delete', table:'noivas', id: noiva.id});   // rollback
+            return;
+        }
         if (restante > 0.01) {
-            const restaEntry = {
+            restaEntry = {
                 id: genId(), dataPag: data||today(), dataServ: data||'',
                 cliente: nome, tipo: 'Pagamento', valor: String(restante),
                 valorTotal: valor, servico: 'Maquiagem', local: 'Studio',
@@ -142,22 +145,30 @@ function saveNoiva() {
                 auto: true, parentSinalId: sinalIdNoiva,
                 createdAt: new Date().toISOString(), noivaId: noiva.id
             };
-            entries.unshift(restaEntry); cacheEntries();
-            sbCall({action:'save', table:'entries', data:encodeURIComponent(JSON.stringify(restaEntry))});
+            if (!await sbCall({action:'save', table:'entries', data:encodeURIComponent(JSON.stringify(restaEntry))})) {
+                await sbCall({action:'delete', table:'entries', id: sinalEntry.id});
+                await sbCall({action:'delete', table:'noivas', id: noiva.id});
+                return;
+            }
         }
-        toast(`Noiva cadastrada! Sinal ${brl(sinalValor)} + Restante ${brl(restante)} lançados.`);
-    } else {
-        toast('Noiva cadastrada!');
     }
+    // Tudo confirmado no Supabase → aplica na memória/cache de leitura
+    noivas.unshift(noiva); cacheNoivas();
+    if (sinalEntry) entries.unshift(sinalEntry);
+    if (restaEntry) entries.unshift(restaEntry);
+    if (sinalEntry || restaEntry) cacheEntries();
+    toast(sinalValor > 0
+        ? `Noiva cadastrada! Sinal ${brl(sinalValor)} + Restante ${brl(restante)} lançados.`
+        : 'Noiva cadastrada!');
     noivaDetail = noiva.id;
     closeModal(); render();
 }
 
-function deleteNoiva(id) {
+async function deleteNoiva(id) {
     if (!confirm('Excluir esta noiva? Os pagamentos vinculados ficam em Entradas.')) return;
+    if (!await sbCall({action:'delete', table:'noivas', id})) return;
     noivas = noivas.filter(n=>n.id!==id); cacheNoivas();
     noivaDetail=null; render(); toast('Noiva excluída');
-    sbCall({action:'delete', table:'noivas', id});
 }
 
 function openNoivaPgto(noivaId, nomeCli) {
@@ -207,16 +218,17 @@ function openEditNoivaContrato(noivaId) {
     setTimeout(()=>document.getElementById('ec-valor')?.focus(),80);
 }
 
-function saveEditNoivaContrato(noivaId) {
+async function saveEditNoivaContrato(noivaId) {
     const valor = document.getElementById('ec-valor').value;
     const obs   = document.getElementById('ec-obs').value;
     if (!valor || Number(valor) <= 0) { toast('⚠️ Informe o valor!'); return; }
     const idx = noivas.findIndex(n => n.id === noivaId);
     if (idx < 0) return;
-    noivas[idx] = { ...noivas[idx], valorContrato: valor, obs };
+    const updated = { ...noivas[idx], valorContrato: valor, obs };
+    if (!await sbCall({action:'save', table:'noivas', data: encodeURIComponent(JSON.stringify(updated))})) return;
+    noivas[idx] = updated;
     cacheNoivas();
-    sbCall({action:'save', table:'noivas', data: encodeURIComponent(JSON.stringify(noivas[idx]))});
-    recalcRestaNoiva(noivaId);
+    await recalcRestaNoiva(noivaId);
     closeModal(); render();
     toast('Contrato atualizado!');
 }
@@ -236,9 +248,10 @@ async function uploadNoivaDoc(noivaId, tipo) {
             if (idx < 0) return;
             const doc = { fileId: result.fileId, link: result.link, nome: file.name, tipo, ts: Date.now() };
             const contratos = [...(noivas[idx].contratos || []), doc];
-            noivas[idx] = { ...noivas[idx], contratos };
+            const updated = { ...noivas[idx], contratos };
+            if (!await sbCall({action:'save', table:'noivas', data: encodeURIComponent(JSON.stringify(updated))})) return;
+            noivas[idx] = updated;
             cacheNoivas();
-            sbCall({action:'save', table:'noivas', data: encodeURIComponent(JSON.stringify(noivas[idx]))});
             render();
             toast('Arquivo enviado!');
         } catch(err) {
@@ -252,10 +265,11 @@ async function deleteNoivaDoc(noivaId, fileId) {
     if (!confirm('Remover este documento?')) return;
     const idx = noivas.findIndex(n => n.id === noivaId);
     if (idx < 0) return;
+    const updated = { ...noivas[idx], contratos: (noivas[idx].contratos||[]).filter(d=>d.fileId!==fileId) };
+    if (!await sbCall({action:'save', table:'noivas', data: encodeURIComponent(JSON.stringify(updated))})) return;
     try { await DB.storage.deleteComprovante(fileId); } catch(_) {}
-    noivas[idx] = { ...noivas[idx], contratos: (noivas[idx].contratos||[]).filter(d=>d.fileId!==fileId) };
+    noivas[idx] = updated;
     cacheNoivas();
-    sbCall({action:'save', table:'noivas', data: encodeURIComponent(JSON.stringify(noivas[idx]))});
     render();
     toast('Documento removido');
 }
@@ -273,9 +287,10 @@ async function uploadPgtoProof(entryId) {
             const result = await DB.storage.uploadComprovante(entryId, file, 'PGTO', b64, file.type);
             const idx = entries.findIndex(en => en.id === entryId);
             if (idx < 0) return;
-            entries[idx] = { ...entries[idx], comprovanteUrl: result.link };
+            const updated = { ...entries[idx], comprovanteUrl: result.link };
+            if (!await sbCall({action:'save', table:'entries', data: encodeURIComponent(JSON.stringify(updated))})) return;
+            entries[idx] = updated;
             cacheEntries();
-            sbCall({action:'save', table:'entries', data: encodeURIComponent(JSON.stringify(entries[idx]))});
             render();
             toast('Comprovante salvo!');
         } catch(err) {
@@ -285,7 +300,7 @@ async function uploadPgtoProof(entryId) {
     input.click();
 }
 
-function saveNoivaPgto(noivaId, nomeCli) {
+async function saveNoivaPgto(noivaId, nomeCli) {
     const valor  = document.getElementById('np-valor').value;
     const dataPag= document.getElementById('np-data').value;
     const status = document.getElementById('ed-status').value;
@@ -312,9 +327,9 @@ function saveNoivaPgto(noivaId, nomeCli) {
         forma, status, origem:'Noiva', obs,
         auto: false, createdAt: new Date().toISOString(), noivaId
     };
+    if (!await sbCall({action:'save', table:'entries', data:encodeURIComponent(JSON.stringify(entry))})) return;
     entries.unshift(entry); cacheEntries();
-    sbCall({action:'save', table:'entries', data:encodeURIComponent(JSON.stringify(entry))});
-    recalcRestaNoiva(noivaId);
+    await recalcRestaNoiva(noivaId);
     closeModal(); render();
     toast(`Pagamento de ${brl(valor)} salvo!`);
 }

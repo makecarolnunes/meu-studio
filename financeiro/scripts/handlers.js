@@ -88,77 +88,73 @@ function toggleEquipeInput(checked) {
 async function saveEntry() {
     if (_savingEntry) return;
     _savingEntry = true;
-    setTimeout(()=>{ _savingEntry = false; }, 600);
+    try {
+        syncF(); F.cliente = F.cliente.trim();
+        if (!F.cliente)  { toast('⚠️ Informe o nome da cliente!'); return; }
+        if (!F.dataPag)  { toast('⚠️ Informe a data!'); return; }
+        if (!F.valor || Number(F.valor)<=0) { toast('⚠️ Informe um valor válido!'); return; }
 
-    syncF(); F.cliente = F.cliente.trim();
-    if (!F.cliente)  { toast('⚠️ Informe o nome da cliente!'); return; }
-    if (!F.dataPag)  { toast('⚠️ Informe a data!'); return; }
-    if (!F.valor || Number(F.valor)<=0) { toast('⚠️ Informe um valor válido!'); return; }
-
-    if (F.tipo === 'Sinal') {
-        const sinal=Number(F.valor), total=Number(F.valorTotal);
-        if (!F.valorTotal||total<=0) { toast('⚠️ Informe o valor total!'); return; }
-        if (sinal>=total) { toast('⚠️ Sinal deve ser menor que o total!'); return; }
-        const rest=total-sinal, datRest=F.dataServ||F.dataPag;
-        const sinalId = genId();
-        const e1={ id:sinalId, ...JSON.parse(JSON.stringify(F)), createdAt:new Date().toISOString() };
-        const e2={ id:genId(), dataPag:datRest, dataServ:F.dataServ, cliente:F.cliente,
-            tipo:'Pagamento', valor:rest.toFixed(2), valorTotal:'', servico:F.servico, local:F.local,
-            forma:F.forma, status:'Previsto', origem:F.origem, obs:`Restante (sinal: ${brl(sinal)})`,
-            equipe:F.equipe||'', auto:true, parentSinalId:sinalId, createdAt:new Date().toISOString() };
-        entries.unshift(e2); entries.unshift(e1);
-        cacheEntries(); render();
-        toast(`Sinal + Previsto de ${brl(rest)} criados!`);
-        sbCall({action:'save', table:'entries', data: encodeURIComponent(JSON.stringify(e1))});
-        sbCall({action:'save', table:'entries', data: encodeURIComponent(JSON.stringify(e2))});
-    } else {
-        const entry={ id:genId(), ...JSON.parse(JSON.stringify(F)), createdAt:new Date().toISOString() };
-        entries.unshift(entry); cacheEntries(); render();
-        toast('Lançamento salvo!');
-        sbCall({action:'save', table:'entries', data: encodeURIComponent(JSON.stringify(entry))});
+        if (F.tipo === 'Sinal') {
+            const sinal=Number(F.valor), total=Number(F.valorTotal);
+            if (!F.valorTotal||total<=0) { toast('⚠️ Informe o valor total!'); return; }
+            if (sinal>=total) { toast('⚠️ Sinal deve ser menor que o total!'); return; }
+            const rest=total-sinal, datRest=F.dataServ||F.dataPag;
+            const sinalId = genId();
+            const e1={ id:sinalId, ...JSON.parse(JSON.stringify(F)), createdAt:new Date().toISOString() };
+            const e2={ id:genId(), dataPag:datRest, dataServ:F.dataServ, cliente:F.cliente,
+                tipo:'Pagamento', valor:rest.toFixed(2), valorTotal:'', servico:F.servico, local:F.local,
+                forma:F.forma, status:'Previsto', origem:F.origem, obs:`Restante (sinal: ${brl(sinal)})`,
+                equipe:F.equipe||'', auto:true, parentSinalId:sinalId, createdAt:new Date().toISOString() };
+            // Confirma no Supabase ANTES de mostrar como salvo
+            if (!await sbCall({action:'save', table:'entries', data: encodeURIComponent(JSON.stringify(e1))})) return;
+            if (!await sbCall({action:'save', table:'entries', data: encodeURIComponent(JSON.stringify(e2))})) {
+                await sbCall({action:'delete', table:'entries', id: e1.id});   // desfaz o sinal órfão no banco
+                return;
+            }
+            entries.unshift(e2); entries.unshift(e1);
+            cacheEntries();
+            toast(`Sinal + Previsto de ${brl(rest)} criados!`);
+        } else {
+            const entry={ id:genId(), ...JSON.parse(JSON.stringify(F)), createdAt:new Date().toISOString() };
+            if (!await sbCall({action:'save', table:'entries', data: encodeURIComponent(JSON.stringify(entry))})) return;
+            entries.unshift(entry); cacheEntries();
+            toast('Lançamento salvo!');
+        }
+        const k={local:F.local, servico:F.servico, origem:F.origem, forma:F.forma};
+        initF(); Object.assign(F, k);
+        render();
+    } finally {
+        _savingEntry = false;
     }
-    const k={local:F.local, servico:F.servico, origem:F.origem, forma:F.forma};
-    initF(); Object.assign(F, k);
-    render();
 }
 
 async function delEntry(id) {
     const target = entries.find(e=>String(e.id)===String(id));
     if (!target) return;
+    if (!confirm('Excluir este lançamento? A exclusão é confirmada direto no servidor.')) return;
     const filhoPrev = target.tipo==='Sinal'
         ? entries.find(e => String(e.parentSinalId||'')===String(target.id))
         : null;
-    const idsParaApagar = new Set([String(id)]);
-    if (filhoPrev) idsParaApagar.add(String(filhoPrev.id));
-    const removidos = entries.filter(e => idsParaApagar.has(String(e.id)));
-
-    // Soft delete: remove da UI agora, commita no Supabase após 5s sem undo
-    entries = entries.filter(e => !idsParaApagar.has(String(e.id)));
-    cacheEntries(); render();
-
-    const msg = filhoPrev ? 'Sinal + Previsto removidos' : 'Lançamento removido';
-    showUndoToast(msg,
-        // restore
-        () => {
-            // Restaura na ordem original
-            removidos.forEach(item => entries.unshift(item));
-            cacheEntries(); render();
-        },
-        // commit (após 5s sem undo)
-        () => {
-            idsParaApagar.forEach(delId => sbCall({action:'delete', table:'entries', id: delId}));
-            if (target.noivaId) recalcRestaNoiva(target.noivaId);
-        }
-    );
+    const ids = [String(id)];
+    if (filhoPrev) ids.push(String(filhoPrev.id));
+    // Confirma a exclusão no Supabase ANTES de remover da tela
+    for (const delId of ids) {
+        if (!await sbCall({action:'delete', table:'entries', id: delId})) return;
+    }
+    entries = entries.filter(e => !ids.includes(String(e.id)));
+    cacheEntries();
+    if (target.noivaId) await recalcRestaNoiva(target.noivaId);
+    render();
+    toast(filhoPrev ? 'Sinal + Previsto removidos' : 'Lançamento removido');
 }
 
 async function toggleStatus(id) {
     const e = entries.find(e=>String(e.id)===String(id));
     if (!e) return;
-    e.status = e.status==='Realizado' ? 'Previsto' : 'Realizado';
-    cacheEntries(); render();
-    toast(e.status==='Realizado' ? 'Marcado como Realizado!' : 'Marcado como Previsto');
-    sbCall({action:'update', table:'entries', id, field:'status', value:e.status});
+    const novo = e.status==='Realizado' ? 'Previsto' : 'Realizado';
+    if (!await sbCall({action:'update', table:'entries', id, field:'status', value:novo})) return;
+    e.status = novo; cacheEntries(); render();
+    toast(novo==='Realizado' ? 'Marcado como Realizado!' : 'Marcado como Previsto');
 }
 
 // ── ACTIONS: SAÍDAS ──
@@ -167,40 +163,51 @@ function toggleSaidasForm() { syncF(); saidasFormOpen=!saidasFormOpen; render();
 async function saveSaida() {
     if (_savingSaida) return;
     _savingSaida = true;
-    setTimeout(()=>{ _savingSaida = false; }, 600);
-    syncF();
-    if (!Fs.valor||Number(Fs.valor)<=0) { toast('⚠️ Informe o valor!'); return; }
-    if (!Fs.dataPag) { toast('⚠️ Informe a data!'); return; }
-    const rec = Fs.recorrencia || 'unica';
-    const k = {tipo:Fs.tipo, forma:Fs.forma};
-    const naturezaFs = Fs.natureza || 'PROFISSIONAL';
-    // Pessoais: zera tipo (a interface não pede categoria — basta natureza)
-    const tipoFs = naturezaFs === 'PESSOAL' ? 'Pessoal' : Fs.tipo;
-    if (rec === 'unica') {
-        const saida = { id:genId(), dataPag:Fs.dataPag, tipo:tipoFs, valor:Fs.valor,
-            forma:Fs.forma, status:Fs.status, obs:Fs.obs,
-            recorrencia:'unica', grupoId:null, natureza:naturezaFs,
-            createdAt:new Date().toISOString() };
-        saidas.unshift(saida); cacheSaidas();
-        toast('Saída salva!');
-        initFs(); Object.assign(Fs,k);
-        saidasFormOpen=false; render();
-        sbCall({action:'save', table:'saidas', data: encodeURIComponent(JSON.stringify(saida))});
-    } else {
-        const totalMeses = rec === 'fixa' ? 12 : Math.max(2, Number(Fs.meses)||2);
-        const grupoId = genId();
-        const novasSaidas = [];
-        for (let i = 0; i < totalMeses; i++) {
-            novasSaidas.push({ id:genId(), dataPag:addMonths(Fs.dataPag, i),
-                tipo:tipoFs, valor:Fs.valor, forma:Fs.forma, status:Fs.status, obs:Fs.obs,
-                recorrencia:rec, grupoId, natureza:naturezaFs,
-                createdAt:new Date().toISOString() });
+    try {
+        syncF();
+        if (!Fs.valor||Number(Fs.valor)<=0) { toast('⚠️ Informe o valor!'); return; }
+        if (!Fs.dataPag) { toast('⚠️ Informe a data!'); return; }
+        const rec = Fs.recorrencia || 'unica';
+        const k = {tipo:Fs.tipo, forma:Fs.forma};
+        const naturezaFs = Fs.natureza || 'PROFISSIONAL';
+        // Pessoais: zera tipo (a interface não pede categoria — basta natureza)
+        const tipoFs = naturezaFs === 'PESSOAL' ? 'Pessoal' : Fs.tipo;
+        if (rec === 'unica') {
+            const saida = { id:genId(), dataPag:Fs.dataPag, tipo:tipoFs, valor:Fs.valor,
+                forma:Fs.forma, status:Fs.status, obs:Fs.obs,
+                recorrencia:'unica', grupoId:null, natureza:naturezaFs,
+                createdAt:new Date().toISOString() };
+            if (!await sbCall({action:'save', table:'saidas', data: encodeURIComponent(JSON.stringify(saida))})) return;
+            saidas.unshift(saida); cacheSaidas();
+            toast('Saída salva!');
+            initFs(); Object.assign(Fs,k);
+            saidasFormOpen=false; render();
+        } else {
+            const totalMeses = rec === 'fixa' ? 12 : Math.max(2, Number(Fs.meses)||2);
+            const grupoId = genId();
+            const novasSaidas = [];
+            for (let i = 0; i < totalMeses; i++) {
+                novasSaidas.push({ id:genId(), dataPag:addMonths(Fs.dataPag, i),
+                    tipo:tipoFs, valor:Fs.valor, forma:Fs.forma, status:Fs.status, obs:Fs.obs,
+                    recorrencia:rec, grupoId, natureza:naturezaFs,
+                    createdAt:new Date().toISOString() });
+            }
+            // Confirma cada parcela no Supabase; se uma falhar, desfaz as já salvas
+            const salvas = [];
+            for (const s of novasSaidas) {
+                if (!await sbCall({action:'save', table:'saidas', data: encodeURIComponent(JSON.stringify(s))})) {
+                    for (const done of salvas) await sbCall({action:'delete', table:'saidas', id: done.id});
+                    return;
+                }
+                salvas.push(s);
+            }
+            [...novasSaidas].reverse().forEach(s=>saidas.unshift(s)); cacheSaidas();
+            toast(rec==='fixa' ? `Saída fixa criada (12 meses)!` : `${totalMeses} parcelas criadas!`);
+            initFs(); Object.assign(Fs,k);
+            saidasFormOpen=false; render();
         }
-        [...novasSaidas].reverse().forEach(s=>saidas.unshift(s)); cacheSaidas();
-        toast(rec==='fixa' ? `Saída fixa criada (12 meses)!` : `${totalMeses} parcelas criadas!`);
-        initFs(); Object.assign(Fs,k);
-        saidasFormOpen=false; render();
-        novasSaidas.forEach(s=>sbCall({action:'save', table:'saidas', data: encodeURIComponent(JSON.stringify(s))}));
+    } finally {
+        _savingSaida = false;
     }
 }
 
@@ -220,16 +227,14 @@ async function delSaida(id) {
         <button class="skip" onclick="closeModal()">Cancelar</button>`;
         return;
     }
-    // Soft delete com undo
+    // Exclusão confirmada no servidor antes de remover da tela
+    if (!confirm('Excluir esta saída?')) return;
+    if (!await sbCall({action:'delete', table:'saidas', id})) return;
     saidas = saidas.filter(x => String(x.id) !== String(id));
-    cacheSaidas(); render();
-    showUndoToast('Saída removida',
-        () => { saidas.unshift(s); cacheSaidas(); render(); },
-        () => sbCall({action:'delete', table:'saidas', id})
-    );
+    cacheSaidas(); render(); toast('Saída removida');
 }
 
-function execDelSaida(scope) {
+async function execDelSaida(scope) {
     const id = _pendingDelSaidaId;
     const s = saidas.find(x=>String(x.id)===String(id));
     if (!s) { closeModal(); return; }
@@ -241,19 +246,25 @@ function execDelSaida(scope) {
     } else {
         ids = saidas.filter(x=>x.grupoId===s.grupoId).map(x=>String(x.id));
     }
-    const idSet = new Set(ids);
-    saidas = saidas.filter(x=>!idSet.has(String(x.id)));
-    cacheSaidas(); closeModal(); render(); toast(`${idSet.size} saída(s) excluída(s)`);
-    idSet.forEach(delId=>sbCall({action:'delete', table:'saidas', id:delId}));
+    closeModal();
+    // Confirma cada exclusão no Supabase; remove só as que o servidor aceitou
+    const apagadas = [];
+    for (const delId of ids) {
+        if (!await sbCall({action:'delete', table:'saidas', id:delId})) break;
+        apagadas.push(String(delId));
+    }
+    const delSet = new Set(apagadas);
+    saidas = saidas.filter(x=>!delSet.has(String(x.id)));
+    cacheSaidas(); render(); toast(`${delSet.size} saída(s) excluída(s)`);
 }
 
 async function toggleSaidaStatus(id) {
     const s=saidas.find(s=>s.id===id);
     if (!s) return;
-    s.status=s.status==='Pago'?'Previsto':'Pago';
-    cacheSaidas(); render();
-    toast(s.status==='Pago'?'Marcado como Pago!':'Marcado como Previsto');
-    sbCall({action:'update', table:'saidas', id, field:'status', value:s.status});
+    const novo = s.status==='Pago'?'Previsto':'Pago';
+    if (!await sbCall({action:'update', table:'saidas', id, field:'status', value:novo})) return;
+    s.status = novo; cacheSaidas(); render();
+    toast(novo==='Pago'?'Marcado como Pago!':'Marcado como Previsto');
 }
 
 // ── COMPROVANTE DE ENTRADA ──
@@ -272,9 +283,9 @@ async function uploadEntradaComprovante(event, entryId) {
         }
         const result = await DB.storage.uploadEntradaComprovante(entryId, file, b64, tipo);
         if (!result.ok) throw new Error(result.error || 'Erro no upload');
+        if (!await sbCall({action:'update', table:'entries', id:entryId, field:'comprovanteUrl', value:result.link})) return;
         const entry = entries.find(x => String(x.id) === String(entryId));
         if (entry) { entry.comprovanteUrl = result.link; cacheEntries(); }
-        sbCall({action:'update', table:'entries', id:entryId, field:'comprovanteUrl', value:result.link});
         render();
         toast('✅ Comprovante salvo!');
     } catch(err) {
@@ -284,12 +295,12 @@ async function uploadEntradaComprovante(event, entryId) {
     }
 }
 
-function removeEntradaComprovante(entryId) {
+async function removeEntradaComprovante(entryId) {
     const entry = entries.find(x => String(x.id) === String(entryId));
     if (!entry || !confirm('Remover o comprovante?')) return;
+    if (!await sbCall({action:'update', table:'entries', id:entryId, field:'comprovanteUrl', value:''})) return;
     entry.comprovanteUrl = '';
     cacheEntries();
-    sbCall({action:'update', table:'entries', id:entryId, field:'comprovanteUrl', value:''});
     render();
     toast('🗑 Comprovante removido');
 }
