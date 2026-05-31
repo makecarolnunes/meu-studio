@@ -5,3 +5,6 @@
 .DS_Store
 Thumbs.db
 .sql
+
+# Backups de dados (dumps do Supabase — não versionar)
+backups/

@@ -141,7 +141,7 @@ function renderLista() {
         const s=entradaStyle(e.origem, e.tipo);
         const extra=e.valorTotal?` · ${brl(e.valorTotal)}`:'';
         const auto=e.auto?`<span style="font-size:.6rem;background:var(--amber-l);color:#7c4a00;border-radius:7px;padding:1px 5px;margin-left:4px">auto</span>`:'';
-        const equipeTag=e.equipe?`<span style="background:#e0f7fa;color:#006064;border-radius:8px;padding:1px 7px;font-size:.68rem;margin-left:5px;font-weight:500">↑ ${e.equipe}</span>`:'';
+        const equipeTag=e.equipe?`<span style="background:#e0f7fa;color:#006064;border-radius:8px;padding:1px 7px;font-size:.68rem;margin-left:5px;font-weight:600">👥 ${e.equipe}</span>`:'';
         const pixBtn = e.status === 'Previsto' && Number(e.valor) > 0
             ? `<button class="pixbtn" onclick="openPixModal('${e.id}')" title="Gerar QR PIX">PIX</button>`
             : '';
@@ -287,7 +287,7 @@ function renderListaDesktop() {
                     const s=entradaStyle(e.origem, e.tipo);
                     const isSel=String(e.id)===String(selectedEntryId);
                     const auto=e.auto?`<span class="auto-tag">auto</span>`:'';
-                    const equipe=e.equipe?`<span class="equipe-tag">↑ ${e.equipe}</span>`:'';
+                    const equipe=e.equipe?`<span class="equipe-tag">👥 ${e.equipe}</span>`:'';
                     const pixBtnD = e.status === 'Previsto' && Number(e.valor) > 0
                         ? `<button class="pixbtn" onclick="event.stopPropagation();openPixModal('${e.id}')" title="Gerar QR PIX">PIX</button>`
                         : '';
@@ -321,6 +321,14 @@ function renderListaDesktop() {
 function renderSaidas() {
     if (window.innerWidth >= 1024) return renderSaidasDesktop();
     const monthList = saidas.filter(s=>{const my=getMonthYear(s.dataPag);return my&&my.m===selMonth&&my.y===selYear;});
+    // Guard: tipo de despesa selecionado ausente neste mês volta a "Todos os tipos".
+    // Mesmo bug do filtro de equipe — o dropdown só lista os tipos do mês visível,
+    // então um filtro preso some da tela e esconde as saídas, zerando o total.
+    // "Ver todos os meses" é intencional e não dispara o reset.
+    if (!saidasVerTodosMeses && saidasTipoFilter!=='todas'
+        && !monthList.some(s => (saidasNaturezaFilter==='todas' || (s.natureza||'PROFISSIONAL')===saidasNaturezaFilter) && s.tipo===saidasTipoFilter)) {
+        saidasTipoFilter='todas';
+    }
     const list = monthList
         .filter(s=> saidasNaturezaFilter==='todas' || (s.natureza||'PROFISSIONAL')===saidasNaturezaFilter)
         .filter(s=> saidasTipoFilter==='todas' || s.tipo===saidasTipoFilter)
@@ -408,6 +416,14 @@ function renderSaidaListContent(list) {
 // ── DESKTOP: SAÍDAS — hero card com totais + toolbar com filtros e CTA ──
 function renderSaidasDesktop() {
     const monthList = saidas.filter(s=>{const my=getMonthYear(s.dataPag);return my&&my.m===selMonth&&my.y===selYear;});
+    // Guard: tipo de despesa selecionado ausente neste mês volta a "Todos os tipos".
+    // Mesmo bug do filtro de equipe — o dropdown só lista os tipos do mês visível,
+    // então um filtro preso some da tela e esconde as saídas, zerando o total.
+    // "Ver todos os meses" é intencional e não dispara o reset.
+    if (!saidasVerTodosMeses && saidasTipoFilter!=='todas'
+        && !monthList.some(s => (saidasNaturezaFilter==='todas' || (s.natureza||'PROFISSIONAL')===saidasNaturezaFilter) && s.tipo===saidasTipoFilter)) {
+        saidasTipoFilter='todas';
+    }
     const list = monthList
         .filter(s=> saidasNaturezaFilter==='todas' || (s.natureza||'PROFISSIONAL')===saidasNaturezaFilter)
         .filter(s=> saidasTipoFilter==='todas' || s.tipo===saidasTipoFilter)
