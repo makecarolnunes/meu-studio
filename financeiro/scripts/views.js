@@ -111,14 +111,18 @@ function updateSinalPreview() {
 // ── SCREEN: LISTA ENTRADAS ──
 function renderLista() {
     if (window.innerWidth >= 1024) return renderListaDesktop();
-    let list = entries.filter(e => { const my=getMonthYear(e.dataPag); return my&&my.m===selMonth&&my.y===selYear; });
+    const monthEntries = entries.filter(e => { const my=getMonthYear(e.dataPag); return my&&my.m===selMonth&&my.y===selYear; });
+    const equipes = [...new Set(monthEntries.map(e=>e.equipe).filter(Boolean))];
+    // Guard: filtro de equipe específico ausente neste mês volta a "Todas".
+    // Sem isso a barra de filtros some e os lançamentos ficam escondidos por um filtro preso.
+    if (listEquipeFilter!=='todos' && listEquipeFilter!=='__sem__' && !equipes.includes(listEquipeFilter)) listEquipeFilter='todos';
+    let list = monthEntries.slice();
     if (listFilter!=='todos') list = list.filter(e=>e.status===listFilter||e.tipo===listFilter);
     if (listEquipeFilter==='__sem__') list = list.filter(e=>!e.equipe);
     else if (listEquipeFilter!=='todos') list = list.filter(e=>e.equipe===listEquipeFilter);
     list.sort((a,b)=>(b.dataPag||'').localeCompare(a.dataPag||''));
     const total = list.reduce((s,e)=>s+Number(e.valor||0),0);
     const filters = [{k:'todos',l:'Todos'},{k:'Realizado',l:'Realizado'},{k:'Previsto',l:'Previsto'},{k:'Sinal',l:'Sinal'},{k:'Pagamento',l:'Pagamento'},{k:'Parcela',l:'Parcela'}];
-    const equipes = [...new Set(entries.filter(e=>{const my=getMonthYear(e.dataPag);return my&&my.m===selMonth&&my.y===selYear;}).map(e=>e.equipe).filter(Boolean))];
     const equipeFiltersHtml = equipes.length ? `<div class="ftabs" style="margin-top:5px">${[{k:'todos',l:'Todas'},{k:'__sem__',l:'Sem equipe'},...equipes.map(eq=>({k:eq,l:eq}))].map(f=>`<button class="ftab ${listEquipeFilter===f.k?'on':''}" onclick="setEquipeFilter('${f.k}')">${f.l}</button>`).join('')}</div>` : '';
     return `
     <div class="msel">
@@ -223,7 +227,12 @@ function renderEntryDetailPanel(e) {
 
 // ── DESKTOP: renderização master-detail da tela Lista ──
 function renderListaDesktop() {
-    let list = entries.filter(e => { const my=getMonthYear(e.dataPag); return my&&my.m===selMonth&&my.y===selYear; });
+    const monthEntries = entries.filter(e => { const my=getMonthYear(e.dataPag); return my&&my.m===selMonth&&my.y===selYear; });
+    const equipesD = [...new Set(monthEntries.map(e=>e.equipe).filter(Boolean))];
+    // Guard: filtro de equipe específico ausente neste mês volta a "Todas".
+    // Sem isso a barra de filtros some e os lançamentos ficam escondidos por um filtro preso.
+    if (listEquipeFilter!=='todos' && listEquipeFilter!=='__sem__' && !equipesD.includes(listEquipeFilter)) listEquipeFilter='todos';
+    let list = monthEntries.slice();
     if (listFilter!=='todos') list = list.filter(e=>e.status===listFilter||e.tipo===listFilter);
     if (listEquipeFilter==='__sem__') list = list.filter(e=>!e.equipe);
     else if (listEquipeFilter!=='todos') list = list.filter(e=>e.equipe===listEquipeFilter);
@@ -234,7 +243,6 @@ function renderListaDesktop() {
     const cntReal  = list.filter(e=>e.status==='Realizado').length;
     const cntPrev  = list.filter(e=>e.status==='Previsto').length;
     const filters  = [{k:'todos',l:'Todos'},{k:'Realizado',l:'Realizado'},{k:'Previsto',l:'Previsto'},{k:'Sinal',l:'Sinal'},{k:'Pagamento',l:'Pagamento'},{k:'Parcela',l:'Parcela'}];
-    const equipesD = [...new Set(entries.filter(e=>{const my=getMonthYear(e.dataPag);return my&&my.m===selMonth&&my.y===selYear;}).map(e=>e.equipe).filter(Boolean))];
     const equipeToolbar = equipesD.length ? `<div class="ftabs" style="margin-top:5px">${[{k:'todos',l:'Todas'},{k:'__sem__',l:'Sem equipe'},...equipesD.map(eq=>({k:eq,l:eq}))].map(f=>`<button class="ftab ${listEquipeFilter===f.k?'on':''}" onclick="setEquipeFilter('${f.k}')">${f.l}</button>`).join('')}</div>` : '';
 
     // Limpa seleção se a entrada foi deletada
