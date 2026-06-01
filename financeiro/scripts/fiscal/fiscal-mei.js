@@ -160,53 +160,62 @@ function fsCalcPainel(entries, orcamentos, cfg) {
   const mesesRestantes = ehAnoCorrente ? Math.max(12 - mesAtual, 1) : 0;
   const margemMensal = mesesRestantes > 0 ? restanteAteTeto / mesesRestantes : 0;
 
-  // ── Simulador: projeção por ritmo atual ──
-  // Média mensal dos meses já decorridos no ano corrente
-  const mesesDecorridos = ehAnoCorrente ? (mesAtual + 1) : 12;
-  const mediaMensalRitmo = mesesDecorridos > 0 ? realizadoAno / mesesDecorridos : 0;
-  const projecaoRitmo = ehAnoCorrente
-    ? realizadoAno + (mediaMensalRitmo * mesesRestantes)
+  // ── Simulador / projeção: ritmo dos meses já COMPLETOS ──
+  // O mês corrente é parcial (ainda está acontecendo). Se ele entrar na
+  // média de ritmo, um mês recém-começado (≈ R$ 0) derruba a média
+  // artificialmente — pior ainda na ponderada, onde ele teria o maior peso.
+  // Por isso o ritmo considera só os meses já fechados.
+  const mesesCompletos = ehAnoCorrente ? mesAtual : 12; // Jan..mês anterior
+  const realizadoCompletos = ehAnoCorrente
+    ? mesesRealizado.slice(0, mesAtual).reduce((s, v) => s + v, 0)
     : realizadoAno;
-  const pctRitmo = teto > 0 ? (projecaoRitmo / teto) * 100 : 0;
 
-  // Média ponderada pelos últimos 3 meses (peso maior em meses recentes)
-  let mediaPonderada = 0;
-  if (ehAnoCorrente && mesAtual >= 2) {
-    // Pega mesAtual, mesAtual-1, mesAtual-2 com pesos 3,2,1
+  // Média simples dos meses completos
+  const mediaMensalRitmo = mesesCompletos > 0
+    ? realizadoCompletos / mesesCompletos
+    : realizadoAno; // fallback (janeiro): usa o parcial como estimativa
+
+  // Média ponderada dos últimos 3 meses COMPLETOS (pesos 3,2,1)
+  let mediaPonderada;
+  if (ehAnoCorrente && mesesCompletos >= 1) {
     const w = [3, 2, 1];
     let soma = 0, peso = 0;
     for (let i = 0; i < 3; i++) {
-      const idx = mesAtual - i;
-      if (idx >= 0) {
-        soma += mesesRealizado[idx] * w[i];
-        peso += w[i];
-      }
+      const idx = mesAtual - 1 - i; // último mês completo e os anteriores
+      if (idx >= 0) { soma += mesesRealizado[idx] * w[i]; peso += w[i]; }
     }
-    mediaPonderada = peso > 0 ? soma / peso : 0;
+    mediaPonderada = peso > 0 ? soma / peso : mediaMensalRitmo;
   } else {
     mediaPonderada = mediaMensalRitmo;
   }
+
+  // Projeção = realizado nos meses completos + ritmo × meses restantes
+  // (mesesRestantes = 12 - mesAtual = nº de meses ainda não fechados, incl. o atual)
+  const projecaoRitmo = ehAnoCorrente
+    ? realizadoCompletos + (mediaMensalRitmo * mesesRestantes)
+    : realizadoAno;
+  const pctRitmo = teto > 0 ? (projecaoRitmo / teto) * 100 : 0;
   const projecaoPonderada = ehAnoCorrente
-    ? realizadoAno + (mediaPonderada * mesesRestantes)
+    ? realizadoCompletos + (mediaPonderada * mesesRestantes)
     : realizadoAno;
   const pctPonderada = teto > 0 ? (projecaoPonderada / teto) * 100 : 0;
 
   // ── Previsão de fechamento (ritmo realista) ──
   // Usa a média ponderada (peso nos últimos meses) quando há histórico
   // suficiente; senão a média simples do ano.
-  const mediaProjecao = (ehAnoCorrente && mesAtual >= 2) ? mediaPonderada : mediaMensalRitmo;
+  const mediaProjecao = (ehAnoCorrente && mesesCompletos >= 3) ? mediaPonderada : mediaMensalRitmo;
   const projecaoFechamento = ehAnoCorrente
-    ? realizadoAno + (mediaProjecao * mesesRestantes)
+    ? realizadoCompletos + (mediaProjecao * mesesRestantes)
     : realizadoAno;
   const pctProjecao = teto > 0 ? (projecaoFechamento / teto) * 100 : 0;
   const excessoProjecao = Math.max(projecaoFechamento - teto, 0);
   const folgaProjecao   = Math.max(teto - projecaoFechamento, 0);
 
-  // Série mensal projetada: realizado até hoje + ritmo nos meses futuros.
-  // Serve pra achar o mês provável de estouro mantendo o ritmo atual.
+  // Série mensal projetada: realizado nos meses completos + ritmo do mês
+  // corrente em diante. Serve pra achar o mês provável de estouro.
   const mesesProjetados = mesesRealizado.map((v, i) => {
     if (!ehAnoCorrente) return v;
-    return i <= mesAtual ? v : mediaProjecao;
+    return i < mesAtual ? v : mediaProjecao;
   });
   const estouroProjecao = fsMesEstouro(mesesProjetados, teto);
 
@@ -240,6 +249,7 @@ function fsCalcPainel(entries, orcamentos, cfg) {
     pctRealizado, pctConservador, pctProvavel, pctOtimista,
     estouroConservador, estouroProvavel, estouroOtimista,
     margemMensal, restanteAteTeto, mesesRestantes,
+    mesesCompletos, realizadoCompletos,
     mediaMensalRitmo, projecaoRitmo, pctRitmo,
     mediaPonderada, projecaoPonderada, pctPonderada,
     mediaProjecao, projecaoFechamento, pctProjecao,
@@ -397,7 +407,7 @@ function fsRenderPrevisaoCard(p) {
       ${verdict}
 
       <div class="fs-prev-foot">
-        Base: média de <b>${fsBrl(p.mediaProjecao)}/mês</b>${p.mesAtual >= 2 ? ' (peso maior nos últimos 3 meses)' : ''}
+        Base: média de <b>${fsBrl(p.mediaProjecao)}/mês</b>${p.mesesCompletos >= 3 ? ' (peso maior nos últimos 3 meses)' : ''}, calculada só com meses fechados
         × ${p.mesesRestantes} ${p.mesesRestantes === 1 ? 'mês restante' : 'meses restantes'}.
       </div>
     </div>
