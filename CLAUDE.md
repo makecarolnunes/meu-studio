@@ -227,5 +227,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-31 21:04 | main | fix(financeiro): autopreenchimento de valor/sinal nao disparava (form 'e' vs !form) -->
+<!-- AUTO: 2026-06-01 00:46 | main | feat(fiscal): redesenha painel MEI como diagnostico e previsao -->
 
