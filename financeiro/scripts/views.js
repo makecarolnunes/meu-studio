@@ -584,6 +584,11 @@ function renderResumo() {
     const despMesTotal = despProf + despPess + despMista;
     const lucroReal=fatReal-despPago, lucroTotal=fatTotal-despTotal;
     const margem=fatTotal>0?Math.round(lucroTotal/fatTotal*100):0;
+    // Lucro do negócio: desconta SÓ as saídas profissionais (ignora pessoais e mistas)
+    const despProfPago  = msAll.filter(s=>(s.natureza||'PROFISSIONAL')==='PROFISSIONAL' && s.status==='Pago').reduce((t,s)=>t+Number(s.valor||0),0);
+    const lucroNegTotal = fatTotal - despProf;       // faturamento total − saídas profissionais
+    const lucroNegReal  = fatReal  - despProfPago;   // só o que já entrou/saiu
+    const margemNeg     = fatTotal>0?Math.round(lucroNegTotal/fatTotal*100):0;
     const byOri={}, bySai={};
     ['Produção Social','Noiva','Assistência'].forEach(o=>byOri[o]=me.filter(e=>e.origem===o).reduce((t,e)=>t+Number(e.valor||0),0));
     ms.forEach(s=>bySai[s.tipo]=(bySai[s.tipo]||0)+Number(s.valor||0));
@@ -720,6 +725,16 @@ function renderResumo() {
             <strong style="color:var(--ok);font-size:.95rem;display:block;margin-top:2px">${brl(lucroReal / 0.72)} bruto</strong>
             <span style="font-size:.68rem;color:var(--muted);display:block;margin-top:2px">Considerando INSS + IRRF típicos (fator 0,72)</span>
         </div>` : ''}
+    </div>
+    <div class="card">
+        <div class="card-title">Lucro do negócio</div>
+        <div style="font-size:.72rem;color:var(--muted);margin:-2px 0 11px">Quanto o trabalho realmente rende — descontando só as saídas profissionais, sem as pessoais.</div>
+        <div class="rrow"><span class="rlbl">Faturamento total</span><span class="rval">${brl(fatTotal)}</span></div>
+        <div class="rrow"><span class="rlbl">Saídas profissionais</span><span class="rval" style="color:var(--red)">- ${brl(despProf)}</span></div>
+        <div class="rrow total" style="margin-top:6px;padding-top:10px;border-top:2px solid #f0f0f0"><span class="rlbl">LUCRO DO NEGÓCIO</span><span class="rval" style="font-size:1.1rem;color:${lucroNegTotal>=0?'var(--ok)':'var(--red)'}">${brl(lucroNegTotal)}</span></div>
+        <div class="rrow" style="margin-top:2px"><span class="rlbl" style="font-size:.72rem;color:var(--muted)">Só o que já entrou/saiu (realizado)</span><span class="rval" style="font-size:.9rem;color:${lucroNegReal>=0?'var(--ok)':'var(--red)'}">${brl(lucroNegReal)}</span></div>
+        ${(despPess>0||despMista>0)?`<div style="margin-top:10px;padding:8px 11px;background:#faf6f2;border-radius:9px;font-size:.7rem;color:var(--muted);text-align:center">Fora desta conta: ${despPess>0?`pessoais ${brl(despPess)}`:''}${(despPess>0&&despMista>0)?' · ':''}${despMista>0?`mistas ${brl(despMista)}`:''}</div>`:''}
+        <div style="text-align:right;margin-top:8px;font-size:.78rem;color:var(--muted)">Margem do negócio: <strong style="color:${lucroNegTotal>=0?'var(--ok)':'var(--red)'}">${margemNeg}%</strong></div>
     </div>
     <div class="card">
         <div class="card-title">Visão Anual ${anoVisaoAnual}</div>
