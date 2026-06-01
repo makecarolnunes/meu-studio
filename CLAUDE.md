@@ -227,5 +227,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-06-01 01:11 | main | feat(financeiro): card 'Lucro do negocio' no Resumo (desconta so saidas profissionais) -->
+<!-- AUTO: 2026-06-01 12:27 | main | feat(pessoal): novo modulo financeiro pessoal isolado + sync da empresa -->
 
