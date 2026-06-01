@@ -227,5 +227,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-05-31 20:37 | main | fix(financeiro): cache-busting nos scripts (?v=) para o navegador pegar o JS novo -->
+<!-- AUTO: 2026-05-31 21:04 | main | fix(financeiro): autopreenchimento de valor/sinal nao disparava (form 'e' vs !form) -->
 
