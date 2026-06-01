@@ -227,5 +227,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-06-01 01:05 | main | fix(fiscal): media de ritmo so com meses fechados (ignora mes corrente parcial) -->
+<!-- AUTO: 2026-06-01 01:11 | main | feat(financeiro): card 'Lucro do negocio' no Resumo (desconta so saidas profissionais) -->
 
