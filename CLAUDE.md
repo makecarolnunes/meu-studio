@@ -227,5 +227,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-06-01 18:57 | main | docs: sync CLAUDE.md [auto] -->
+<!-- AUTO: 2026-06-01 18:58 | main | docs: sync CLAUDE.md [auto] -->
 
