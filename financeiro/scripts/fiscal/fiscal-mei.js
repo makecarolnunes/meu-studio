@@ -191,7 +191,42 @@ function fsCalcPainel(entries, orcamentos, cfg) {
     : realizadoAno;
   const pctPonderada = teto > 0 ? (projecaoPonderada / teto) * 100 : 0;
 
-  // Nível de alerta baseado no PROVÁVEL
+  // ── Previsão de fechamento (ritmo realista) ──
+  // Usa a média ponderada (peso nos últimos meses) quando há histórico
+  // suficiente; senão a média simples do ano.
+  const mediaProjecao = (ehAnoCorrente && mesAtual >= 2) ? mediaPonderada : mediaMensalRitmo;
+  const projecaoFechamento = ehAnoCorrente
+    ? realizadoAno + (mediaProjecao * mesesRestantes)
+    : realizadoAno;
+  const pctProjecao = teto > 0 ? (projecaoFechamento / teto) * 100 : 0;
+  const excessoProjecao = Math.max(projecaoFechamento - teto, 0);
+  const folgaProjecao   = Math.max(teto - projecaoFechamento, 0);
+
+  // Série mensal projetada: realizado até hoje + ritmo nos meses futuros.
+  // Serve pra achar o mês provável de estouro mantendo o ritmo atual.
+  const mesesProjetados = mesesRealizado.map((v, i) => {
+    if (!ehAnoCorrente) return v;
+    return i <= mesAtual ? v : mediaProjecao;
+  });
+  const estouroProjecao = fsMesEstouro(mesesProjetados, teto);
+
+  // ── Nível de risco de desenquadramento (4 faixas) ──
+  let riscoNivel, riscoMes = null;
+  if (realizadoAno >= teto) {
+    riscoNivel = 'estourado';
+    riscoMes = (estouroConservador && estouroConservador.mes != null)
+      ? estouroConservador.mes : mesAtual;
+  } else if (projecaoFechamento > teto || provavel > teto) {
+    riscoNivel = 'risco';
+    riscoMes = estouroProjecao ? estouroProjecao.mes
+             : (estouroProvavel ? estouroProvavel.mes : null);
+  } else if (pctProvavel >= 75 || pctProjecao >= 85) {
+    riscoNivel = 'atencao';
+  } else {
+    riscoNivel = 'ok';
+  }
+
+  // Nível de alerta baseado no PROVÁVEL (legado — mantido por compat.)
   let nivel = 'ok';
   if (pctProvavel >= 100 || pctRealizado >= 95) nivel = 'danger';
   else if (pctProvavel >= 85) nivel = 'warn';
@@ -207,6 +242,9 @@ function fsCalcPainel(entries, orcamentos, cfg) {
     margemMensal, restanteAteTeto, mesesRestantes,
     mediaMensalRitmo, projecaoRitmo, pctRitmo,
     mediaPonderada, projecaoPonderada, pctPonderada,
+    mediaProjecao, projecaoFechamento, pctProjecao,
+    excessoProjecao, folgaProjecao, estouroProjecao,
+    riscoNivel, riscoMes,
     nivel,
     mesesRealizado, mesesPrevisto, mesesOrc,
   };
@@ -233,193 +271,213 @@ function fsRenderPainel() {
 
   const p = fsCalcPainel(FS.entries, FS.orcamentos, FS.config);
 
-  // Delta visual
-  let deltaHtml = '';
-  if (p.delta !== null && isFinite(p.delta)) {
-    const cls = p.delta > 2 ? 'fs-delta-up' : p.delta < -2 ? 'fs-delta-down' : 'fs-delta-flat';
-    const sign = p.delta > 0 ? '+' : '';
-    const arrow = p.delta > 2 ? '↗' : p.delta < -2 ? '↘' : '→';
-    deltaHtml = `<span class="fs-delta ${cls}">${arrow} ${sign}${p.delta.toFixed(0)}%</span>`;
-  }
-
-  const mesNome = FS_MES_LONGO[p.ehAnoCorrente ? p.mesAtual : 11];
-
   root.innerHTML = `
-    ${fsRenderResumoTopo(p, mesNome, deltaHtml)}
-    <div class="fs-card-row">
-      ${fsRenderTetoCard(p)}
-      ${fsRenderCenarios(p)}
-    </div>
-    ${p.ehAnoCorrente && p.mesesRestantes > 0 && p.realizadoAno > 0 ? fsRenderSimulador(p) : ''}
+    ${fsRenderStatusCard(p)}
+    ${fsRenderPrevisaoCard(p)}
+    ${fsRenderAcoesCard(p)}
+    ${fsRenderCenarios(p)}
     ${fsRenderMesesCard(p)}
   `;
 }
 
-function fsRenderSimulador(p) {
-  const cor = (pct) => pct >= 100 ? 'danger' : pct >= 85 ? 'warn' : 'ok';
-  const corRitmo    = cor(p.pctRitmo);
-  const corPonderada = cor(p.pctPonderada);
-  const pctRitmoClamp = Math.min(p.pctRitmo, 100);
-  const pctPondClamp  = Math.min(p.pctPonderada, 100);
+// Mapa de risco → rótulo + classe de cor
+const FS_RISCO_INFO = {
+  ok:        { label: 'Dentro do limite',          cls: 'ok' },
+  atencao:   { label: 'Atenção — chegando perto',  cls: 'warn' },
+  risco:     { label: 'Risco de desenquadramento', cls: 'danger' },
+  estourado: { label: 'Limite ultrapassado',       cls: 'danger' },
+};
+
+function fsCapMes(i) {
+  const m = FS_MES_LONGO[i] || '';
+  return m.charAt(0).toUpperCase() + m.slice(1);
+}
+
+// ── 1) Diagnóstico: onde estou agora ────────────────────────
+function fsRenderStatusCard(p) {
+  const info = FS_RISCO_INFO[p.riscoNivel] || FS_RISCO_INFO.ok;
+  const pctReal = Math.min(p.pctRealizado, 100);
+  const pctProv = Math.min(p.pctProvavel, 100);
+
+  let resumo;
+  if (p.riscoNivel === 'estourado') {
+    resumo = `Você já passou <b>${fsBrl(p.realizadoAno - p.teto)}</b> do teto do MEI neste ano.`;
+  } else if (p.riscoNivel === 'risco') {
+    resumo = p.riscoMes != null
+      ? `No ritmo atual, o teto deve estourar em <b>${fsCapMes(p.riscoMes)}</b>.`
+      : `No ritmo atual, você deve ultrapassar o teto antes de dezembro.`;
+  } else if (p.riscoNivel === 'atencao') {
+    resumo = `Já comprometeu <b>${p.pctProvavel.toFixed(0)}%</b> do teto. Dá pra seguir, mas acompanhe de perto.`;
+  } else {
+    resumo = `Tranquilo: usou <b>${p.pctProvavel.toFixed(0)}%</b> do teto e tem folga até dezembro.`;
+  }
 
   return `
-    <div class="fs-card">
-      <div class="fs-card-title">Simulador · ritmo atual</div>
-      <p class="fs-cen-help">Projeções automáticas baseadas no que você já faturou — sem contar previstos nem orçamentos.</p>
+    <div class="fs-card fs-status fs-status--${info.cls}">
+      <div class="fs-status-badge fs-status-badge--${info.cls}">${info.label}</div>
+      <div class="fs-status-resumo">${resumo}</div>
 
-      <div class="fs-cen-row">
-        <div class="fs-cen-head">
-          <span class="fs-cen-label">Mantendo a média mensal</span>
-          <span class="fs-cen-val">${fsBrl(p.projecaoRitmo)} <span class="fs-cen-pct ${corRitmo}">${p.pctRitmo.toFixed(0)}%</span></span>
+      <div class="fs-status-bignum">${fsBrl(p.realizadoAno)} <span>já recebido em ${p.ano}</span></div>
+
+      <div class="fs-teto-bar-stack" style="margin-top:12px">
+        <div class="fs-teto-fill-base ${info.cls}" style="width:${pctProv}%"></div>
+        <div class="fs-teto-fill-real" style="width:${pctReal}%"></div>
+      </div>
+      <div class="fs-teto-legend">
+        <span><i class="fs-dot fs-dot-real"></i>Recebido ${fsBrl(p.realizadoAno)}</span>
+        <span><i class="fs-dot fs-dot-prev"></i>Previsto ${fsBrl(p.previstoAno)}</span>
+      </div>
+
+      <div class="fs-kpis">
+        <div class="fs-kpi">
+          <div class="fs-kpi-num ${p.pctProvavel >= 100 ? 'danger' : ''}">${p.pctProvavel.toFixed(0)}%</div>
+          <div class="fs-kpi-lbl">do teto comprometido</div>
         </div>
-        <div class="fs-cen-bar"><div class="fs-cen-fill ${corRitmo}" style="width:${pctRitmoClamp}%"></div></div>
-        <div class="fs-cen-foot" style="margin-top:6px;padding-top:0;border-top:none">
-          <span>Média de R$ ${p.mediaMensalRitmo.toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0})}/mês × ${p.mesesRestantes} ${p.mesesRestantes === 1 ? 'mês restante' : 'meses restantes'}</span>
+        <div class="fs-kpi">
+          <div class="fs-kpi-num ${p.restanteAteTeto > 0 ? 'ok' : 'danger'}">${fsBrl(p.restanteAteTeto)}</div>
+          <div class="fs-kpi-lbl">ainda posso faturar</div>
         </div>
       </div>
 
-      ${p.mesAtual >= 2 ? `
-      <div class="fs-cen-row">
-        <div class="fs-cen-head">
-          <span class="fs-cen-label">Pelo ritmo dos últimos 3 meses</span>
-          <span class="fs-cen-val">${fsBrl(p.projecaoPonderada)} <span class="fs-cen-pct ${corPonderada}">${p.pctPonderada.toFixed(0)}%</span></span>
-        </div>
-        <div class="fs-cen-bar"><div class="fs-cen-fill ${corPonderada}" style="width:${pctPondClamp}%"></div></div>
-        <div class="fs-cen-foot" style="margin-top:6px;padding-top:0;border-top:none">
-          <span>Média ponderada de R$ ${p.mediaPonderada.toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0})}/mês (peso maior nos meses recentes)</span>
-        </div>
-      </div>` : ''}
+      <div class="fs-status-foot">
+        Teto MEI ${p.ano}: <b>${fsBrl(p.teto)}</b> · recebido + previsto = <b>${fsBrl(p.provavel)}</b>
+      </div>
     </div>
   `;
 }
 
-function fsRenderResumoTopo(p, mesNome, deltaHtml) {
-  return `
-    <div class="fs-grid-2">
-      <div class="fs-mini">
-        <div class="fs-mini-label">${mesNome}</div>
-        <div class="fs-mini-value">${fsBrl(p.faturamentoMes)}</div>
-        ${deltaHtml ? `<div style="margin-top:6px">${deltaHtml}</div>` : ''}
-      </div>
-      <div class="fs-mini">
-        <div class="fs-mini-label">Ano ${p.ano} · realizado</div>
-        <div class="fs-mini-value">${fsBrl(p.realizadoAno)}</div>
-        <div style="margin-top:6px;font-size:var(--text-xs);color:var(--text-muted)">
-          ${p.pctRealizado.toFixed(1)}% do teto
+// ── 2) Previsão de fechamento (substitui o simulador) ───────
+function fsRenderPrevisaoCard(p) {
+  if (!p.ehAnoCorrente) {
+    return `
+      <div class="fs-card">
+        <div class="fs-card-title">Fechamento do ano</div>
+        <div class="fs-prev-head">
+          <div class="fs-prev-num">${fsBrl(p.realizadoAno)}</div>
+          <div class="fs-prev-pct">${p.pctRealizado.toFixed(0)}%<span>do teto</span></div>
         </div>
-      </div>
-    </div>
-  `;
-}
+        <p class="fs-cen-help" style="margin:8px 0 0">Ano encerrado.</p>
+      </div>`;
+  }
 
-function fsRenderTetoCard(p) {
-  // Cores baseadas no nível
-  const corBarra =
-    p.nivel === 'danger' ? 'danger'
-    : (p.nivel === 'warn' || p.nivel === 'warn-leve') ? 'warn'
-    : 'ok';
+  const over = p.excessoProjecao > 0;
+  const cor = over ? 'danger' : (p.pctProjecao >= 85 ? 'warn' : 'ok');
 
-  const pctRealClamp    = Math.min(p.pctRealizado, 100);
-  const pctProvavelClamp = Math.min(p.pctProvavel, 100);
-
-  // Alert principal (baseado no cenário provável)
-  let alertCls = '', alertText = '', alertIcon = '';
-  if (p.estouroProvavel) {
-    alertCls = 'danger';
-    alertIcon = '⚠';
-    alertText = `Pelo ritmo atual e previstos, o teto deve ser estourado em <b>${FS_MES_LONGO[p.estouroProvavel.mes]}</b>.`;
-  } else if (p.nivel === 'warn') {
-    alertCls = 'warn';
-    alertIcon = '●';
-    alertText = `Ritmo de atenção: <b>${fsBrl(p.provavel)}</b> projetado para o ano (${p.pctProvavel.toFixed(0)}%).`;
-  } else if (p.nivel === 'warn-leve') {
-    alertCls = 'warn';
-    alertIcon = '●';
-    alertText = `Já comprometeu ${p.pctProvavel.toFixed(0)}% do teto contando previstos.`;
-  } else if (p.realizadoAno > 0 || p.previstoAno > 0) {
-    alertCls = 'ok';
-    alertIcon = '✓';
-    alertText = `Margem confortável. Restam <b>${fsBrl(p.restanteAteTeto)}</b> até o teto.`;
+  let verdict;
+  if (over) {
+    verdict = `
+      <div class="fs-prev-verdict danger">
+        <div class="fs-prev-vrow">
+          <span class="fs-prev-vlbl">Excesso previsto sobre o teto</span>
+          <span class="fs-prev-vval">${fsBrl(p.excessoProjecao)}</span>
+        </div>
+        ${p.estouroProjecao ? `
+        <div class="fs-prev-vrow">
+          <span class="fs-prev-vlbl">Mês provável de estouro</span>
+          <span class="fs-prev-vval">${fsCapMes(p.estouroProjecao.mes)}</span>
+        </div>` : ''}
+      </div>`;
+  } else {
+    verdict = `
+      <div class="fs-prev-verdict ok">
+        Você ainda pode faturar <b>${fsBrl(p.restanteAteTeto)}</b> sem ultrapassar o limite.
+      </div>`;
   }
 
   return `
     <div class="fs-card">
-      <div class="fs-card-title">Teto MEI · ${p.ano}</div>
+      <div class="fs-card-title">Previsão de fechamento</div>
+      <p class="fs-cen-help" style="margin-bottom:14px">Se você mantiver o ritmo atual de faturamento até dezembro.</p>
 
-      <div class="fs-teto-row">
-        <div>
-          <div class="fs-teto-pct ${corBarra}">${p.pctProvavel.toFixed(0)}%</div>
-          <div style="font-size:var(--text-xs);color:var(--text-muted);margin-top:2px">previsto + realizado</div>
-        </div>
-        <div class="fs-teto-total" style="text-align:right">
-          ${fsBrl(p.provavel)}<br>
-          <span style="color:var(--text-subtle)">de ${fsBrl(p.teto)}</span>
-        </div>
+      <div class="fs-prev-head">
+        <div class="fs-prev-num ${cor}">${fsBrl(p.projecaoFechamento)}</div>
+        <div class="fs-prev-pct ${cor}">${p.pctProjecao.toFixed(0)}%<span>do teto</span></div>
       </div>
 
-      <!-- Barra dupla: realizado sólido + previsto translúcido -->
-      <div class="fs-teto-bar-stack">
-        <div class="fs-teto-fill-base ${corBarra}" style="width:${pctProvavelClamp}%"></div>
-        <div class="fs-teto-fill-real" style="width:${pctRealClamp}%"></div>
+      ${verdict}
+
+      <div class="fs-prev-foot">
+        Base: média de <b>${fsBrl(p.mediaProjecao)}/mês</b>${p.mesAtual >= 2 ? ' (peso maior nos últimos 3 meses)' : ''}
+        × ${p.mesesRestantes} ${p.mesesRestantes === 1 ? 'mês restante' : 'meses restantes'}.
       </div>
-
-      <div class="fs-teto-legend">
-        <span><i class="fs-dot fs-dot-real"></i>Realizado ${fsBrl(p.realizadoAno)}</span>
-        <span><i class="fs-dot fs-dot-prev"></i>Previsto ${fsBrl(p.previstoAno)}</span>
-      </div>
-
-      ${p.ehAnoCorrente && p.mesesRestantes > 0 ? `
-        <div class="fs-teto-info">
-          <span>Restam ${fsBrl(p.restanteAteTeto)}</span>
-          <span>≈ ${fsBrl(p.margemMensal)}/mês</span>
-        </div>
-      ` : ''}
-
-      ${alertText ? `
-        <div class="fs-teto-alert ${alertCls}">
-          <span style="font-weight:bold;font-size:14px">${alertIcon}</span>
-          <span>${alertText}</span>
-        </div>
-      ` : ''}
     </div>
   `;
 }
 
+// ── 3) O que fazer agora (orientado a decisão) ──────────────
+function fsRenderAcoesCard(p) {
+  const acoes = fsAcoes(p);
+  if (!acoes.length) return '';
+  const info = FS_RISCO_INFO[p.riscoNivel] || FS_RISCO_INFO.ok;
+  return `
+    <div class="fs-card">
+      <div class="fs-card-title">O que fazer agora</div>
+      <ul class="fs-acoes fs-acoes--${info.cls}">
+        ${acoes.map(a => `<li>${a}</li>`).join('')}
+      </ul>
+    </div>
+  `;
+}
+
+function fsAcoes(p) {
+  const mes = p.riscoMes != null ? fsCapMes(p.riscoMes) : null;
+  const out = [];
+  if (p.riscoNivel === 'estourado') {
+    out.push(`Você ultrapassou o teto em <b>${fsBrl(p.realizadoAno - p.teto)}</b>. Evite registrar novos recebimentos como MEI até o fim do ano.`);
+    out.push(`Procure um contador: o excedente costuma exigir migração para <b>ME (Simples Nacional)</b> e impostos sobre o que passou.`);
+    out.push(`Separe uma reserva para o <b>DAS complementar</b> e tributos do excedente.`);
+  } else if (p.riscoNivel === 'risco') {
+    if (mes) out.push(`No ritmo atual o teto estoura em <b>${mes}</b>. Planeje os fechamentos a partir de agora com isso em mente.`);
+    out.push(`Ainda há <b>${fsBrl(p.restanteAteTeto)}</b> de margem. Evite concentrar grandes recebimentos antes de ${mes || 'dezembro'}.`);
+    out.push(`Se der, empurre recebimentos que excedam o teto para <b>janeiro do ano seguinte</b>.`);
+    out.push(`Converse com um contador sobre migrar para <b>ME</b> antes de estourar.`);
+  } else if (p.riscoNivel === 'atencao') {
+    out.push(`Você já comprometeu <b>${p.pctProvavel.toFixed(0)}%</b> do teto. Dá pra seguir, mas acompanhe mês a mês.`);
+    out.push(`Margem restante: <b>${fsBrl(p.restanteAteTeto)}</b>. Evite surpresas concentradas em dezembro.`);
+  } else {
+    out.push(`Tudo tranquilo: <b>${p.pctProvavel.toFixed(0)}%</b> do teto usado, com <b>${fsBrl(p.restanteAteTeto)}</b> de folga.`);
+    out.push(`Continue registrando os recebimentos para a previsão ficar precisa.`);
+  }
+  return out;
+}
+
 function fsRenderCenarios(p) {
-  const linha = (label, valor, pct, estouro, cor) => {
+  const linha = (nome, formula, valor, pct, estouro, cor) => {
     const pctClamp = Math.min(pct, 100);
-    const ultrapasse = pct > 100;
     const estouroTxt = estouro
-      ? `<span class="fs-cen-estouro">estoura em ${FS_MES_NOMES[estouro.mes]}</span>`
+      ? `<span class="fs-cen-estouro">estoura o teto em ${FS_MES_NOMES[estouro.mes]}</span>`
       : '';
     return `
       <div class="fs-cen-row">
         <div class="fs-cen-head">
-          <span class="fs-cen-label">${label}</span>
+          <span class="fs-cen-label">${nome}</span>
           <span class="fs-cen-val">${fsBrl(valor)} <span class="fs-cen-pct ${cor}">${pct.toFixed(0)}%</span></span>
         </div>
         <div class="fs-cen-bar"><div class="fs-cen-fill ${cor}" style="width:${pctClamp}%"></div></div>
+        <div class="fs-cen-formula">${formula}</div>
         ${estouroTxt}
       </div>
     `;
   };
 
-  const corC = p.pctConservador >= 100 ? 'danger' : p.pctConservador >= 85 ? 'warn' : 'ok';
-  const corP = p.pctProvavel    >= 100 ? 'danger' : p.pctProvavel    >= 85 ? 'warn' : 'ok';
-  const corO = p.pctOtimista    >= 100 ? 'danger' : p.pctOtimista    >= 85 ? 'warn' : 'ok';
+  const corDe = (pct) => pct >= 100 ? 'danger' : pct >= 85 ? 'warn' : 'ok';
 
   return `
     <div class="fs-card">
       <div class="fs-card-title">Cenários até dezembro</div>
-      <div class="fs-cen-help">Considerando o que já entrou, os previstos e os orçamentos em aberto.</div>
-      ${linha('Conservador',  p.conservador, p.pctConservador, p.estouroConservador, corC)}
-      ${linha('Provável',     p.provavel,    p.pctProvavel,    p.estouroProvavel,    corP)}
-      ${linha('Otimista',     p.otimista,    p.pctOtimista,    p.estouroOtimista,    corO)}
-      <div class="fs-cen-foot">
-        <span>Conservador = só já recebido</span>
-        <span>Provável = + previstos confirmados</span>
-        <span>Otimista = + orçamentos em negociação</span>
-      </div>
+      <div class="fs-cen-help">Três fechamentos possíveis, do mais garantido ao mais otimista. Cada um soma uma camada a mais.</div>
+      ${linha(
+        'Somente valores já recebidos',
+        `O que já caiu na conta em ${p.ano}: <b>${fsBrl(p.realizadoAno)}</b>.`,
+        p.conservador, p.pctConservador, p.estouroConservador, corDe(p.pctConservador))}
+      ${linha(
+        'Recebidos + previstos confirmados',
+        `Recebido ${fsBrl(p.realizadoAno)} + previsto ${fsBrl(p.previstoAno)} (restante já contratado de noivas/clientes).`,
+        p.provavel, p.pctProvavel, p.estouroProvavel, corDe(p.pctProvavel))}
+      ${linha(
+        'Recebidos + previstos + orçamentos em negociação',
+        `Os dois acima + ${fsBrl(p.orcamentoAno)} em orçamentos ainda em aberto (podem ou não fechar).`,
+        p.otimista, p.pctOtimista, p.estouroOtimista, corDe(p.pctOtimista))}
     </div>
   `;
 }
