@@ -1767,7 +1767,17 @@
     });
 
     var json = await res.json();
-    if (json.error) throw new Error(json.error.message || 'Erro na Claude API');
+    if (json.error) {
+      var et = json.error.type || '';
+      var em = json.error.message || '';
+      if (res.status === 401 || et === 'authentication_error' || /invalid x-api-key|api key/i.test(em)) {
+        throw new Error('Chave Claude inválida ou expirada — toque no 🔑 e cole uma chave nova.');
+      }
+      if (et === 'permission_error' || /credit balance|billing/i.test(em)) {
+        throw new Error('Créditos da conta Claude esgotados ou bloqueio de cobrança. Verifique em console.anthropic.com.');
+      }
+      throw new Error(em || 'Erro na Claude API');
+    }
     if (!json.content || !json.content.length) throw new Error('Resposta vazia da Claude');
     if (json.stop_reason === 'max_tokens') throw new Error('Resposta cortada (muitas imagens ou briefing longo). Tente com menos imagens ou um briefing mais curto.');
     var text = json.content.map(function(c) { return c.text || ''; }).join('');
