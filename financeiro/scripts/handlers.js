@@ -30,11 +30,11 @@ function pick(field, value, form) {
     if (form === 's') Fs[field] = value;
     else F[field] = value;
     if (field === 'tipo' || field === 'recorrencia') {
-        if (field === 'tipo' && !form) applyServicePrice();   // recalcula valor/sinal ao trocar de tipo
+        if (field === 'tipo' && form !== 's') applyServicePrice();   // recalcula valor/sinal ao trocar de tipo (form 'e' ou undefined)
         render(); return;
     }
     // Auto-detect local quando serviço contém "domicílio" ou "studio"
-    if (!form && field === 'servico') {
+    if (form !== 's' && field === 'servico') {
         const low = (value || '').toLowerCase();
         const SKIP = ['noiva', 'curso', 'automaquiagem', 'automake', 'assistência', 'assistencia'];
         if (!SKIP.some(s => low.includes(s))) {
@@ -48,7 +48,7 @@ function pick(field, value, form) {
         }
     }
     // Ao trocar serviço/local, recalcula o valor (e Sinal/Restante se for Sinal)
-    if (!form && (field === 'servico' || field === 'local')) {
+    if (form !== 's' && (field === 'servico' || field === 'local')) {
         applyServicePrice();
     }
     document.querySelectorAll(`[data-f="${field}"][data-form="${form||'e'}"]`).forEach(btn => {
