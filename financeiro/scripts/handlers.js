@@ -74,7 +74,8 @@ function chm(d) { selMonth+=d; if(selMonth<0){selMonth=11;selYear--;}if(selMonth
 function setF(f) { listFilter=f; render(); }
 function setEquipeFilter(f) { listEquipeFilter=f; render(); }
 function setSaidaNatureza(n) { saidasNaturezaFilter = n; saidasTipoFilter = 'todas'; saidasVerTodosMeses = false; render(); }
-function pickSaidaNatureza(n) { Fs.natureza = n; render(); }
+function pickSaidaNatureza(n) { Fs.natureza = n; if (n !== 'PESSOAL') Fs.transferenciaParaMim = false; render(); }
+function toggleTransfMim(checked) { Fs.transferenciaParaMim = !!checked; }
 function setSaidaTipoFilter(val) { saidasTipoFilter = val; saidasVerTodosMeses = false; render(); }
 function toggleSaidasTodosMeses() { saidasVerTodosMeses = !saidasVerTodosMeses; render(); }
 // Filtro de período do Resumo
@@ -188,10 +189,13 @@ async function saveSaida() {
         const naturezaFs = Fs.natureza || 'PROFISSIONAL';
         // Pessoais: zera tipo (a interface não pede categoria — basta natureza)
         const tipoFs = naturezaFs === 'PESSOAL' ? 'Pessoal' : Fs.tipo;
+        // Só marca transferência-para-mim quando faz sentido (pessoal + transferência)
+        const transfMim = (naturezaFs === 'PESSOAL' && Fs.forma === 'Transferência' && Fs.transferenciaParaMim === true);
         if (rec === 'unica') {
             const saida = { id:genId(), dataPag:Fs.dataPag, tipo:tipoFs, valor:Fs.valor,
                 forma:Fs.forma, status:Fs.status, obs:Fs.obs,
                 recorrencia:'unica', grupoId:null, natureza:naturezaFs,
+                transferenciaParaMim:transfMim,
                 createdAt:new Date().toISOString() };
             if (!await sbCall({action:'save', table:'saidas', data: encodeURIComponent(JSON.stringify(saida))})) return;
             saidas.unshift(saida); cacheSaidas();
@@ -206,6 +210,7 @@ async function saveSaida() {
                 novasSaidas.push({ id:genId(), dataPag:addMonths(Fs.dataPag, i),
                     tipo:tipoFs, valor:Fs.valor, forma:Fs.forma, status:Fs.status, obs:Fs.obs,
                     recorrencia:rec, grupoId, natureza:naturezaFs,
+                    transferenciaParaMim:transfMim,
                     createdAt:new Date().toISOString() });
             }
             // Confirma cada parcela no Supabase; se uma falhar, desfaz as já salvas

@@ -120,5 +120,5 @@ function initF()  {
 function initFs() {
     Fs = { dataPag: today(), valor: '', tipo: 'Reposição/Investimento de material',
            status: 'Pago', forma: 'PIX', obs: '', recorrencia: 'unica', meses: 2,
-           natureza: 'PROFISSIONAL' };
+           natureza: 'PROFISSIONAL', transferenciaParaMim: false };
 }

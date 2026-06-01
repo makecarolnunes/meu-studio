@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#38190b">
+  <title>Meu Financeiro Pessoal</title>
+  <link rel="stylesheet" href="../shared/css/tokens.css">
+  <link rel="stylesheet" href="../shared/css/base.css">
+  <link rel="stylesheet" href="styles/pessoal.css?v=1">
+</head>
+<body>
+
+  <!-- LOADING -->
+  <div id="loading-overlay">
+    <div class="spinner"></div>
+  </div>
+
+  <!-- LOGIN -->
+  <div id="login-screen" style="display:none">
+    <div class="login-card">
+      <div class="login-logo">💰</div>
+      <h1>Financeiro Pessoal</h1>
+      <p class="login-sub">Acesso privado</p>
+      <form id="login-form" onsubmit="return doLoginPessoal(event)">
+        <label class="pl">Usuário</label>
+        <input class="pi" id="login-user" type="text" autocomplete="username" placeholder="seu usuário" autocapitalize="off">
+        <label class="pl">Senha</label>
+        <div class="pass-wrap">
+          <input class="pi" id="login-pass" type="password" autocomplete="current-password" placeholder="••••••••">
+          <button type="button" class="eye" id="eye-btn" onclick="toggleEye()">👁</button>
+        </div>
+        <label class="remember"><input type="checkbox" id="login-remember"> Lembrar neste aparelho</label>
+        <div id="login-err" class="login-err"></div>
+        <button class="psub" type="submit" id="login-btn">Entrar</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- APP -->
+  <div id="app" style="display:none">
+    <header class="phead">
+      <div class="phead-top">
+        <div class="phead-title">💰 Pessoal</div>
+        <button class="phead-logout" onclick="doLogoutPessoal()" title="Sair">⏻</button>
+      </div>
+      <div class="month-nav">
+        <button onclick="chMonth(-1)">‹</button>
+        <span id="month-label">—</span>
+        <button onclick="chMonth(1)">›</button>
+      </div>
+    </header>
+
+    <main id="view"></main>
+
+    <nav class="ptabs">
+      <button data-tab="resumo"   onclick="go('resumo')"   class="on">Resumo</button>
+      <button data-tab="entradas" onclick="go('entradas')">Entradas</button>
+      <button data-tab="saidas"   onclick="go('saidas')">Saídas</button>
+      <button data-tab="importar" onclick="go('importar')">Importar</button>
+    </nav>
+  </div>
+
+  <!-- MODAL genérico -->
+  <div id="modal-overlay" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeModal()">
+    <div id="modal-box" class="modal-box"></div>
+  </div>
+
+  <!-- TOAST -->
+  <div id="toast" class="toast"></div>
+
+  <!-- Scripts: ordem obrigatória -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="../config.js"></script>
+  <script src="../shared/js/db.js"></script>
+  <script src="scripts/state.js?v=1"></script>
+  <script src="scripts/api.js?v=1"></script>
+  <script src="scripts/parser.js?v=1"></script>
+  <script src="scripts/views.js?v=1"></script>
+  <script src="scripts/handlers.js?v=1"></script>
+  <script src="scripts/main.js?v=1"></script>
+</body>
+</html>

@@ -420,8 +420,15 @@ function openEditSaida(id) {
     </div>
     <div class="fg"><label class="fl">Valor (R$)</label><div class="vwrap"><span class="vpfx">R$</span><input class="fi" type="number" id="es-valor" value="${s.valor||''}" step="0.01" min="0" inputmode="decimal"></div></div>
     <div class="fg"><label class="fl">Forma</label><div class="bg" style="flex-wrap:wrap">
-        ${['PIX','Débito','Transferência','Crédito','Dinheiro'].map(f=>`<button class="bt ${s.forma===f?'on':''}" onclick="edPick('sforma','${f}',this)">${f}</button>`).join('')}
+        ${['PIX','Débito','Transferência','Crédito','Dinheiro'].map(f=>`<button class="bt ${s.forma===f?'on':''}" onclick="edPickSaidaForma('${f}',this)">${f}</button>`).join('')}
     </div></div>
+    <div id="es-transfmim-wrap" class="fg" style="display:${(natAtual==='PESSOAL'&&s.forma==='Transferência')?'block':'none'};background:var(--info-soft,#E3F2FD);border-radius:10px;padding:11px 12px">
+        <label style="display:flex;align-items:center;gap:9px;cursor:pointer;font-size:13px;font-weight:600;color:var(--info,#1565C0)">
+          <input type="checkbox" id="es-transfmim" ${s.transferenciaParaMim?'checked':''} style="width:18px;height:18px;accent-color:var(--info,#1565C0)">
+          🔁 Transferência para minha conta pessoal
+        </label>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:5px;padding-left:27px">Vira uma <strong>entrada</strong> no Financeiro Pessoal. Desmarque se for para outra pessoa/conta.</div>
+    </div>
     <div class="fg"><label class="fl">Status</label>
         <div class="stog">
             <button class="stbtn ${s.status==='Pago'?'on-g':''}" onclick="edPickStatus('Pago',this)">Pago</button>
@@ -452,6 +459,19 @@ function edPickNatureza(value, btn) {
     }
     const wrap = document.getElementById('es-tipo-wrap');
     if (wrap) wrap.style.display = value === 'PESSOAL' ? 'none' : 'block';
+    edToggleTransfMimVis();
+}
+
+// Forma no modal de edição de saída + toggle do checkbox "transferência para mim"
+function edPickSaidaForma(value, btn) {
+    edPick('sforma', value, btn);
+    edToggleTransfMimVis();
+}
+function edToggleTransfMimVis() {
+    const wrap = document.getElementById('es-transfmim-wrap');
+    if (!wrap) return;
+    const show = (_pick['snatureza'] === 'PESSOAL') && (_pick['sforma'] === 'Transferência');
+    wrap.style.display = show ? 'block' : 'none';
 }
 async function saveEditSaida(id) {
     const s = saidas.find(x=>String(x.id)===String(id));
@@ -461,13 +481,17 @@ async function saveEditSaida(id) {
     const natChosen = _pick['snatureza'] || s.natureza || 'PROFISSIONAL';
     const tipoSel = document.getElementById('es-tipo-sel');
     const tipoChosen = natChosen === 'PESSOAL' ? 'Pessoal' : (tipoSel ? tipoSel.value : (_pick['stipo'] || s.tipo));
+    const formaChosen = _pick['sforma'] || s.forma;
+    const transfMimEl = document.getElementById('es-transfmim');
+    const transfMim = (natChosen === 'PESSOAL' && formaChosen === 'Transferência' && !!(transfMimEl && transfMimEl.checked));
     const changes = {
         tipo:     tipoChosen,
-        forma:    _pick['sforma'] || s.forma,
+        forma:    formaChosen,
         status:   document.getElementById('ed-status').value,
         valor:    String(valor),
         obs:      document.getElementById('es-obs').value,
         natureza: natChosen,
+        transferenciaParaMim: transfMim,
     };
     const scope = s.grupoId ? (_pick['escopo'] || 'so-esta') : 'so-esta';
     let toEdit;

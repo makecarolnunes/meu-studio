@@ -66,6 +66,7 @@ const _SAIDA_KEYS = {
   recorrencia: 'recorrencia', grupoId: 'grupo_id',
   createdAt: 'created_at',
   natureza: 'natureza',
+  transferenciaParaMim: 'transferencia_para_mim',
 };
 
 const _ORC_KEYS = {
@@ -138,7 +139,7 @@ function _noivaFromDb(r) {
 }
 
 // ── Saida ─────────────────────────────────────────────────────────────────────
-function _saidaToDb(s)   { return _toDb(s, _SAIDA_KEYS, ['valor']); }
+function _saidaToDb(s)   { return _toDb(s, _SAIDA_KEYS, ['valor'], ['transferenciaParaMim']); }
 function _saidaFromDb(r) {
   return {
     id:          String(r.id),
@@ -152,6 +153,7 @@ function _saidaFromDb(r) {
     grupoId:     r.grupo_id  || null,
     createdAt:   r.created_at || '',
     natureza:    r.natureza  || 'PROFISSIONAL',
+    transferenciaParaMim: !!r.transferencia_para_mim,
   };
 }
 
@@ -849,6 +851,88 @@ window.DB = {
   },
 
   // ──────────────────────────────────────────────────────────────
+  //  PESSOAL — sistema financeiro pessoal (isolado da empresa)
+  //  Auth própria (usuarios_pessoal). Tabelas entradas_pessoal /
+  //  saidas_pessoal. Sincronização empresa->pessoal via trigger.
+  // ──────────────────────────────────────────────────────────────
+  pessoal: {
+    auth: {
+      // Retorna { id, usuario } se válido, null se inválido
+      async login(usuario, senha) {
+        _guard();
+        const hash = await _sha256(senha);
+        const { data, error } = await _sb.rpc('autenticar_pessoal', {
+          p_usuario:    usuario.toLowerCase().trim(),
+          p_senha_hash: hash,
+        });
+        if (error) throw error;
+        return (data && data.length > 0) ? data[0] : null;
+      },
+    },
+
+    entradas: {
+      async list() {
+        _guard();
+        const { data, error } = await _sb.from('entradas_pessoal').select('*').order('data', { ascending: false });
+        if (error) throw error;
+        return (data || []).map(_pessFromDb);
+      },
+      async upsert(e) {
+        _guard();
+        const row = _pessToDb(e);
+        const { error } = await _sb.from('entradas_pessoal').upsert(row, { onConflict: 'id' });
+        if (error) throw error;
+        return row.id;
+      },
+      async delete(id) {
+        _guard();
+        const { error } = await _sb.from('entradas_pessoal').delete().eq('id', String(id));
+        if (error) throw error;
+      },
+      // Insere várias (importação) ignorando duplicatas por id
+      async insertBatch(arr) {
+        _guard();
+        if (!arr || !arr.length) return 0;
+        const rows = arr.map(_pessToDb);
+        const { data, error } = await _sb.from('entradas_pessoal')
+          .upsert(rows, { onConflict: 'id', ignoreDuplicates: true }).select('id');
+        if (error) throw error;
+        return (data || []).length;
+      },
+    },
+
+    saidas: {
+      async list() {
+        _guard();
+        const { data, error } = await _sb.from('saidas_pessoal').select('*').order('data', { ascending: false });
+        if (error) throw error;
+        return (data || []).map(_pessFromDb);
+      },
+      async upsert(s) {
+        _guard();
+        const row = _pessToDb(s);
+        const { error } = await _sb.from('saidas_pessoal').upsert(row, { onConflict: 'id' });
+        if (error) throw error;
+        return row.id;
+      },
+      async delete(id) {
+        _guard();
+        const { error } = await _sb.from('saidas_pessoal').delete().eq('id', String(id));
+        if (error) throw error;
+      },
+      async insertBatch(arr) {
+        _guard();
+        if (!arr || !arr.length) return 0;
+        const rows = arr.map(_pessToDb);
+        const { data, error } = await _sb.from('saidas_pessoal')
+          .upsert(rows, { onConflict: 'id', ignoreDuplicates: true }).select('id');
+        if (error) throw error;
+        return (data || []).length;
+      },
+    },
+  },
+
+  // ──────────────────────────────────────────────────────────────
   //  FISCAL — módulo tributário (Sprint 1+)
   //  Namespace isolado. Não compartilha estado com entries/saidas.
   //  Tabelas: fiscal_config (singleton), fiscal_das.
@@ -1077,6 +1161,35 @@ window.DB = {
     },
   },
 };
+
+// ── Mapeadores pessoal (entradas_pessoal / saidas_pessoal) ────────
+function _pessFromDb(r) {
+  return {
+    id:            String(r.id),
+    usuarioId:     r.usuario_id      || null,
+    data:          r.data            || '',
+    descricao:     r.descricao       || '',
+    valor:         r.valor != null ? Number(r.valor) : 0,
+    categoria:     r.categoria       || 'Outros',
+    forma:         r.forma           || '',
+    origem:        r.origem          || 'manual',
+    saidaOrigemId: r.saida_origem_id || null,
+    createdAt:     r.created_at       || '',
+  };
+}
+function _pessToDb(e) {
+  return {
+    id:              String(e.id || Date.now()),
+    usuario_id:      e.usuarioId || null,
+    data:            e.data || null,
+    descricao:       e.descricao || '',
+    valor:           e.valor != null && e.valor !== '' ? parseFloat(e.valor) || 0 : 0,
+    categoria:       e.categoria || 'Outros',
+    forma:           e.forma || '',
+    origem:          e.origem || 'manual',
+    saida_origem_id: e.saidaOrigemId || null,
+  };
+}
 
 // ── Mapeadores fiscal_documentos ──────────────────────────────────
 function _docFromDb(r) {
