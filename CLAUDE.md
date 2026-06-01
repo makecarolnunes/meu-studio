@@ -227,5 +227,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-06-01 00:47 | main | docs: sync CLAUDE.md [auto] -->
+<!-- AUTO: 2026-06-01 01:05 | main | fix(fiscal): media de ritmo so com meses fechados (ignora mes corrente parcial) -->
 
