@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
@@ -6,17 +6,17 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Financeiro">
-    <title>Financeiro · Meu Studio</title>
+    <title>Financeiro Â· Meu Studio</title>
     <link rel="stylesheet" href="../shared/css/tokens.css">
     <link rel="stylesheet" href="../shared/css/base.css">
     <link rel="stylesheet" href="./styles/financeiro.css">
-    <!-- Fiscal CSS: estilos do fluxo de import (modal, revisão).
-         Todos seletores com prefixo .fs- não conflitam. -->
+    <!-- Fiscal CSS: estilos do fluxo de import (modal, revisÃ£o).
+         Todos seletores com prefixo .fs- nÃ£o conflitam. -->
     <link rel="stylesheet" href="./styles/fiscal.css">
 </head>
 <body>
 
-<!-- ── LOGIN SCREEN ── -->
+<!-- â”€â”€ LOGIN SCREEN â”€â”€ -->
 <div class="login-screen" id="login-screen">
     <div class="login-logo">
         <span class="icon" style="color:var(--brown);display:flex;justify-content:center">
@@ -30,14 +30,14 @@
     </div>
     <div class="login-card">
         <h3>Entrar na conta</h3>
-        <div class="login-error" id="login-error">Usuário ou senha incorretos</div>
+        <div class="login-error" id="login-error">UsuÃ¡rio ou senha incorretos</div>
         <div class="login-field">
-            <label class="fl">Usuário</label>
-            <input class="fi" type="text" id="login-user" placeholder="seu usuário" autocomplete="username" autocapitalize="none">
+            <label class="fl">UsuÃ¡rio</label>
+            <input class="fi" type="text" id="login-user" placeholder="seu usuÃ¡rio" autocomplete="username" autocapitalize="none">
         </div>
         <div class="login-field">
             <label class="fl">Senha</label>
-            <input class="fi" type="password" id="login-pass" placeholder="••••••••••••" autocomplete="current-password" style="padding-right:44px">
+            <input class="fi" type="password" id="login-pass" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" autocomplete="current-password" style="padding-right:44px">
             <button class="eye-btn" onclick="toggleEye()" id="eye-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
         </div>
         <label class="login-remember">
@@ -47,7 +47,7 @@
     </div>
 </div>
 
-<!-- ── APP (oculto até autenticar) ── -->
+<!-- â”€â”€ APP (oculto atÃ© autenticar) â”€â”€ -->
 <div id="app" style="display:none">
 
 <button class="btn-back-float" onclick="window.location.href='../'" aria-label="Voltar">
@@ -67,7 +67,7 @@
         <button class="gear-btn" onclick="loadFromSupabase()" title="Atualizar" aria-label="Atualizar">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
         </button>
-        <button class="gear-btn" onclick="openConfig()" title="Configurações" aria-label="Configurações">
+        <button class="gear-btn" onclick="openConfig()" title="ConfiguraÃ§Ãµes" aria-label="ConfiguraÃ§Ãµes">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <circle cx="12" cy="12" r="3"/>
             <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 0 1-4 0v-.1a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 0 1 0-4h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3h0a1.7 1.7 0 0 0 1-1.5V3a2 2 0 0 1 4 0v.1a1.7 1.7 0 0 0 1 1.5h0a1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8v0a1.7 1.7 0 0 0 1.5 1H21a2 2 0 0 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>
@@ -89,7 +89,7 @@
     </button>
     <button class="ni" id="nav-saidas" onclick="go('saidas')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
-        Saídas
+        SaÃ­das
     </button>
     <button class="ni" id="nav-noivas" onclick="go('noivas')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12l4 6-10 13L2 9z"/><path d="M11 3 8 9l4 13 4-13-3-6"/><path d="M2 9h20"/></svg>
@@ -111,22 +111,22 @@
 <!-- Chat Modal -->
 <div class="chat-modal" id="chat-modal">
     <div class="chat-hdr">
-        <button class="chat-back" onclick="closeChat()">←</button>
+        <button class="chat-back" onclick="closeChat()">â†</button>
         <div style="flex:1">
             <div style="font-weight:700;font-size:1rem;display:flex;align-items:center;gap:7px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Assistente Financeira</div>
-            <div style="font-size:.7rem;opacity:.75">Powered by Claude · acesso aos seus dados</div>
+            <div style="font-size:.7rem;opacity:.75">Powered by Claude Â· acesso aos seus dados</div>
         </div>
         <button onclick="chatHistory=[];renderChatMessages()" style="background:none;border:none;color:rgba(255,255,255,.7);font-size:.78rem;cursor:pointer">Limpar</button>
     </div>
     <div class="chat-messages" id="chat-messages"></div>
     <div class="chat-typing" id="chat-typing">
         <div class="chat-dot"></div><div class="chat-dot"></div><div class="chat-dot"></div>
-        <span style="font-size:.78rem;color:var(--muted);margin-left:4px">Claude está pensando...</span>
+        <span style="font-size:.78rem;color:var(--muted);margin-left:4px">Claude estÃ¡ pensando...</span>
     </div>
     <div class="chat-bar">
-        <input class="fi" type="text" id="chat-input" placeholder="Ex: quanto faturei esse mês?" autocomplete="off"
+        <input class="fi" type="text" id="chat-input" placeholder="Ex: quanto faturei esse mÃªs?" autocomplete="off"
             onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat()}">
-        <button class="chat-send" id="chat-send" onclick="sendChat()">↑</button>
+        <button class="chat-send" id="chat-send" onclick="sendChat()">â†‘</button>
     </div>
 </div>
 
@@ -144,33 +144,33 @@
     <div class="modal" id="modal-inner"></div>
 </div>
 
-<!-- Fiscal/Import modal — reaproveitado pela importação de extrato -->
+<!-- Fiscal/Import modal â€” reaproveitado pela importaÃ§Ã£o de extrato -->
 <div class="fs-modal-bg" id="fs-modal-bg" style="display:none">
     <div class="fs-modal" id="fs-modal-inner"></div>
 </div>
 <div class="fs-toast" id="fs-toast"></div>
 
-<!-- ── Dependências externas + infra compartilhada ── -->
+<!-- â”€â”€ DependÃªncias externas + infra compartilhada â”€â”€ -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<!-- ?v= força o navegador a baixar o JS novo a cada deploy (cache-busting). Bump a cada mudança de JS. -->
+<!-- ?v= forÃ§a o navegador a baixar o JS novo a cada deploy (cache-busting). Bump a cada mudanÃ§a de JS. -->
 <script src="../config.js?v=2026053102"></script>
-<script src="../shared/js/db.js?v=2026053102"></script>
+<script src="../shared/js/db.js?v=2026060102"></script>
 <script src="../shared/js/icons.js?v=2026053102"></script>
 <script src="../shared/js/calc-fiscal.js?v=2026053102"></script>
 
-<!-- ── Módulo Financeiro (ordem importa) ── -->
-<script src="./scripts/state.js?v=2026053102"></script>
+<!-- â”€â”€ MÃ³dulo Financeiro (ordem importa) â”€â”€ -->
+<script src="./scripts/state.js?v=2026060102"></script>
 <script src="./scripts/utils.js?v=2026053102"></script>
 <script src="./scripts/auth.js?v=2026053102"></script>
 <script src="./scripts/api.js?v=2026053102"></script>
-<script src="./scripts/handlers.js?v=2026053102"></script>
+<script src="./scripts/handlers.js?v=2026060102"></script>
 <script src="./scripts/noivas.js?v=2026053102"></script>
-<script src="./scripts/modals.js?v=2026053102"></script>
-<script src="./scripts/views.js?v=2026060101"></script>
+<script src="./scripts/modals.js?v=2026060102"></script>
+<script src="./scripts/views.js?v=2026060102"></script>
 <script src="./scripts/chat.js?v=2026053102"></script>
 <script src="./scripts/main.js?v=2026053102"></script>
 
-<!-- ── Import bancário (fluxo movido para a aba Saídas) ── -->
+<!-- â”€â”€ Import bancÃ¡rio (fluxo movido para a aba SaÃ­das) â”€â”€ -->
 <script src="./scripts/fiscal/fiscal-state.js?v=2026053102"></script>
 <script src="./scripts/fiscal/fiscal-categorias.js?v=2026053102"></script>
 <script src="./scripts/fiscal/fiscal-parser.js?v=2026053102"></script>
@@ -178,10 +178,10 @@
 <script src="./scripts/fiscal/fiscal-import.js?v=2026053102"></script>
 <script src="./scripts/fiscal/fiscal-main.js?v=2026053102"></script>
 
-<!-- ── Sidebar (último, depende de DOM pronto) ── -->
+<!-- â”€â”€ Sidebar (Ãºltimo, depende de DOM pronto) â”€â”€ -->
 <script src="../shared/js/global-search.js?v=2026053102"></script>
 <script src="../shared/js/global-notes.js?v=2026053102"></script>
 <script src="../shared/js/sidebar.js?v=2026053102"></script>
-<script src="../shared/js/alerts.js?v=2026053102"></script>
+<script src="../shared/js/alerts.js?v=2026060101"></script>
 </body>
 </html>

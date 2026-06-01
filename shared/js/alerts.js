@@ -62,13 +62,23 @@
     catch(e){ return false; }
   }
 
-  function basePath(){
-    var p=window.location.pathname, segs=p.split('/').filter(Boolean);
-    if(/\.html?$/i.test(segs[segs.length-1]||'')) segs.pop();
-    var base=''; for(var i=0;i<segs.length;i++) base+='../';
-    return base || './';
+  // Raiz do app derivada do próprio <script src=".../shared/js/alerts.js">.
+  // Usar o src resolvido (absoluto) torna a navegação correta em qualquer
+  // hospedagem — raiz do domínio OU subpasta (ex.: GitHub Pages /meu-studio/).
+  // (Contar segmentos do pathname quebrava no subpath: gerava ../ a mais e
+  //  caía na raiz do domínio → 404.)
+  var _self = document.currentScript;
+  function appRoot(){
+    var sc = _self;
+    if(!sc){
+      var ss=document.getElementsByTagName('script');
+      for(var i=ss.length-1;i>=0;i--){ if(/shared\/js\/alerts\.js/.test(ss[i].src)){ sc=ss[i]; break; } }
+    }
+    var src = sc ? sc.src : '';
+    var root = src.replace(/shared\/js\/alerts\.js.*$/, '');
+    return root || './';
   }
-  function go(href){ window.location.href = basePath() + href; }
+  function go(href){ window.location.href = appRoot() + href; }
 
   /* ── Prioridades ─────────────────────────────────────────── */
   var PRIO_RANK = { critico:3, importante:2, informativo:1 };
