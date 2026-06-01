@@ -227,5 +227,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-06-01 18:57 | main | feat(instagram): botao de chave Claude no header + Validador e erro de auth claro -->
+<!-- AUTO: 2026-06-01 18:57 | main | docs: sync CLAUDE.md [auto] -->
 
