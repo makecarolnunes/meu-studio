@@ -129,7 +129,8 @@ function renderLista() {
     if (listFilter!=='todos') list = list.filter(e=>e.status===listFilter||e.tipo===listFilter);
     if (listEquipeFilter==='__sem__') list = list.filter(e=>!e.equipe);
     else if (listEquipeFilter!=='todos') list = list.filter(e=>e.equipe===listEquipeFilter);
-    list.sort((a,b)=>(b.dataPag||'').localeCompare(a.dataPag||''));
+    // Entradas em ordem crescente de data (mais antigas primeiro) — pedido da Carol
+    list.sort((a,b)=>(a.dataPag||'').localeCompare(b.dataPag||''));
     const total = list.reduce((s,e)=>s+Number(e.valor||0),0);
     const filters = [{k:'todos',l:'Todos'},{k:'Realizado',l:'Realizado'},{k:'Previsto',l:'Previsto'},{k:'Sinal',l:'Sinal'},{k:'Pagamento',l:'Pagamento'},{k:'Parcela',l:'Parcela'}];
     const equipeFiltersHtml = equipes.length ? `<div class="ftabs" style="margin-top:5px">${[{k:'todos',l:'Todas'},{k:'__sem__',l:'Sem equipe'},...equipes.map(eq=>({k:eq,l:eq}))].map(f=>`<button class="ftab ${listEquipeFilter===f.k?'on':''}" onclick="setEquipeFilter('${f.k}')">${f.l}</button>`).join('')}</div>` : '';
@@ -163,9 +164,11 @@ function renderLista() {
                 <div class="eval" style="color:${e.status==='Realizado'?'var(--ok)':'var(--red)'}">${brl(e.valor)}</div>
                 <span class="sbadge ${e.status==='Realizado'?'sb-g':'sb-r'}" onclick="toggleStatus('${e.id}')">${e.status==='Realizado'?'Realizado':'Previsto'}</span>
             </div>
-            ${pixBtn}
-            <button class="editbtn" onclick="openEditEntry('${e.id}')">${SVG.edit}</button>
-            <button class="delbtn" onclick="delEntry('${e.id}')">${SVG.trash}</button>
+            <div class="eact">
+                ${pixBtn}
+                <button class="editbtn" onclick="openEditEntry('${e.id}')">${SVG.edit}</button>
+                <button class="delbtn" onclick="delEntry('${e.id}')">${SVG.trash}</button>
+            </div>
         </div>`;
     }).join('')}`;
 }
@@ -245,7 +248,8 @@ function renderListaDesktop() {
     if (listFilter!=='todos') list = list.filter(e=>e.status===listFilter||e.tipo===listFilter);
     if (listEquipeFilter==='__sem__') list = list.filter(e=>!e.equipe);
     else if (listEquipeFilter!=='todos') list = list.filter(e=>e.equipe===listEquipeFilter);
-    list.sort((a,b)=>(b.dataPag||'').localeCompare(a.dataPag||''));
+    // Entradas em ordem crescente de data (mais antigas primeiro) — pedido da Carol
+    list.sort((a,b)=>(a.dataPag||'').localeCompare(b.dataPag||''));
     const total    = list.reduce((s,e)=>s+Number(e.valor||0),0);
     const realized = list.filter(e=>e.status==='Realizado').reduce((s,e)=>s+Number(e.valor||0),0);
     const previsto = list.filter(e=>e.status==='Previsto').reduce((s,e)=>s+Number(e.valor||0),0);
@@ -523,8 +527,10 @@ function saidaItemHtml(s) {
             <div class="eval" style="color:${s.status==='Pago'?'var(--red)':'var(--muted)'}">${brl(s.valor)}</div>
             <span class="sbadge ${s.status==='Pago'?'sb-r':'sb-b'}" onclick="toggleSaidaStatus('${s.id}')">${s.status==='Pago'?'Pago':'Previsto'}</span>
         </div>
-        <button class="editbtn" onclick="openEditSaida('${s.id}')">${SVG.edit}</button>
-        <button class="delbtn" onclick="delSaida('${s.id}')">${SVG.trash}</button>
+        <div class="eact">
+            <button class="editbtn" onclick="openEditSaida('${s.id}')">${SVG.edit}</button>
+            <button class="delbtn" onclick="delSaida('${s.id}')">${SVG.trash}</button>
+        </div>
     </div>`;
 }
 

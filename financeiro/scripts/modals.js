@@ -9,6 +9,7 @@ function openConfig() {
 }
 function closeModal() {
     document.getElementById('modal-bg').style.display = 'none';
+    _editEntryOpenId = null;
 }
 
 // ── Service prices helpers ──
@@ -332,9 +333,13 @@ function edPickStatus(val, btn) {
 }
 
 // ── Editar Entrada ──
+// Guarda o id da entrada aberta no modal — usado pelos handlers de comprovante
+// para reabrir o modal e refletir o anexo recém-enviado/removido (mobile).
+let _editEntryOpenId = null;
 function openEditEntry(id) {
     const e = entries.find(x=>String(x.id)===String(id));
     if (!e) return;
+    _editEntryOpenId = String(id);
     _pick = {};
     document.getElementById('modal-bg').style.display='flex';
     document.getElementById('modal-inner').innerHTML=`
@@ -363,6 +368,21 @@ function openEditEntry(id) {
     </div>
     <div class="fg"><label class="fl">Atendimento pela equipe <span style="color:var(--muted);font-size:.75rem">(opcional)</span></label><input class="fi" type="text" id="ee-equipe" value="${e.equipe||''}" placeholder="Ex: Julia" autocomplete="off"></div>
     <div class="fg"><label class="fl">Observações</label><textarea class="fi ta" id="ee-obs">${e.obs||''}</textarea></div>
+    <div class="fg">
+        <label class="fl">Comprovante de pagamento</label>
+        ${e.comprovanteUrl
+            ? `<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;padding:10px 12px;background:#f0f7ff;border-radius:10px;border:1px solid #c5deff">
+                   <a href="${e.comprovanteUrl}" target="_blank" rel="noopener" style="flex:1;font-size:.82rem;color:#1565c0;font-weight:600;text-decoration:none">📎 Ver comprovante</a>
+                   <button onclick="removeEntradaComprovante('${e.id}')" style="font-size:.72rem;background:none;border:none;color:var(--muted);cursor:pointer;padding:2px 6px">🗑</button>
+               </div>`
+            : ''}
+        <label style="display:flex;align-items:center;justify-content:center;gap:7px;padding:11px 14px;background:var(--bg,#faf8f6);border:1.5px dashed var(--border,#e5ddd8);border-radius:12px;cursor:pointer;font-size:.82rem;font-weight:600;color:var(--muted)" onclick="document.getElementById('entrada-comp-inp').click()">
+            📎 ${e.comprovanteUrl ? 'Trocar comprovante' : 'Anexar comprovante'}
+            <span style="font-size:.7rem;opacity:.65">imagem ou PDF · máx 10 MB</span>
+        </label>
+        <input type="file" id="entrada-comp-inp" style="display:none" accept="image/*,application/pdf"
+               onchange="uploadEntradaComprovante(event,'${e.id}')">
+    </div>
     <button class="bsub" onclick="saveEditEntry('${id}')">Salvar</button>
     <button class="skip" onclick="closeModal()">Cancelar</button>`;
     _pick['tipo']   = e.tipo   || 'Pagamento';

@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
@@ -26,7 +26,7 @@
       <div class="login-logo-title">@makecarolnunes Studio</div>
       <div class="login-logo-sub">Entre para continuar</div>
     </div>
-    <input class="login-field" type="text"     id="login-user" placeholder="UsuÃ¡rio" autocomplete="username">
+    <input class="login-field" type="text"     id="login-user" placeholder="Usuário" autocomplete="username">
     <input class="login-field" type="password" id="login-pass" placeholder="Senha"   autocomplete="current-password"
            onkeydown="if(event.key==='Enter') doLogin()">
     <label class="login-remember">
@@ -37,7 +37,7 @@
   </div>
 </div>
 
-<!-- HUB (oculto atÃ© autenticar) -->
+<!-- HUB (oculto até autenticar) -->
 <div id="hub-app" style="display:none">
 <div class="wrap">
 
@@ -49,52 +49,52 @@
 
   <div class="body">
 
-    <!-- OPERAÃ‡ÃƒO -->
-    <div class="section-lbl">OperaÃ§Ã£o diÃ¡ria</div>
+    <!-- OPERAÇÃO -->
+    <div class="section-lbl">Operação diária</div>
     <div class="sys-grid" id="ops-grid"></div>
 
-    <!-- ORGANIZAÃ‡ÃƒO (tarefas + anotaÃ§Ãµes) -->
-    <div class="section-lbl">OrganizaÃ§Ã£o</div>
+    <!-- ORGANIZAÇÃO (tarefas + anotações) -->
+    <div class="section-lbl">Organização</div>
     <div class="sys-grid" id="org-grid"></div>
     <div id="todo-section" style="display:none">
       <div class="todo-hub-card" id="todo-widget"></div>
     </div>
 
-    <!-- CONTEÃšDO -->
-    <div class="section-lbl">ConteÃºdo</div>
+    <!-- CONTEÚDO -->
+    <div class="section-lbl">Conteúdo</div>
     <div class="sys-grid" id="creative-section"></div>
 
     <!-- REDES SOCIAIS -->
     <div class="section-lbl">Redes Sociais</div>
     <div class="sys-grid" id="social-section"></div>
 
-    <!-- ESTRATÃ‰GIA -->
-    <div class="section-lbl">EstratÃ©gia</div>
+    <!-- ESTRATÉGIA -->
+    <div class="section-lbl">Estratégia</div>
     <div class="sys-grid" id="estrategia-section"></div>
 
-    <!-- GESTÃƒO -->
-    <div class="section-lbl">GestÃ£o</div>
+    <!-- GESTÃO -->
+    <div class="section-lbl">Gestão</div>
     <div class="sys-grid" id="gestao-grid"></div>
 
   </div>
 
   <div class="footer">
-    @makecarolnunes Studio Â· Painel central
-    Â· <a href="#" onclick="doLogout();return false;" style="color:var(--muted);font-size:.75rem;">Sair</a>
+    @makecarolnunes Studio · Painel central
+    · <a href="#" onclick="doLogout();return false;" style="color:var(--muted);font-size:.75rem;">Sair</a>
   </div>
 
 </div><!-- /hub-app -->
 </div><!-- /wrap -->
 
 
-<!-- â”€â”€ DependÃªncias externas + infra compartilhada â”€â”€ -->
+<!-- ── Dependências externas + infra compartilhada ── -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="config.js"></script>
 <script src="shared/js/db.js"></script>
 <script src="shared/js/sidebar.js"></script>
 <script src="shared/js/alerts.js"></script>
 
-<!-- â”€â”€ Hub â”€â”€ -->
+<!-- ── Hub ── -->
 <script src="hub-assets/scripts/hub.js?v=2026060102"></script>
 </body>
 </html>

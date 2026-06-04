@@ -308,11 +308,24 @@ async function uploadEntradaComprovante(event, entryId) {
         const entry = entries.find(x => String(x.id) === String(entryId));
         if (entry) { entry.comprovanteUrl = result.link; cacheEntries(); }
         render();
+        refreshOpenEntryModal(entryId);
         toast('✅ Comprovante salvo!');
     } catch(err) {
         console.error(err);
         toast('❌ Erro ao enviar: ' + (err.message || err));
         render();
+    }
+}
+
+// Mobile: o anexo é gerenciado dentro do modal de edição, que é separado da
+// tela renderizada por render(). Reabre o modal para refletir o novo estado.
+function refreshOpenEntryModal(entryId) {
+    const bg = document.getElementById('modal-bg');
+    if (typeof openEditEntry === 'function'
+        && bg && bg.style.display === 'flex'
+        && typeof _editEntryOpenId !== 'undefined'
+        && String(_editEntryOpenId) === String(entryId)) {
+        openEditEntry(entryId);
     }
 }
 
@@ -323,6 +336,7 @@ async function removeEntradaComprovante(entryId) {
     entry.comprovanteUrl = '';
     cacheEntries();
     render();
+    refreshOpenEntryModal(entryId);
     toast('🗑 Comprovante removido');
 }
 

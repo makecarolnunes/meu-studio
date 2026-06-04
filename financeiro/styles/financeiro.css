@@ -56,7 +56,7 @@ body { max-width: var(--fin-container); margin: 0 auto; }
    Em mobile fica colado na esquerda do viewport; quando o container fica
    menor que a viewport (desktop), gruda na borda esquerda do container. */
 .btn-back-float {
-    position: fixed; bottom: calc(74px + env(safe-area-inset-bottom, 0px));
+    position: fixed; bottom: calc(88px + env(safe-area-inset-bottom, 0px));
     left: max(14px, calc(50vw - var(--fin-container) / 2 + 14px));
     z-index: 150;
     width: 42px; height: 42px; border-radius: 50%; border: none;
@@ -68,19 +68,21 @@ body { max-width: var(--fin-container); margin: 0 auto; }
 .btn-back-float:active { background: rgba(0,0,0,.18); }
 
 /* ── CONTENT ── */
-.content { padding: 13px 13px calc(86px + env(safe-area-inset-bottom, 0px)); }
+.content { padding: 13px 13px calc(102px + env(safe-area-inset-bottom, 0px)); }
 
-/* ── BOTTOM NAV ── */
+/* ── BOTTOM NAV ──
+   Mantém um respiro mínimo da borda inferior mesmo em aparelhos sem safe-area
+   (a barra estava "colada" na borda em alguns celulares). */
 .bnav {
     position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
     width: 100%; max-width: var(--fin-container); background: white;
     border-top: 1px solid var(--border); display: flex; z-index: 100;
     box-shadow: 0 -2px 8px rgba(0,0,0,.07);
-    padding-bottom: env(safe-area-inset-bottom, 0px);
+    padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
 }
 .ni {
     flex: 1; display: flex; flex-direction: column; align-items: center;
-    padding: 8px 0 6px; gap: 2px; cursor: pointer; color: var(--muted);
+    padding: 10px 0 8px; gap: 2px; cursor: pointer; color: var(--muted);
     font-size: .64rem; font-weight: 500; border: none; background: none;
 }
 .ni.active { color: var(--brown); }
@@ -163,6 +165,9 @@ body { max-width: var(--fin-container); margin: 0 auto; }
 }
 .pixbtn:active { background: #1ea854; }
 .pixbtn:hover  { background: #1fbb5b; }
+/* Grupo de ações (PIX / editar / excluir) — inline por padrão (tablet/desktop);
+   vira uma linha própria no mobile (ver @media max-width:600px). */
+.eact { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
 
 /* ── EMPTY / LOADING ── */
 .empty { text-align: center; padding: 44px 16px; color: var(--muted); }
@@ -171,6 +176,41 @@ body { max-width: var(--fin-container); margin: 0 auto; }
 .empty p { font-size: .85rem; line-height: 1.5; }
 .eico svg { width: 18px; height: 18px; display: block; }
 .editbtn svg, .delbtn svg { width: 14px; height: 14px; display: block; }
+
+/* ── ENTRY ITEM · refinamento mobile (telas estreitas) ──
+   Antes as informações ficavam comprimidas numa única linha. Aqui damos mais
+   respiro, destacamos o valor e movemos as ações (PIX/editar/excluir) para uma
+   linha própria, separadas por um filete, evitando elementos colados. */
+@media (max-width: 600px) {
+    .eitem {
+        flex-wrap: wrap;
+        align-items: center;
+        padding: 13px 14px;
+        border-radius: 16px;
+        margin-bottom: 9px;
+        column-gap: 12px;
+        row-gap: 2px;
+    }
+    .eico { width: 40px; height: 40px; border-radius: 12px; }
+    .einf { align-self: center; }
+    .ecli { font-size: .94rem; }
+    .emta { font-size: .73rem; margin-top: 3px; line-height: 1.4; white-space: normal; }
+    .erig { align-self: center; }
+    .eval { font-size: 1.08rem; }
+    .sbadge { font-size: .62rem; padding: 3px 9px; margin-top: 4px; }
+    /* Ações numa linha própria, alinhadas à direita */
+    .eact {
+        flex-basis: 100%;
+        justify-content: flex-end;
+        gap: 8px;
+        margin-top: 9px;
+        padding-top: 9px;
+        border-top: 1px solid var(--border);
+    }
+    .editbtn, .delbtn { width: 36px; height: 36px; border-radius: 9px; }
+    .editbtn svg, .delbtn svg { width: 15px; height: 15px; }
+    .pixbtn { height: 36px; }
+}
 
 /* ═════════════════════════════════════════════════════════
    NOIVAS — design tokens locais + componentes do card

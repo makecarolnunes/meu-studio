@@ -1364,6 +1364,8 @@ function openAction(id) {
   document.getElementById('act-phone').textContent  = e.Telefone || 'Sem telefone';
   const reqDateEl = document.getElementById('act-request-date');
   if (reqDateEl) reqDateEl.textContent = e.DataPedido ? 'Pedido em ' + fmtDateWeekFull(e.DataPedido) : '';
+  const dataPedidoEl = document.getElementById('act-data-pedido');
+  if (dataPedidoEl) dataPedidoEl.value = e.DataPedido || '';
 
   const badge = document.getElementById('act-badge');
   badge.textContent = e.Status || '—';
@@ -1446,6 +1448,27 @@ async function updateFollowup() {
   }
 }
 
+// Edita a data de cadastro/recebimento do orçamento (DataPedido).
+// Útil quando o orçamento é lançado dias depois de ter sido recebido.
+async function updateDataPedido() {
+  const e = entries.find(x => String(x.ID) === String(activeId));
+  if (!e) return;
+  const nova = document.getElementById('act-data-pedido').value;
+  if (!nova) return;
+  e.DataPedido = nova;
+  const reqDateEl = document.getElementById('act-request-date');
+  if (reqDateEl) reqDateEl.textContent = 'Pedido em ' + fmtDateWeekFull(e.DataPedido);
+  cacheEntries();
+  render();
+
+  const result = await postEntry({ action: 'update', id: e.ID, fields: { DataPedido: e.DataPedido } });
+  if (!result.ok && result.error !== 'no-url') {
+    toast('⚠️ Sincronização da data falhou');
+  } else if (result.ok) {
+    toast('✅ Data do pedido atualizada');
+  }
+}
+
 async function saveAction() {
   const e = entries.find(x => String(x.ID) === String(activeId));
   if (!e) return;
@@ -1453,6 +1476,8 @@ async function saveAction() {
   const existingSlots = entrySlots(e);
   e.Obs = packSlots(newObs, existingSlots);
   e.ProxFollowup = document.getElementById('act-followup').value;
+  const dpEl = document.getElementById('act-data-pedido');
+  if (dpEl && dpEl.value) e.DataPedido = dpEl.value;
   const vf = document.getElementById('act-val-fechado').value;
   const ve = document.getElementById('act-val-enviado').value;
   if (e.Status === 'Fechado' && vf) e.ValorFechado = vf;
@@ -1473,6 +1498,7 @@ async function saveAction() {
 
   const fields = {
     Status:        e.Status,
+    DataPedido:    e.DataPedido,
     DataEnvio:     e.DataEnvio,
     DataFechamento:e.DataFechamento,
     ProxFollowup:  e.ProxFollowup,
