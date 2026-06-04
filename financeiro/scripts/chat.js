@@ -25,9 +25,10 @@ const CHAT_TOOLS = [
     }, required:['cliente','valor','forma','status','origem'] }
   },
   { name:'add_saida',
-    description:'Registra nova saída/despesa.',
+    description:'Registra nova saída/despesa. No cartão (forma=Crédito), dataPag é o VENCIMENTO da fatura e a despesa pesa no caixa no mês anterior — o sistema calcula dataCaixa automaticamente. Só envie dataCaixa para sobrescrever.',
     input_schema:{ type:'object', properties:{
-        dataPag: { type:'string', description:'Data YYYY-MM-DD' },
+        dataPag: { type:'string', description:'Data YYYY-MM-DD (no cartão: vencimento da fatura)' },
+        dataCaixa:{ type:'string', description:'Competência YYYY-MM-DD — mês de impacto no caixa. Opcional, calculado automaticamente.' },
         tipo:    { type:'string', enum:['Reposição de Material','Curso','DAS','Assistente','Seguro de Celular','Investimento Produto','Investimento Material','Outro'] },
         valor:   { type:'number', description:'Valor da despesa' },
         forma:   { type:'string', enum:['PIX','Crédito','Dinheiro'] },
@@ -65,10 +66,10 @@ const CHAT_TOOLS = [
     input_schema:{ type:'object', properties:{ id:{ type:'string', description:'ID da entrada' } }, required:['id'] }
   },
   { name:'edit_saida',
-    description:'Edita campos de uma saída existente.',
+    description:'Edita campos de uma saída existente. Ao mudar dataPag ou forma, dataCaixa (competência) é recalculada (cartão = vencimento −1 mês), a menos que você envie dataCaixa explicitamente.',
     input_schema:{ type:'object', properties:{
         id:      { type:'string', description:'ID da saída' },
-        dataPag: { type:'string' }, tipo: { type:'string' },
+        dataPag: { type:'string' }, dataCaixa:{ type:'string', description:'Competência YYYY-MM-DD (mês de impacto no caixa)' }, tipo: { type:'string' },
         valor:   { type:'number' }, forma:{ type:'string', enum:['PIX','Crédito','Dinheiro'] },
         status:  { type:'string', enum:['Pago','Pendente'] },
         obs:     { type:'string' }
@@ -100,7 +101,7 @@ function buildContext() {
     const fatReal = me.filter(e=>e.status==='Realizado').reduce((t,e)=>t+Number(e.valor||0),0);
     const fatPrev = me.filter(e=>e.status==='Previsto').reduce((t,e)=>t+Number(e.valor||0),0);
 
-    const ms = saidas.filter(s=>{ const my=getMonthYear(s.dataPag); return my&&my.m===selMonth&&my.y===selYear; });
+    const ms = saidas.filter(s=>{ const my=getMonthYear(saidaBucketDate(s)); return my&&my.m===selMonth&&my.y===selYear; });
     const despReal = ms.filter(s=>s.status==='Pago').reduce((t,s)=>t+Number(s.valor||0),0);
     const despPrev = ms.filter(s=>s.status==='Pendente').reduce((t,s)=>t+Number(s.valor||0),0);
 
@@ -289,10 +290,12 @@ async function executeChatTool(name, input) {
             return `Entrada criada: id="${entry.id}" | ${entry.cliente} | ${entry.tipo} | ${brl(entry.valor)} | ${entry.status} | noivaId="${entry.noivaId}"`;
         }
         if (name === 'add_saida') {
+            const dpSaida = input.dataPag||today();
+            const fmSaida = input.forma||'PIX';
             const saida = {
-                id:genId(), dataPag:input.dataPag||today(),
+                id:genId(), dataPag:dpSaida, dataCaixa:input.dataCaixa||defaultDataCaixa(dpSaida, fmSaida),
                 tipo:input.tipo||'Outro', valor:String(input.valor||0),
-                forma:input.forma||'PIX', status:input.status||'Pago',
+                forma:fmSaida, status:input.status||'Pago',
                 obs:input.obs||'', createdAt:new Date().toISOString()
             };
             if (!await sbCall({action:'save', table:'saidas', data:encodeURIComponent(JSON.stringify(saida))})) return `ERRO: falha ao salvar no servidor — saída NÃO criada. Avise a usuária para tentar de novo.`;
@@ -411,6 +414,9 @@ async function executeChatTool(name, input) {
             if (input.forma   !== undefined) updated.forma   = input.forma;
             if (input.status  !== undefined) updated.status  = input.status;
             if (input.obs     !== undefined) updated.obs     = input.obs;
+            // Competência: explícita vence; senão recalcula quando muda vencimento/forma
+            if (input.dataCaixa !== undefined) updated.dataCaixa = input.dataCaixa;
+            else if (input.dataPag !== undefined || input.forma !== undefined) updated.dataCaixa = defaultDataCaixa(updated.dataPag, updated.forma);
             if (!await sbCall({action:'save', table:'saidas', data:encodeURIComponent(JSON.stringify(updated))})) return `ERRO: falha ao salvar no servidor — saída NÃO atualizada.`;
             saidas[idx] = updated; cacheSaidas();
             render();

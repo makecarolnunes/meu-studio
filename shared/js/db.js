@@ -61,7 +61,7 @@ const _NOIVA_KEYS = {
 };
 
 const _SAIDA_KEYS = {
-  dataPag: 'data_pag', tipo: 'tipo', valor: 'valor',
+  dataPag: 'data_pag', dataCaixa: 'data_caixa', tipo: 'tipo', valor: 'valor',
   forma: 'forma', status: 'status', obs: 'obs',
   recorrencia: 'recorrencia', grupoId: 'grupo_id',
   createdAt: 'created_at',
@@ -144,6 +144,7 @@ function _saidaFromDb(r) {
   return {
     id:          String(r.id),
     dataPag:     r.data_pag  || '',
+    dataCaixa:   r.data_caixa || '',
     tipo:        r.tipo      || '',
     valor:       r.valor     != null ? String(r.valor) : '',
     forma:       r.forma     || '',

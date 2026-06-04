@@ -178,6 +178,18 @@ async function fsImportConfirmarFaturaData() {
   await fsImportHashEPreview();
 }
 
+// Mês anterior (competência da fatura de cartão), sem overflow de dia.
+// Self-contained: o importador também roda no painel fiscal standalone,
+// onde utils.js do financeiro pode não estar carregado.
+function fsMesAnterior(dateStr) {
+  const [y, m, d] = String(dateStr || '').split('-').map(Number);
+  if (!y || !m) return dateStr || '';
+  const dt = new Date(y, m - 2, 1);
+  const lastDay = new Date(dt.getFullYear(), dt.getMonth() + 1, 0).getDate();
+  const day = Math.min(d || 1, lastDay);
+  return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+}
+
 function fsDetectarForma(t) {
   if (FS_IMPORT.tipoExtrato === 'cartao') return 'Crédito';
   const desc = (t.descricao || '').toLowerCase();
@@ -575,10 +587,16 @@ async function fsImportSalvar() {
     const dataSaida = (FS_IMPORT.tipoExtrato === 'cartao' && FS_IMPORT.faturaData)
       ? FS_IMPORT.faturaData
       : t.data;
+    // Competência (impacto no caixa): fatura de cartão pesa no mês anterior ao
+    // vencimento (paga com o dinheiro do mês anterior). Demais: própria data.
+    const dataCaixaSaida = (FS_IMPORT.tipoExtrato === 'cartao')
+      ? fsMesAnterior(dataSaida)
+      : dataSaida;
 
     novasSaidas.push({
       id: saidaId,
       dataPag: dataSaida,
+      dataCaixa: dataCaixaSaida,
       tipo: categoria,
       valor: String(valorAbs),
       forma: fsDetectarForma(t),

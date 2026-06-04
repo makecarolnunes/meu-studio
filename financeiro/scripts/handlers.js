@@ -78,6 +78,8 @@ function pickSaidaNatureza(n) { Fs.natureza = n; if (n !== 'PESSOAL') Fs.transfe
 function toggleTransfMim(checked) { Fs.transferenciaParaMim = !!checked; }
 function setSaidaTipoFilter(val) { saidasTipoFilter = val; saidasVerTodosMeses = false; render(); }
 function toggleSaidasTodosMeses() { saidasVerTodosMeses = !saidasVerTodosMeses; render(); }
+// Alterna a visão temporal das saídas: 'caixa' (competência) ou 'banco' (vencimento)
+function setSaidasVisao(v) { saidasVisao = (v === 'banco' ? 'banco' : 'caixa'); render(); }
 // Filtro de período do Resumo
 function setResumoPeriodo(p) { resumoPeriodo = p; render(); }
 function setResumoDataIni(v) { resumoDataIni = v; if (resumoPeriodo==='personalizado') render(); }
@@ -192,7 +194,8 @@ async function saveSaida() {
         // Só marca transferência-para-mim quando faz sentido (pessoal + transferência)
         const transfMim = (naturezaFs === 'PESSOAL' && Fs.forma === 'Transferência' && Fs.transferenciaParaMim === true);
         if (rec === 'unica') {
-            const saida = { id:genId(), dataPag:Fs.dataPag, tipo:tipoFs, valor:Fs.valor,
+            const saida = { id:genId(), dataPag:Fs.dataPag, dataCaixa:defaultDataCaixa(Fs.dataPag, Fs.forma),
+                tipo:tipoFs, valor:Fs.valor,
                 forma:Fs.forma, status:Fs.status, obs:Fs.obs,
                 recorrencia:'unica', grupoId:null, natureza:naturezaFs,
                 transferenciaParaMim:transfMim,
@@ -207,7 +210,8 @@ async function saveSaida() {
             const grupoId = genId();
             const novasSaidas = [];
             for (let i = 0; i < totalMeses; i++) {
-                novasSaidas.push({ id:genId(), dataPag:addMonths(Fs.dataPag, i),
+                const dp = addMonths(Fs.dataPag, i);
+                novasSaidas.push({ id:genId(), dataPag:dp, dataCaixa:defaultDataCaixa(dp, Fs.forma),
                     tipo:tipoFs, valor:Fs.valor, forma:Fs.forma, status:Fs.status, obs:Fs.obs,
                     recorrencia:rec, grupoId, natureza:naturezaFs,
                     transferenciaParaMim:transfMim,
@@ -350,10 +354,11 @@ function exportCSV() {
     toast('CSV baixado!');
 }
 function exportSaidasCSV() {
-    const ms=saidas.filter(s=>{const my=getMonthYear(s.dataPag);return my&&my.m===selMonth&&my.y===selYear;});
+    // Filtra pelo mesmo critério da tela (competência ou vencimento, conforme a visão)
+    const ms=saidas.filter(s=>{const my=getMonthYear(saidaBucketDate(s));return my&&my.m===selMonth&&my.y===selYear;});
     if(!ms.length){toast('Nenhuma saída para exportar!');return;}
-    const h=['Data','Valor','Tipo de Despesa','Status','Forma Pgto','Observações'];
-    const r=ms.map(s=>[s.dataPag?s.dataPag.split('-').reverse().join('/'):'',Number(s.valor||0).toFixed(2).replace('.',','),s.tipo,s.status,s.forma,(s.obs||'').replace(/"/g,'""')]);
+    const h=['Vencimento','Competência','Valor','Tipo de Despesa','Status','Forma Pgto','Observações'];
+    const r=ms.map(s=>[s.dataPag?s.dataPag.split('-').reverse().join('/'):'',saidaDataCaixa(s)?saidaDataCaixa(s).split('-').reverse().join('/'):'',Number(s.valor||0).toFixed(2).replace('.',','),s.tipo,s.status,s.forma,(s.obs||'').replace(/"/g,'""')]);
     dl([h,...r].map(row=>row.map(c=>`"${c}"`).join(';')).join('\n'),`saidas_${MONTHS[selMonth].toLowerCase()}_${selYear}.csv`);
     toast('CSV baixado!');
 }

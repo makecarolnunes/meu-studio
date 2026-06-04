@@ -29,6 +29,41 @@ function addMonths(dateStr, n) {
     return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
 }
 
+// ── Competência / fluxo de caixa (cartão de crédito) ──────────────
+// Subtrai 1 mês sem "vazar" pro mês errado por overflow de dia
+// (ex.: 2025-05-31 → 2025-04-30, não 2025-05-01).
+function prevMonth(dateStr) {
+    const [y,m,d] = String(dateStr||'').split('-').map(Number);
+    if (!y || !m) return dateStr || '';
+    const dt = new Date(y, m - 2, 1);                                   // dia 1 do mês anterior
+    const lastDay = new Date(dt.getFullYear(), dt.getMonth() + 1, 0).getDate();
+    const day = Math.min(d || 1, lastDay);
+    return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+}
+// Competência padrão de uma saída: cartão pesa no mês anterior ao vencimento;
+// demais formas pesam na própria data de pagamento.
+function defaultDataCaixa(dataPag, forma) {
+    if (!dataPag) return '';
+    return forma === 'Crédito' ? prevMonth(dataPag) : dataPag;
+}
+// Data de competência efetiva (com fallback p/ registros antigos sem dataCaixa).
+function saidaDataCaixa(s) {
+    return (s && s.dataCaixa) ? s.dataCaixa : defaultDataCaixa(s && s.dataPag, s && s.forma);
+}
+// Data usada pra agrupar uma saída por mês, conforme a visão atual:
+//  'caixa' (padrão) → competência · 'banco' → vencimento/movimento bancário.
+function saidaBucketDate(s) {
+    return (typeof saidasVisao !== 'undefined' && saidasVisao === 'banco')
+        ? (s && s.dataPag || '')
+        : saidaDataCaixa(s);
+}
+// "abr/25" — mês/ano curto, pra rótulos de competência.
+function fmtMesAno(ds) {
+    const my = getMonthYear(ds);
+    if (!my) return '—';
+    return MONTHS_SHORT[my.m].toLowerCase() + '/' + String(my.y).slice(2);
+}
+
 // Guards anti-duplo-clique
 let _savingEntry = false;
 let _savingSaida = false;

@@ -430,7 +430,8 @@ function openEditSaida(id) {
         <button class="bt ${natAtual==='PESSOAL'?'on':''}" onclick="edPickNatureza('PESSOAL',this)">Pessoal</button>
         <button class="bt ${natAtual==='MISTA'?'on':''}" onclick="edPickNatureza('MISTA',this)">Mista</button>
     </div></div>
-    <div class="fg"><label class="fl">Data</label><input class="fi" type="date" id="es-data" value="${s.dataPag||''}"></div>
+    <div class="fg"><label class="fl">Vencimento / pagamento</label><input class="fi" type="date" id="es-data" value="${s.dataPag||''}"></div>
+    <div class="fg"><label class="fl">Compete no caixa</label><input class="fi" type="date" id="es-datacaixa" value="${saidaDataCaixa(s)}"><div style="font-size:.68rem;color:var(--muted);margin-top:4px">Mês em que a despesa pesa no fluxo de caixa. No cartão, normalmente 1 mês antes do vencimento.</div></div>
     <div id="es-tipo-wrap" style="display:${natAtual==='PESSOAL'?'none':'block'}">
       <div class="fg"><label class="fl">Tipo de Despesa</label>
         <select class="fi" id="es-tipo-sel">
@@ -523,12 +524,21 @@ async function saveEditSaida(id) {
         toEdit = saidas.filter(x=>x.grupoId===s.grupoId);
     }
     const novaData = document.getElementById('es-data').value;
+    const dcEl = document.getElementById('es-datacaixa');
+    const novaDataCaixa = dcEl ? dcEl.value : '';
     // Confirma cada alteração no Supabase; aplica na tela só as que o servidor aceitou
     let okCount = 0;
     for (const item of toEdit) {
         const idx = saidas.findIndex(x=>String(x.id)===String(item.id));
         const updated = { ...item, ...changes };
-        if (scope === 'so-esta') updated.dataPag = novaData || item.dataPag;
+        if (scope === 'so-esta') {
+            updated.dataPag = novaData || item.dataPag;
+            // Competência: respeita o que a usuária digitou; senão deriva (cartão = vencimento −1 mês)
+            updated.dataCaixa = novaDataCaixa || defaultDataCaixa(updated.dataPag, formaChosen);
+        } else {
+            // Em lote (futuras/todas): cada item recalcula a partir do próprio vencimento
+            updated.dataCaixa = defaultDataCaixa(item.dataPag, formaChosen);
+        }
         if (!await sbCall({action:'save', table:'saidas', data:encodeURIComponent(JSON.stringify(updated))})) break;
         saidas[idx] = updated; okCount++;
     }

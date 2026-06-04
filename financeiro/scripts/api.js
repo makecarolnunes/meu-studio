@@ -4,7 +4,7 @@
 // ════════════════════════════════════════════════════════════
 
 function normalizeE(e) { return { ...e, id: String(e.id||''), auto: e.auto==='true'||e.auto===true, noivaId: e.noivaId||'', comprovanteUrl: e.comprovanteUrl||'' }; }
-function normalizeS(s) { return { ...s, id: String(s.id||'') }; }
+function normalizeS(s) { const o = { ...s, id: String(s.id||'') }; if (!o.dataCaixa) o.dataCaixa = defaultDataCaixa(o.dataPag, o.forma); return o; }
 function normalizeN(n) { return { ...n, id: String(n.id||''), contratos: Array.isArray(n.contratos)?n.contratos:[] }; }
 
 // Cache de LEITURA apenas (abrir rápido / ver dados). Nunca é fonte da verdade:

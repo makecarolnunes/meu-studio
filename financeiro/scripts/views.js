@@ -330,10 +330,23 @@ function renderListaDesktop() {
     </div>`;
 }
 
+// Toggle de visão temporal das saídas: competência (caixa) × movimento bancário.
+// Cartão de crédito pesa no caixa no mês anterior ao vencimento.
+function visaoToggleHtml() {
+    const hint = saidasVisao==='caixa'
+        ? 'Cartão pesa no mês anterior ao vencimento — o caixa que você reserva.'
+        : 'Cada saída no mês em que sai da conta — o vencimento da fatura.';
+    return `<div class="ftabs" style="margin-bottom:4px">
+        <button class="ftab ${saidasVisao==='caixa'?'on':''}" onclick="setSaidasVisao('caixa')" title="Visão de caixa / competência">💰 Competência</button>
+        <button class="ftab ${saidasVisao==='banco'?'on':''}" onclick="setSaidasVisao('banco')" title="Movimento bancário / vencimento">🏦 Movimento bancário</button>
+    </div>
+    <div style="font-size:.68rem;color:var(--muted);margin:0 0 10px">${hint}</div>`;
+}
+
 // ── SCREEN: SAÍDAS ──
 function renderSaidas() {
     if (window.innerWidth >= 1024) return renderSaidasDesktop();
-    const monthList = saidas.filter(s=>{const my=getMonthYear(s.dataPag);return my&&my.m===selMonth&&my.y===selYear;});
+    const monthList = saidas.filter(s=>{const my=getMonthYear(saidaBucketDate(s));return my&&my.m===selMonth&&my.y===selYear;});
     // Guard: tipo de despesa selecionado ausente neste mês volta a "Todos os tipos".
     // Mesmo bug do filtro de equipe — o dropdown só lista os tipos do mês visível,
     // então um filtro preso some da tela e esconde as saídas, zerando o total.
@@ -383,6 +396,7 @@ function renderSaidas() {
     ${(()=>{ const tipos=[...new Set(monthList.filter(s=>saidasNaturezaFilter==='todas'||(s.natureza||'PROFISSIONAL')===saidasNaturezaFilter).map(s=>s.tipo).filter(Boolean))].sort(); return tipos.length>1?`<div style="margin-bottom:8px"><select class="fi" style="font-size:.82rem;padding:7px 10px" onchange="setSaidaTipoFilter(this.value)"><option value="todas">Todos os tipos</option>${tipos.map(t=>`<option value="${t}" ${saidasTipoFilter===t?'selected':''}>${t}</option>`).join('')}</select></div>`:''; })()}
     ${saidasTipoFilter !== 'todas' ? `<button class="ftab ${saidasVerTodosMeses?'on':''}" onclick="toggleSaidasTodosMeses()" style="margin-bottom:10px;display:inline-flex;align-items:center;gap:6px">📅 ${saidasVerTodosMeses ? 'Voltar ao mês atual' : 'Ver em todos os meses'}</button>` : ''}
     ${saidasFormOpen ? renderSaidaForm() : ''}
+    ${visaoToggleHtml()}
     ${renderSaidaListContent(list)}`;
 }
 
@@ -429,7 +443,7 @@ function renderSaidaListContent(list) {
 
 // ── DESKTOP: SAÍDAS — hero card com totais + toolbar com filtros e CTA ──
 function renderSaidasDesktop() {
-    const monthList = saidas.filter(s=>{const my=getMonthYear(s.dataPag);return my&&my.m===selMonth&&my.y===selYear;});
+    const monthList = saidas.filter(s=>{const my=getMonthYear(saidaBucketDate(s));return my&&my.m===selMonth&&my.y===selYear;});
     // Guard: tipo de despesa selecionado ausente neste mês volta a "Todos os tipos".
     // Mesmo bug do filtro de equipe — o dropdown só lista os tipos do mês visível,
     // então um filtro preso some da tela e esconde as saídas, zerando o total.
@@ -502,6 +516,7 @@ function renderSaidasDesktop() {
         </div>
     </div>
     ${saidasFormOpen ? renderSaidaForm() : ''}
+    ${visaoToggleHtml()}
     ${renderSaidaListContent(list)}`;
 }
 
@@ -516,11 +531,17 @@ function saidaItemHtml(s) {
     const creditTag = s.forma === 'Crédito'
         ? `<span style="font-size:.65rem;background:#e3f2fd;color:#0d47a1;border-radius:7px;padding:1px 6px;margin-left:4px">💳</span>`
         : '';
+    // Cartão: deixa explícito que vence num mês mas pesa no caixa no mês anterior
+    const dcx = saidaDataCaixa(s);
+    const compInfo = (s.forma === 'Crédito' && dcx && dcx.slice(0,7) !== (s.dataPag||'').slice(0,7))
+        ? `<div class="emta" style="font-size:.68rem;color:#0d47a1">💳 vence ${fmtDate(s.dataPag)} · pesa no caixa em ${fmtMesAno(dcx)}</div>`
+        : '';
     return `<div class="eitem">
         <div class="eico" style="background:${st.bg};color:${st.col}">${st.ico}</div>
         <div class="einf"><div class="ecli">${s.tipo}${natBadge}${creditTag}</div>
             <div class="emta">${fmtDate(s.dataPag)} · ${s.forma}${s.grupoId?` · ${s.recorrencia==='fixa'?'↺ Fixa':'↺ Recorrente'}`:''}
             </div>
+            ${compInfo}
             ${s.obs?`<div class="emta">${s.obs}</div>`:''}
         </div>
         <div class="erig">
@@ -576,7 +597,8 @@ function renderResumo() {
 
     // ── Filtra entradas/saidas pelo range ──
     const me = entries.filter(e => inResumoRange(e.dataPag, ini, fim));
-    const msAll = saidas.filter(s => inResumoRange(s.dataPag, ini, fim));
+    // Saídas entram pela data de competência/banco conforme a visão (cartão: competência = mês anterior ao vencimento)
+    const msAll = saidas.filter(s => inResumoRange(saidaBucketDate(s), ini, fim));
     const ms = msAll.filter(s => saidasNaturezaFilter==='todas' || (s.natureza||'PROFISSIONAL')===saidasNaturezaFilter);
 
     const fatReal = me.filter(e=>e.status==='Realizado').reduce((t,e)=>t+Number(e.valor||0),0);
@@ -608,10 +630,10 @@ function renderResumo() {
 
     // Visão anual: sempre referente ao ano do FIM do range (ou range único)
     const fatAno=entries.filter(e=>{const my=getMonthYear(e.dataPag);return my&&my.y===anoVisaoAnual;}).reduce((t,e)=>t+Number(e.valor||0),0);
-    const desAno=saidas.filter(s=>{const my=getMonthYear(s.dataPag);return my&&my.y===anoVisaoAnual;}).reduce((t,s)=>t+Number(s.valor||0),0);
+    const desAno=saidas.filter(s=>{const my=getMonthYear(saidaBucketDate(s));return my&&my.y===anoVisaoAnual;}).reduce((t,s)=>t+Number(s.valor||0),0);
     const anoRows=MONTHS_SHORT.map((m,i)=>{
         const em=entries.filter(e=>{const my=getMonthYear(e.dataPag);return my&&my.m===i&&my.y===anoVisaoAnual;});
-        const sm=saidas.filter(s=>{const my=getMonthYear(s.dataPag);return my&&my.m===i&&my.y===anoVisaoAnual;});
+        const sm=saidas.filter(s=>{const my=getMonthYear(saidaBucketDate(s));return my&&my.m===i&&my.y===anoVisaoAnual;});
         const fat=em.reduce((t,e)=>t+Number(e.valor||0),0);
         const des=sm.reduce((t,s)=>t+Number(s.valor||0),0);
         const luc=fat-des;
@@ -700,6 +722,7 @@ function renderResumo() {
     </div>
     <div class="card">
         <div class="card-title">Saídas</div>
+        ${visaoToggleHtml()}
         <div class="ftabs ftabs--wrap" style="margin-bottom:10px">
             <button class="ftab ${saidasNaturezaFilter==='todas'?'on':''}" onclick="setSaidaNatureza('todas')">Todas</button>
             <button class="ftab ${saidasNaturezaFilter==='PROFISSIONAL'?'on':''}" onclick="setSaidaNatureza('PROFISSIONAL')">Profissional</button>

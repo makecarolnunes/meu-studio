@@ -115,6 +115,24 @@ if ($c -notmatch '</html>') { Write-Warning 'ARQUIVO TRUNCADO' }
 
 ---
 
+## Saídas: duas datas (competência × banco)
+
+Cada saída tem **duas datas** — não confundir:
+
+| Campo | Significado |
+|---|---|
+| `dataPag` | **Vencimento / movimento bancário** — quando o dinheiro sai da conta. |
+| `dataCaixa` | **Competência** — mês em que a despesa pesa no fluxo de caixa. |
+
+- **Cartão (`forma === 'Crédito'`)**: a fatura vence em `dataPag`, mas é paga com o dinheiro do mês anterior → `dataCaixa = dataPag − 1 mês` (helper `defaultDataCaixa`/`prevMonth` em `utils.js`).
+- **Demais formas**: `dataCaixa = dataPag`.
+- O import OFX de fatura carimba `dataPag = data de pagamento da fatura` em todas as compras e deriva `dataCaixa` (mês anterior) em `fiscal-import.js`.
+- **Toda agregação por mês de saída** usa `saidaBucketDate(s)` (respeita o toggle `saidasVisao`: `'caixa'` = competência, padrão · `'banco'` = vencimento). Nunca voltar a `getMonthYear(s.dataPag)` direto em Resumo/Saídas/Visão Anual.
+- `saidaDataCaixa(s)` tem **fallback**: registro antigo sem `dataCaixa` recalcula na hora — o display fica correto mesmo antes do backfill.
+- Migration: `sql/saidas-data-caixa.sql` (rodar manual no SQL Editor — migrations não rodam no deploy).
+
+---
+
 ## Issues conhecidos / Tech debt
 
 - `loadServicePricesFromSupabase()` em `api.js` busca preços da tabela `valores_servicos` mas não bloqueia o render (fire-and-forget). Se falhar, usa preços padrão hardcoded em `state.js`.
