@@ -38,6 +38,7 @@ let listEquipeFilter = 'todos';
 let saidasFormOpen = false;
 let saidasNaturezaFilter = 'todas';  // 'todas' | 'PROFISSIONAL' | 'PESSOAL' | 'MISTA'
 let saidasTipoFilter    = 'todas';  // 'todas' | nome da categoria
+let saidasFormaFilter   = [];        // multi-seleção de forma de pagamento ([] = todas)
 let saidasVerTodosMeses = false;    // ver categoria selecionada em todos os meses
 // Visão das saídas no tempo: 'caixa' agrupa por competência (cartão pesa no mês
 // anterior ao vencimento) · 'banco' agrupa pelo vencimento/movimento bancário.

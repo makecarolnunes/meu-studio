@@ -343,6 +343,17 @@ function visaoToggleHtml() {
     <div style="font-size:.68rem;color:var(--muted);margin:0 0 10px">${hint}</div>`;
 }
 
+// Filtro por forma de pagamento (multi-seleção). Some quando há 0–1 forma no mês.
+function saidaFormaFilterHtml(formasDisp) {
+    if (!formasDisp || formasDisp.length <= 1) return '';
+    const todasOn = saidasFormaFilter.length === 0;
+    const emoji = { 'PIX':'⚡', 'Débito':'💳', 'Crédito':'💳', 'Dinheiro':'💵', 'Transferência':'🔁' };
+    return `<div class="ftabs ftabs--wrap" style="margin-bottom:10px">
+        <button class="ftab ${todasOn?'on':''}" onclick="setSaidaFormaTodas()">Todas as formas</button>
+        ${formasDisp.map(f=>`<button class="ftab ${saidasFormaFilter.includes(f)?'on':''}" onclick="toggleSaidaFormaFilter('${f}')">${emoji[f]||''} ${f}</button>`).join('')}
+    </div>`;
+}
+
 // ── SCREEN: SAÍDAS ──
 function renderSaidas() {
     if (window.innerWidth >= 1024) return renderSaidasDesktop();
@@ -355,9 +366,15 @@ function renderSaidas() {
         && !monthList.some(s => (saidasNaturezaFilter==='todas' || (s.natureza||'PROFISSIONAL')===saidasNaturezaFilter) && s.tipo===saidasTipoFilter)) {
         saidasTipoFilter='todas';
     }
-    const list = monthList
+    const baseList = monthList
         .filter(s=> saidasNaturezaFilter==='todas' || (s.natureza||'PROFISSIONAL')===saidasNaturezaFilter)
-        .filter(s=> saidasTipoFilter==='todas' || s.tipo===saidasTipoFilter)
+        .filter(s=> saidasTipoFilter==='todas' || s.tipo===saidasTipoFilter);
+    // Formas disponíveis no contexto atual (mês + natureza + tipo) p/ os botões do filtro
+    const formasDisp = [...new Set(baseList.map(s=>s.forma).filter(Boolean))].sort();
+    // Guard: solta da seleção qualquer forma ausente neste mês (filtro preso não esconde tudo)
+    saidasFormaFilter = saidasFormaFilter.filter(f=>formasDisp.includes(f));
+    const list = baseList
+        .filter(s=> saidasFormaFilter.length===0 || saidasFormaFilter.includes(s.forma))
         .sort((a,b)=>(b.dataPag||'').localeCompare(a.dataPag||''));
     const totPago = list.filter(s=>s.status==='Pago').reduce((t,s)=>t+Number(s.valor||0),0);
     const totPrev = list.filter(s=>s.status==='Previsto').reduce((t,s)=>t+Number(s.valor||0),0);
@@ -395,6 +412,7 @@ function renderSaidas() {
 
     ${(()=>{ const tipos=[...new Set(monthList.filter(s=>saidasNaturezaFilter==='todas'||(s.natureza||'PROFISSIONAL')===saidasNaturezaFilter).map(s=>s.tipo).filter(Boolean))].sort(); return tipos.length>1?`<div style="margin-bottom:8px"><select class="fi" style="font-size:.82rem;padding:7px 10px" onchange="setSaidaTipoFilter(this.value)"><option value="todas">Todos os tipos</option>${tipos.map(t=>`<option value="${t}" ${saidasTipoFilter===t?'selected':''}>${t}</option>`).join('')}</select></div>`:''; })()}
     ${saidasTipoFilter !== 'todas' ? `<button class="ftab ${saidasVerTodosMeses?'on':''}" onclick="toggleSaidasTodosMeses()" style="margin-bottom:10px;display:inline-flex;align-items:center;gap:6px">📅 ${saidasVerTodosMeses ? 'Voltar ao mês atual' : 'Ver em todos os meses'}</button>` : ''}
+    ${saidaFormaFilterHtml(formasDisp)}
     ${saidasFormOpen ? renderSaidaForm() : ''}
     ${visaoToggleHtml()}
     ${renderSaidaListContent(list)}`;
@@ -452,9 +470,15 @@ function renderSaidasDesktop() {
         && !monthList.some(s => (saidasNaturezaFilter==='todas' || (s.natureza||'PROFISSIONAL')===saidasNaturezaFilter) && s.tipo===saidasTipoFilter)) {
         saidasTipoFilter='todas';
     }
-    const list = monthList
+    const baseList = monthList
         .filter(s=> saidasNaturezaFilter==='todas' || (s.natureza||'PROFISSIONAL')===saidasNaturezaFilter)
-        .filter(s=> saidasTipoFilter==='todas' || s.tipo===saidasTipoFilter)
+        .filter(s=> saidasTipoFilter==='todas' || s.tipo===saidasTipoFilter);
+    // Formas disponíveis no contexto atual (mês + natureza + tipo) p/ os botões do filtro
+    const formasDisp = [...new Set(baseList.map(s=>s.forma).filter(Boolean))].sort();
+    // Guard: solta da seleção qualquer forma ausente neste mês (filtro preso não esconde tudo)
+    saidasFormaFilter = saidasFormaFilter.filter(f=>formasDisp.includes(f));
+    const list = baseList
+        .filter(s=> saidasFormaFilter.length===0 || saidasFormaFilter.includes(s.forma))
         .sort((a,b)=>(b.dataPag||'').localeCompare(a.dataPag||''));
     const totPago = list.filter(s=>s.status==='Pago').reduce((t,s)=>t+Number(s.valor||0),0);
     const totPrev = list.filter(s=>s.status==='Previsto').reduce((t,s)=>t+Number(s.valor||0),0);
@@ -515,6 +539,7 @@ function renderSaidasDesktop() {
             </button>
         </div>
     </div>
+    ${saidaFormaFilterHtml(formasDisp)}
     ${saidasFormOpen ? renderSaidaForm() : ''}
     ${visaoToggleHtml()}
     ${renderSaidaListContent(list)}`;
@@ -559,6 +584,7 @@ function renderSaidasHistorico() {
     const filtradas = saidas
         .filter(s => saidasTipoFilter === 'todas' || s.tipo === saidasTipoFilter)
         .filter(s => saidasNaturezaFilter === 'todas' || (s.natureza || 'PROFISSIONAL') === saidasNaturezaFilter)
+        .filter(s => saidasFormaFilter.length === 0 || saidasFormaFilter.includes(s.forma))
         .sort((a,b) => (b.dataPag||'').localeCompare(a.dataPag||''));
     if (!filtradas.length) return `<div class="empty"><div class="ico">${SVG.upload}</div><p>Nenhuma saída de <strong>${saidasTipoFilter}</strong></p></div>`;
     const total = filtradas.reduce((t,s) => t + Number(s.valor||0), 0);

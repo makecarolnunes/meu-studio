@@ -80,6 +80,13 @@ function setSaidaTipoFilter(val) { saidasTipoFilter = val; saidasVerTodosMeses =
 function toggleSaidasTodosMeses() { saidasVerTodosMeses = !saidasVerTodosMeses; render(); }
 // Alterna a visão temporal das saídas: 'caixa' (competência) ou 'banco' (vencimento)
 function setSaidasVisao(v) { saidasVisao = (v === 'banco' ? 'banco' : 'caixa'); render(); }
+// Filtro por forma de pagamento (multi-seleção). Vazio = todas.
+function setSaidaFormaTodas() { saidasFormaFilter = []; render(); }
+function toggleSaidaFormaFilter(f) {
+    const i = saidasFormaFilter.indexOf(f);
+    if (i >= 0) saidasFormaFilter.splice(i, 1); else saidasFormaFilter.push(f);
+    render();
+}
 // Filtro de período do Resumo
 function setResumoPeriodo(p) { resumoPeriodo = p; render(); }
 function setResumoDataIni(v) { resumoDataIni = v; if (resumoPeriodo==='personalizado') render(); }
