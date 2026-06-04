@@ -227,5 +227,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-06-04 17:36 | main | fix: encoding pt-BR + ajustes mobile financeiro e data do or├ºamento -->
+<!-- AUTO: 2026-06-04 17:36 | main | docs: sync CLAUDE.md [auto] -->
 
