@@ -343,9 +343,9 @@ function visaoToggleHtml() {
     <div style="font-size:.68rem;color:var(--muted);margin:0 0 10px">${hint}</div>`;
 }
 
-// Filtro por forma de pagamento (multi-seleção). Some quando há 0–1 forma no mês.
+// Filtro por forma de pagamento (multi-seleção). Some só quando o mês não tem saídas.
 function saidaFormaFilterHtml(formasDisp) {
-    if (!formasDisp || formasDisp.length <= 1) return '';
+    if (!formasDisp || formasDisp.length === 0) return '';
     const todasOn = saidasFormaFilter.length === 0;
     const emoji = { 'PIX':'⚡', 'Débito':'💳', 'Crédito':'💳', 'Dinheiro':'💵', 'Transferência':'🔁' };
     return `<div class="ftabs ftabs--wrap" style="margin-bottom:10px">
