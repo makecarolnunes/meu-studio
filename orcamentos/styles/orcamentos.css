@@ -238,6 +238,7 @@
     .st-fechado  { background: var(--ok-l);     color: var(--ok);     }
     .st-perdido  { background: var(--red-l);    color: var(--red);    }
     .st-semresp  { background: var(--slate-l);  color: var(--slate);  }
+    .st-outros   { background: var(--brown-l);  color: var(--brown-d);}
 
     /* ── WA QUICK BTN ────────────────────────────────────── */
     .wa-btn {
@@ -651,6 +652,7 @@
     .st-btn-fechado { background: var(--ok-l);     color: var(--ok);     }
     .st-btn-perdido { background: var(--red-l);    color: var(--red);    }
     .st-btn-semresp { background: var(--slate-l);  color: var(--slate);  }
+    .st-btn-outros  { background: var(--brown-l);  color: var(--brown-d);}
 
     .fu-row {
       display: none; align-items: center; gap: 10px;

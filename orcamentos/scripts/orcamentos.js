@@ -34,7 +34,11 @@ const STATUS_CLASS = {
   'Fechado':                       'st-fechado',
   'Perdido - Sem Resposta':        'st-semresp',
   'Perdido - Sem Disponibilidade': 'st-perdido',
+  'Perdido - Outros motivos':      'st-outros',
 };
+
+// Todos os status de "perdido" (qualquer motivo)
+const PERDIDO_STATUS = ['Perdido - Sem Resposta', 'Perdido - Sem Disponibilidade', 'Perdido - Outros motivos'];
 
 const DIAS = ['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'];
 
@@ -106,7 +110,7 @@ function renderEntryCard(e) {
   const agPend = e.Status === 'Fechado' && !getAgendaCriada(e);
   const cls    = agPend ? 'is-agenda-pend' :
                  agOk   ? 'is-agenda-ok'   :
-                 ['Perdido - Sem Resposta','Perdido - Sem Disponibilidade'].includes(e.Status) ? 'is-perdido' :
+                 PERDIDO_STATUS.includes(e.Status) ? 'is-perdido' :
                  needsFollowup(e) ? 'needs-fu' : '';
   const nfu    = needsFollowup(e);
   const val    = e.ValorFechado ? parseFloat(e.ValorFechado) : parseFloat(e.ValorProp) || 0;
@@ -165,7 +169,7 @@ function daysSince(dateStr) {
   return Math.floor((Date.now() - d) / 86400000);
 }
 function needsFollowup(e) {
-  if (['Fechado','Perdido - Sem Resposta','Perdido - Sem Disponibilidade'].includes(e.Status)) return false;
+  if (e.Status === 'Fechado' || PERDIDO_STATUS.includes(e.Status)) return false;
   return e.ProxFollowup && e.ProxFollowup <= todayStr();
 }
 function initials(name) {
@@ -880,7 +884,7 @@ function _convStatsFor(start, end) {
   const list = entries.filter(inPeriod);
   const enviados   = list.length;
   const fechados   = list.filter(e => e.Status === 'Fechado').length;
-  const perdidos   = list.filter(e => ['Perdido - Sem Resposta','Perdido - Sem Disponibilidade'].includes(e.Status)).length;
+  const perdidos   = list.filter(e => PERDIDO_STATUS.includes(e.Status)).length;
   const abertos    = enviados - fechados - perdidos;
   const receita    = list.filter(e => e.Status === 'Fechado')
     .reduce((s,e) => s + (parseFloat(e.ValorFechado) || parseFloat(e.ValorProp) || 0), 0);
@@ -1027,7 +1031,7 @@ function render() {
   // Filtro por status
   if (curFilter === 'followup')          list = list.filter(e => needsFollowup(e));
   else if (curFilter === 'novos')        list = list.filter(e => ['Novo Pedido','Orçamento Enviado'].includes(e.Status));
-  else if (curFilter === 'perdidos')     list = list.filter(e => ['Perdido - Sem Resposta','Perdido - Sem Disponibilidade'].includes(e.Status));
+  else if (curFilter === 'perdidos')     list = list.filter(e => PERDIDO_STATUS.includes(e.Status));
   else if (curFilter === 'fechados')     list = list.filter(e => e.Status === 'Fechado');
   else if (curFilter === 'agenda-pend')  list = list.filter(e => e.Status === 'Fechado' && !getAgendaCriada(e));
   else if (curFilter === 'agenda-ok')    list = list.filter(e => e.Status === 'Fechado' && getAgendaCriada(e));
