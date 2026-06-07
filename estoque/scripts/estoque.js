@@ -227,7 +227,7 @@ function render() {
   if (!list.length) {
     html += '<div class="empty-filter"><p>Nenhum item' + (curFilter !== 'todos' ? ' neste filtro' : '') + '.</p></div>';
   } else {
-    html += list.map(function(i) { return itemCardHtml(i, false); }).join('');
+    html += renderGrouped(list);
   }
 
   // Seção de comprados
@@ -264,6 +264,48 @@ function itemCardHtml(i, isComprado) {
     '</div>' +
     '<span class="sbadge" style="color:' + s.color + ';background:' + s.bg + '">' + s.label + '</span>' +
   '</div>';
+}
+
+// ── AGRUPAMENTO POR STATUS (página principal) ─────────────────
+// Ordem dos tópicos na lista: zerado → acabando → investir → wishlist → ok
+var STATUS_ORDER   = ['zerado', 'acabando', 'investir', 'wishlist', 'ok'];
+var STATUS_SEC_LBL = {
+  zerado:   'Zerado — repor',
+  acabando: 'Acabando',
+  investir: 'Investir',
+  wishlist: 'Wishlist',
+  ok:       'OK — tenho',
+};
+
+function renderGrouped(list) {
+  var groups = STATUS_ORDER.map(function(st) {
+    return { st: st, items: list.filter(function(i) { return i.status === st; }) };
+  }).filter(function(g) { return g.items.length; });
+
+  // Qualquer status fora da lista conhecida cai num grupo final
+  var others = list.filter(function(i) { return STATUS_ORDER.indexOf(i.status) < 0; });
+  if (others.length) groups.push({ st: 'outros', items: others });
+
+  // Um único grupo (ex.: filtro de status específico) → sem cabeçalho
+  if (groups.length <= 1) {
+    return list.map(function(i) { return itemCardHtml(i, false); }).join('');
+  }
+
+  return groups.map(function(g) {
+    return statusSecHeaderHtml(g.st, g.items.length) +
+      g.items.map(function(i) { return itemCardHtml(i, false); }).join('');
+  }).join('');
+}
+
+function statusSecHeaderHtml(status, count) {
+  var cfg = STATUS_CFG[status] || { color: '#888', bg: '#EEE' };
+  var lbl = STATUS_SEC_LBL[status] || cfg.label || 'Outros';
+  return '<div class="status-sec-hdr">' +
+      '<span class="status-sec-dot" style="background:' + cfg.color + '"></span>' +
+      '<span class="status-sec-lbl" style="color:' + cfg.color + '">' + lbl + '</span>' +
+      '<span class="status-sec-count" style="color:' + cfg.color + ';background:' + cfg.bg + '">' + count + '</span>' +
+      '<span class="status-sec-line"></span>' +
+    '</div>';
 }
 
 // ── FILTERS ───────────────────────────────────────────────────
