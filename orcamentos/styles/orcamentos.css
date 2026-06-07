@@ -93,6 +93,29 @@
     }
     .month-clear.show { display: flex; }
 
+    /* ── DATA DO ATENDIMENTO (mobile) ─────────────────────── */
+    .event-date-bar {
+      display: flex; align-items: center; gap: 8px;
+      padding: 6px 13px; background: var(--card);
+      border-bottom: 1px solid var(--border);
+    }
+    .event-date-lbl {
+      font-size: 0.74rem; font-weight: 700; color: var(--muted);
+      white-space: nowrap;
+    }
+    .event-date-input {
+      flex: 1; min-width: 0; padding: 6px 10px;
+      border: 1.5px solid var(--border); border-radius: 8px;
+      font-size: 0.8rem; font-family: inherit; color: var(--brown-d);
+      background: var(--surface-2); -webkit-appearance: none;
+    }
+    .event-date-input:focus { outline: none; border-color: var(--purple); background: #fff; }
+    .event-date-clear {
+      background: var(--purple); color: #fff; border: none; border-radius: 8px;
+      width: 26px; height: 26px; font-size: 0.7rem; cursor: pointer; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+    }
+
     /* ── FOLLOW-UP ALERT ────────────────────────────────── */
     .fu-alert {
       margin: 4px 13px 0; background: #fff3e0;
@@ -399,6 +422,7 @@
       .chips       { display: none; }
       .month-nav   { display: none; }
       .m-search-bar{ display: none; }
+      .event-date-bar { display: none; }
       .orig-tabs   { display: none; }
       #equipe-tabs { display: none !important; }
       .fab         { display: none; }
@@ -445,6 +469,20 @@
       }
       .search-input:focus { outline: none; border-color: var(--brown); background: #fff; }
       .search-input::placeholder { color: var(--muted); }
+
+      /* ── Filtro por data de atendimento (desktop) ── */
+      .d-event-group { display: flex; align-items: center; gap: 8px; }
+      .d-event-input {
+        padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px;
+        font-size: .78rem; font-family: inherit; color: var(--brown-d);
+        background: var(--surface-2); -webkit-appearance: none; cursor: pointer;
+      }
+      .d-event-input:focus { outline: none; border-color: var(--brown); background: #fff; }
+      .d-event-clear {
+        background: var(--purple); color: #fff; border: none; border-radius: 50%;
+        width: 22px; height: 22px; font-size: .65rem; cursor: pointer;
+        display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+      }
 
       /* ── Conteúdo ── */
       .content { padding: 16px 28px 64px; }

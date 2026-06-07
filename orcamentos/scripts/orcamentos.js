@@ -52,6 +52,7 @@ let curEquipe   = 'todos';   // filtro por equipe: 'todos' | '__sem__' | nome da
 let curSearch   = '';        // pesquisa por nome do cliente
 let activeId    = null;
 let filterMonth = null;
+let filterEventDate = null;   // data do atendimento (YYYY-MM-DD) — filtra por DataEvento / datas dos serviços
 
 let addSlots          = [];
 let fechSlots         = [];
@@ -237,6 +238,13 @@ function unpackSlots(obs) {
 }
 function entrySlots(e) { return unpackSlots(e.Obs).slots; }
 function entryCleanObs(e) { return unpackSlots(e.Obs).obs; }
+// Todas as datas de atendimento de um orçamento (datas dos serviços + DataEvento)
+function entryEventDates(e) {
+  const set = {};
+  entrySlots(e).forEach(s => { if (s.data) set[s.data] = 1; });
+  if (e.DataEvento) set[e.DataEvento] = 1;
+  return Object.keys(set);
+}
 
 let _syncState = 'syncing';
 function dot(state) {
@@ -1010,6 +1018,12 @@ function render() {
     list = list.filter(e => (e.DataPedido || '').startsWith(filterMonth));
   }
 
+  // Filtro por data de atendimento (dia específico) — usa DataEvento / datas dos serviços
+  if (filterEventDate) {
+    list = list.filter(e => entryEventDates(e).includes(filterEventDate));
+  }
+  syncEventDateUI();
+
   // Filtro por status
   if (curFilter === 'followup')          list = list.filter(e => needsFollowup(e));
   else if (curFilter === 'novos')        list = list.filter(e => ['Novo Pedido','Orçamento Enviado'].includes(e.Status));
@@ -1088,10 +1102,16 @@ function render() {
 
   const content = document.getElementById('content');
   if (list.length === 0) {
+    const semFiltro = curFilter === 'todos' && !filterEventDate && !filterMonth &&
+                      !curSearch.trim() && curOrigem === 'todos' && curEquipe === 'todos';
+    let msg;
+    if (filterEventDate)   msg = 'Nenhum atendimento marcado para ' + fmtDate(filterEventDate) + '.';
+    else if (semFiltro)    msg = 'Nenhum orçamento ainda.<br>Toque em <strong>＋</strong> para adicionar.';
+    else                   msg = 'Nenhum orçamento neste filtro.';
     content.innerHTML =
       '<div class="empty">' +
-        '<span class="ico">' + (curFilter === 'todos' ? '💰' : '🔍') + '</span>' +
-        '<p>' + (curFilter === 'todos' ? 'Nenhum orçamento ainda.<br>Toque em <strong>＋</strong> para adicionar.' : 'Nenhum orçamento neste filtro.') + '</p>' +
+        '<span class="ico">' + (semFiltro ? '💰' : '🔍') + '</span>' +
+        '<p>' + msg + '</p>' +
       '</div>';
     return;
   }
@@ -1129,6 +1149,15 @@ function navMonth(dir) {
   render();
 }
 function clearMonth() { filterMonth = null; render(); }
+// ── Filtro por data de atendimento (dia específico) ──────────
+function setEventDate(v) { filterEventDate = v || null; render(); }
+function clearEventDate() { filterEventDate = null; render(); }
+function syncEventDateUI() {
+  const inps   = [document.getElementById('d-event-date'), document.getElementById('m-event-date')];
+  const clears = [document.getElementById('d-event-clear'), document.getElementById('m-event-clear')];
+  inps.forEach(inp => { if (inp && inp.value !== (filterEventDate || '')) inp.value = filterEventDate || ''; });
+  clears.forEach(btn => { if (btn) btn.style.display = filterEventDate ? '' : 'none'; });
+}
 function setPorMes() {
   if (!filterMonth) navMonth(0);   // navMonth() chama render() → updatePeriodToggle()
 }

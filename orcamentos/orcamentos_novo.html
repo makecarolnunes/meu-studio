@@ -109,6 +109,11 @@
       <button class="d-month-arrow" onclick="navMonth(1)">›</button>
     </div>
   </div>
+  <div class="d-event-group">
+    <span class="d-period-lbl">Atende em:</span>
+    <input type="date" id="d-event-date" class="d-event-input" onchange="setEventDate(this.value)" title="Filtrar por data do atendimento">
+    <button class="d-event-clear" id="d-event-clear" onclick="clearEventDate()" title="Limpar data" style="display:none">✕</button>
+  </div>
   <div class="search-wrap">
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
     <input id="d-search" class="search-input" type="search" placeholder="Pesquisar cliente..." oninput="setSearch(this.value)" autocomplete="off">
@@ -121,6 +126,13 @@
   <span class="month-label" id="month-label" onclick="clearMonth()">Todos os meses</span>
   <button class="month-arrow" onclick="navMonth(1)"  title="Próximo mês">›</button>
   <button class="month-clear" id="month-clear" onclick="clearMonth()" title="Ver todos">✕</button>
+</div>
+
+<!-- ── DATA DO ATENDIMENTO (mobile) ────────────────────────── -->
+<div class="event-date-bar">
+  <label class="event-date-lbl" for="m-event-date">📅 Atende em</label>
+  <input type="date" id="m-event-date" class="event-date-input" onchange="setEventDate(this.value)">
+  <button class="event-date-clear" id="m-event-clear" onclick="clearEventDate()" title="Limpar data" style="display:none">✕</button>
 </div>
 
 <!-- ── PESQUISA (mobile) ───────────────────────────────────── -->
