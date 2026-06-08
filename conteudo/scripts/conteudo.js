@@ -24,7 +24,7 @@ var DOW = ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
 var QN_KEY='mk_quick_notes';
 var ideas=[], customCats=[], customPlats=[];
 var curView='list', curSF='todos', curCF=[], curPlat='todos';
-var curSort='date'; // 'date' | 'category' | 'status' | 'scheduled'
+var curSort='status'; // 'date' | 'category' | 'status' | 'scheduled' — padrão: por etapa de produção
 var colIdx=0, editId=null;
 var fCats=[CATS[0]], fFmts=['Reels'], fSt='Nao Iniciado', fPlats=['Instagram'];
 var calYear=new Date().getFullYear(), calMonth=new Date().getMonth();
@@ -698,14 +698,16 @@ function renderList(){
       for(var ii=0;ii<byC[cat].length;ii++) html+=ideaCardHTML(byC[cat][ii]);
     }
   } else if(curSort==='status'){
-    // Agrupar por status
-    var stOrder=['Nao Iniciado','Fila de Gravacao','Editando','Publicado'];
+    // Agrupar por etapa de produção. Ordem do fluxo: o que precisa de ação
+    // primeiro, e Publicado por último (apagadinho, pois já saiu).
+    var stOrder=['Fila de Gravacao','Editando','Nao Iniciado','Publicado'];
     for(var si=0;si<stOrder.length;si++){
       var sv=stOrder[si], sc2=ST[sv]||ST['Nao Iniciado'];
       var stList=list.filter(function(i){ return i.status===sv; });
       if(!stList.length) continue;
-      html+='<div class="group-hdr"><span class="group-pill" style="background:'+sc2.dot+'">'+safe(sv)+'</span><span class="group-count">'+stList.length+'</span></div>';
-      for(var sii=0;sii<stList.length;sii++) html+=ideaCardHTML(stList[sii]);
+      var dim = (sv==='Publicado') ? ' grp-dim' : '';
+      html+='<div class="group-hdr'+dim+'"><span class="group-pill" style="background:'+sc2.dot+'">'+safe(sv)+'</span><span class="group-count">'+stList.length+'</span></div>';
+      for(var sii=0;sii<stList.length;sii++) html+=ideaCardHTML(stList[sii], dim?'idea-card-dim':'');
     }
   } else if(curSort==='scheduled'){
     // Ordenar por data agendada (sem data no final)
@@ -730,7 +732,7 @@ function renderList(){
   for(var ci2=0;ci2<cards.length;ci2++){(function(card){card.onclick=function(){openModal(card.getAttribute('data-id'));};})(cards[ci2]);}
 }
 
-function ideaCardHTML(idea){
+function ideaCardHTML(idea, extraCls){
   var sc=ST[idea.status]||ST['Nao Iniciado'];
   var cat=catsOf(idea)[0]||'';
   var hasContent=!!(idea.roteiro||idea.legenda);
@@ -738,7 +740,7 @@ function ideaCardHTML(idea){
   var dateStr=idea.scheduledDate
     ?'<span class="idea-cal-date">📅 '+fmtDate(idea.scheduledDate)+'</span>'
     :'<span class="idea-date-sm">'+fDate(idea.createdAt)+'</span>';
-  return '<div class="idea-card '+sc.cls+'" data-id="'+safe(idea.id)+'">'+
+  return '<div class="idea-card '+sc.cls+(extraCls?' '+extraCls:'')+'" data-id="'+safe(idea.id)+'">'+
     '<div class="idea-card-top">'+
       '<div class="idea-title">'+safe(idea.title)+contentDot+'</div>'+
       '<div class="status-pill" style="background:'+sc.bg+';color:'+sc.color+'">'+

@@ -73,6 +73,10 @@
     .idea-card.s-fila { border-left-color:var(--red); }
     .idea-card.s-edit { border-left-color:var(--purple); }
     .idea-card.s-pub  { border-left-color:var(--ok); }
+    /* Grupo "Publicado" fica apagadinho (já saiu) — realça no hover */
+    .group-hdr.grp-dim { opacity:.55; }
+    .idea-card-dim { opacity:.5; transition:opacity .15s; }
+    .idea-card-dim:hover { opacity:.9; }
     .idea-meta { display:flex; flex-wrap:wrap; gap:4px; margin-bottom:5px; }
     .idea-fmt  { font-size:.59rem; font-weight:700; padding:2px 7px; border-radius:9px; background:var(--brown-l); color:var(--brown); display:inline-block; }
     .idea-cat  { font-size:.59rem; font-weight:700; padding:2px 7px; border-radius:9px; background:#f0e6f0; color:var(--purple-d); display:inline-block; }
@@ -237,13 +241,14 @@
 .cont-main-wrap { display: contents; }
 
 @media (min-width: 1024px) {
-  html { height: auto; overflow-y: visible; }
+  /* App-shell: trava o scroll da página e deixa o conteúdo rolar DENTRO da
+     coluna principal. Padrão à prova de falha para o wheel do mouse — o scroll
+     no document com sidebar sticky 100vh vinha quebrando de forma intermitente. */
+  html, body { height: 100%; overflow: hidden; }
   body {
     max-width: none;
     background: linear-gradient(135deg, #f0ebe8 0%, #e8e0db 100%);
-    min-height: 100vh;
     overflow-x: hidden;
-    overflow-y: visible;
   }
 
   #cont-app {
@@ -252,13 +257,14 @@
     background: var(--bg);
     box-shadow: 0 8px 48px rgba(56,25,11,.13);
     border-radius: 0 0 20px 20px;
-    min-height: 100vh;
+    height: 100vh;
     display: flex;
     flex-direction: row;
-    align-items: flex-start;
+    align-items: stretch;
+    overflow: hidden;
   }
 
-  /* ── Sidebar (sticky para não capturar o wheel da página) ── */
+  /* ── Sidebar: coluna fixa; rola sozinha se passar da altura ── */
   .d-sidebar {
     display: flex;
     flex-direction: column;
@@ -267,19 +273,18 @@
     background: linear-gradient(160deg, #3d1e12 0%, #5a2e1e 55%, #8B6B61 100%);
     padding: 22px 15px 28px;
     border-radius: 0 0 0 20px;
-    position: sticky;
-    top: 0;
-    align-self: stretch;
-    height: 100vh;
+    height: 100%;
     overflow-y: auto;
   }
 
-  /* ── Main wrap (flex item, coluna) ── */
+  /* ── Main wrap: container de scroll real (o mouse wheel rola aqui) ── */
   .cont-main-wrap {
     display: flex;
     flex-direction: column;
     flex: 1;
     min-width: 0;
+    height: 100%;
+    overflow-y: auto;
   }
 
   .d-sb-brand {
@@ -421,8 +426,9 @@
     display: flex;
     gap: 12px;
     padding: 16px 20px 48px;
-    overflow-x: auto;
+    overflow: auto;
     flex: 1;
+    min-height: 0;
   }
   .d-board-col {
     min-width: 220px; flex: 1;

@@ -227,5 +227,5 @@ globais ordenados (sem build step, sem ES modules).
 
 ---
 
-<!-- AUTO: 2026-06-08 19:24 | main -->
+<!-- AUTO: 2026-06-08 19:32 | main -->
 
