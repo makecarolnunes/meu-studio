@@ -1208,6 +1208,9 @@ function closeAll() {
 function openAddForm() {
   document.getElementById('add-nome').value     = '';
   document.getElementById('add-tel').value      = '';
+  const addNoTel = document.getElementById('add-no-tel');
+  if (addNoTel) addNoTel.checked = false;
+  toggleNoPhone(false);
   document.getElementById('add-followup').value = defaultFollowup();
   document.getElementById('add-obs').value      = '';
   document.getElementById('add-origem').value   = 'Produção Social';
@@ -1225,6 +1228,13 @@ function toggleAddEquipeInput(checked) {
   if (!inp) return;
   if (checked) { inp.style.display = ''; inp.style.marginTop = '8px'; inp.focus(); }
   else { inp.style.display = 'none'; inp.value = ''; }
+}
+
+function toggleNoPhone(checked) {
+  const inp = document.getElementById('add-tel');
+  if (!inp) return;
+  if (checked) { inp.value = ''; inp.disabled = true; inp.placeholder = 'Telefone não informado'; }
+  else { inp.disabled = false; inp.placeholder = '11 98765-4321'; }
 }
 
 function toggleActEquipeInput(checked) {
@@ -1330,8 +1340,9 @@ async function saveNew() {
   const origem = document.getElementById('add-origem').value;
   const equipe = (document.getElementById('add-equipe') || {}).value?.trim() || '';
 
+  const semTel = (document.getElementById('add-no-tel') || {}).checked;
   if (!nome) { toast('⚠️ Informe o nome do cliente'); return; }
-  if (!tel)  { toast('⚠️ Informe o telefone'); return; }
+  if (!tel && !semTel) { toast('⚠️ Informe o telefone'); return; }
   const slotsValidos = addSlots.filter(s => s.servico);
   if (!slotsValidos.length) { toast('⚠️ Adicione pelo menos um serviço'); return; }
 

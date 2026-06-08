@@ -201,6 +201,9 @@
     <div class="form-group">
       <label class="form-label">Telefone *</label>
       <input class="form-input" id="add-tel" type="tel" placeholder="11 98765-4321">
+      <label class="form-label" style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600;margin-top:8px;margin-bottom:0">
+        <input type="checkbox" id="add-no-tel" style="width:16px;height:16px;accent-color:#006064;flex-shrink:0" onchange="toggleNoPhone(this.checked)"> Não informar telefone
+      </label>
     </div>
 
     <!-- Slots (serviço + valor + data + hora) -->
