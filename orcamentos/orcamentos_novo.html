@@ -6,6 +6,17 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Orçamentos">
+  <script>
+  /* Auth guard — redireciona ao hub se não houver sessão válida */
+  (function(){
+    try {
+      var s = JSON.parse(localStorage.getItem('mk_session') || 'null');
+      if (s && s.expires && Date.now() < s.expires) return;
+    } catch(e) {}
+    localStorage.removeItem('mk_session');
+    window.location.href = '../';
+  })();
+  </script>
   <title>Orçamentos · Meu Studio</title>
   <link rel="stylesheet" href="../shared/css/tokens.css">
   <link rel="stylesheet" href="../shared/css/base.css">
