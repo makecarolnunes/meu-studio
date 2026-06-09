@@ -31,12 +31,31 @@ var _isDirty       = false;
 
 // ── Toast ─────────────────────────────────────────────────────────────
 var _toastTimer;
-function toast(msg, type) {
+function toast(msg, type, action) {
   var el = document.getElementById('toast');
-  el.textContent = msg;
-  el.className = 'toast show' + (type === 'err' ? ' toast-err' : '');
+  el.innerHTML = '';
+  if (action && action.label) {
+    var span = document.createElement('span');
+    span.textContent = msg;
+    var btn = document.createElement('button');
+    btn.className = 'toast-action';
+    btn.type = 'button';
+    btn.textContent = action.label;
+    btn.onclick = function() {
+      el.className = 'toast';
+      clearTimeout(_toastTimer);
+      action.onClick();
+    };
+    el.appendChild(span);
+    el.appendChild(btn);
+  } else {
+    el.textContent = msg;
+  }
+  el.className = 'toast show' +
+    (type === 'err' ? ' toast-err' : '') +
+    (action ? ' toast-action-on' : '');
   clearTimeout(_toastTimer);
-  _toastTimer = setTimeout(function() { el.className = 'toast'; }, 2800);
+  _toastTimer = setTimeout(function() { el.className = 'toast'; }, action ? 6500 : 2800);
 }
 
 // ── Auto-save ─────────────────────────────────────────────────────────
@@ -164,9 +183,11 @@ function showView(v) {
   var hdrStatus = document.getElementById('hdr-save-status');
   var hdrBack   = document.getElementById('hdr-back');
   var hdrTitle  = document.getElementById('hdr-title');
+  var hdrTrash  = document.getElementById('hdr-trash');
 
   fab.style.display = (v === 'editor') ? 'none' : '';
   if (hdrStatus) hdrStatus.style.display = (v === 'editor') ? '' : 'none';
+  if (hdrTrash)  hdrTrash.style.display  = (v === 'cadernos') ? '' : 'none';
 
   if (v === 'cadernos') {
     hdrTitle.textContent = 'Anotações';
@@ -566,15 +587,14 @@ async function saveNota() {
   }
 }
 
-// ── Excluir nota ──────────────────────────────────────────────────────
+// ── Excluir nota (manda pra lixeira, reversível) ──────────────────────
 async function deleteNota() {
   if (!curNota) return;
-  if (!confirm('Excluir esta nota permanentemente?')) return;
+  var alvo = curNota;
   try {
-    await DB.anotacoes.delete(curNota.id);
-    notas = notas.filter(function(n) { return n.id !== curNota.id; });
+    await DB.anotacoes.softDelete(alvo.id);
+    notas = notas.filter(function(n) { return n.id !== alvo.id; });
     curNota = null;
-    toast('Nota excluída');
     if (isDesktop()) {
       showEditorDesktop(false);
       renderNotas();
@@ -582,8 +602,124 @@ async function deleteNota() {
       showView('notas');
       renderNotas();
     }
+    toast('Nota movida para a lixeira', null, {
+      label: 'Desfazer',
+      onClick: function() { undoDelete(alvo); }
+    });
   } catch(e) {
     toast('Erro ao excluir', 'err');
+  }
+}
+
+// Desfazer a última exclusão (restaura da lixeira)
+async function undoDelete(nota) {
+  try {
+    await DB.anotacoes.restore(nota.id);
+    if (curCad && nota.cadernoId === curCad.id) {
+      notas.unshift(nota);
+      notas.sort(function(a, b) {
+        return String(b.updatedAt || '').localeCompare(String(a.updatedAt || ''));
+      });
+      renderNotas();
+    }
+    toast('Nota restaurada');
+  } catch(e) {
+    toast('Erro ao restaurar', 'err');
+  }
+}
+
+// ── Lixeira ───────────────────────────────────────────────────────────
+function cadLabel(cadId) {
+  var c = cadernos.find(function(x) { return x.id === cadId; });
+  return c ? ((c.emoji || '📓') + ' ' + c.nome) : 'Caderno removido';
+}
+
+async function openTrash() {
+  showPanel('trash');
+  var el = document.getElementById('trash-list');
+  el.innerHTML = '<div class="loader"><div class="spinner"></div><br>Carregando...</div>';
+  try {
+    var lixo = await DB.anotacoes.listTrash();
+    renderTrash(lixo);
+  } catch(e) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-ico">⚠️</div>' +
+      '<div class="empty-msg">Erro ao carregar a lixeira</div></div>';
+  }
+}
+
+function renderTrash(lixo) {
+  var el  = document.getElementById('trash-list');
+  var btn = document.getElementById('trash-empty-btn');
+  if (btn) btn.style.display = lixo.length ? '' : 'none';
+
+  if (!lixo.length) {
+    el.innerHTML = '<div class="empty-state">' +
+      '<div class="empty-ico">🗑️</div>' +
+      '<div class="empty-title">Lixeira vazia</div>' +
+      '<div class="empty-msg">Notas que você excluir aparecem aqui e podem ser restauradas</div>' +
+    '</div>';
+    return;
+  }
+
+  el.innerHTML = lixo.map(function(n) {
+    var preview = n.conteudo ? n.conteudo.slice(0, 80) + (n.conteudo.length > 80 ? '…' : '') : '';
+    return '<div class="trash-item">' +
+      '<div class="trash-item-main">' +
+        '<div class="trash-item-titulo">' + esc(n.titulo || 'Sem título') + '</div>' +
+        '<div class="trash-item-meta">' + esc(cadLabel(n.cadernoId)) +
+          ' · excluída ' + relTime(n.deletedAt) + '</div>' +
+        (preview ? '<div class="trash-item-preview">' + esc(preview) + '</div>' : '') +
+      '</div>' +
+      '<div class="trash-item-actions">' +
+        '<button class="trash-btn trash-restore" onclick="restoreNota(\'' + n.id + '\')">Restaurar</button>' +
+        '<button class="trash-btn trash-purge" onclick="purgeNota(\'' + n.id + '\')" aria-label="Excluir definitivamente">' +
+          '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>' +
+        '</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+async function restoreNota(id) {
+  try {
+    await DB.anotacoes.restore(id);
+    toast('Nota restaurada');
+    var lixo = await DB.anotacoes.listTrash();
+    renderTrash(lixo);
+    if (curCad) loadNotas();   // recarrega a lista do caderno aberto
+  } catch(e) {
+    toast('Erro ao restaurar', 'err');
+  }
+}
+
+async function purgeNota(id) {
+  if (!confirm('Excluir esta nota definitivamente? Isso não pode ser desfeito.')) return;
+  try {
+    await DB.anotacoes.delete(id);
+    toast('Nota excluída definitivamente');
+    var lixo = await DB.anotacoes.listTrash();
+    renderTrash(lixo);
+  } catch(e) {
+    toast('Erro ao excluir', 'err');
+  }
+}
+
+async function emptyTrash() {
+  var lixo;
+  try { lixo = await DB.anotacoes.listTrash(); }
+  catch(e) { toast('Erro ao carregar a lixeira', 'err'); return; }
+  if (!lixo.length) return;
+  if (!confirm('Esvaziar a lixeira? ' + lixo.length +
+    (lixo.length === 1 ? ' nota será excluída' : ' notas serão excluídas') +
+    ' para sempre. Isso não pode ser desfeito.')) return;
+  try {
+    for (var i = 0; i < lixo.length; i++) {
+      await DB.anotacoes.delete(lixo[i].id);
+    }
+    toast('Lixeira esvaziada');
+    renderTrash([]);
+  } catch(e) {
+    toast('Erro ao esvaziar a lixeira', 'err');
   }
 }
 

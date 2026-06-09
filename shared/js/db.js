@@ -723,6 +723,7 @@ window.DB = {
       const { data, error } = await _sb
         .from('anotacoes').select('*')
         .eq('caderno_id', String(cadernoId))
+        .is('deleted_at', null)
         .order('updated_at', { ascending: false });
       if (error) throw error;
       return data.map(r => ({
@@ -730,6 +731,22 @@ window.DB = {
         titulo: r.titulo || '', conteudo: r.conteudo || '',
         tags: r.tags || [], imagens: r.imagens || [],
         createdAt: r.created_at || '', updatedAt: r.updated_at || '',
+      }));
+    },
+    // Notas na lixeira (soft-deleted), mais recentes primeiro
+    async listTrash() {
+      _guard();
+      const { data, error } = await _sb
+        .from('anotacoes').select('*')
+        .not('deleted_at', 'is', null)
+        .order('deleted_at', { ascending: false });
+      if (error) throw error;
+      return data.map(r => ({
+        id: String(r.id), cadernoId: String(r.caderno_id),
+        titulo: r.titulo || '', conteudo: r.conteudo || '',
+        tags: r.tags || [], imagens: r.imagens || [],
+        createdAt: r.created_at || '', updatedAt: r.updated_at || '',
+        deletedAt: r.deleted_at || '',
       }));
     },
     async upsert(nota) {
@@ -747,6 +764,23 @@ window.DB = {
       if (error) throw error;
       return row.id;
     },
+    // Manda pra lixeira (reversível)
+    async softDelete(id) {
+      _guard();
+      const { error } = await _sb.from('anotacoes')
+        .update({ deleted_at: new Date().toISOString() })
+        .eq('id', String(id));
+      if (error) throw error;
+    },
+    // Restaura da lixeira
+    async restore(id) {
+      _guard();
+      const { error } = await _sb.from('anotacoes')
+        .update({ deleted_at: null })
+        .eq('id', String(id));
+      if (error) throw error;
+    },
+    // Exclusão permanente (esvaziar lixeira / excluir definitivamente)
     async delete(id) {
       _guard();
       const { error } = await _sb.from('anotacoes').delete().eq('id', String(id));

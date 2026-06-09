@@ -26,8 +26,13 @@ CREATE TABLE IF NOT EXISTS anotacoes (
   tags        TEXT[] DEFAULT '{}',
   imagens     JSONB DEFAULT '[]',
   created_at  TIMESTAMPTZ DEFAULT now(),
-  updated_at  TIMESTAMPTZ DEFAULT now()
+  updated_at  TIMESTAMPTZ DEFAULT now(),
+  deleted_at  TIMESTAMPTZ            -- NULL = ativa · preenchido = na lixeira (soft-delete)
 );
+
+-- Lixeira (soft-delete): para bancos já existentes
+ALTER TABLE anotacoes ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ;
+CREATE INDEX IF NOT EXISTS idx_anotacoes_deleted_at ON anotacoes (deleted_at);
 
 ALTER TABLE anotacoes ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "anon_all_anotacoes" ON anotacoes;

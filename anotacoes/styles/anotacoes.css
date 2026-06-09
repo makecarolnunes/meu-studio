@@ -688,3 +688,85 @@ body {
 }
 .toast.show     { opacity: 1; transform: translateX(-50%) translateY(0); }
 .toast.toast-err { background: #C62828; }
+.toast.toast-action-on {
+  pointer-events: auto;
+  display: flex; align-items: center; gap: 16px;
+  padding-right: 8px;
+}
+.toast-action {
+  background: none; border: none; cursor: pointer;
+  color: #FFD8A8; font-size: .82rem; font-weight: 800;
+  font-family: inherit; padding: 4px 6px; white-space: nowrap;
+}
+.toast-action:active { opacity: .7; }
+
+/* ── LIXEIRA: botões de entrada ─────────────────────────────── */
+.hdr-trash {
+  width: 34px; height: 34px; border-radius: 50%;
+  border: none; background: rgba(255,255,255,.13);
+  color: rgba(255,255,255,.88);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; padding: 0; transition: background .13s;
+}
+.hdr-trash:active { background: rgba(255,255,255,.26); }
+
+/* Botão lixeira no header desktop (sidebar escura) — definido no media query desktop */
+@media (min-width: 1024px) {
+  .hdr-trash { display: none !important; }
+  .d-cad-trash-btn {
+    display: flex; align-items: center; justify-content: center; gap: 7px;
+    padding: 8px 12px; border-radius: 10px;
+    background: transparent; color: rgba(255,255,255,.78);
+    border: 1px solid rgba(255,255,255,.18);
+    font-size: .78rem; font-weight: 700; cursor: pointer; font-family: inherit;
+  }
+  .d-cad-trash-btn:hover { background: rgba(255,255,255,.12); color: white; }
+}
+.d-cad-trash-btn { display: none; }
+
+/* ── LIXEIRA: painel ────────────────────────────────────────── */
+.trash-hdr {
+  display: flex; align-items: center; justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+}
+.trash-title { border-bottom: none; padding-bottom: 14px; }
+.trash-empty-btn {
+  margin-right: 18px;
+  background: none; border: 1px solid #fdd; color: #C62828;
+  border-radius: 9px; padding: 6px 13px;
+  font-size: .76rem; font-weight: 700; cursor: pointer; font-family: inherit;
+}
+.trash-empty-btn:active { background: #fff5f5; }
+
+.trash-item {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 13px 2px; border-bottom: .5px solid var(--border);
+}
+.trash-item:last-of-type { border-bottom: none; }
+.trash-item-main { flex: 1; min-width: 0; }
+.trash-item-titulo {
+  font-size: .9rem; font-weight: 700; color: var(--text);
+  margin-bottom: 3px; word-break: break-word;
+}
+.trash-item-meta { font-size: .72rem; color: var(--muted); }
+.trash-item-preview {
+  font-size: .78rem; color: var(--muted); margin-top: 4px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.trash-item-actions {
+  display: flex; align-items: center; gap: 6px; flex-shrink: 0;
+}
+.trash-btn {
+  border: 1px solid var(--border); background: var(--bg);
+  border-radius: 9px; cursor: pointer; font-family: inherit;
+  display: flex; align-items: center; justify-content: center;
+}
+.trash-restore {
+  padding: 7px 12px; color: var(--ac-d);
+  font-size: .78rem; font-weight: 700;
+}
+.trash-restore:active { background: var(--ac-l); }
+.trash-purge {
+  width: 34px; height: 32px; color: #C62828; border-color: #fdd;
+}
+.trash-purge:active { background: #fff5f5; }

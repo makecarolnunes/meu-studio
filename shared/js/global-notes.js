@@ -89,7 +89,11 @@
     renderList();
     updateBadge();
     if (!window.DB || !DB.anotacoes) return;
-    try { await DB.anotacoes.delete(id); } catch(_){}
+    // Soft-delete: vai pra lixeira (recuperável em /anotacoes), não apaga de vez
+    try {
+      if (DB.anotacoes.softDelete) await DB.anotacoes.softDelete(id);
+      else await DB.anotacoes.delete(id);
+    } catch(_){}
   }
 
   /* ---------- CSS ---------- */
