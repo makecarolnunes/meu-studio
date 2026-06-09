@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
+  <!-- ════════════════════════════════════════════════════════════
+       SEO básico  ·  troque as URLs pelo seu domínio quando publicar
+       ════════════════════════════════════════════════════════════ -->
+  <title>Carol Nunes · Beauty Artist | Maquiagem para Noivas</title>
+  <meta name="description" content="Carol Nunes — Beauty Artist. Produção com acabamento natural e sofisticado para noivas, madrinhas e produções sociais. Solicite seu orçamento.">
+  <meta name="author" content="Carol Nunes">
+  <meta name="robots" content="index, follow">
+  <meta name="theme-color" content="#2C1A0E">
+  <link rel="canonical" href="https://makecarolnunes.netlify.app/">
+
+  <!-- Compartilhamento (WhatsApp / Instagram / Facebook) -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Carol Nunes · Beauty Artist">
+  <meta property="og:title" content="Carol Nunes · Beauty Artist">
+  <meta property="og:description" content="Produção com acabamento natural e sofisticado para noivas, madrinhas e produções sociais.">
+  <meta property="og:url" content="https://makecarolnunes.netlify.app/">
+  <meta property="og:image" content="https://makecarolnunes.netlify.app/perfil.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Carol Nunes · Beauty Artist">
+  <meta name="twitter:description" content="Maquiagem natural e sofisticada para noivas e produções sociais.">
+  <meta name="twitter:image" content="https://makecarolnunes.netlify.app/perfil.jpg">
+
+  <!-- Favicon = monograma CN oficial (ébano + creme) -->
+  <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20512%20512'%3E%3Crect%20width='512'%20height='512'%20fill='%232C1A0E'/%3E%3Cg%20transform='translate(116,156)'%20fill='none'%20stroke='%23F5EDE3'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M%20108%2038%20C%2056%2038,%2026%2064,%2026%20100%20C%2026%20138,%2056%20166,%20110%20166'%20stroke-width='11'/%3E%3Cpath%20d='M%20134%20165%20L%20154%2035'%20stroke-width='4'/%3E%3Cpath%20d='M%20154%2035%20L%20214%20165'%20stroke-width='11'/%3E%3Cpath%20d='M%20214%20165%20L%20234%2035'%20stroke-width='4'/%3E%3C/g%3E%3C/svg%3E">
+
+  <!-- Dados estruturados (Google) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "HealthAndBeautyBusiness",
+    "name": "Carol Nunes · Beauty Artist",
+    "image": "https://makecarolnunes.netlify.app/perfil.jpg",
+    "description": "Maquiadora profissional especialista em noivas, madrinhas e produção social. Acabamento natural e sofisticado.",
+    "url": "https://makecarolnunes.netlify.app/",
+    "priceRange": "$$",
+    "areaServed": "Brasil",
+    "sameAs": [
+      "https://instagram.com/makecarolnunes",
+      "https://tiktok.com/@makecarolnunes"
+    ]
+  }
+  </script>
+
+  <!-- Fontes da marca: Cormorant Garamond (títulos) + DM Sans (texto/UI) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet">
+
+  <style>
+  /* ═══════════════════════════════════════════════════════════════
+     PALETA OFICIAL  ·  Carol Nunes — Design System
+     ═══════════════════════════════════════════════════════════════ */
+  :root{
+    --ebano:  #2C1A0E;   /* mais escuro — CTA, texto forte */
+    --cafe:   #4A2E1A;   /* marrom assinatura — títulos, logo */
+    --gold:   #B8975A;   /* fio dourado — detalhes, kicker */
+    --creme:  #F5EDE3;   /* off-white da marca */
+    --warm:   #FBF7F1;   /* branco quente — superfícies */
+    --nude:   #EFE4D7;   /* nude suave — fundos sutis */
+    --taupe:  #8A7561;   /* texto secundário */
+    --line:   rgba(74,46,26,.16);
+
+    /* Assinatura visual (Eyesome Script). Para que apareça PARA AS VISITANTES,
+       coloque o arquivo da fonte em links/fonts/eyesome.woff2 — sem ele,
+       cai elegantemente no Cormorant itálico. */
+    --r-btn: 14px;
+    --ease: cubic-bezier(.22,.61,.36,1);
+
+    /* fonte dos títulos dos botões — DM Sans versais (definida) */
+    --btn-font:'DM Sans',sans-serif;
+    --btn-weight:500; --btn-size:12.5px; --btn-spacing:.2em;
+    --btn-transform:uppercase; --btn-style:normal;
+  }
+  @font-face{
+    font-family:'Eyesome Script';
+    src:url('./fonts/eyesome.woff2') format('woff2');
+    font-display:swap;
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html{-webkit-text-size-adjust:100%}
+
+  body{
+    font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    color:var(--cafe);
+    min-height:100dvh;
+    -webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility;
+    /* creme quente, plano e arejado — sem brilhos, sem ruído digital */
+    background:
+      linear-gradient(180deg, var(--warm) 0%, var(--creme) 60%, var(--nude) 100%);
+    background-attachment:fixed;
+  }
+
+  /* ═══ CONTAINER (mobile-first, coluna estreita = editorial) ═════ */
+  .page{
+    width:100%;max-width:440px;margin:0 auto;
+    padding:max(20px,env(safe-area-inset-top)) 26px max(40px,env(safe-area-inset-bottom));
+    display:flex;flex-direction:column;
+  }
+
+  /* ═══ MARCA NO TOPO (monograma CN oficial) ══════════════════════ */
+  .brandmark{display:flex;justify-content:center;margin-bottom:14px}
+  .brandmark svg{width:48px;height:auto;display:block}
+
+  /* ═══ RETRATO EM ARCO (editorial) ═══════════════════════════════ */
+  .portrait{
+    position:relative;width:min(182px,48vw);aspect-ratio:4/5;margin:0 auto;
+    border-radius:50% 50% 16px 16px / 42% 42% 12px 12px;
+    overflow:hidden;background:var(--nude);
+    box-shadow:0 34px 54px -30px rgba(44,26,14,.42);
+  }
+  .portrait::after{ /* fio dourado fino emoldurando o arco */
+    content:'';position:absolute;inset:0;border-radius:inherit;
+    border:1px solid var(--gold);pointer-events:none;
+    mix-blend-mode:multiply;opacity:.65;
+  }
+  .portrait img{
+    position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;
+    border-radius:inherit;                 /* auto-recorte no arco (corrige iOS/Safari) */
+    transform-origin:center;
+    -webkit-user-drag:none;user-select:none;
+  }
+  .portrait.editing{cursor:grab}
+  .portrait.editing.dragging{cursor:grabbing}
+  .portrait.editing::after{opacity:1;border-style:dashed;border-width:1.5px}
+  .portrait .monogram{
+    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    font-family:'Cormorant Garamond',serif;font-size:84px;font-weight:500;
+    font-style:italic;color:var(--cafe);background:var(--creme);
+  }
+
+  /* ═══ NOME + KICKER (espelha o wordmark da marca) ═══════════════ */
+  .hero{text-align:center;margin-top:14px}
+  .name{
+    font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:500;
+    font-size:34px;line-height:1.0;letter-spacing:-.01em;color:var(--cafe);
+  }
+  .kicker{
+    margin-top:8px;font-size:10.5px;font-weight:500;letter-spacing:.42em;
+    text-transform:uppercase;color:var(--gold);padding-left:.42em;
+  }
+  .tagline{
+    margin:10px auto 0;max-width:320px;
+    font-size:13px;font-weight:300;line-height:1.5;color:var(--taupe);
+  }
+
+  /* ornamento discreto — losango dourado entre fios finos */
+  .rule{display:flex;align-items:center;justify-content:center;gap:13px;margin:16px 0 15px}
+  .rule::before,.rule::after{content:'';width:46px;height:1px;background:var(--line)}
+  .rule i{width:5px;height:5px;transform:rotate(45deg);background:var(--gold);display:block}
+
+  /* ═══ LINKS — tipografia centrada, traço fino, SEM ícone e SEM sombra ═══ */
+  .links{display:flex;flex-direction:column;gap:10px}
+
+  .lnk{
+    position:relative;display:block;width:100%;text-align:center;
+    text-decoration:none;cursor:pointer;
+    padding:16px 20px;border-radius:3px;
+    background:#FFFFFF;border:1px solid rgba(74,46,26,.32);
+    color:var(--cafe);font-family:inherit;
+    transition:background .4s var(--ease), border-color .4s var(--ease), color .4s var(--ease);
+  }
+  .lnk:hover{background:var(--creme);border-color:var(--cafe)}
+  .lnk:active{background:var(--nude)}
+
+  .lnk-title{font-family:var(--btn-font);font-weight:var(--btn-weight);font-size:var(--btn-size);letter-spacing:var(--btn-spacing);text-transform:var(--btn-transform);font-style:var(--btn-style);line-height:1.12}
+  .lnk-sub{display:block;font-size:11px;font-weight:300;color:var(--taupe);margin-top:5px;letter-spacing:.02em}
+  .lnk-badge{display:block;font-size:9.5px;font-weight:500;color:var(--gold);margin-top:7px;letter-spacing:.24em;text-transform:uppercase}
+
+  /* — PRIMÁRIO: Orçamento Noivas (a conversão principal) — */
+  .lnk--primary{
+    background:var(--ebano);border-color:var(--ebano);color:var(--creme);
+    padding:19px 20px;
+  }
+  .lnk--primary .lnk-title{font-size:calc(var(--btn-size) + 2px)}
+  .lnk--primary:hover{background:#1d1107;border-color:var(--gold)}
+
+  /* — "Em breve" (Cursos) — sem preenchimento, traço tracejado — */
+  .lnk--soon{cursor:default;background:transparent;border-style:dashed;border-color:rgba(74,46,26,.32)}
+  .lnk--soon:hover{background:transparent;border-color:rgba(74,46,26,.32)}
+  .lnk--soon .lnk-title{color:var(--taupe)}
+
+  /* ═══ RODAPÉ + ASSINATURA (Eyesome Script) ══════════════════════ */
+  .foot{text-align:center;margin-top:34px}
+  .signature{
+    font-family:'Eyesome Script','Cormorant Garamond',cursive;
+    font-size:34px;font-style:italic;color:var(--gold);line-height:1;
+  }
+  .foot-loc{margin-top:14px;font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--taupe)}
+  .foot-copy{font-size:10px;font-weight:300;color:var(--taupe);margin-top:8px;opacity:.85}
+
+  /* ═══ ANIMAÇÃO DE ENTRADA — só um fade-up lento e discreto ══════ */
+  @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+  .reveal{opacity:0;animation:rise .9s var(--ease) forwards}
+
+  @media (prefers-reduced-motion: reduce){
+    .reveal{animation:none;opacity:1}
+    *{transition:none!important}
+  }
+
+  /* ═══ DESKTOP — folha boutique centralizada ═════════════════════ */
+  @media (min-width:768px){
+    .page{
+      max-width:472px;margin:48px auto;padding:48px 44px 40px;
+      background:var(--warm);border:1px solid var(--line);border-radius:4px;
+      box-shadow:0 50px 90px -50px rgba(44,26,14,.4);
+    }
+  }
+
+  /* ═══ EDITOR DE FOTO (abra a página com  ?edit ) ════════════════ */
+  #ed-fab{
+    position:fixed;right:18px;bottom:18px;z-index:55;width:50px;height:50px;border-radius:50%;
+    background:var(--ebano);color:var(--gold);border:1px solid var(--gold);
+    font-size:18px;cursor:pointer;box-shadow:0 12px 28px -12px rgba(44,26,14,.6);
+    display:none;align-items:center;justify-content:center;   /* escondido por padrão (produção) */
+  }
+  #ed-fab.show{display:flex}   /* só aparece em file:// ou ?edit */
+  #editor{
+    position:fixed;left:0;right:0;bottom:0;z-index:60;
+    max-width:472px;margin:0 auto;
+    transform:translateY(112%);transition:transform .42s var(--ease);
+    background:var(--warm);border:1px solid var(--line);border-bottom:none;
+    border-radius:20px 20px 0 0;
+    padding:18px 24px calc(20px + env(safe-area-inset-bottom));
+    box-shadow:0 -24px 60px -34px rgba(44,26,14,.55);
+  }
+  #editor.open{transform:none}
+  .ed-head{display:flex;align-items:baseline;justify-content:space-between}
+  .ed-title{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:24px;color:var(--cafe)}
+  .ed-close{background:none;border:none;font-family:inherit;font-size:12px;color:var(--taupe);cursor:pointer;letter-spacing:.04em}
+  .ed-hint{font-size:11.5px;color:var(--taupe);margin:3px 0 15px;line-height:1.5}
+  .ed-upload{display:inline-flex;align-items:center;gap:8px;padding:11px 16px;border-radius:10px;border:1px solid var(--line);background:#fff;font-size:13px;font-weight:500;color:var(--cafe);cursor:pointer}
+  .ed-zoomrow{display:flex;align-items:center;gap:12px;margin:16px 0 6px;font-size:12px;color:var(--taupe);letter-spacing:.04em}
+  .ed-zoomrow input{flex:1;accent-color:var(--cafe);height:3px}
+  .ed-vals{font-size:10px;color:var(--gold);letter-spacing:.05em;margin-bottom:14px;font-variant-numeric:tabular-nums}
+  .ed-actions{display:flex;gap:9px}
+  .ed-actions button{flex:1;padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--creme);font-family:inherit;font-size:13px;font-weight:500;color:var(--cafe);cursor:pointer}
+  .ed-actions button.primary{background:var(--ebano);color:var(--creme);border-color:var(--ebano)}
+  .ed-export{width:100%;margin-top:9px;padding:12px;border-radius:10px;border:1px solid var(--gold);background:#fff;color:var(--cafe);font-family:inherit;font-size:12.5px;font-weight:500;cursor:pointer}
+  .ed-export:hover{background:var(--creme)}
+  .ed-msg{font-size:11px;color:#3B6D11;margin-top:9px;min-height:14px;line-height:1.4}
+  .ed-divider{height:1px;background:var(--line);margin:20px 0 14px}
+  .ft-opts{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+  .ft-opt{padding:10px 14px;border-radius:8px;border:1px solid var(--line);background:#fff;color:var(--cafe);cursor:pointer;font-size:15px;line-height:1}
+  .ft-opt.active{background:var(--ebano);color:var(--creme);border-color:var(--ebano)}
+  .ft-active{font-size:10.5px;color:var(--gold);letter-spacing:.04em;margin-top:12px;min-height:14px;line-height:1.4}
+
+  /* ═══ PAINEL DE CLIQUES (abra a página com  ?stats ) ════════════ */
+  #stats{display:none;position:fixed;inset:0;z-index:50;background:rgba(44,26,14,.5);align-items:center;justify-content:center;padding:22px}
+  #stats.open{display:flex}
+  .stats-card{background:var(--warm);border-radius:6px;padding:26px;max-width:340px;width:100%;box-shadow:0 40px 80px -40px rgba(44,26,14,.6)}
+  .stats-card h3{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:26px;color:var(--cafe);margin-bottom:4px}
+  .stats-card .stats-hint{font-size:11px;color:var(--taupe);margin-bottom:16px;line-height:1.5}
+  .stats-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);font-size:13px}
+  .stats-num{font-weight:500;color:var(--gold);font-variant-numeric:tabular-nums}
+  .stats-actions{display:flex;gap:9px;margin-top:20px}
+  .stats-actions button{flex:1;padding:11px;border-radius:8px;border:1px solid var(--line);background:var(--creme);font-family:inherit;font-size:12px;font-weight:500;color:var(--cafe);cursor:pointer}
+  .stats-actions button.primary{background:var(--ebano);color:var(--creme);border-color:var(--ebano)}
+  </style>
+</head>
+<body>
+
+  <main class="page">
+
+    <!-- ══════════ MARCA (monograma CN oficial) ══════════ -->
+    <div class="brandmark reveal" style="animation-delay:.05s">
+      <svg viewBox="0 0 280 200" aria-label="Carol Nunes">
+        <g fill="none" stroke="#4A2E1A" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M 108 38 C 56 38, 26 64, 26 100 C 26 138, 56 166, 110 166" stroke-width="9"/>
+          <path d="M 134 165 L 154 35" stroke-width="3"/>
+          <path d="M 154 35 L 214 165" stroke-width="9"/>
+          <path d="M 214 165 L 234 35" stroke-width="3"/>
+          <path d="M 149 35 L 159 35" stroke-width="1.4"/>
+          <path d="M 229 35 L 239 35" stroke-width="1.4"/>
+          <path d="M 129 165 L 139 165" stroke-width="1.4"/>
+          <path d="M 209 165 L 219 165" stroke-width="1.4"/>
+        </g>
+        <line x1="26" y1="180" x2="234" y2="180" stroke="#B8975A" stroke-width="0.7"/>
+      </svg>
+    </div>
+
+    <!-- ══════════ RETRATO ══════════ -->
+    <div class="portrait reveal" id="portrait" style="animation-delay:.12s"></div>
+
+    <!-- ══════════ NOME + DESCRIÇÃO ══════════ -->
+    <header class="hero reveal" style="animation-delay:.2s">
+      <h1 class="name" id="name"></h1>
+      <div class="kicker" id="kicker"></div>
+      <p class="tagline" id="tagline"></p>
+    </header>
+
+    <div class="rule reveal" style="animation-delay:.3s" aria-hidden="true"><i></i></div>
+
+    <!-- ══════════ LINKS ══════════ -->
+    <nav class="links" id="links" aria-label="Links principais"></nav>
+
+    <!-- ══════════ RODAPÉ ══════════ -->
+    <footer class="foot reveal" id="foot" style="animation-delay:.7s"></footer>
+  </main>
+
+  <div id="stats" role="dialog" aria-modal="true">
+    <div class="stats-card">
+      <h3>Cliques nos links</h3>
+      <div class="stats-hint">Contagem deste aparelho. Para relatórios completos, conecte o Google Analytics no CONFIG.</div>
+      <div id="stats-list"></div>
+      <div class="stats-actions">
+        <button onclick="MK.resetStats()">Zerar</button>
+        <button class="primary" onclick="MK.closeStats()">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Editor de foto (ativado com ?edit na URL) -->
+  <button id="ed-fab" onclick="MK.openEditor()" title="Ajustar foto">&#9998;</button>
+  <div id="editor">
+    <div class="ed-head">
+      <div class="ed-title">Ajustar foto</div>
+      <button class="ed-close" onclick="MK.closeEditor()">Fechar</button>
+    </div>
+    <div class="ed-hint">Arraste a foto dentro do quadro para reposicionar e use o zoom abaixo. Envie quantas fotos quiser para testar.</div>
+    <label class="ed-upload">&#128247;&nbsp; Enviar uma foto<input type="file" accept="image/*" id="ed-file" hidden></label>
+    <div class="ed-zoomrow"><span>ZOOM</span><input type="range" id="ed-zoom" min="1" max="3" step="0.01" value="1"></div>
+    <div class="ed-vals" id="ed-vals"></div>
+    <div class="ed-actions">
+      <button onclick="MK.resetPhoto()">Resetar</button>
+      <button class="primary" onclick="MK.savePhoto()">Salvar</button>
+    </div>
+    <button class="ed-export" onclick="MK.exportPhoto()">⬇ Baixar “perfil.jpg” já enquadrada</button>
+    <div class="ed-msg" id="ed-msg"></div>
+
+    <div class="ed-divider"></div>
+    <div class="ed-title" style="font-size:20px">Fonte dos botões</div>
+    <div class="ed-hint">Toque para testar — cada opção aparece na própria fonte. A escolhida vale só no seu aparelho até eu fixar no site.</div>
+    <div class="ft-opts" id="ft-opts"></div>
+    <div class="ft-active" id="ft-active"></div>
+  </div>
+
+  <script>
+  /* ═══════════════════════════════════════════════════════════════
+     ███  CONFIG  ███   — É AQUI QUE VOCÊ EDITA TUDO
+     ═══════════════════════════════════════════════════════════════ */
+  const CONFIG = {
+    name:    'Carol Nunes',
+    kicker:  'Beauty Artist',
+    tagline: 'Produção com acabamento natural e sofisticado para noivas, madrinhas e produções sociais.',
+
+    photo:   './perfil.jpg',          // foto padrão. Você pode enviar e reposicionar outras em ?edit
+    photoX:  0,                        // posição/zoom padrão do retrato (ajuste no modo ?edit)
+    photoY:  0,
+    photoScale: 1,
+    monogram:'C',                     // fallback se a foto não carregar
+
+    whatsapp: '5521989085968',                        // 55 (Brasil) + 21 (Rio) + número
+    instagram:'https://instagram.com/makecarolnunes',
+    tiktok:   'https://tiktok.com/@makecarolnunes',
+
+    location: 'Atendimento a domicílio · Rio de Janeiro',
+    signature:'Carol Nunes',          // assinatura em Eyesome Script no rodapé
+
+    gaId: '',                         // Google Analytics: cole "G-XXXXXXX" para ativar
+  };
+
+  /* Abre o WhatsApp SEM mensagem pronta — a cliente escreve o que quiser. */
+  const WA = () => `https://wa.me/${CONFIG.whatsapp}`;
+
+  /* Para ADICIONAR um link: copie um bloco e cole no fim da lista. */
+  const LINKS = [
+    {
+      id:'orcamento-noivas', variant:'primary', icon:'ring',
+      title:'Orçamento para Noivas',
+      href: WA(),
+    },
+    {
+      id:'orcamento-social', variant:'default', icon:'sparkle',
+      title:'Orçamento Produção Social',
+      sub:'Madrinhas, formatura, festas e eventos',
+      href: WA(),
+    },
+    {
+      id:'whatsapp', variant:'default', icon:'whats',
+      title:'Falar no WhatsApp',
+      sub:'Tirar dúvidas e verificar agenda',
+      href: WA(),
+    },
+    {
+      id:'instagram', variant:'default', icon:'ig',
+      title:'Portfólio no Instagram',
+      href: CONFIG.instagram,
+    },
+    {
+      id:'tiktok', variant:'default', icon:'tt',
+      title:'TikTok',
+      sub:'Bastidores e dicas',
+      href: CONFIG.tiktok,
+    },
+    {
+      id:'cursos', variant:'soon', icon:'cap', badge:'Em breve',
+      title:'Cursos Profissionais',
+      href: '',
+    },
+  ];
+
+  /* ═══ ÍCONES — linha fina, monocromáticos, on-brand ═══ */
+  const ICONS = {
+    ring:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.2l2.4-3.4h-4.8z"/><circle cx="12" cy="14.6" r="5.6"/></svg>',
+    sparkle:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"><path d="M12 3l1.9 5.6L19.5 10l-5.6 1.7L12 17l-1.9-5.3L4.5 10l5.6-1.4z"/></svg>',
+    whats:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21l1.5-4.2A8 8 0 1112 20a8 8 0 01-4.2-1.2z"/><path d="M8.6 8.4c.2-.5.4-.5.7-.5h.5c.2 0 .4 0 .6.5l.6 1.4c0 .2 0 .4-.1.5l-.4.5c-.1.1-.2.3-.1.5a4.5 4.5 0 002.3 2c.2 0 .4 0 .5-.1l.5-.6c.1-.2.3-.2.5-.1l1.4.7c.2.1.3.2.3.3 0 .5-.3 1.2-.8 1.4-.5.3-1.4.5-3-.3a7 7 0 01-3.3-3.3c-.5-1-.4-1.8-.2-2.3z"/></svg>',
+    ig:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="3.8"/><circle cx="17.2" cy="6.8" r="1" fill="currentColor" stroke="none"/></svg>',
+    tt:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M15.5 3.5c.4 2.1 1.7 3.4 3.8 3.7v2.5c-1.3 0-2.6-.35-3.7-1v5.9a5.4 5.4 0 11-5.4-5.4c.25 0 .5 0 .75.05v2.6a2.8 2.8 0 101.95 2.65V3.5z"/></svg>',
+    cap:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 9L12 4.5 2 9l10 4.5L22 9z"/><path d="M6.5 11v4.2c0 1 2.5 2.3 5.5 2.3s5.5-1.3 5.5-2.3V11"/></svg>',
+    arrow:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>',
+  };
+
+  const $ = (s) => document.querySelector(s);
+
+  function renderHero(){
+    $('#name').textContent = CONFIG.name;
+    $('#kicker').textContent = CONFIG.kicker;
+    $('#tagline').textContent = CONFIG.tagline;
+
+    $('#foot').innerHTML =
+      `<div class="signature">${CONFIG.signature}</div>
+       <div class="foot-loc">${CONFIG.location}</div>
+       <div class="foot-copy">© ${new Date().getFullYear()} ${CONFIG.name} · @makecarolnunes</div>`;
+  }
+
+  function renderLinks(){
+    $('#links').innerHTML = LINKS.map((l,i) => {
+      const inert = l.variant==='soon' || !l.href;
+      const tag = inert ? 'div' : 'a';
+      const attrs = inert ? 'aria-disabled="true"'
+        : `href="${l.href}" target="_blank" rel="noopener" onclick="MK.click('${l.id}')"`;
+      return `
+      <${tag} class="lnk lnk--${l.variant} reveal" style="animation-delay:${.36 + i*.07}s" ${attrs}>
+        <span class="lnk-title">${l.title}</span>
+        ${l.sub ? `<span class="lnk-sub">${l.sub}</span>`:''}
+        ${l.badge ? `<span class="lnk-badge">${l.badge}</span>`:''}
+      </${tag}>`;
+    }).join('');
+  }
+
+  /* ═══ RETRATO — upload + reposicionar + zoom ═══ */
+  const PSTORE = 'mk_portrait';
+  let P = Object.assign(
+    { src:null, x:CONFIG.photoX, y:CONFIG.photoY, scale:CONFIG.photoScale },
+    JSON.parse(localStorage.getItem(PSTORE) || 'null') || {}
+  );
+  let portraitImg = null;
+
+  function applyPortrait(){
+    if(portraitImg){
+      // sem transform quando é o padrão → o iOS recorta o arco corretamente
+      const def = (P.x===0 && P.y===0 && P.scale===1);
+      portraitImg.style.transform = def ? '' : `translate(${P.x}%, ${P.y}%) scale(${P.scale})`;
+    }
+    const v = $('#ed-vals');
+    if(v) v.textContent = `posição  x ${P.x.toFixed(1)}%  ·  y ${P.y.toFixed(1)}%  ·  zoom ${P.scale.toFixed(2)}`;
+  }
+  function loadPortrait(){
+    const box = $('#portrait');
+    box.innerHTML = '<div class="monogram">'+CONFIG.monogram+'</div>';
+    const img = new Image();
+    img.alt = CONFIG.name + ' — Beauty Artist';
+    img.draggable = false;
+    img.onload = () => { box.innerHTML=''; box.appendChild(img); portraitImg=img; applyPortrait(); };
+    img.src = P.src || CONFIG.photo;   // se falhar, fica o monograma
+  }
+  function initEditor(autoOpen){
+    const box = $('#portrait');
+    $('#ed-fab').classList.add('show');
+    $('#ed-zoom').value = P.scale;
+    let drag = null;
+    const pt = e => e.touches ? e.touches[0] : e;
+    const down = e => { if(!box.classList.contains('editing')) return; const p=pt(e); drag={x:p.clientX,y:p.clientY}; box.classList.add('dragging'); };
+    const move = e => { if(!drag) return; e.preventDefault(); const p=pt(e); const r=box.getBoundingClientRect();
+      P.x += (p.clientX-drag.x)/r.width*100; P.y += (p.clientY-drag.y)/r.height*100; drag.x=p.clientX; drag.y=p.clientY; applyPortrait(); };
+    const up = () => { drag=null; box.classList.remove('dragging'); };
+    box.addEventListener('mousedown',down); addEventListener('mousemove',move); addEventListener('mouseup',up);
+    box.addEventListener('touchstart',down,{passive:false}); addEventListener('touchmove',move,{passive:false}); addEventListener('touchend',up);
+    $('#ed-zoom').addEventListener('input', e => { P.scale=parseFloat(e.target.value); applyPortrait(); });
+    $('#ed-file').addEventListener('change', e => {
+      const f = e.target.files && e.target.files[0]; if(!f) return;
+      $('#ed-msg').style.color = 'var(--taupe)';
+      $('#ed-msg').textContent = 'Carregando foto…';
+      const fr = new FileReader();
+      fr.onerror = () => { $('#ed-msg').textContent = 'Não consegui ler o arquivo. Tente outra foto.'; };
+      fr.onload = () => {
+        const im = new Image();
+        im.onload = () => {
+          try{
+            const max=1100, s=Math.min(1, max/im.width);
+            const c=document.createElement('canvas');
+            c.width=Math.round(im.width*s); c.height=Math.round(im.height*s);
+            c.getContext('2d').drawImage(im,0,0,c.width,c.height);
+            P.src = c.toDataURL('image/jpeg',0.85);
+          }catch(err){ P.src = fr.result; }
+          P.x=0; P.y=0; P.scale=1; $('#ed-zoom').value=1;
+          $('#ed-msg').textContent=''; loadPortrait();
+        };
+        im.onerror = () => { $('#ed-msg').textContent = 'Essa imagem não carregou. Tente um JPG ou PNG.'; };
+        im.src = fr.result;
+      };
+      fr.readAsDataURL(f);
+    });
+    if(autoOpen) MK.openEditor();
+  }
+
+  /* ═══ TESTE DE FONTE DOS BOTÕES ═══ */
+  const FONTS = [
+    {id:'cormorant',    label:'Cormorant',         font:"'Cormorant Garamond',serif", weight:600, size:'22px',   spacing:'.01em',  transform:'none',      style:'normal'},
+    {id:'cormorant-it', label:'Cormorant itálico', font:"'Cormorant Garamond',serif", weight:600, size:'22px',   spacing:'.01em',  transform:'none',      style:'italic'},
+    {id:'dmsans',       label:'DM Sans',           font:"'DM Sans',sans-serif",       weight:500, size:'15px',   spacing:'.01em',  transform:'none',      style:'normal'},
+    {id:'dmsans-caps',  label:'DM Sans versais',   font:"'DM Sans',sans-serif",       weight:500, size:'12.5px', spacing:'.2em',   transform:'uppercase', style:'normal'},
+  ];
+  const FSTORE = 'mk_btnfont';
+  function applyFont(p, save){
+    const r = document.documentElement.style;
+    r.setProperty('--btn-font',p.font);          r.setProperty('--btn-weight',p.weight);
+    r.setProperty('--btn-size',p.size);          r.setProperty('--btn-spacing',p.spacing);
+    r.setProperty('--btn-transform',p.transform);r.setProperty('--btn-style',p.style);
+    document.querySelectorAll('.ft-opt').forEach(o => o.classList.toggle('active', o.dataset.id===p.id));
+    if(save) localStorage.setItem(FSTORE, p.id);
+    const a = $('#ft-active'); if(a) a.textContent = 'Fonte ativa: ' + p.label + ' — me peça para fixar quando decidir.';
+  }
+  function applySavedFont(){ const p = FONTS.find(f => f.id === localStorage.getItem(FSTORE)); if(p) applyFont(p, false); }
+  function initFontTest(){
+    $('#ft-opts').innerHTML = FONTS.map(p =>
+      `<button class="ft-opt" data-id="${p.id}" onclick="MK.pickFont('${p.id}')"
+         style="font-family:${p.font};font-style:${p.style};text-transform:${p.transform};letter-spacing:${p.spacing}">${p.label}</button>`
+    ).join('');
+    const p = FONTS.find(f => f.id === localStorage.getItem(FSTORE)) || FONTS.find(f => f.id === 'dmsans-caps');
+    applyFont(p, false);
+  }
+
+  /* ═══ ANALYTICS ═══ */
+  const STORE = 'mk_link_clicks';
+  function loadGA(){
+    if(!CONFIG.gaId) return;
+    const s=document.createElement('script');
+    s.async=true;s.src='https://www.googletagmanager.com/gtag/js?id='+CONFIG.gaId;
+    document.head.appendChild(s);
+    window.dataLayer=window.dataLayer||[];
+    window.gtag=function(){dataLayer.push(arguments)};
+    gtag('js',new Date());gtag('config',CONFIG.gaId);
+  }
+  const MK = {
+    click(id){
+      const data = JSON.parse(localStorage.getItem(STORE)||'{}');
+      data[id]=(data[id]||0)+1; localStorage.setItem(STORE,JSON.stringify(data));
+      if(window.gtag) gtag('event','link_click',{link_id:id});
+    },
+    openStats(){
+      const data = JSON.parse(localStorage.getItem(STORE)||'{}');
+      $('#stats-list').innerHTML = LINKS.map(l =>
+        `<div class="stats-row"><span>${l.title}</span><span class="stats-num">${data[l.id]||0}</span></div>`
+      ).join('');
+      $('#stats').classList.add('open');
+    },
+    closeStats(){ $('#stats').classList.remove('open'); history.replaceState(null,'',location.pathname); },
+    resetStats(){ localStorage.removeItem(STORE); this.openStats(); },
+
+    openEditor(){ $('#editor').classList.add('open'); $('#portrait').classList.add('editing'); applyPortrait(); },
+    closeEditor(){ $('#editor').classList.remove('open'); $('#portrait').classList.remove('editing'); },
+    savePhoto(){
+      try{ localStorage.setItem(PSTORE, JSON.stringify(P)); }
+      catch(e){ $('#ed-msg').style.color='#C62828'; $('#ed-msg').textContent='A foto ficou grande demais para guardar. Tente uma imagem menor.'; return; }
+      $('#ed-msg').style.color = '#3B6D11';
+      $('#ed-msg').textContent = '✓ Enquadramento salvo neste aparelho. Para publicar a foto para todas as visitantes, me envie a foto escolhida que eu fixo no site.';
+    },
+    resetPhoto(){
+      localStorage.removeItem(PSTORE);
+      P = { src:null, x:CONFIG.photoX, y:CONFIG.photoY, scale:CONFIG.photoScale };
+      $('#ed-zoom').value = P.scale; $('#ed-msg').textContent=''; loadPortrait();
+    },
+    pickFont(id){ const p = FONTS.find(f => f.id === id); if(p) applyFont(p, true); },
+
+    /* Gera um perfil.jpg 4:5 com o enquadramento ATUAL "queimado" na imagem,
+       para a foto ficar igual no site (sem depender de localStorage). */
+    exportPhoto(){
+      const img = portraitImg, m = $('#ed-msg');
+      if(!img || !img.naturalWidth){ m.style.color='#C62828'; m.textContent='Posicione uma foto antes de exportar.'; return; }
+      const Wo=1000, Ho=1250;                       // mesma proporção 4:5 do retrato
+      const c=document.createElement('canvas'); c.width=Wo; c.height=Ho;
+      const x=c.getContext('2d'); x.fillStyle='#EFE4D7'; x.fillRect(0,0,Wo,Ho);
+      const Wn=img.naturalWidth, Hn=img.naturalHeight;
+      const eff=Math.max(Wo/Wn, Ho/Hn)*P.scale;     // object-fit:cover × zoom
+      const dW=Wn*eff, dH=Hn*eff;
+      x.drawImage(img, Wo/2+(P.x/100*Wo)-dW/2, Ho/2+(P.y/100*Ho)-dH/2, dW, dH);
+      let url;
+      try{ url=c.toDataURL('image/jpeg',0.88); }
+      catch(e){
+        m.style.color='#C62828';
+        m.textContent='Não deu para exportar a foto padrão (trava do navegador). Clique em "Enviar uma foto", escolha a mesma imagem do seu PC, reposicione e exporte de novo — ou me mande os números de posição/zoom mostrados acima que eu aplico aqui.';
+        return;
+      }
+      const a=document.createElement('a'); a.href=url; a.download='perfil.jpg'; a.click();
+      m.style.color='#3B6D11';
+      m.textContent='✓ "perfil.jpg" baixada com o seu enquadramento. Salve-a na pasta links (substituindo a antiga) e publique de novo. Depois clique em Resetar.';
+    },
+  };
+  window.MK = MK;
+
+  renderHero();
+  renderLinks();
+  loadPortrait();
+  applySavedFont();
+  loadGA();
+  if(location.search.includes('stats')) MK.openStats();
+  // Painel de ajustes (foto + fonte) disponível ao abrir o arquivo no PC (file://); some quando publicado.
+  if(location.protocol === 'file:' || location.search.includes('edit')){
+    initEditor(location.search.includes('edit'));
+    initFontTest();
+  }
+  </script>
+</body>
+</html>

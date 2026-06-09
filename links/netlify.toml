@@ -1,0 +1,25 @@
+# Configuração do site no Netlify (lida automaticamente ao publicar a pasta)
+
+[build]
+  publish = "."
+
+# Cabeçalhos de segurança em todas as páginas
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "SAMEORIGIN"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "geolocation=(), microphone=(), camera=()"
+
+# A foto pode ficar muito tempo em cache (renomeie o arquivo se trocar)
+[[headers]]
+  for = "/perfil.jpg"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# O HTML deve ser sempre revalidado (para suas edições aparecerem rápido)
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"

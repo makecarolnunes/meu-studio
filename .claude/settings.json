@@ -7,7 +7,14 @@
       "Write",
       "Read(//c/Users/carol/OneDrive/�rea de Trabalho/claude/Nova pasta/confirmacao/**)",
       "PowerShell($c = Get-Content 'c:/Users/carol/OneDrive/Área de Trabalho/claude/Nova pasta/financeiro/index.html' -Raw; if \\($c -notmatch '</html>'\\) { Write-Warning 'ARQUIVO TRUNCADO' } else { Write-Host \"OK — $\\($c.Split\\(\"`n\"\\).Count\\) linhas\" })",
-      "PowerShell(Copy-Item 'c:/Users/carol/OneDrive/�rea de Trabalho/claude/Nova pasta/financeiro/index.html' 'c:/Users/carol/OneDrive/�rea de Trabalho/claude/Nova pasta/financeiro/entradas.html')"
+      "PowerShell(Copy-Item 'c:/Users/carol/OneDrive/�rea de Trabalho/claude/Nova pasta/financeiro/index.html' 'c:/Users/carol/OneDrive/�rea de Trabalho/claude/Nova pasta/financeiro/entradas.html')",
+      "PowerShell(& \".\\\\_audit_ids.ps1\")",
+      "PowerShell(gh run list --limit 3)",
+      "mcp__claude_ai_Supabase__list_projects",
+      "mcp__claude_ai_Supabase__get_logs",
+      "mcp__claude_ai_Supabase__list_tables",
+      "mcp__claude_ai_Supabase__execute_sql",
+      "mcp__claude_ai_Supabase__apply_migration"
     ],
     "defaultMode": "bypassPermissions",
     "additionalDirectories": [
