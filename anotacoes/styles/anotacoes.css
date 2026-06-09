@@ -195,15 +195,68 @@ body {
 }
 .editor-titulo::placeholder { color: var(--muted); font-weight: 500; }
 
+/* Toolbar do editor rico */
+.ano-rte-toolbar {
+  display: flex; align-items: center; gap: 1px; flex-wrap: wrap;
+  padding: 6px 10px;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 53px; z-index: 50;
+}
+.ano-rte-btn {
+  width: 30px; height: 30px; border: none; background: none;
+  border-radius: 7px; font-size: .9rem; cursor: pointer; color: var(--text);
+  display: flex; align-items: center; justify-content: center;
+  font-family: inherit; flex-shrink: 0;
+}
+.ano-rte-btn.ano-rte-lbl { font-size: .7rem; font-weight: 800; letter-spacing: -.02em; }
+.ano-rte-btn:hover  { background: var(--ac-l); color: var(--ac-d); }
+.ano-rte-btn:active { background: rgba(163,104,68,.2); }
+.ano-rte-sep { width: 1px; height: 18px; background: var(--border); margin: 0 4px; flex-shrink: 0; }
+
+/* Área editável (contenteditable) */
 .editor-conteudo {
   width: 100%; padding: 14px;
   border: none; border-bottom: 1px solid var(--border);
   font-size: .91rem; color: var(--text); line-height: 1.72;
   background: var(--card); font-family: inherit;
-  outline: none; resize: none; display: block;
+  outline: none; display: block;
   min-height: 52vh;
+  word-break: break-word;
 }
-.editor-conteudo::placeholder { color: var(--muted); }
+.editor-conteudo:focus { outline: none; }
+.editor-conteudo:empty::before {
+  content: attr(data-placeholder);
+  color: var(--muted); pointer-events: none;
+}
+/* Tipografia */
+.editor-conteudo h1 { font-size: 1.5rem;  font-weight: 800; line-height: 1.25; margin: .5em 0 .3em;  color: var(--ac-d); }
+.editor-conteudo h2 { font-size: 1.25rem; font-weight: 800; line-height: 1.3;  margin: .5em 0 .25em; color: var(--ac-d); }
+.editor-conteudo h3 { font-size: 1.08rem; font-weight: 700; line-height: 1.3;  margin: .45em 0 .2em; color: var(--ac-d); }
+.editor-conteudo p  { margin: .35em 0; }
+.editor-conteudo ul, .editor-conteudo ol { padding-left: 1.5em; margin: .4em 0; }
+.editor-conteudo li { margin: .2em 0; }
+.editor-conteudo a  { color: var(--ac); text-decoration: underline; word-break: break-word; }
+.editor-conteudo mark { background: #fff3bf; }
+.editor-conteudo blockquote { border-left: 3px solid var(--border); margin: .4em 0; padding-left: 12px; color: var(--muted); }
+
+/* Checklist */
+.editor-conteudo ul.ano-check { list-style: none; padding-left: 0; margin: .4em 0; }
+.editor-conteudo ul.ano-check li {
+  position: relative; padding-left: 30px; margin: .28em 0; list-style: none;
+}
+.editor-conteudo ul.ano-check li::before {
+  content: ''; position: absolute; left: 0; top: 3px;
+  width: 18px; height: 18px; border-radius: 5px;
+  border: 1.5px solid var(--ac); background: var(--card); cursor: pointer;
+}
+.editor-conteudo ul.ano-check li.done::before { background: var(--ac); border-color: var(--ac); }
+.editor-conteudo ul.ano-check li.done::after {
+  content: ''; position: absolute; left: 6px; top: 6px;
+  width: 5px; height: 9px; border: solid #fff; border-width: 0 2px 2px 0;
+  transform: rotate(45deg); pointer-events: none;
+}
+.editor-conteudo ul.ano-check li.done { color: var(--muted); text-decoration: line-through; }
 
 .editor-section {
   background: var(--card);
@@ -670,6 +723,8 @@ body {
     min-height: 240px;
     border-bottom: 1px solid var(--border);
   }
+  /* Header oculto no desktop: toolbar gruda no topo do editor */
+  .ano-rte-toolbar { top: 0; padding: 7px 22px; }
   .editor-section { padding: 14px 22px 16px; }
   .btn-del-nota   { display: none !important; } /* usa botão desktop */
 

@@ -87,7 +87,7 @@ async function autoSave() {
     id:        curNota ? curNota.id : String(Date.now()),
     cadernoId: curCad.id,
     titulo:    titulo,
-    conteudo:  (document.getElementById('f-conteudo').value || '').trim(),
+    conteudo:  getEditorHtml(),
     tags:      editTags.slice(),
     imagens:   editImgs.slice(),
     createdAt: curNota ? curNota.createdAt : now,
@@ -129,6 +129,137 @@ async function flushAutoSave() {
   if (!_isDirty) return;
   clearTimeout(_autoSaveTimer);
   await autoSave();
+}
+
+// ── Editor rico (contenteditable) ─────────────────────────────────────
+function editorEl() { return document.getElementById('f-conteudo'); }
+
+// Lê o HTML da nota; '' quando o editor está visualmente vazio
+function getEditorHtml() {
+  var el = editorEl();
+  if (!el) return '';
+  var h = el.innerHTML;
+  if (h === '' || h === '<br>' || h === '<p></p>' ||
+      h === '<p><br></p>' || h === '<div><br></div>') return '';
+  return h;
+}
+
+// Heurística: o conteúdo salvo já é HTML?
+function looksHtml(s) {
+  return /<(p|br|h[1-6]|ul|ol|li|div|b|i|u|strong|em|a|mark|span|blockquote)\b/i.test(String(s || ''));
+}
+
+// Preenche o editor; notas antigas (texto puro) são escapadas e ganham <br>
+function setEditorHtml(content) {
+  var el = editorEl();
+  if (!el) return;
+  content = content || '';
+  if (content && !looksHtml(content)) {
+    el.innerHTML = esc(content).replace(/\n/g, '<br>');
+  } else {
+    el.innerHTML = content;
+  }
+}
+
+// Texto puro a partir de HTML (previews e busca)
+function stripHtml(s) {
+  return String(s || '')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&').replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>').replace(/&quot;/g, '"')
+    .replace(/\s+/g, ' ').trim();
+}
+
+// Comandos de formatação
+function anoFmt(cmd, val) {
+  var el = editorEl();
+  if (!el) return;
+  el.focus();
+  document.execCommand(cmd, false, val || null);
+  scheduleAutoSave();
+}
+
+function anoFmtBg(color) {
+  var el = editorEl();
+  if (!el) return;
+  el.focus();
+  document.execCommand('hiliteColor', false, color);
+  scheduleAutoSave();
+}
+
+// Inserir link (Ctrl+K) — preserva a seleção que o prompt pode descartar
+function anoLink() {
+  var el = editorEl();
+  if (!el) return;
+  el.focus();
+  var sel = window.getSelection();
+  var savedRange = (sel && sel.rangeCount) ? sel.getRangeAt(0).cloneRange() : null;
+  var hadSel = savedRange && !savedRange.collapsed;
+  var url = prompt('URL do link:', 'https://');
+  if (url === null) return;
+  url = url.trim();
+  if (!url || url === 'https://') return;
+  if (!/^https?:\/\//i.test(url) && !/^mailto:/i.test(url)) url = 'https://' + url;
+  el.focus();
+  if (savedRange) { sel.removeAllRanges(); sel.addRange(savedRange); }
+  if (hadSel) {
+    document.execCommand('createLink', false, url);
+  } else {
+    document.execCommand('insertHTML', false, '<a href="' + esc(url) + '">' + esc(url) + '</a>');
+  }
+  scheduleAutoSave();
+}
+
+// Acha o <ul> que contém a seleção (dentro do editor)
+function _closestUl() {
+  var node = window.getSelection().anchorNode;
+  var n = node ? (node.nodeType === 1 ? node : node.parentNode) : null;
+  var el = editorEl();
+  while (n && n !== el && n !== document.body) {
+    if (n.tagName === 'UL') return n;
+    n = n.parentNode;
+  }
+  return null;
+}
+
+// Checklist: texto → checklist; bullet → checklist; checklist → texto
+function anoChecklist() {
+  var el = editorEl();
+  if (!el) return;
+  el.focus();
+  var ul = _closestUl();
+  if (ul && ul.classList.contains('ano-check')) {
+    document.execCommand('insertUnorderedList'); // toggle off
+  } else if (ul) {
+    ul.classList.add('ano-check');               // bullet → checklist
+  } else {
+    document.execCommand('insertUnorderedList');
+    var nl = _closestUl();
+    if (nl) nl.classList.add('ano-check');
+  }
+  scheduleAutoSave();
+}
+
+// Clique na caixinha de um item de checklist alterna o estado
+function _checklistClick(e) {
+  var li = e.target.closest ? e.target.closest('.ano-check > li') : null;
+  if (!li) return;
+  var rect = li.getBoundingClientRect();
+  if (e.clientX - rect.left <= 30) {
+    li.classList.toggle('done');
+    scheduleAutoSave();
+  }
+}
+
+// Atalhos de teclado no editor
+function _editorKeydown(e) {
+  if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
+  var k = (e.key || '').toLowerCase();
+  if (k === 'b')      { e.preventDefault(); anoFmt('bold'); }
+  else if (k === 'i') { e.preventDefault(); anoFmt('italic'); }
+  else if (k === 'u') { e.preventDefault(); anoFmt('underline'); }
+  else if (k === 'k') { e.preventDefault(); anoLink(); }
 }
 
 // ── Utils ─────────────────────────────────────────────────────────────
@@ -316,7 +447,7 @@ function renderNotas() {
   if (_notaSearch) {
     list = list.filter(function(n) {
       return (n.titulo || '').toLowerCase().includes(_notaSearch) ||
-             (n.conteudo || '').toLowerCase().includes(_notaSearch);
+             stripHtml(n.conteudo).toLowerCase().includes(_notaSearch);
     });
   }
 
@@ -347,7 +478,8 @@ function renderNotas() {
           ' ' + n.imagens.length +
         '</span>'
       : '';
-    var preview = n.conteudo ? n.conteudo.slice(0,90) + (n.conteudo.length > 90 ? '…' : '') : '';
+    var ptxt = stripHtml(n.conteudo);
+    var preview = ptxt ? ptxt.slice(0,90) + (ptxt.length > 90 ? '…' : '') : '';
     var isSelNota = curNota && curNota.id === n.id;
     return '<div class="nota-card' + (isSelNota ? ' selected' : '') + '" onclick="openNotaEditor(\'' + n.id + '\')">' +
       tagsHtml +
@@ -410,8 +542,8 @@ function openEditor(nota) {
   editTags = nota ? (nota.tags    || []).slice() : [];
   editImgs = nota ? (nota.imagens || []).slice() : [];
 
-  document.getElementById('f-titulo').value   = nota ? nota.titulo   : '';
-  document.getElementById('f-conteudo').value = nota ? nota.conteudo : '';
+  document.getElementById('f-titulo').value = nota ? nota.titulo : '';
+  setEditorHtml(nota ? nota.conteudo : '');
 
   renderEditTags();
   renderEditImgs();
@@ -537,7 +669,7 @@ async function saveNota() {
   _isDirty = false;
 
   var titulo   = (document.getElementById('f-titulo').value   || '').trim();
-  var conteudo = (document.getElementById('f-conteudo').value || '').trim();
+  var conteudo = getEditorHtml();
   if (!titulo) {
     document.getElementById('f-titulo').focus();
     toast('Informe um título para a nota', 'err');
@@ -662,7 +794,8 @@ function renderTrash(lixo) {
   }
 
   el.innerHTML = lixo.map(function(n) {
-    var preview = n.conteudo ? n.conteudo.slice(0, 80) + (n.conteudo.length > 80 ? '…' : '') : '';
+    var ptxt = stripHtml(n.conteudo);
+    var preview = ptxt ? ptxt.slice(0, 80) + (ptxt.length > 80 ? '…' : '') : '';
     return '<div class="trash-item">' +
       '<div class="trash-item-main">' +
         '<div class="trash-item-titulo">' + esc(n.titulo || 'Sem título') + '</div>' +
@@ -865,3 +998,11 @@ function closePanel(name) {
 // ── Init ──────────────────────────────────────────────────────────────
 load();
 showView('cadernos');
+
+// Listeners do editor rico (o #f-conteudo já existe no DOM, mesmo oculto)
+(function initEditor() {
+  var el = editorEl();
+  if (!el) return;
+  el.addEventListener('keydown', _editorKeydown);
+  el.addEventListener('click', _checklistClick);
+})();

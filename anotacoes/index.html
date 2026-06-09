@@ -9,7 +9,7 @@
   <title>Anotações · Meu Studio</title>
   <link rel="stylesheet" href="../shared/css/tokens.css">
   <link rel="stylesheet" href="../shared/css/base.css">
-  <link rel="stylesheet" href="./styles/anotacoes.css">
+  <link rel="stylesheet" href="./styles/anotacoes.css?v=rte1">
 </head>
 <body>
 
@@ -115,9 +115,32 @@
         <span id="save-status" class="save-status"></span>
       </div>
 
-      <textarea class="editor-conteudo" id="f-conteudo"
-                placeholder="Escreva suas anotações aqui…"
-                oninput="scheduleAutoSave()"></textarea>
+      <!-- Toolbar do editor rico -->
+      <div class="ano-rte-toolbar" id="ano-rte-toolbar">
+        <button class="ano-rte-btn" onmousedown="return false" onclick="anoFmt('bold')"      title="Negrito (Ctrl+B)"><b>B</b></button>
+        <button class="ano-rte-btn" onmousedown="return false" onclick="anoFmt('italic')"    title="Itálico (Ctrl+I)"><i>I</i></button>
+        <button class="ano-rte-btn" onmousedown="return false" onclick="anoFmt('underline')" title="Sublinhado (Ctrl+U)"><u>U</u></button>
+        <span class="ano-rte-sep"></span>
+        <button class="ano-rte-btn ano-rte-lbl" onmousedown="return false" onclick="anoFmt('formatBlock','h1')" title="Título 1">H1</button>
+        <button class="ano-rte-btn ano-rte-lbl" onmousedown="return false" onclick="anoFmt('formatBlock','h2')" title="Título 2">H2</button>
+        <button class="ano-rte-btn ano-rte-lbl" onmousedown="return false" onclick="anoFmt('formatBlock','h3')" title="Título 3">H3</button>
+        <button class="ano-rte-btn ano-rte-lbl" onmousedown="return false" onclick="anoFmt('formatBlock','p')"  title="Parágrafo">¶</button>
+        <span class="ano-rte-sep"></span>
+        <button class="ano-rte-btn" onmousedown="return false" onclick="anoFmt('insertUnorderedList')" title="Lista com marcadores">•</button>
+        <button class="ano-rte-btn" onmousedown="return false" onclick="anoFmt('insertOrderedList')"   title="Lista numerada">1.</button>
+        <button class="ano-rte-btn" onmousedown="return false" onclick="anoChecklist()" title="Checklist">☑</button>
+        <span class="ano-rte-sep"></span>
+        <button class="ano-rte-btn" onmousedown="return false" onclick="anoLink()" title="Inserir link (Ctrl+K)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        </button>
+        <button class="ano-rte-btn" onmousedown="return false" onclick="anoFmtBg('#fff3bf')" title="Destacar em amarelo" style="color:#b8860b">✦</button>
+        <button class="ano-rte-btn" onmousedown="return false" onclick="anoFmtBg('#ffd9e6')" title="Destacar em rosa"   style="color:#c2185b">✦</button>
+        <button class="ano-rte-btn" onmousedown="return false" onclick="anoFmt('removeFormat')" title="Limpar formatação" style="font-size:.72rem;color:var(--muted)">✕</button>
+      </div>
+
+      <div class="editor-conteudo" id="f-conteudo" contenteditable="true"
+           data-placeholder="Escreva suas anotações aqui…"
+           oninput="scheduleAutoSave()"></div>
 
       <!-- Tags -->
       <div class="editor-section">
@@ -218,7 +241,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="../config.js"></script>
 <script src="../shared/js/db.js?v=lixeira1"></script>
-<script src="./scripts/anotacoes.js?v=lixeira1"></script>
+<script src="./scripts/anotacoes.js?v=rte1"></script>
 <script src="../shared/js/global-search.js"></script>
 <script src="../shared/js/global-notes.js?v=lixeira1"></script>
 <script src="../shared/js/sidebar.js"></script>
