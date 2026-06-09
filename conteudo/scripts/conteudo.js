@@ -23,7 +23,7 @@ var DOW = ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
    ============================================================ */
 var QN_KEY='mk_quick_notes';
 var ideas=[], customCats=[], customPlats=[];
-var curView='list', curSF='todos', curCF=[], curPlat='todos';
+var curView='list', curSF='todos', curCF=[], curPlats=[];
 var curSort='status'; // 'date' | 'category' | 'status' | 'scheduled' — padrão: por etapa de produção
 var colIdx=0, editId=null;
 var fCats=[CATS[0]], fFmts=['Reels'], fSt='Nao Iniciado', fPlats=['Instagram'];
@@ -76,6 +76,86 @@ function setRteHtml(id, html){
 }
 
 /* ============================================================
+   DROPDOWN MULTISELEÇÃO (reutilizável: filtros + seletores do editor)
+   ============================================================ */
+var _openDD = null; // id do dropdown atualmente aberto
+
+// Helpers de toggle em arrays
+function toggleArr(arr, v){ var i=arr.indexOf(v); if(i===-1) arr.push(v); else arr.splice(i,1); }
+function toggleArrMin1(arr, v, msg){
+  var i=arr.indexOf(v);
+  if(i===-1){ arr.push(v); }
+  else { if(arr.length<=1){ showToast(msg); return; } arr.splice(i,1); }
+}
+
+// Monta o HTML de um dropdown. opts: {dark, allowClear, addPlat, removable}
+function ddHtml(id, kind, label, options, selected, opts){
+  opts = opts||{};
+  var sel = selected||[];
+  var cnt = sel.length;
+  var trig = label + (cnt ? ' · ' + cnt : '');
+  var cls = 'ms-dd' + (opts.dark?' ms-dd-dark':'') + (cnt?' has-sel':'');
+  var h = '<div class="'+cls+'" id="'+id+'">'+
+    '<button type="button" class="ms-dd-trigger">'+
+      '<span class="ms-dd-lbl">'+safe(trig)+'</span>'+
+      '<svg class="ms-dd-caret" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>'+
+    '</button>'+
+    '<div class="ms-dd-panel">';
+  if(opts.allowClear !== false){
+    h += '<button type="button" class="ms-dd-clear" data-clear="'+safe(kind)+'">'+(opts.clearLabel||'Limpar seleção')+'</button>';
+  }
+  for(var i=0;i<options.length;i++){
+    var v = (options[i].value!==undefined)?options[i].value:options[i];
+    var l = (options[i].label!==undefined)?options[i].label:options[i];
+    var on = sel.indexOf(v)!==-1;
+    var rm = (opts.removable && opts.removable.indexOf(v)!==-1)
+      ? '<span class="ms-dd-rm" data-rm="'+safe(v)+'" title="Remover">×</span>' : '';
+    h += '<button type="button" class="ms-dd-opt'+(on?' on':'')+'" data-kind="'+safe(kind)+'" data-val="'+safe(v)+'">'+
+      '<span class="ms-dd-check"></span><span class="ms-dd-opt-lbl">'+safe(l)+'</span>'+rm+'</button>';
+  }
+  if(opts.addPlat){
+    h += '<button type="button" class="ms-dd-add" data-add="plat">+ Nova plataforma</button>';
+  }
+  h += '</div></div>';
+  return h;
+}
+
+function toggleDD(id){ _openDD = (_openDD===id) ? null : id; applyDDOpen(); }
+function applyDDOpen(){
+  var all = document.querySelectorAll('.ms-dd');
+  for(var i=0;i<all.length;i++) all[i].classList.toggle('open', all[i].id===_openDD);
+}
+
+function ddPick(kind, val){
+  if(kind==='fltPlat'){ toggleArr(curPlats, val); saveCurPlat(); render(); }
+  else if(kind==='fltCat'){ toggleArr(curCF, val); render(); }
+  else if(kind==='edCat'){  toggleArrMin1(fCats,  val, 'Pelo menos um tema!');       buildEditorDDs(); scheduleDraft(); }
+  else if(kind==='edPlat'){ toggleArrMin1(fPlats, val, 'Pelo menos uma plataforma!'); buildEditorDDs(); scheduleDraft(); }
+  else if(kind==='edFmt'){  toggleArrMin1(fFmts,  val, 'Pelo menos um formato!');     buildEditorDDs(); scheduleDraft(); }
+  applyDDOpen();
+}
+function ddClear(kind){
+  if(kind==='fltPlat'){ curPlats=[]; saveCurPlat(); render(); }
+  else if(kind==='fltCat'){ curCF=[]; render(); }
+  applyDDOpen();
+}
+
+// Delegação única para todos os dropdowns
+document.addEventListener('click', function(e){
+  var trig = e.target.closest('.ms-dd-trigger');
+  if(trig){ e.stopPropagation(); var dd=trig.closest('.ms-dd'); if(dd) toggleDD(dd.id); return; }
+  var rm = e.target.closest('.ms-dd-rm');
+  if(rm){ e.stopPropagation(); removePlatform(rm.getAttribute('data-rm')); return; }
+  var add = e.target.closest('.ms-dd-add');
+  if(add){ e.stopPropagation(); addPlatform(); return; }
+  var opt = e.target.closest('.ms-dd-opt');
+  if(opt){ e.stopPropagation(); ddPick(opt.getAttribute('data-kind'), opt.getAttribute('data-val')); return; }
+  var clr = e.target.closest('.ms-dd-clear');
+  if(clr){ e.stopPropagation(); ddClear(clr.getAttribute('data-clear')); return; }
+  if(_openDD && !e.target.closest('.ms-dd')){ _openDD=null; applyDDOpen(); }
+});
+
+/* ============================================================
    SYNC
    ============================================================ */
 var syncTimer=null;
@@ -92,7 +172,7 @@ function pushToSheets(){
   var url=getScriptUrl(); if(!url) return;
   updateSyncDot('syncing');
   fetch(url,{method:'POST',headers:{'Content-Type':'text/plain'},
-    body:JSON.stringify({action:'saveAll',ideas:ideas,customCats:customCats,customPlats:customPlats,curPlatform:curPlat})})
+    body:JSON.stringify({action:'saveAll',ideas:ideas,customCats:customCats,customPlats:customPlats,curPlatform:curPlats})})
   .then(function(r){return r.json();})
   .then(function(d){updateSyncDot(d.ok?'ok':'error');})
   .catch(function(){updateSyncDot('error');});
@@ -105,20 +185,26 @@ function readLS(){
   try{ideas      =JSON.parse(localStorage.getItem('mk_content_ideas')||'[]');}catch(e){ideas=[];}
   try{customCats =JSON.parse(localStorage.getItem('mk_content_cats') ||'[]');}catch(e){customCats=[];}
   try{customPlats=JSON.parse(localStorage.getItem('mk_content_platforms')||'[]');}catch(e){customPlats=[];}
-  try{curPlat    =localStorage.getItem('mk_content_cur_platform')||'todos';}catch(e){curPlat='todos';}
+  // Filtro de plataforma agora é multiseleção (array). Migra o valor único antigo.
+  try{
+    var rawP=localStorage.getItem('mk_content_cur_platform');
+    if(!rawP||rawP==='todos'){ curPlats=[]; }
+    else if(rawP.charAt(0)==='['){ curPlats=JSON.parse(rawP)||[]; }
+    else { curPlats=[rawP]; }
+  }catch(e){ curPlats=[]; }
 }
 function writeLS(){
   try{localStorage.setItem('mk_content_ideas',       JSON.stringify(ideas));}catch(e){}
   try{localStorage.setItem('mk_content_cats',        JSON.stringify(customCats));}catch(e){}
   try{localStorage.setItem('mk_content_platforms',   JSON.stringify(customPlats));}catch(e){}
-  try{localStorage.setItem('mk_content_cur_platform',curPlat);}catch(e){}
+  try{localStorage.setItem('mk_content_cur_platform',JSON.stringify(curPlats));}catch(e){}
 }
 function saveIdeas(){try{localStorage.setItem('mk_content_ideas',JSON.stringify(ideas));}catch(e){} scheduleSync();}
 // Persiste categorias/plataformas personalizadas no Supabase (tabela configuracoes) p/ sync entre devices
 function syncCfg(chave,val){ if(typeof DB!=='undefined' && DB.config && DB.config.set && !window._SB_ERROR){ DB.config.set(chave, JSON.stringify(val)).catch(function(){}); } }
 function saveCats() {try{localStorage.setItem('mk_content_cats', JSON.stringify(customCats));}catch(e){} syncCfg('conteudo_custom_cats', customCats); scheduleSync();}
 function savePlats(){try{localStorage.setItem('mk_content_platforms',JSON.stringify(customPlats));}catch(e){} syncCfg('conteudo_custom_plats', customPlats); scheduleSync();}
-function saveCurPlat(){try{localStorage.setItem('mk_content_cur_platform',curPlat);}catch(e){} scheduleSync();}
+function saveCurPlat(){try{localStorage.setItem('mk_content_cur_platform',JSON.stringify(curPlats));}catch(e){} scheduleSync();}
 
 /* ============================================================
    RASCUNHO AUTOMÁTICO (draft)
@@ -201,7 +287,7 @@ function migrate(){
     if(idea.scheduledDate===undefined) idea.scheduledDate='';
   }
 }
-function validateCurPlat(){ if(curPlat!=='todos'&&allPlats().indexOf(curPlat)===-1) curPlat='todos'; }
+function validateCurPlat(){ var all=allPlats(); curPlats=curPlats.filter(function(p){ return all.indexOf(p)!==-1; }); }
 
 /* ============================================================
    QUICK NOTES / INBOX
@@ -370,7 +456,7 @@ function saveSetupUrl(){
       if((!data.ideas||!data.ideas.length)&&ideas.length>0){
         showMigrateBanner(true); updateSyncDot('error'); showToast('Conectado! Migre seus dados.');
       } else {
-        ideas=data.ideas||[]; customCats=data.customCats||[]; customPlats=data.customPlats||[]; curPlat=data.curPlatform||'todos';
+        ideas=data.ideas||[]; customCats=data.customCats||[]; customPlats=data.customPlats||[]; curPlats=Array.isArray(data.curPlatform)?data.curPlatform:((data.curPlatform&&data.curPlatform!=='todos')?[data.curPlatform]:[]);
         migrate(); validateCurPlat(); writeLS(); updateSyncDot('ok'); showToast('Conectado!');
       }
       render();
@@ -401,14 +487,23 @@ function allCats(){  var m=CATS.slice(); for(var i=0;i<customCats.length;i++) if
 function platsOf(idea){ if(idea.platforms&&idea.platforms.length) return idea.platforms; return [idea.platform||'Instagram']; }
 function catsOf(idea){ if(idea.categories&&idea.categories.length) return idea.categories; return [idea.category||CATS[0]]; }
 function fmtsOf(idea){ if(idea.formatos&&idea.formatos.length) return idea.formatos; return [idea.formato||'Reels']; }
-function ideaInCurPlat(idea){ if(curPlat==='todos') return true; return platsOf(idea).indexOf(curPlat)!==-1; }
+function ideaInCurPlat(idea){
+  if(!curPlats.length) return true;
+  var p=platsOf(idea);
+  for(var i=0;i<curPlats.length;i++) if(p.indexOf(curPlats[i])!==-1) return true;
+  return false;
+}
 
-function setPlatform(p){ curPlat=p; saveCurPlat(); colIdx=0; render(); }
 function addPlatform(){
   var name=prompt('Nome da nova plataforma:'); if(!name) return; name=name.trim(); if(!name) return;
   var plats=allPlats();
-  for(var i=0;i<plats.length;i++){if(plats[i].toLowerCase()===name.toLowerCase()){setPlatform(plats[i]);showToast('Plataforma ja existia');return;}}
-  customPlats.push(name); savePlats(); setPlatform(name); showToast('Plataforma criada!');
+  for(var i=0;i<plats.length;i++){
+    if(plats[i].toLowerCase()===name.toLowerCase()){
+      if(curPlats.indexOf(plats[i])===-1) curPlats.push(plats[i]);
+      saveCurPlat(); render(); showToast('Plataforma ja existia'); return;
+    }
+  }
+  customPlats.push(name); savePlats(); curPlats.push(name); saveCurPlat(); render(); showToast('Plataforma criada!');
 }
 function removePlatform(p){
   if(DEFAULT_PLATFORMS.indexOf(p)!==-1){showToast('Nao da pra remover '+p);return;}
@@ -416,22 +511,24 @@ function removePlatform(p){
   var msg='Remover a plataforma "'+p+'"?'; if(count>0) msg+='\n\n'+count+' ideia(s) serao afetadas.';
   if(!confirm(msg)) return;
   for(var i=0;i<ideas.length;i++){var idx=platsOf(ideas[i]).indexOf(p);if(idx!==-1){ideas[i].platforms=platsOf(ideas[i]).filter(function(x){return x!==p;});if(!ideas[i].platforms.length)ideas[i].platforms=['Instagram'];}}
-  customPlats=customPlats.filter(function(x){return x!==p;}); if(curPlat===p) curPlat='todos';
+  customPlats=customPlats.filter(function(x){return x!==p;}); curPlats=curPlats.filter(function(x){return x!==p;});
   savePlats();saveIdeas();saveCurPlat(); render(); showToast('Plataforma removida');
 }
-function buildPlatTabs(){
-  var plats=allPlats();
-  var html='<button class="ptab ptab-all'+(curPlat==='todos'?' on':'')+'" data-p="todos">Todos</button>';
-  for(var i=0;i<plats.length;i++){
-    var p=plats[i],isC=DEFAULT_PLATFORMS.indexOf(p)===-1;
-    var del=(isC&&curPlat===p)?'<span class="ptab-del" data-del="'+safe(p)+'">×</span>':'';
-    html+='<button class="ptab'+(curPlat===p?' on':'')+'" data-p="'+safe(p)+'">'+safe(p)+del+'</button>';
-  }
-  html+='<button class="ptab ptab-add" id="ptab-add">+ Plataforma</button>';
-  var el=document.getElementById('ptabs'); el.innerHTML=html; attachHorizWheel(el);
-  var tabs=el.querySelectorAll('.ptab:not(.ptab-add)');
-  for(var j=0;j<tabs.length;j++){(function(tab){tab.onclick=function(e){var del=e.target.getAttribute&&e.target.getAttribute('data-del');if(del){e.stopPropagation();removePlatform(del);return;}setPlatform(tab.getAttribute('data-p'));};})(tabs[j]);}
-  document.getElementById('ptab-add').onclick=addPlatform;
+
+// Barra de filtros (Plataforma + Temas) — dropdowns multiseleção; mobile (#ptabs) e desktop (#d-filter-dds)
+function buildFilters(){
+  var plats=allPlats(), cats=allCats();
+  var customPl=customPlats.slice();
+  var platOpts=plats.map(function(p){ return {value:p,label:p}; });
+  var catOpts=cats.map(function(c){ return {value:c,label:c}; });
+  var mobHtml =
+    ddHtml('dd-fltPlat-mob','fltPlat','Plataforma',platOpts,curPlats,{addPlat:true,removable:customPl}) +
+    ddHtml('dd-fltCat-mob','fltCat','Temas',catOpts,curCF,{});
+  var deskHtml =
+    ddHtml('dd-fltPlat-desk','fltPlat','Plataforma',platOpts,curPlats,{addPlat:true,removable:customPl}) +
+    ddHtml('dd-fltCat-desk','fltCat','Temas',catOpts,curCF,{});
+  var mob=document.getElementById('ptabs'); if(mob) mob.innerHTML=mobHtml;
+  var desk=document.getElementById('d-filter-dds'); if(desk) desk.innerHTML=deskHtml;
 }
 
 /* ============================================================
@@ -449,9 +546,12 @@ function setView(v){
   var toolbar=document.querySelector('.d-toolbar');
   if(toolbar) toolbar.classList.toggle('hide-sort', v!=='list');
   var showListUI=(v==='list');
-  document.getElementById('ctabs').style.display    =showListUI?'':'none';
-  document.getElementById('chips').style.display    =showListUI?'':'none';
   document.getElementById('list-view').style.display=showListUI?'':'none';
+  // Filtros (Plataforma/Temas + Status) só fazem sentido em lista e board
+  var showFilters=(v==='list'||v==='board');
+  var fbar=document.getElementById('ptabs'); if(fbar) fbar.style.display=showFilters?'':'none';
+  var sbar=document.getElementById('stabs'); if(sbar) sbar.style.display=showFilters?'':'none';
+  if(toolbar) toolbar.classList.toggle('no-filters', !showFilters);
   // Mobile board vs desktop board
   var dboard=document.getElementById('d-board-wrap');
   if(dboard) dboard.style.display=(v==='board'&&isDesktop())?'flex':'none';
@@ -464,17 +564,6 @@ function setView(v){
   if(v!=='inbox') render();
 }
 function setSF(btn){ curSF=btn.getAttribute('data-s'); var tabs=document.querySelectorAll('.stab'); for(var i=0;i<tabs.length;i++) tabs[i].classList.toggle('on',tabs[i]===btn); render(); }
-
-/* Multi-select category filter */
-function setCF(val){
-  if(val==='todos'){ curCF=[]; }
-  else {
-    var idx=curCF.indexOf(val);
-    if(idx===-1) curCF.push(val);
-    else curCF.splice(idx,1);
-  }
-  buildCatTabs(); render();
-}
 
 /* ============================================================
    FILTER
@@ -515,16 +604,8 @@ function buildSidebar(){
       '<div class="d-sb-stat"><div class="d-sb-stat-lbl">Na fila</div><span class="d-sb-stat-val c-fila">'+fila+'</span></div>'+
     '</div>';
 
-  // Platform
-  var plats=['todos'].concat(allPlats());
-  var platLabels={'todos':'Todas'};
-  var platHtml='<div class="d-sb-lbl">Plataforma</div><div class="d-sb-plat-row">';
-  for(var p=0;p<plats.length;p++){
-    var pv=plats[p], pl=platLabels[pv]||pv;
-    platHtml+='<button class="d-sb-plat'+(curPlat===pv?' active':'')+'" onclick="setPlatD(\''+safe(pv)+'\')">'+safe(pl)+'</button>';
-  }
-  platHtml+='</div>';
-  document.getElementById('d-sb-plats').innerHTML=platHtml;
+  // Plataforma e Temas agora são dropdowns compactos na toolbar (buildFilters).
+  // A sidebar mantém só Stats + Status para ficar limpa.
 
   // Status
   var statuses=[
@@ -545,18 +626,6 @@ function buildSidebar(){
   }
   document.getElementById('d-sb-status').innerHTML=stHtml;
 
-  // Categories
-  var cats=['todos'].concat(allCats());
-  var catLabels={'todos':'Todas'};
-  var catHtml='<div class="d-sb-lbl">Temas</div><div class="d-sb-cats-row">';
-  for(var c=0;c<cats.length;c++){
-    var cv=cats[c], cl=catLabels[cv]||cv;
-    var isOn=(cv==='todos'&&curCF.length===0)||(curCF.indexOf(cv)!==-1);
-    catHtml+='<button class="d-sb-cat'+(isOn?' active':'')+'" onclick="setCFD(\''+safe(cv)+'\')">'+safe(cl)+'</button>';
-  }
-  catHtml+='</div>';
-  document.getElementById('d-sb-cats').innerHTML=catHtml;
-
   // Toolbar
   var filterNames={todos:'Todos','Nao Iniciado':'Não iniciado','Fila de Gravacao':'Fila de gravação','Editando':'Editando','Publicado':'Publicado'};
   var dTitle=document.getElementById('d-toolbar-title');
@@ -568,18 +637,9 @@ function buildSidebar(){
   }
 }
 
-function setPlatD(p){ curPlat=p; saveCurPlat(); render(); }
 function setSFD(s){
   curSF=s;
   document.querySelectorAll('.stab').forEach(function(b){b.classList.toggle('on',b.dataset.s===s);});
-  render();
-}
-function setCFD(c){
-  if(c==='todos'){curCF=[];}
-  else{
-    var idx=curCF.indexOf(c);
-    if(idx===-1) curCF.push(c); else curCF.splice(idx,1);
-  }
   render();
 }
 
@@ -637,20 +697,11 @@ function renderBoardDesktop(){
    RENDER
    ============================================================ */
 function render(){
-  buildPlatTabs(); buildCatTabs();
+  buildFilters();
   attachHorizWheel(document.getElementById('stabs'));
   var platIdeas=ideas.filter(ideaInCurPlat), total=platIdeas.length;
-  var fila=platIdeas.filter(function(i){return i.status==='Fila de Gravacao';}).length;
-  var edit=platIdeas.filter(function(i){return i.status==='Editando';}).length;
-  var pub =platIdeas.filter(function(i){return i.status==='Publicado';}).length;
-  var label=curPlat==='todos'?'Todas plataformas':curPlat;
+  var label=curPlats.length?curPlats.join(', '):'Todas plataformas';
   document.getElementById('hdr-count').textContent=total+' ideia'+(total!==1?'s':'')+' • '+label;
-  document.getElementById('chips').innerHTML=total?(
-    '<div class="chip"><div class="chip-lbl">Total</div><div class="chip-val">'+total+'</div></div>'+
-    '<div class="chip"><div class="chip-lbl" style="color:#e53935">Gravacao</div><div class="chip-val" style="color:#e53935">'+fila+'</div></div>'+
-    '<div class="chip"><div class="chip-lbl" style="color:#7d3c6e">Editando</div><div class="chip-val" style="color:#7d3c6e">'+edit+'</div></div>'+
-    '<div class="chip"><div class="chip-lbl" style="color:#2d7d3a">Publicado</div><div class="chip-val" style="color:#2d7d3a">'+pub+'</div></div>'
-  ):'';
   buildSidebar();
   if(curView==='list')  renderList();
   else if(curView==='board'){
@@ -658,18 +709,7 @@ function render(){
     else { renderBoard(); }
   }
   else renderCalendar();
-}
-
-function buildCatTabs(){
-  var cats=allCats(), todos=(curCF.length===0);
-  var html='<button class="ctab ctab-todos'+(todos?' on':'')+'" data-c="todos">Todas</button>';
-  for(var i=0;i<cats.length;i++){
-    var on=curCF.indexOf(cats[i])!==-1;
-    html+='<button class="ctab'+(on?' on':'')+'" data-c="'+safe(cats[i])+'">'+safe(cats[i])+'</button>';
-  }
-  var el=document.getElementById('ctabs'); el.innerHTML=html; attachHorizWheel(el);
-  var tabs=el.querySelectorAll('.ctab');
-  for(var j=0;j<tabs.length;j++){(function(tab){tab.onclick=function(){setCF(tab.getAttribute('data-c'));};})(tabs[j]);}
+  applyDDOpen();
 }
 
 function setSort(s){
@@ -765,7 +805,7 @@ function stLabel(s){
 function moveCol(dir){ var cats=allCats(); colIdx=Math.max(0,Math.min(cats.length-1,colIdx+dir)); renderBoard(); }
 function renderBoard(){
   var cats=allCats(); colIdx=Math.min(colIdx,cats.length-1); var cat=cats[colIdx];
-  var label=curPlat==='todos'?'Todas plataformas':curPlat;
+  var label=curPlats.length?curPlats.join(', '):'Todas plataformas';
   document.getElementById('b-cat-name').textContent=cat;
   document.getElementById('b-cat-pos').textContent=(colIdx+1)+' de '+cats.length+' • '+label;
   document.getElementById('arr-prev').disabled=colIdx===0;
@@ -780,7 +820,7 @@ function renderBoard(){
   else{
     for(var i=0;i<catIdeas.length;i++){
       var idea=catIdeas[i],sc=ST[idea.status]||ST['Nao Iniciado'],plats=platsOf(idea),fmts=fmtsOf(idea);
-      var platTag=(curPlat==='todos'||plats.length>1)?' <span style="font-size:.55rem;color:var(--purple-d);background:var(--purple-l);padding:1px 6px;border-radius:7px;font-weight:700;">'+plats.map(safe).join('·')+'</span>':'';
+      var platTag=(!curPlats.length||plats.length>1)?' <span style="font-size:.55rem;color:var(--purple-d);background:var(--purple-l);padding:1px 6px;border-radius:7px;font-weight:700;">'+plats.map(safe).join('·')+'</span>':'';
       html+='<div class="board-card" data-id="'+safe(idea.id)+'"><div class="board-card-title">'+safe(idea.title)+platTag+'</div><div class="board-card-row"><span class="bstatus" style="background:'+sc.bg+';color:'+sc.color+'">'+safe(idea.status)+'</span><span class="bfmt">'+fmts.map(safe).join(', ')+'</span></div></div>';
     }
   }
@@ -931,40 +971,20 @@ function editFromDay(id){ closeDayModal(); setTimeout(function(){openModal(id);}
 /* ============================================================
    MODAL — idea
    ============================================================ */
-function buildCatBtns(){
-  var cats=allCats(), el=document.getElementById('cat-btns'), html='';
-  for(var i=0;i<cats.length;i++){
-    var on=fCats.indexOf(cats[i])!==-1;
-    html+='<button class="gbtn'+(on?' on':'')+'" data-v="'+safe(cats[i])+'">'+safe(cats[i])+'</button>';
-  }
-  el.innerHTML=html;
-  var btns=el.querySelectorAll('.gbtn');
-  for(var j=0;j<btns.length;j++){(function(btn){btn.onclick=function(){
-    var v=btn.getAttribute('data-v'),idx=fCats.indexOf(v);
-    if(idx===-1){fCats.push(v);btn.classList.add('on');}
-    else{if(fCats.length<=1){showToast('Pelo menos um tema!');return;}fCats.splice(idx,1);btn.classList.remove('on');}
-  };})(btns[j]);}
+var FMT_OPTS=['Reels','Carrossel','Stories','Feed'];
+
+// Seletores do editor (Temas, Plataforma, Formato) como dropdowns multiseleção
+function buildEditorDDs(){
+  var cats=allCats(), plats=allPlats();
+  var catEl=document.getElementById('cat-dd');
+  var plEl =document.getElementById('pl-dd');
+  var fmtEl=document.getElementById('fmt-dd');
+  if(catEl) catEl.innerHTML=ddHtml('dd-edCat','edCat','Temas',cats.map(function(c){return {value:c,label:c};}),fCats,{allowClear:false});
+  if(plEl)  plEl.innerHTML =ddHtml('dd-edPlat','edPlat','Plataformas',plats.map(function(p){return {value:p,label:p};}),fPlats,{allowClear:false});
+  if(fmtEl) fmtEl.innerHTML=ddHtml('dd-edFmt','edFmt','Formato',FMT_OPTS.map(function(f){return {value:f,label:f};}),fFmts,{allowClear:false});
+  applyDDOpen();
 }
 
-function buildPlatBtns(){
-  var plats=allPlats(), el=document.getElementById('pl-btns'), html='';
-  for(var i=0;i<plats.length;i++){
-    var on=fPlats.indexOf(plats[i])!==-1;
-    html+='<button type="button" class="gbtn pl'+(on?' on':'')+'" data-v="'+safe(plats[i])+'">'+safe(plats[i])+'</button>';
-  }
-  el.innerHTML=html;
-  var btns=el.querySelectorAll('.gbtn');
-  for(var j=0;j<btns.length;j++){(function(btn){btn.onclick=function(){
-    var v=btn.getAttribute('data-v'),idx=fPlats.indexOf(v);
-    if(idx===-1){fPlats.push(v);btn.classList.add('on');}
-    else{if(fPlats.length<=1){showToast('Pelo menos uma plataforma!');return;}fPlats.splice(idx,1);btn.classList.remove('on');}
-  };})(btns[j]);}
-}
-
-function syncFmtBtns(){
-  var btns=document.querySelectorAll('#fmt-btns .gbtn');
-  for(var i=0;i<btns.length;i++) btns[i].classList.toggle('on',fFmts.indexOf(btns[i].getAttribute('data-v'))!==-1);
-}
 function syncStBtns(){
   var btns=document.querySelectorAll('#st-btns .gbtn');
   for(var i=0;i<btns.length;i++) btns[i].classList.toggle('on',btns[i].getAttribute('data-v')===fSt);
@@ -981,20 +1001,21 @@ function openModal(id){
   fCats = idea ? catsOf(idea).slice() : (fCats.length?fCats:[CATS[0]]);
   fFmts = idea ? fmtsOf(idea).slice() : ['Reels'];
   fSt   = idea ? (idea.status||'Nao Iniciado') : 'Nao Iniciado';
-  fPlats= idea ? platsOf(idea).slice() : [(curPlat==='todos')?'Instagram':curPlat];
+  fPlats= idea ? platsOf(idea).slice() : (curPlats.length?[curPlats[0]]:['Instagram']);
   // Preenche editores ricos com dados da ideia
   setRteHtml('rte-roteiro', idea?(idea.roteiro||''):'');
   setRteHtml('rte-legenda', idea?(idea.legenda||''):'');
   setRteHtml('rte-notas',   idea?(idea.notes||''):'');
   switchRteTab('roteiro');
-  buildCatBtns(); buildPlatBtns(); syncFmtBtns(); syncStBtns();
+  buildEditorDDs(); syncStBtns();
   // Restaura rascunho salvo automaticamente (sobrescreve dados acima se houver)
   var restored = restoreDraft(id);
-  if(restored){ buildCatBtns(); buildPlatBtns(); syncFmtBtns(); syncStBtns(); showToast('Rascunho restaurado ✓'); }
+  if(restored){ buildEditorDDs(); syncStBtns(); showToast('Rascunho restaurado ✓'); }
+  _openDD=null;
   document.getElementById('modal-bg').classList.add('open');
   setTimeout(function(){document.getElementById('f-title').focus();},320);
 }
-function closeModal(){ document.getElementById('modal-bg').classList.remove('open'); }
+function closeModal(){ _openDD=null; applyDDOpen(); document.getElementById('modal-bg').classList.remove('open'); }
 
 function saveIdea(){
   var title=document.getElementById('f-title').value.trim();
@@ -1038,8 +1059,8 @@ function deleteIdea(){
 function addCustomCat(){
   var inp=document.getElementById('new-cat-inp'),name=inp.value.trim(); if(!name){inp.focus();return;}
   var cats=allCats(),lower=name.toLowerCase();
-  for(var i=0;i<cats.length;i++){if(cats[i].toLowerCase()===lower){if(fCats.indexOf(cats[i])===-1)fCats.push(cats[i]);inp.value='';buildCatBtns();return;}}
-  customCats.push(name); saveCats(); fCats.push(name); inp.value=''; buildCatBtns(); showToast('Tema criado!');
+  for(var i=0;i<cats.length;i++){if(cats[i].toLowerCase()===lower){if(fCats.indexOf(cats[i])===-1)fCats.push(cats[i]);inp.value='';buildEditorDDs();return;}}
+  customCats.push(name); saveCats(); fCats.push(name); inp.value=''; buildEditorDDs(); showToast('Tema criado!');
 }
 
 /* ============================================================
@@ -1188,19 +1209,12 @@ document.getElementById('f-date').addEventListener('change', scheduleDraft);
 // Fechar overlays com Escape
 document.addEventListener('keydown',function(e){
   if(e.key==='Escape'){
-    if(document.getElementById('tp-bg').classList.contains('open')) closeTeleprompter();
+    if(_openDD){ _openDD=null; applyDDOpen(); }
+    else if(document.getElementById('tp-bg').classList.contains('open')) closeTeleprompter();
     else if(document.getElementById('gravacao-bg').classList.contains('open')) closeGravacao();
     else if(document.getElementById('modal-bg').classList.contains('open')) closeModal();
   }
 });
-
-// Formato multi-select
-var fmtBtns=document.querySelectorAll('#fmt-btns .gbtn');
-for(var fi=0;fi<fmtBtns.length;fi++){(function(btn){btn.onclick=function(){
-  var v=btn.getAttribute('data-v'),idx=fFmts.indexOf(v);
-  if(idx===-1){fFmts.push(v);btn.classList.add('on');}
-  else{if(fFmts.length<=1){showToast('Pelo menos um formato!');return;}fFmts.splice(idx,1);btn.classList.remove('on');}
-};})(fmtBtns[fi]);}
 
 // Status single-select
 var stBtns=document.querySelectorAll('#st-btns .gbtn');
