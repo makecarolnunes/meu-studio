@@ -1743,6 +1743,41 @@
     return data + task;
   }
 
+  // Conserta JSON malformado que o modelo às vezes devolve:
+  // aspas não-escapadas dentro de strings, quebras de linha cruas e vírgulas sobrando.
+  function repairJson(s) {
+    var out = '';
+    var inStr = false;
+    var esc = false;
+    for (var i = 0; i < s.length; i++) {
+      var ch = s[i];
+      if (esc) { out += ch; esc = false; continue; }
+      if (ch === '\\') { out += ch; esc = true; continue; }
+      if (!inStr) {
+        if (ch === '"') inStr = true;
+        out += ch;
+        continue;
+      }
+      // dentro de uma string
+      if (ch === '"') {
+        // a string realmente termina aqui? Só se o próximo char não-branco for estrutural.
+        var j = i + 1;
+        while (j < s.length && (s[j] === ' ' || s[j] === '\t' || s[j] === '\n' || s[j] === '\r')) j++;
+        var next = s[j];
+        if (next === undefined || next === ',' || next === '}' || next === ']' || next === ':') {
+          inStr = false;
+          out += ch;
+        } else {
+          out += '\\"'; // aspa interna não-escapada → escapa
+        }
+      } else if (ch === '\n') { out += '\\n'; }
+      else if (ch === '\r') { out += '\\r'; }
+      else if (ch === '\t') { out += '\\t'; }
+      else { out += ch; }
+    }
+    return out.replace(/,(\s*[}\]])/g, '$1'); // remove vírgula sobrando antes de } ou ]
+  }
+
   async function callClaude(promptOrContent) {
     var key = getClaudeKey();
     if (!key) throw new Error('Chave Claude não configurada. Clica no botão de chave 🔑 pra configurar.');
@@ -1789,7 +1824,14 @@
       var parsed = JSON.parse(match[0]);
       return { parsed: parsed, raw: text, usage: json.usage || null };
     } catch (e) {
-      throw new Error('JSON inválido: ' + e.message + '\nTexto: ' + match[0].slice(0, 300));
+      // Tenta consertar JSON malformado pelo modelo (aspas internas, quebras de linha cruas)
+      try {
+        var repaired = JSON.parse(repairJson(match[0]));
+        console.warn('[ig] JSON reparado após erro de parse:', e.message);
+        return { parsed: repaired, raw: text, usage: json.usage || null };
+      } catch (e2) {
+        throw new Error('JSON inválido: ' + e.message + '\nTexto: ' + match[0].slice(0, 300));
+      }
     }
   }
 
