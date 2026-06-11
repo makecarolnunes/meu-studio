@@ -327,7 +327,44 @@ ul.cl li::before{content:'—';position:absolute;left:0;color:var(--terra);}
   .vc-body{grid-template-columns:1fr;}
   .tab-bar .logo{display:none;}
   .capa-grid{grid-template-columns:1fr 1fr;}
+  .tab-btn{padding:0 12px;font-size:10px;}
+  .ideas{grid-template-columns:1fr;}
 }
+
+/* ── LANÇAMENTO + CURSO (4ª aba) ── */
+.tab-bar{overflow-x:auto;}
+.tab-btn{flex-shrink:0;white-space:nowrap;}
+.lfilter{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 22px;position:sticky;top:var(--tab-h);background:inherit;padding:10px 0;z-index:40;}
+.fbtn{font-family:sans-serif;font-size:10px;letter-spacing:1px;text-transform:uppercase;padding:7px 15px;border-radius:30px;border:1px solid var(--terra);background:transparent;color:var(--caramelo);cursor:pointer;transition:all .15s;}
+.fbtn:hover{background:rgba(196,149,106,.12);}
+.fbtn.active{background:var(--cafe);color:var(--nude);border-color:var(--cafe);}
+.fbtn .ct{opacity:.55;}
+.ideas{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.idea{background:#fff;border-radius:2px;box-shadow:0 2px 12px rgba(74,46,26,.07);border-top:4px solid var(--terra);overflow:hidden;}
+.idea[data-phase="a"]{border-color:var(--cafe);}
+.idea[data-phase="d"]{border-color:var(--dourado);}
+.idea[data-phase="v"]{border-color:var(--verde);}
+.idea-h{padding:16px 20px 10px;}
+.idea-m{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px;}
+.idea-code{font-family:sans-serif;font-size:10px;font-weight:bold;letter-spacing:1px;color:#fff;background:var(--terra);padding:3px 9px;border-radius:3px;}
+.idea[data-phase="a"] .idea-code{background:var(--cafe);}
+.idea[data-phase="d"] .idea-code{background:var(--dourado);}
+.idea[data-phase="v"] .idea-code{background:var(--verde);}
+.idea-fmt{font-size:10px;font-family:sans-serif;letter-spacing:.5px;text-transform:uppercase;color:var(--caramelo);}
+.idea-t{font-size:18px;color:var(--cafe);line-height:1.2;font-weight:bold;}
+.idea-b{padding:0 20px 18px;font-size:12.5px;color:var(--grafite);}
+.idea-f{margin-top:11px;}
+.idea-f .fl{font-size:8.5px;font-family:sans-serif;letter-spacing:1.5px;text-transform:uppercase;color:var(--caramelo);font-weight:bold;display:block;margin-bottom:3px;}
+.idea-g{background:var(--creme);border-left:3px solid var(--terra);padding:9px 13px;border-radius:0 3px 3px 0;font-style:italic;font-size:14px;color:var(--cafe);line-height:1.4;}
+.idea-cta{background:var(--cafe);color:var(--nude);padding:8px 12px;border-radius:3px;font-size:12px;}
+.idea-cta .fl{color:var(--terra);}
+.ficha{background:var(--cafe);color:var(--nude);font-family:'Courier New',monospace;font-size:11.5px;padding:15px 17px;border-radius:4px;white-space:pre-wrap;line-height:1.6;margin:10px 0;overflow-x:auto;}
+.modc{background:#fff;border-radius:2px;padding:20px 22px;margin-bottom:14px;box-shadow:0 2px 12px rgba(74,46,26,.06);border-left:4px solid var(--cafe);}
+.modc .mh{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-bottom:6px;}
+.modc .mcode{font-family:sans-serif;font-size:10px;font-weight:bold;letter-spacing:1px;color:var(--nude);background:var(--cafe);padding:3px 9px;border-radius:3px;}
+.modc .mtime{font-family:sans-serif;font-size:9px;letter-spacing:.5px;text-transform:uppercase;color:var(--caramelo);}
+.modc .mtitle{font-size:17px;color:var(--cafe);font-weight:bold;}
+.modc .mcheck{background:var(--creme);border-left:3px solid var(--verde);padding:8px 12px;border-radius:0 3px 3px 0;font-size:12px;margin-top:8px;}
 </style>
 <style>
 /* ── Meu Studio integration ── */
@@ -368,6 +405,7 @@ ul.cl li::before{content:'—';position:absolute;left:0;color:var(--terra);}
   <button class="tab-btn active" onclick="switchTab('brand')">Brand Brain</button>
   <button class="tab-btn" onclick="switchTab('insta')">Instagram</button>
   <button class="tab-btn" onclick="switchTab('curso')">Curso VIP ★</button>
+  <button class="tab-btn" onclick="switchTab('lancamento')">Lançamento ★</button>
 </div>
 
 <!-- ══════════════════ SIDEBAR ══════════════════ -->
@@ -2101,6 +2139,463 @@ esse ninguém tira.</div>
 
 </div><!-- fim tab-curso -->
 
+<!-- ════════════════════════════════════════════
+     TAB 3 · LANÇAMENTO ★
+════════════════════════════════════════════ -->
+<div id="tab-lancamento" class="tab-panel">
+
+<div class="hero bg-cachos" id="L-hero">
+  <div class="hero-tag">Lançamento · Formação VIP Individual · Cachos &amp; Crespos</div>
+  <h1>Uma aluna.<br>Um dia inteiro.<br>A atenção <em>completa.</em></h1>
+  <p>Playbook de 8 semanas de aquecimento + a estrutura pedagógica do curso. Tudo ancorado neste Brand Brain e na técnica real de textura.</p>
+  <div class="hero-chips">
+    <span class="chip">52 roteiros</span>
+    <span class="chip">4 fases · 8 semanas</span>
+    <span class="chip">R$680 fundadora / R$850 cheio</span>
+    <span class="chip">9 módulos de curso</span>
+  </div>
+</div>
+
+<div class="alert dark" style="margin:0;border-radius:0;padding:24px 64px;">
+  <p><strong>Regra-mãe:</strong> a mensagem nunca é "Carol faz as duas coisas". É — <em>"Carol domina a arte de revelar a beleza de qualquer mulher, e é por isso que profissionais querem aprender com ela."</em> Para cada post de curso, <strong>2 posts de trabalho real.</strong></p>
+</div>
+
+<!-- L · POSICIONAMENTO -->
+<div class="sec" id="L-pos">
+  <div class="sec-tag">Parte 1 · Análise estratégica</div>
+  <h2 class="sec-h">O posicionamento a <em>fortalecer</em></h2>
+  <p>Hoje te veem como maquiadora de noivas + pele preta. Falta cravar a terceira camada — <strong>autoridade técnica em cabelo texturizado</strong> — senão o curso parece pivô oportunista. Três deslocamentos:</p>
+  <div class="g3">
+    <div class="card"><h4 class="label">1 · O serviço</h4><p>De "também faz penteado" → <strong>"integra maquiagem + penteado em textura"</strong>. Diferencial único: ninguém entrega os dois em cacho/crespo.</p></div>
+    <div class="card"><h4 class="label">2 · A profundidade</h4><p>De "faz bonito" → <strong>"sabe o porquê"</strong>. Pontes dissulfeto, pH, fator encolhimento, porosidade — profissional reconhece em 5 segundos.</p></div>
+    <div class="card"><h4 class="label">3 · A prática</h4><p>De "especialista performática" → <strong>"especialista de prática real"</strong>. Casos, anamnese, precificação, método.</p></div>
+  </div>
+  <div class="alert"><p><strong>Pergunta de controle:</strong> "Esse conteúdo faz uma profissional pensar <em>'existe um nível aqui que eu ainda não tenho'</em>? Se não faz, é raso demais para sustentar um curso de R$680–850."</p></div>
+</div>
+
+<!-- L · CRENÇAS -->
+<div class="sec" id="L-crencas">
+  <div class="sec-tag">Parte 1 · Análise estratégica</div>
+  <h2 class="sec-h">As 7 <em>crenças</em> a instalar</h2>
+  <p>O lançamento não vende um curso — vende crenças que o tornam inevitável.</p>
+  <table>
+    <tr><th>#</th><th>Crença</th><th>Por que vende o curso</th></tr>
+    <tr><td>1</td><td>Cacho/crespo têm <strong>estrutura própria</strong> — técnica específica, não adaptação do liso</td><td>Justifica um curso só disso</td></tr>
+    <tr><td>2</td><td><strong>Domar é o erro</strong>; beleza se revela, não se transforma</td><td>Conecta ao DNA da marca</td></tr>
+    <tr><td>3</td><td>Durabilidade está em <strong>etapas invisíveis</strong> (leitura do fio, umectação, pH, fitagem)</td><td>Mostra conhecimento oculto = o curso</td></tr>
+    <tr><td>4</td><td><strong>Maquiagem e cabelo se constroem juntos</strong></td><td>Vende a integração que só você ensina</td></tr>
+    <tr><td>5</td><td><strong>Demanda enorme, pouca oferta</strong> — quem domina cobra mais</td><td>Ativa a dor da aluna (renda, segurança)</td></tr>
+    <tr><td>6</td><td>Aprender exige <strong>correção em tempo real</strong> — vídeo não substitui</td><td>Pré-quebra YouTube e turma</td></tr>
+    <tr><td>7</td><td>Carol <strong>já era professora antes de se chamar professora</strong></td><td>Faz o anúncio parecer natural</td></tr>
+  </table>
+</div>
+
+<!-- L · OBJEÇÕES -->
+<div class="sec" id="L-objecoes">
+  <div class="sec-tag">Parte 1 · Análise estratégica</div>
+  <h2 class="sec-h">Objeções — <em>quebrar antes</em></h2>
+  <table>
+    <tr><th>Objeção</th><th>Como pré-quebrar</th></tr>
+    <tr><td>"R$680–850 é caro para um dia."</td><td>Um dia inteiro de atenção individual + modelo incluso + suporte 30 dias. Cobrar 350 vs 300 paga o curso em ~2 clientes.</td></tr>
+    <tr><td>"Aprendo no YouTube."</td><td>Vídeo não te diz que você está errando no fio que está na sua mão agora.</td></tr>
+    <tr><td>"Não vou conseguir praticar depois."</td><td>Suporte de 30 dias + vídeos de revisão como rede de segurança.</td></tr>
+    <tr><td>"Quero esperar a turma (mais barata)."</td><td>Individual ≠ turma menor. "Quanto você progride quando alguém olha só pra você?"</td></tr>
+    <tr><td>"Tenho medo de errar / não tenho talento."</td><td>"Errei muito no começo — o que mudou foi entender a estrutura do fio." Ambiente seguro.</td></tr>
+    <tr><td>"Cacho é imprevisível, não dá pra garantir."</td><td>Resultado é previsível quando você lê o fio. Previsibilidade = método.</td></tr>
+  </table>
+</div>
+
+<!-- L · LACUNAS -->
+<div class="sec" id="L-lacunas">
+  <div class="sec-tag">Parte 1 · Análise estratégica</div>
+  <h2 class="sec-h">Lacunas de mercado — <em>onde você planta autoridade</em></h2>
+  <div class="g2">
+    <div class="card"><p><strong>1.</strong> Quase ninguém ensina a <strong>ler o fio antes de pentear</strong> (diagnóstico, porosidade, fator encolhimento, pH).</p></div>
+    <div class="card"><p><strong>2.</strong> A <strong>integração maquiagem + penteado</strong> é território vazio.</p></div>
+    <div class="card"><p><strong>3.</strong> As <strong>etapas invisíveis de durabilidade</strong> (umectação 1 sem. antes, acidificante, protetor térmico, alta fixação).</p></div>
+    <div class="card"><p><strong>4.</strong> <strong>Crespo 4B-4C com acabamento editorial</strong> para noiva é raríssimo.</p></div>
+    <div class="card"><p><strong>5.</strong> A <strong>responsabilidade do alisamento térmico</strong> (pontes dissulfeto / risco permanente).</p></div>
+    <div class="card"><p><strong>6.</strong> <strong>Precificação para textura</strong> — o mercado cobra igual liso e cacheado.</p></div>
+  </div>
+  <div class="alert"><p><strong>7. A ponte técnica + posicionamento.</strong> O mercado é massivo-barato OU técnico-sem-negócio. Você ocupa o terceiro espaço.</p></div>
+  <div class="quote">Os cabelos crespos e cacheados são a maioria do Brasil — pouco se fala sobre penteados para esses cabelos, mas o público existe e deseja atendimento.<div class="src">Frase-âncora (apostila) que vira manifesto</div></div>
+</div>
+
+<!-- L · TEMAS -->
+<div class="sec" id="L-temas">
+  <div class="sec-tag">Parte 1 · Análise estratégica</div>
+  <h2 class="sec-h">Temas que <em>diferenciam</em></h2>
+  <div class="g3">
+    <div class="card"><p>Diagnóstico visual / leitura de fio (2A–4C, porosidade, fator encolhimento)</p></div>
+    <div class="card"><p>Ciência aplicada (pontes h.×dissulfeto, pH/cutícula)</p></div>
+    <div class="card"><p>Etapas invisíveis de durabilidade</p></div>
+    <div class="card"><p>Harmonização make + cabelo + pele negra</p></div>
+    <div class="card"><p>Casos reais · teoria x prática · beleza individual</p></div>
+    <div class="card"><p>Posicionamento e precificação</p></div>
+  </div>
+</div>
+
+<!-- L · FASES -->
+<div class="sec" id="L-fases">
+  <div class="sec-tag">Parte 2 · Aquecimento</div>
+  <h2 class="sec-h">As 4 <em>fases</em> · 8 semanas</h2>
+  <p>2–3 posts de feed/semana + stories. A proporção evolui por fase. Nunca pare de postar noiva/trabalho real.</p>
+  <div class="phase p1">
+    <h4 class="label">Fase 1 · Consciência · Semanas 1–2 · C1–C12</h4>
+    <p><strong>Objetivo:</strong> reconhecer que textura é especialidade técnica e que você a domina. Zero curso. Crenças 1, 2, 5.</p>
+    <p><strong>Comunicar:</strong> "cacho não é liso bagunçado"; "o mercado doma, eu revelo"; "tem muita gente mal atendida".</p>
+    <p><strong>Conteúdo:</strong> reels técnicos de gancho forte, carrosséis de diagnóstico, 1 reel emocional de noiva cacheada. 60% noiva · 40% bridge.</p>
+  </div>
+  <div class="phase p2">
+    <h4 class="label">Fase 2 · Autoridade · Semanas 3–5 · A1–A16</h4>
+    <p><strong>Objetivo:</strong> provar profundidade ("preciso aprender com ela"). Crenças 3, 4, 7. Plantar 1ª semente no fim.</p>
+    <p><strong>Comunicar:</strong> o método por trás do resultado; make+cabelo juntos; prática real de anos.</p>
+    <p><strong>Conteúdo:</strong> reels de processo (fitagem, modelador, babyliss), carrosséis "como eu faço", harmonização, casos reais, storytelling. 50% · 50%.</p>
+  </div>
+  <div class="phase p3">
+    <h4 class="label">Fase 3 · Desejo · Semanas 6–7 · D1–D12</h4>
+    <p><strong>Objetivo:</strong> virar admiração em vontade de aprender com você; fazer a audiência pedir antes de você oferecer. Crenças 5, 6.</p>
+    <p><strong>Comunicar:</strong> o abismo entre "fazer cacho" e "dominar textura"; quem domina cobra mais; o reframe do home studio.</p>
+    <p><strong>Conteúdo:</strong> reels provocativos de gap, enquetes com profissionais, precificação, DMs públicas. 50% · 50%.</p>
+  </div>
+  <div class="phase p4">
+    <h4 class="label">Fase 4 · Conversão · Semana 8 + D+3 · V1–V12</h4>
+    <p><strong>Objetivo:</strong> converter quem já está aquecida; quebrar objeções; abrir 3 vagas fundadoras com escassez real.</p>
+    <p><strong>Comunicar:</strong> o que é, o que inclui, para quem, quanto, por que individual + prova social.</p>
+    <p><strong>Conteúdo:</strong> sequência de stories de anúncio, post editorial, reels de quebra de objeção, carrossel do que inclui, fechamento. 40% noiva · 60% lançamento.</p>
+  </div>
+</div>
+
+<!-- L · ROTEIROS -->
+<div class="sec" id="L-roteiros">
+  <div class="sec-tag">Parte 3 · Conteúdo</div>
+  <h2 class="sec-h">52 <em>roteiros</em> prontos para gravar</h2>
+  <p>Capa sempre com foto real + tipografia da marca no terço inferior. Sem "oi gente". Palavras proibidas: transformação, incrível, arrasou, perfeito, para todos, nova versão de você.</p>
+  <div class="lfilter" id="L-filter">
+    <button class="fbtn active" onclick="filterIdeas('all',this)">Todas <span class="ct">52</span></button>
+    <button class="fbtn" onclick="filterIdeas('c',this)">Consciência <span class="ct">12</span></button>
+    <button class="fbtn" onclick="filterIdeas('a',this)">Autoridade <span class="ct">16</span></button>
+    <button class="fbtn" onclick="filterIdeas('d',this)">Desejo <span class="ct">12</span></button>
+    <button class="fbtn" onclick="filterIdeas('v',this)">Conversão <span class="ct">12</span></button>
+  </div>
+  <div class="ideas" id="L-ideas"></div>
+</div>
+
+<!-- L · CALENDÁRIO -->
+<div class="sec" id="L-cal">
+  <div class="sec-tag">Parte 4 · Execução</div>
+  <h2 class="sec-h">Calendário <em>cronológico</em> · 8 semanas</h2>
+  <table>
+    <tr><th>Sem</th><th>Objetivo</th><th>Conteúdo</th><th>Formato</th><th>CTA</th><th>Fase</th></tr>
+    <tr><td><strong>1</strong></td><td>Abrir nível técnico</td><td>C1 vilão dos cachos · C2 ler curvatura · C8 noiva cacheada</td><td>Reel · Carrossel · Reel emocional</td><td>Salva / me manda mensagem</td><td><span class="tag a">Consciência</span></td></tr>
+    <tr><td><strong>2</strong></td><td>Diferenciação + mercado</td><td>C3 erro nº1 · C4 cacheado≠crespo · C9 manifesto</td><td>Reel · Carrossel · Carrossel</td><td>Marca uma profissional</td><td><span class="tag a">Consciência</span></td></tr>
+    <tr><td><strong>3</strong></td><td>Provar método</td><td>A1 fitagem · A2 umectação · A8 subtom+crespo</td><td>Reel · Carrossel · Reel técnico</td><td>Salva pra usar amanhã</td><td><span class="tag d">Autoridade</span></td></tr>
+    <tr><td><strong>4</strong></td><td>Integração make+cabelo</td><td>A4 make a partir do cabelo · A9 dicionário · A7 "queria alisar"</td><td>Reel · Carrossel · Reel narrativo</td><td>Salva / marca alguém</td><td><span class="tag d">Autoridade</span></td></tr>
+    <tr><td><strong>5</strong></td><td>Construir a expert + semente</td><td>A14 coque em crespo · A16 7 anos+publicidade · A13 "recebi mensagem"</td><td>Reel · Reel · Reel pessoal</td><td>Ativa notificações 🔔</td><td><span class="tag d">Autoridade</span></td></tr>
+    <tr><td><strong>6</strong></td><td>Abrir o gap + dor de renda</td><td>D1 fazer x dominar · D5 precificação · D7 look integrado</td><td>Reel · Reel · Reel processo</td><td>Comenta seu time</td><td><span class="tag y">Desejo</span></td></tr>
+    <tr><td><strong>7</strong></td><td>Maturar desejo + teaser do anúncio</td><td>D6 o que muda · D11 penteado 12h · D9 "como aprendeu cachos?"</td><td>Carrossel · Carrossel · Reel</td><td>Salva como meta / 🔔</td><td><span class="tag y">Desejo</span></td></tr>
+    <tr><td><strong>8 · Dia X</strong></td><td><strong>Abrir 3 vagas fundadoras</strong></td><td>V2 abertura · V3 por que individual · V5 o que inclui (+V1 stories)</td><td>Post · Reel · Carrossel</td><td>"FORMAÇÃO VIP" no direct</td><td><span class="tag g">Conversão</span></td></tr>
+    <tr><td><strong>8 · D+2</strong></td><td>Quebrar objeções</td><td>V4 é caro? · V8 por que criei · V11 é pra você se...</td><td>Reel · Reel · Carrossel</td><td>"QUERO SABER MAIS"</td><td><span class="tag g">Conversão</span></td></tr>
+    <tr><td><strong>8 · D+3</strong></td><td>Fechamento fundador→cheio</td><td>V12 post de fechamento (+V10 contagem)</td><td>Post editorial</td><td>Última chance no valor fundador</td><td><span class="tag g">Conversão</span></td></tr>
+  </table>
+  <div class="alert success"><p><strong>Pós-lançamento (sem. 9+):</strong> voltar a 70% portfólio · 30% técnica. Postar com sutileza os resultados das alunas fundadoras como prova social. Abrir lista de espera para a próxima data a R$850.</p></div>
+</div>
+
+<!-- L · CHECKLIST -->
+<div class="sec" id="L-checklist">
+  <div class="sec-tag">Execução</div>
+  <h2 class="sec-h">Pré-requisitos — <em>antes da Semana 1</em></h2>
+  <div class="ck">
+    <div class="ck-item"><div class="ck-box"></div><p>Criar e abastecer o destaque <strong>"Cachos &amp; Crespos"</strong> com os melhores trabalhos que já existem.</p></div>
+    <div class="ck-item"><div class="ck-box"></div><p>Criar o destaque <strong>"Feedbacks"</strong> (o mais crítico para conversão).</p></div>
+    <div class="ck-item"><div class="ck-box"></div><p>Atualizar a <strong>bio</strong> com os 3 pilares + linha do manifesto.</p></div>
+    <div class="ck-item"><div class="ck-box"></div><p>Definir <strong>preço fundador (R$680) e cheio (R$850)</strong> e o cronograma do dia.</p></div>
+    <div class="ck-item"><div class="ck-box"></div><p>Montar o <strong>kit de materiais</strong> (apostila, vídeos de revisão, guia de precificação).</p></div>
+    <div class="ck-item"><div class="ck-box"></div><p>Ter <strong>pelo menos 1 modelo</strong> contatado.</p></div>
+    <div class="ck-item"><div class="ck-box"></div><p>Definir o <strong>canal de contato</strong> (WhatsApp — sem landing page no 1º lançamento).</p></div>
+  </div>
+</div>
+
+<!-- L · GUARDRAILS -->
+<div class="sec" id="L-guardrails">
+  <div class="sec-tag">Execução</div>
+  <h2 class="sec-h"><em>Guardrails</em> do lançamento</h2>
+  <div class="alert danger"><p><strong>Nunca usar:</strong> transformação, mentoria, mentorados, incrível, arrasou, perfeito, últimas vagas, link na bio, para todos. <strong>Usar:</strong> formação, especialização, o que eu ensino, revelar, presença, técnica.</p></div>
+  <ul class="cl">
+    <li>Para cada post de curso, <strong>2 posts de trabalho real</strong>.</li>
+    <li>Capas sempre com foto real + tipografia da marca. Nunca fundo sólido colorido.</li>
+    <li>Escassez sim (3 vagas fundadoras), desconto nunca.</li>
+    <li>O anúncio deve soar como <strong>consequência natural</strong> do conteúdo — quem chega já está aquecida.</li>
+  </ul>
+</div>
+
+<!-- ════════ CURSO · ESTRUTURA PEDAGÓGICA ════════ -->
+<div class="hero bg-cafe" id="P-hero">
+  <div class="hero-tag">Formação VIP · Design Pedagógico · Cachos &amp; Crespos</div>
+  <h1>Não ensina penteado.<br><em>Forma uma profissional.</em></h1>
+  <p>Andragogia aplicada: do diagnóstico do fio à precificação, com prática deliberada, checkpoints e confiança medível.</p>
+  <div class="hero-chips">
+    <span class="chip">Pré-curso + Dia + 30 dias</span>
+    <span class="chip">9 módulos · 11 competências</span>
+    <span class="chip">Maquiagem + Penteado integrados</span>
+  </div>
+</div>
+
+<!-- P · PRINCÍPIOS -->
+<div class="sec" id="P-principios">
+  <div class="sec-tag">Base · Educação para adultos</div>
+  <h2 class="sec-h">Princípios que <em>regem</em> o curso</h2>
+  <table>
+    <tr><th>Princípio</th><th>Na prática</th><th>Onde aparece</th></tr>
+    <tr><td><strong>Andragogia</strong></td><td>Diagnosticar o ponto de partida, conectar à dor real, foco em aplicação</td><td>Pré-curso + autoavaliação + currículo adaptado</td></tr>
+    <tr><td><strong>Liberação gradual</strong></td><td>Eu faço → Nós fazemos → Você faz</td><td>Cada módulo prático</td></tr>
+    <tr><td><strong>Prática deliberada</strong></td><td>Repetição com objetivo + feedback imediato</td><td>Fitagem e penteados supervisionados</td></tr>
+    <tr><td><strong>Avaliação formativa</strong></td><td>"Portões" de competência antes de avançar</td><td>Checkpoints por módulo</td></tr>
+    <tr><td><strong>Aprendizagem espaçada</strong></td><td>Pré → dia → pós, não tudo de uma vez</td><td>Vídeos antes + dia + revisão</td></tr>
+    <tr><td><strong>Carga cognitiva gerenciada</strong></td><td>Só a teoria necessária para agir</td><td>Teoria fatiada ao longo do dia</td></tr>
+    <tr><td><strong>Confiança por design</strong></td><td>Vitória rápida cedo + prova no fim</td><td>1ª vitória na fitagem + look solo</td></tr>
+    <tr><td><strong>Reflexão e transferência</strong></td><td>O que aprendi → como aplico amanhã</td><td>Plano de ação + autoavaliação final</td></tr>
+  </table>
+  <div class="alert dark"><p><strong>Regra de ouro do VIP:</strong> como é <em>uma aluna só</em>, nada é fixo. O programa é um esqueleto que você molda ao nível e à dor dela. Personalização não é luxo — <strong>é o produto.</strong></p></div>
+</div>
+
+<!-- P · ANÁLISE -->
+<div class="sec" id="P-analise">
+  <div class="sec-tag">Parte 1 · Diagnóstico</div>
+  <h2 class="sec-h">Análise crítica da <em>estrutura atual</em></h2>
+  <div class="g2">
+    <div class="card"><h4 class="label">Já está muito bom</h4><ul><li>Sequência correta: fundamentos → fitagem → penteados</li><li>Inclui posicionamento e precificação (raríssimo)</li><li>Prática com acompanhamento individual</li><li>Modelo incluso + 3 penteados-âncora</li></ul></div>
+    <div class="card dark"><h4 class="label">Precisa melhorar</h4><ul><li>1ª hora sobrecarregada (palestra que perde o adulto)</li><li>Falta marco zero de diagnóstico da aluna</li><li>Negócio cedo demais (abstrato antes da prática)</li><li>Faltam 3 módulos do seu diferencial único</li><li>Durabilidade não cabe na execução de 1 dia</li><li>Sem critério de certificação · erros mostrados de forma passiva</li></ul></div>
+  </div>
+  <h3 class="sub">Os 8 ajustes</h3>
+  <table>
+    <tr><td>1</td><td><strong>Distribuir a teoria</strong> (só o essencial no início; preparação antes da fitagem; negócio no fim)</td></tr>
+    <tr><td>2</td><td><strong>Medir o antes/depois</strong> (autoavaliação de confiança 1–10)</td></tr>
+    <tr><td>3</td><td><strong>Adicionar 3 módulos:</strong> integração make+penteado, foto/portfólio, leitura de imagem</td></tr>
+    <tr><td>4</td><td><strong>Durabilidade vira protocolo</strong> aplicável (umectação é 1 sem. antes)</td></tr>
+    <tr><td>5</td><td><strong>Correção de erros ativa</strong> ("erro proposital": a aluna identifica e corrige)</td></tr>
+    <tr><td>6</td><td><strong>Rubrica de competências</strong> (🔴/🟡/🟢) que dá significado ao certificado</td></tr>
+    <tr><td>7</td><td><strong>Almoço como momento pedagógico</strong> (revisão informal)</td></tr>
+    <tr><td>8</td><td><strong>"Primeira vitória" planejada na fitagem</strong></td></tr>
+  </table>
+</div>
+
+<!-- P · ARQUITETURA -->
+<div class="sec" id="P-arq">
+  <div class="sec-tag">Parte 2 · Arquitetura</div>
+  <h2 class="sec-h">Três tempos, <em>não um</em></h2>
+  <div class="g3">
+    <div class="card"><h4 class="label">Pré-curso</h4><p>assíncrono · prepara e nivela</p></div>
+    <div class="card"><h4 class="label">O dia · 8h30–17h45</h4><p>transforma</p></div>
+    <div class="card"><h4 class="label">Pós-curso · 30 dias</h4><p>consolida e transfere</p></div>
+  </div>
+  <table>
+    <tr><th>Módulo</th><th>Foco</th><th>Tempo</th><th>Checkpoint</th></tr>
+    <tr><td><strong>M0</strong></td><td>Boas-vindas + teoria do fio + autoavaliação</td><td>assíncrono</td><td>Autoavaliação inicial</td></tr>
+    <tr><td><strong>M1</strong></td><td>Diagnóstico e fundamentos</td><td>08h30–09h45</td><td>Diagnostica o modelo sozinha</td></tr>
+    <tr><td><strong>M2</strong></td><td>Preparação (protocolo de durabilidade)</td><td>09h45–10h15</td><td>Acerta protocolo + diluição</td></tr>
+    <tr><td><strong>M3</strong></td><td>Fitagem — técnica-base</td><td>10h15–13h00</td><td>Fita uma cabeça · 1ª vitória</td></tr>
+    <tr><td>—</td><td>Almoço (consolidação)</td><td>13h00–13h40</td><td>—</td></tr>
+    <tr><td><strong>M4</strong></td><td>Penteados — semi, rabo, coque</td><td>13h40–15h45</td><td>Executa os 3</td></tr>
+    <tr><td><strong>M5</strong></td><td>Integração make + leitura de imagem</td><td>15h45–16h30</td><td>Look coerente</td></tr>
+    <tr><td><strong>M6</strong></td><td>Ensaio fotográfico e portfólio</td><td>16h30–17h00</td><td>Fotos do próprio trabalho</td></tr>
+    <tr><td><strong>M7</strong></td><td>Posicionamento, precificação, plano</td><td>17h00–17h45</td><td>Plano + preço + certificado</td></tr>
+    <tr><td><strong>M8</strong></td><td>Suporte, revisão, transferência</td><td>30 dias</td><td>Não trava na 1ª cliente</td></tr>
+  </table>
+  <div class="alert success"><p>Prática deliberada no dia: <strong>~5h30</strong>. Teoria concentrada: <strong>~1h15</strong>, distribuída — nunca em bloco único.</p></div>
+</div>
+
+<!-- P · MÓDULOS -->
+<div class="sec" id="P-modulos">
+  <div class="sec-tag">Parte 3 · Currículo</div>
+  <h2 class="sec-h">Módulos <em>detalhados</em></h2>
+  <p>Cada módulo prático roda no motor <strong>Eu faço → (erro proposital) → Nós fazemos → Você faz → Reflexão</strong>.</p>
+  <div class="modc">
+    <div class="mh"><span class="mcode">M0</span><span class="mtime">Pré-curso · assíncrono</span><span class="mtitle">Preparação e nivelamento</span></div>
+    <h4 class="label">Objetivo</h4><p>Chegar preparada e não ansiosa; tirar a teoria pesada do dia.</p>
+    <h4 class="label">Conteúdo</h4><p>Vídeo 1 boas-vindas · Vídeo 2 teoria do fio (estrutura, pontes h.×dissulfeto, pH) · Vídeo 3 glossário (fitagem, fator encolhimento, porosidade, BC, scab hair, triconodose, day after, blowout) · autoavaliação inicial.</p>
+    <div class="mcheck"><strong>Checkpoint ✅</strong> Autoavaliação preenchida = linha de base. Carol lê e ajusta o programa.</div>
+  </div>
+  <div class="modc">
+    <div class="mh"><span class="mcode">M1</span><span class="mtime">08h30–09h45</span><span class="mtitle">Diagnóstico e fundamentos que guiam a mão</span></div>
+    <h4 class="label">Objetivo</h4><p>A aluna lê uma cabeça (curvatura 2A–4C, porosidade, elasticidade, fator encolhimento), conduz a anamnese e decide antes de tocar no fio.</p>
+    <h4 class="label">Conteúdo</h4><p>Recepção + alinhar a dor dela · leitura do fio (cacheado nasce liso na raiz; crespo em espiral; por que o crespo é o mais frágil) · porosidade e pH (acidificante fecha a cutícula) · anamnese (química? tratamentos/30 dias? volume ou definição?) · fator encolhimento.</p>
+    <h4 class="label">Método + Prática</h4><p>Carol diagnostica em voz alta no modelo → a aluna faz a ficha de diagnóstico sozinha e justifica.</p>
+    <div class="mcheck"><strong>Checkpoint ✅</strong> Classifica curvatura + porosidade e define o preparo, com as próprias palavras.</div>
+  </div>
+  <div class="modc">
+    <div class="mh"><span class="mcode">M2</span><span class="mtime">09h45–10h15</span><span class="mtitle">Preparação dos fios — protocolo de durabilidade</span></div>
+    <h4 class="label">Conteúdo</h4><p>Antes do dia: umectação 1 semana antes (óleos; dividir em 4; 2h ou dormir) · No dia: lavagem + condicionador acidificante (1 colher rasa / 300 ml) · Antes do calor: protetor térmico obrigatório · Regra: alta fixação; em cacheada sem spray de brilho.</p>
+    <div class="mcheck"><strong>Checkpoint ✅</strong> Recita "antes/no dia/antes do calor" e acerta a diluição.</div>
+  </div>
+  <div class="modc">
+    <div class="mh"><span class="mcode">M3</span><span class="mtime">10h15–13h00</span><span class="mtitle">Fitagem — a técnica-base</span></div>
+    <h4 class="label">Conteúdo</h4><p>Lógica: água + acidificante → gelatina → fitar mecha a mecha → secar com difusor (pontas primeiro, raiz por último) · volume×definição (mecha fina menos gelatina; grossa mais; volume = pouco produto na raiz) · ~30 min.</p>
+    <h4 class="label">Método</h4><p>Eu faço (narrando) → erro proposital (aluna corrige) → nós fazemos (mão guiada) → você faz (cabeça inteira, correção em tempo real).</p>
+    <div class="mcheck"><strong>Checkpoint ✅ · 1ª VITÓRIA</strong> Cachos definidos e uniformes, sem excesso, sem amassar; explica a escolha de volume/definição.</div>
+  </div>
+  <div class="modc" style="border-left-color:var(--terra);">
+    <div class="mh"><span class="mcode" style="background:var(--terra);color:#fff;">Almoço</span><span class="mtime">13h00–13h40</span><span class="mtitle">Momento pedagógico, não só pausa</span></div>
+    <p>Café/lanche (cuidado premium). Conversa que revisa a manhã sem virar "aula": "o que mais te surpreendeu? onde travou?". Consolida e coleta o que ajustar à tarde.</p>
+  </div>
+  <div class="modc">
+    <div class="mh"><span class="mcode">M4</span><span class="mtime">13h40–15h45</span><span class="mtitle">Penteados — semi-preso, rabo, coque</span></div>
+    <h4 class="label">Conteúdo</h4><p>Divisões (quanto mais alto o coque, menor o topo) · semi-preso cascata com babyliss (solta a raiz com pente garfo; das pontas subindo; mão perto do babyliss; mecha ao lado da outra; lateral desde a raiz) · rabo (sustenta volume sem repuxar) · coque alto/baixo (respeita o volume; fixa sem enrijecer).</p>
+    <h4 class="label">Método</h4><p>Para cada penteado: Eu faço → Você faz → feedback. Pode trocar 1 dos 3 por outro do portfólio conforme o nível dela.</p>
+    <div class="mcheck"><strong>Checkpoint ✅</strong> Os 3 penteados autônomos, estrutura firme, sem domar o fio.</div>
+  </div>
+  <div class="modc">
+    <div class="mh"><span class="mcode">M5</span><span class="mtime">15h45–16h30</span><span class="mtitle">Integração maquiagem + penteado / leitura de imagem</span></div>
+    <h4 class="label">Objetivo</h4><p>Construir um look coerente — cabelo, pele e make decididos juntos. <em>Diferencial único.</em></p>
+    <h4 class="label">Conteúdo</h4><p>A make a partir do cabelo · pele negra + crespo (harmonizar subtom; make com presença) · leitura de imagem (o que o look comunica) · revelar, não transformar.</p>
+    <div class="mcheck"><strong>Checkpoint ✅</strong> Look coerente; explica por que a make conversa com o cabelo e a pele.</div>
+  </div>
+  <div class="modc">
+    <div class="mh"><span class="mcode">M6</span><span class="mtime">16h30–17h00</span><span class="mtitle">Ensaio fotográfico e portfólio</span></div>
+    <h4 class="label">Conteúdo</h4><p>Luz (natural lateral quente, sem flash duro) · ângulo (perfil ¾) · enquadramento (close do penteado, textura) · fundo limpo · registro de processo + resultado · tratamento que preserva a textura.</p>
+    <div class="mcheck"><strong>Checkpoint ✅</strong> Sai com ≥1 foto editorial + processo do próprio trabalho.</div>
+  </div>
+  <div class="modc">
+    <div class="mh"><span class="mcode">M7</span><span class="mtime">17h00–17h45</span><span class="mtitle">Posicionamento, precificação e plano de ação</span></div>
+    <h4 class="label">Conteúdo</h4><p>Precificação de textura (preparo + tempo + técnica + alta fixação; referência liso×cacheada e a lógica para calcular o dela) · dizer "sim" sem medo · como divulgar · próximos passos.</p>
+    <div class="mcheck"><strong>Checkpoint ✅ + Certificação</strong> Autoavaliação final (mostra o salto) + certificado pelas competências.</div>
+  </div>
+  <div class="modc" style="border-left-color:var(--verde);">
+    <div class="mh"><span class="mcode" style="background:var(--verde);">M8</span><span class="mtime">Pós-curso · 30 dias</span><span class="mtitle">Consolidação e transferência</span></div>
+    <p>Mensagem no dia seguinte · vídeos de revisão na sequência certa · suporte WhatsApp direto por 30 dias · ao fim: encerramento + convite para a próxima formação (pele preta) + pedido de depoimento (prova social do lançamento).</p>
+  </div>
+</div>
+
+<!-- P · PRÁTICA -->
+<div class="sec" id="P-pratica">
+  <div class="sec-tag">Parte 5 · Avaliação</div>
+  <h2 class="sec-h">Prática, checkpoints e <em>avaliação</em></h2>
+  <h3 class="sub">O motor de cada bloco prático</h3>
+  <div class="ficha">EU FAÇO        → Carol demonstra narrando o porquê de cada decisão
+(+ erro proposital → aluna identifica e corrige — fixação ativa)
+NÓS FAZEMOS    → aluna executa com a mão/voz da Carol guiando
+VOCÊ FAZ       → aluna executa sozinha; Carol corrige em tempo real
+REFLEXÃO       → "o que mudou? o que você faria diferente?"</div>
+  <h3 class="sub">Rubrica de competências (base do certificado)</h3>
+  <p style="font-size:13px;">A Carol marca: 🔴 ainda não · 🟡 com ajuda · 🟢 autônoma</p>
+  <table>
+    <tr><th>#</th><th>Competência</th><th>Critério de 🟢</th></tr>
+    <tr><td>1</td><td>Diagnóstico do fio</td><td>Classifica curvatura + porosidade e define o preparo sozinha</td></tr>
+    <tr><td>2</td><td>Anamnese</td><td>Faz as 3 perguntas-chave e interpreta as respostas</td></tr>
+    <tr><td>3</td><td>Preparação / protocolo</td><td>Recita "antes/no dia/antes do calor" + acerta a diluição</td></tr>
+    <tr><td>4</td><td>Fitagem</td><td>Cachos definidos, uniformes, sem excesso, sem amassar</td></tr>
+    <tr><td>5</td><td>Volume x definição</td><td>Ajusta produto e aplicação ao que a cliente quer</td></tr>
+    <tr><td>6–8</td><td>Semi-preso · Rabo · Coque</td><td>Executa cada um com estrutura firme, sem domar o fio</td></tr>
+    <tr><td>9</td><td>Integração make+cabelo</td><td>Justifica a harmonização do look</td></tr>
+    <tr><td>10</td><td>Foto do trabalho</td><td>Sai com 1 foto editorial + processo</td></tr>
+    <tr><td>11</td><td>Precificação</td><td>Calcula o preço dos próprios serviços</td></tr>
+  </table>
+  <div class="alert"><p><strong>Certificado</strong> quando a maioria está 🟢 e nenhuma essencial (1, 3, 4, 6–8) está 🔴. As 🟡 viram foco do suporte de 30 dias. <strong>Prova de transformação:</strong> a autoavaliação 1–10 (M0 × M7) mostra o salto à aluna no fim.</p></div>
+</div>
+
+<!-- P · APOSTILA -->
+<div class="sec" id="P-apostila">
+  <div class="sec-tag">Parte 6 · Material</div>
+  <h2 class="sec-h">A apostila <em>da Carol</em> (sumário)</h2>
+  <p>Premium, encadernada, na identidade da marca. Integra técnica + maquiagem + negócio — o que a torna <strong>sua</strong>, não cópia.</p>
+  <div class="g3">
+    <div class="card"><h4 class="label">I · Fundamentos</h4><ul><li>Estrutura do fio</li><li>Por que liso/ondulado/crespo</li><li>Pontes h.×dissulfeto</li><li>pH e cutícula</li><li>Cacheado x crespo</li><li>Nutrição/hidratação/reconstrução</li><li>Glossário ilustrado</li></ul></div>
+    <div class="card"><h4 class="label">II · Diagnóstico</h4><ul><li>Leitura do fio (2A–4C)</li><li>Teste de porosidade</li><li>Anamnese + quando não pentear</li><li>Ficha de diagnóstico</li></ul></div>
+    <div class="card"><h4 class="label">III · Preparação</h4><ul><li>Umectação (1 sem. antes)</li><li>Preparo no dia + acidificante</li><li>Protocolo de durabilidade</li><li>Produtos: o que cada um faz</li><li>Ferramentas (10/13/19/cônico, difusor, babyliss)</li></ul></div>
+    <div class="card"><h4 class="label">IV · Fitagem</h4><ul><li>O que é e por quê</li><li>Passo a passo + secagem</li><li>Volume x definição</li><li>Adaptação por curvatura</li><li>Erros e correções</li></ul></div>
+    <div class="card"><h4 class="label">V · Penteados</h4><ul><li>Lógica das divisões</li><li>Semi-preso (cascata)</li><li>Rabo de cavalo</li><li>Coque alto/baixo</li><li>Adaptações (curto, transição, BC)</li></ul></div>
+    <div class="card"><h4 class="label">VI · Integração e imagem</h4><ul><li>Make a partir do cabelo</li><li>Harmonização (subtom×tom×ocasião)</li><li>Leitura de imagem</li><li>Fotografar o trabalho</li></ul></div>
+    <div class="card"><h4 class="label">VII · Negócio</h4><ul><li>Precificação de textura</li><li>Dizer "sim" sem medo</li><li>Como divulgar</li><li>Plano de ação 30 dias</li></ul></div>
+    <div class="card dark"><h4 class="label">Anexos</h4><ul><li>Fichas e checklists destacáveis</li><li>Lista de produtos + fornecedores</li><li>Espaço de anotações</li></ul></div>
+  </div>
+</div>
+
+<!-- P · MATERIAIS -->
+<div class="sec" id="P-materiais">
+  <div class="sec-tag">Parte 7 · Apoio</div>
+  <h2 class="sec-h">Materiais, checklists e <em>fichas</em></h2>
+  <h3 class="sub">Ficha de anamnese / diagnóstico</h3>
+  <div class="ficha">CLIENTE: ____________________  DATA: ____  OCASIÃO: ____________
+Curvatura (2A–4C): ____   Porosidade: ( ) baixa ( ) média ( ) alta
+Tem química/relaxamento? ( ) não ( ) sim: ___________________
+Tratamentos nos últimos 30 dias: __________________________
+Sinais de alerta: ( ) scab hair ( ) triconodose ( ) quebra ( ) ressecamento
+Objetivo: ( ) volume ( ) definição   Penteado desejado: __________
+Decisão técnica (preparo/produto/modelador): _______________</div>
+  <h3 class="sub">Checklist de preparação</h3>
+  <div class="ficha">ANTES DO DIA (orientar a cliente)
+[ ] Umectação 1 semana antes (óleo vegetal, 2h ou dormir, lavar)
+NO DIA
+[ ] Lavar com shampoo diluído
+[ ] Condicionador acidificante (1 colher rasa / 300 ml) no lavatório
+[ ] Enxaguar sem retirar todo o produto
+[ ] Protetor térmico ANTES de qualquer calor
+[ ] Produto de ALTA fixação (não "molha-cabelo")
+[ ] Em cacheada: SEM spray de brilho</div>
+  <h3 class="sub">Autoavaliação de confiança (antes / depois · 1–10)</h3>
+  <div class="ficha">Competência                          ANTES   DEPOIS
+Diagnóstico do fio                    ___      ___
+Anamnese                              ___      ___
+Preparação / protocolo                ___      ___
+Fitagem                               ___      ___
+Semi-preso / Rabo / Coque             ___      ___
+Integração make + cabelo              ___      ___
+Foto do trabalho                      ___      ___
+Precificação                          ___      ___
+Segurança p/ ATENDER e COBRAR         ___      ___</div>
+  <h3 class="sub">Plano de ação 30 dias</h3>
+  <div class="ficha">Meus 3 maiores ganhos de hoje: 1)____ 2)____ 3)____
+O que reforçar (os 🟡 da ficha): ______________________
+Clientes-modelo nas próximas 4 semanas: ____ (meta: ____)
+Quanto vou cobrar: R$ ____ (liso) / R$ ____ (cacheada)
+Primeiro trabalho postado em: ____/____</div>
+  <div class="alert"><p><strong>Demais materiais:</strong> planilha de precificação · ficha de acompanhamento (rubrica) · protocolo pré-evento para a cliente · checklist de kit/bancada · guia de fotografia · guia de harmonização · lista de produtos + fornecedores · certificado.</p></div>
+</div>
+
+<!-- P · JORNADA -->
+<div class="sec" id="P-jornada">
+  <div class="sec-tag">Parte 8 · Transformação</div>
+  <h2 class="sec-h">Jornada de <em>transformação</em></h2>
+  <p>A aluna compra a passagem de "eu travo / recuso / cobro pouco" para "eu domino / digo sim / cobro o que vale". O dia precisa fazê-la <strong>sentir</strong> essa virada.</p>
+  <table>
+    <tr><th>Momento</th><th>Estado emocional</th><th>O que o design provoca</th></tr>
+    <tr><td>Pré-curso</td><td>Ansiosa, insegura</td><td>Chega preparada e com a dor nomeada</td></tr>
+    <tr><td>Chegada (M1)</td><td>Nervosismo + admiração</td><td>"hoje a gente ataca o seu X" → sente-se vista</td></tr>
+    <tr><td>Diagnóstico (M1)</td><td>"então tem método"</td><td>1ª mudança de mentalidade</td></tr>
+    <tr><td>Fitagem (M3)</td><td><strong>1ª vitória</strong></td><td>Pico de confiança planejado — vira o dia</td></tr>
+    <tr><td>Penteados (M4)</td><td>Domínio crescente</td><td>Cada penteado = mais autonomia</td></tr>
+    <tr><td>Look + foto (M5–M6)</td><td>Orgulho</td><td>Vê o resultado completo e o registra</td></tr>
+    <tr><td>Negócio (M7)</td><td>Empoderamento</td><td>"agora eu sei cobrar por isso"</td></tr>
+    <tr><td>Autoavaliação final</td><td><strong>Transformação percebida</strong></td><td>O salto numérico prova o que ela sente</td></tr>
+    <tr><td>Pós-curso</td><td>Segurança aplicada</td><td>Suporte garante que não trava na 1ª cliente</td></tr>
+  </table>
+  <div class="quote">A aluna sai com portfólio, plano e resultado real — e vira o principal canal de marketing da próxima turma. O design pedagógico <em>é</em> estratégia de autoridade.</div>
+</div>
+
+<!-- P · TIMELINE -->
+<div class="sec" id="P-timeline">
+  <div class="sec-tag">Parte 9 · Execução</div>
+  <h2 class="sec-h">Timeline do dia <em>(minuto a minuto)</em></h2>
+  <div class="tl">
+    <div class="tl-row"><div class="tl-h">08h30</div><div class="tl-b"><h4>Recepção, café, tour, alinhar expectativas</h4><p class="d">M1 · baixar a ansiedade</p></div></div>
+    <div class="tl-row"><div class="tl-h">08h55</div><div class="tl-b"><h4>Leitura do fio, porosidade/pH, anamnese, fator encolhimento</h4><p class="d">M1 · teoria essencial</p></div></div>
+    <div class="tl-row"><div class="tl-h">09h25</div><div class="tl-b"><h4>Exercício: aluna diagnostica o modelo</h4><p class="d">Checkpoint 1</p></div></div>
+    <div class="tl-row"><div class="tl-h">09h45</div><div class="tl-b"><h4>Preparação: protocolo + acidificante + protetor</h4><p class="d">M2 · just-in-time</p></div></div>
+    <div class="tl-row"><div class="tl-h">10h15</div><div class="tl-b"><h4>Fitagem: eu faço → erro proposital → nós fazemos → você faz</h4><p class="d">M3 · maior carga prática</p></div></div>
+    <div class="tl-row"><div class="tl-h">12h30</div><div class="tl-b"><h4>Aluna fita sozinha (cabeça inteira)</h4><p class="d">1ª vitória + Checkpoint 2</p></div></div>
+    <div class="tl-row"><div class="tl-h">13h00</div><div class="tl-b"><h4>Almoço (revisão informal)</h4><p class="d">Respiro + consolidação</p></div></div>
+    <div class="tl-row"><div class="tl-h">13h40</div><div class="tl-b"><h4>Semi-preso (cascata babyliss): demo → prática</h4><p class="d">M4</p></div></div>
+    <div class="tl-row"><div class="tl-h">14h25</div><div class="tl-b"><h4>Rabo de cavalo: demo → prática</h4></div></div>
+    <div class="tl-row"><div class="tl-h">15h05</div><div class="tl-b"><h4>Coque (alto/baixo): demo → prática</h4><p class="d">Checkpoint 3</p></div></div>
+    <div class="tl-row"><div class="tl-h">15h45</div><div class="tl-b"><h4>Integração make + cabelo + leitura de imagem</h4><p class="d">M5 · diferencial único</p></div></div>
+    <div class="tl-row"><div class="tl-h">16h30</div><div class="tl-b"><h4>Ensaio fotográfico do trabalho da aluna</h4><p class="d">M6 · orgulho + portfólio</p></div></div>
+    <div class="tl-row"><div class="tl-h">17h00</div><div class="tl-b"><h4>Precificação + plano de ação + autoavaliação final</h4><p class="d">M7 · empoderamento</p></div></div>
+    <div class="tl-row"><div class="tl-h">17h30</div><div class="tl-b"><h4>Feedback individual + certificado</h4><p class="d">Fechamento emocional</p></div></div>
+  </div>
+</div>
+
+</div><!-- fim tab-lancamento -->
+
 </div><!-- fim #main -->
 
 <!-- ══════════════════ JAVASCRIPT ══════════════════ -->
@@ -2172,6 +2667,35 @@ const navLinks = {
     {group:'Execução', links:[
       {href:'#c-exec',label:'Checklist · Prioridades'}
     ]}
+  ],
+  lancamento: [
+    {group:'Análise', links:[
+      {href:'#L-pos',label:'Posicionamento'},
+      {href:'#L-crencas',label:'Crenças a construir'},
+      {href:'#L-objecoes',label:'Objeções a quebrar'},
+      {href:'#L-lacunas',label:'Lacunas de mercado'},
+      {href:'#L-temas',label:'Temas diferenciadores'}
+    ]},
+    {group:'Aquecimento', links:[
+      {href:'#L-fases',label:'As 4 Fases'},
+      {href:'#L-roteiros',label:'52 Roteiros'},
+      {href:'#L-cal',label:'Calendário 8 Semanas'}
+    ]},
+    {group:'Execução', links:[
+      {href:'#L-checklist',label:'Pré-requisitos'},
+      {href:'#L-guardrails',label:'Guardrails'}
+    ]},
+    {group:'Curso · Estrutura', links:[
+      {href:'#P-principios',label:'Princípios Pedagógicos'},
+      {href:'#P-analise',label:'Análise Crítica'},
+      {href:'#P-arq',label:'Arquitetura'},
+      {href:'#P-modulos',label:'Módulos Detalhados'},
+      {href:'#P-pratica',label:'Prática · Checkpoints'},
+      {href:'#P-apostila',label:'Apostila (Sumário)'},
+      {href:'#P-materiais',label:'Materiais · Fichas'},
+      {href:'#P-jornada',label:'Jornada · Transformação'},
+      {href:'#P-timeline',label:'Timeline do Dia'}
+    ]}
   ]
 };
 
@@ -2200,13 +2724,92 @@ function switchTab(name){
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('tab-'+name).classList.add('active');
   const btns = document.querySelectorAll('.tab-btn');
-  const map = {brand:0, insta:1, curso:2};
+  const map = {brand:0, insta:1, curso:2, lancamento:3};
   btns[map[name]].classList.add('active');
   buildSidebar(name);
   window.scrollTo(0,0);
 }
 
+/* ── 52 ROTEIROS (aba Lançamento) ── */
+const LIDEAS=[
+{p:"c",code:"C1",fmt:"Reel técnico · 40–50s",title:"O verdadeiro vilão dos cachos não é o frizz",obj:"Instalar crenças 1+2 com autoridade científica. Filtrar: quem entende, fica.",gancho:"O maior vilão do cacho não é o frizz. É a prancha — e tem química nisso que quase ninguém te explica.",dev:"0–5s gancho. 5–25s: pontes de hidrogênio (quebram com água, voltam ao secar = reversível) x pontes dissulfeto (só quebram com calor/química e NÃO voltam = descaracteriza o cacho pra sempre). 25–40s: \"por isso não passo prancha por impulso — é responsabilidade\". Fecha: \"Cacho tem estrutura. Respeitar essa estrutura é o começo de tudo.\"",cta:"Salva isso e me conta: você sabia da diferença entre as pontes?",contrib:"Estabelece o nível técnico que sustenta um curso pago. Bridge: noiva confia, profissional se sente em falta."},
+{p:"c",code:"C2",fmt:"Carrossel · 7 slides",title:"Você sabe ler a curvatura antes de tocar no fio?",obj:"Lacuna do diagnóstico. A técnica começa antes do penteado.",gancho:"2A a 4C: a leitura que muda o penteado inteiro.",dev:"S2: por que o bulbo define a curvatura (redondo=liso, ovalado=ondulado, elíptico=crespo). S3–5: famílias 2/3/4 e o que muda. S6: crespo é o mais frágil (menor córtex, menor distribuição de oleosidade). S7: \"Diagnóstico não é detalhe. É o que separa quem acerta de quem tenta.\"",cta:"Salva pra consultar antes do próximo atendimento.",contrib:"Conteúdo de salvamento. Planta \"existe um método que eu não tenho\"."},
+{p:"c",code:"C3",fmt:"Reel talking head · 30–40s",title:"O erro nº1 do maquiador em noiva cacheada",obj:"Erro do mercado + crença 2 (revelar, não domar).",gancho:"O erro nº1 que eu vejo em noiva cacheada não é técnico. É de mentalidade: tratar o cacho como problema a resolver.",dev:"Nomeia o erro (chegar querendo disciplinar/alisar). O custo: a noiva sai sem se reconhecer. Contrapõe: \"eu pergunto o que ela é, não o que falta nela\". Mostra resultado de cacho valorizado.",cta:"Marca uma profissional que precisa ouvir isso.",contrib:"Diferenciação de posicionamento. Atrai cliente e provoca a aluna."},
+{p:"c",code:"C4",fmt:"Carrossel · 6 slides ou Reel",title:"Cacheado e crespo NÃO são a mesma técnica",obj:"Mostrar especificidade. Crença 1.",gancho:"Tratar cacheado e crespo igual é o erro que entrega resultado errado.",dev:"Cacheado nasce liso na raiz e encacha → distribui melhor a oleosidade, menos seco. Crespo nasce em espiral desde a raiz → cutícula mais aberta, mais seco, mais nós. Consequência: produto, modelador (13mm cacheado / 10mm crespo), hidratação — tudo muda.",cta:"Comenta: você adapta a técnica por textura ou faz igual pra todo mundo?",contrib:"Profundidade que expõe a superficialidade do mercado."},
+{p:"c",code:"C5",fmt:"Reel talking head · 30s",title:"Por que eu nunca passo escova em cliente cacheada",obj:"Autoridade ética + técnica. Diferenciação.",gancho:"Tem uma coisa que eu me recuso a fazer mesmo quando a cliente pede: escova/prancha em cacho, por impulso.",dev:"Liga ao C1 (responsabilidade de descaracterizar). Mostra o que faz no lugar: fitagem, definição, valorização. \"Meu trabalho não é mudar você. É revelar você.\"",cta:"Me conta: já te ofereceram alisar quando você só queria se sentir bonita do seu jeito?",contrib:"Crença 2 viva. Conecta o DNA da marca ao tema do curso."},
+{p:"c",code:"C6",fmt:"Reel educativo · 30–40s",title:"Por que seu cabelo 'diminui' (fator encolhimento)",obj:"Ensinar fator encolhimento — termo que quase nenhum maquiador domina.",gancho:"Seu cabelo não encolheu. Isso tem nome: fator encolhimento — e ignorar ele estraga penteado.",dev:"O formato anelado faz o fio parecer mais curto do que é. Importa: ao planejar semi-preso/coque você precisa contar com o comprimento real. Demonstra esticando uma mecha.",cta:"Salva — e me segue que aqui a gente fala de textura de verdade.",contrib:"Vocabulário de especialista (dicionário) = autoridade percebida."},
+{p:"c",code:"C7",fmt:"Story series · 4–5 frames",title:"Diagnóstico ao vivo: testando a porosidade",obj:"Diagnóstico em formato leve e diário.",gancho:"Antes de qualquer penteado, eu faço esse teste. Quase ninguém faz.",dev:"F2: o que é porosidade (cutícula aberta x fechada). F3: teste do fio na água/toque. F4: por que cabelo poroso pede condicionador acidificante (fecha a cutícula, dá brilho). F5: \"É essa leitura que decide o produto certo.\"",cta:"Tem dúvida sobre o seu fio? Me manda no direct.",contrib:"Sustenta o pilar técnico nos dias sem reel. Coleta DMs (early leads)."},
+{p:"c",code:"C8",fmt:"Reel emocional · 45–60s",title:"\"Achavam que não ia dar\" (noiva cacheada)",obj:"Bridge de ouro: noiva + cacho + emoção. Crença 1 em história.",gancho:"Cachos no altar. Sem alisar um fio.",dev:"0–3s bancada/preparo. 3–25s processo: umectação prévia, fitagem, definição, semi-preso cascata. 25–45s resultado + emoção real no espelho. Legenda: \"Capaz que muita gente dissesse que 'não ia dar'. Mas quem trabalha com textura sabe: cada fio tem o que precisa.\"",cta:"Me manda mensagem se você sonha com os seus cachos no seu dia.",contrib:"Prova de produto + identificação dupla (noiva contrata / profissional admira)."},
+{p:"c",code:"C9",fmt:"Carrossel · 5 slides ou Reel",title:"Pouco se fala sobre penteado para esses cabelos",obj:"Tamanho do mercado + lacuna (manifesto). Crença 5.",gancho:"Os cabelos crespos e cacheados são a maioria do Brasil. E quase ninguém aprende a penteá-los.",dev:"S2: o dado (predominância). S3: a contradição (público existe, deseja atendimento, oferta de qualidade mínima). S4: o que isso significa para quem domina. S5: \"Eu decidi ser parte da solução.\"",cta:"Comenta 🌀 se você é desse time.",contrib:"Planta o \"por que isso importa\" sem citar curso. Prepara a aluna."},
+{p:"c",code:"C10",fmt:"Reel educativo · 40s",title:"Por que cacho fica poroso (e o que fazer antes)",obj:"Ciência do pH. Etapa invisível.",gancho:"Seu cacho não é 'difícil'. Ele é poroso — e isso é química, não sorte.",dev:"pH do fio saudável é ácido (4,2–5,8). Cacheado tem menos camadas de cutícula → poroso, ressecado. Solução: condicionador acidificante (fecha a cutícula) antes de fitar. \"Por isso o mesmo penteado dura num cabelo e cai no outro.\"",cta:"Salva. Esse é o tipo de coisa que muda o seu resultado amanhã.",contrib:"Domínio de bastidor técnico = \"tem um conhecimento aqui que eu não tenho\"."},
+{p:"c",code:"C11",fmt:"Reel bastidor · 30s",title:"As 3 perguntas que faço antes de tocar no cabelo",obj:"Anamnese/diagnóstico. Bastidor premium.",gancho:"Antes de encostar no cabelo de uma cliente, eu pergunto 3 coisas. Pular isso é receita de problema.",dev:"1) Tem química/relaxamento? 2) Que tratamentos fez nos últimos 30 dias? 3) Quer volume ou definição? Cada uma muda a técnica.",cta:"Profissional: você faz anamnese antes? Me conta.",contrib:"Mostra método e cuidado premium. Fala direto com a aluna."},
+{p:"c",code:"C12",fmt:"Carrossel · 4 slides ou Reel",title:"3 noivas, 3 texturas, 3 técnicas",obj:"Diversidade de texturas + amplitude técnica.",gancho:"Mesma data, três noivas. Nenhuma técnica igual.",dev:"Um slide por noiva (ondulada 2 / cacheada 3 / crespa 4), cada uma com a decisão técnica central. Fecha: \"Não existe 'penteado de cacheada'. Existe o penteado certo para aquela textura.\"",cta:"Qual é a sua textura? Comenta.",contrib:"Prova de amplitude (combate \"só sabe um tipo\"). Salvamento."},
+{p:"a",code:"A1",fmt:"Reel de processo · 45–60s",title:"Fitagem: definir o cacho sem amassar nem danificar",obj:"Técnica-assinatura. Crença 3 (etapa invisível).",gancho:"Fitagem mal feita amassa o cacho. Bem feita, define sem danificar. A diferença está em 3 detalhes.",dev:"Mostra: cabelo umedecido com água + condicionador acidificante (1 colher rasa / 300ml), aplicação da gelatina, fitar mecha por mecha, secagem com difusor (pontas primeiro, raiz por último). Voz over com o porquê.",cta:"Quer ver o resultado? Tá no próximo post. Me segue pra não perder.",contrib:"Conteúdo \"aula\" que dá vontade de aprender. Núcleo do produto."},
+{p:"a",code:"A2",fmt:"Carrossel · 6 slides",title:"A etapa que decide se o penteado dura 2h ou o dia inteiro",obj:"Umectação = durabilidade. Crença 3.",gancho:"O penteado caiu? O erro provavelmente foi 7 dias antes.",dev:"S2: umectação = nutrição com óleo vegetal (uva, coco, abacate, rícino, oliva). S3: benefícios. S4: timing — 1 semana antes. S5: passo a passo (dividir em 4, 2h ou dormir, lavar). S6: \"Penteado bonito começa antes do dia.\"",cta:"Salva pra mandar pra sua cliente antes do próximo evento.",contrib:"Etapa invisível = conhecimento que justifica o curso. Salvamento alto."},
+{p:"a",code:"A3",fmt:"Reel demonstrativo · 30–40s",title:"Modelador 10mm ou 13mm? O tamanho muda tudo",obj:"Especificidade técnica. Crença 1.",gancho:"Usar o modelador errado é a forma mais rápida de fazer um cacho parecer 'cabelo de boneca'.",dev:"13mm para cacheado, 10mm para crespo — e por quê (curvatura natural). Mostra os dois resultados lado a lado. Cita protetor térmico obrigatório antes.",cta:"Profissional, qual modelador você mais usa? Comenta.",contrib:"Detalhe que diferencia o especialista do generalista."},
+{p:"a",code:"A4",fmt:"Reel talking head + processo · 40–50s",title:"Eu escolho a maquiagem a partir do cabelo",obj:"Harmonização make+cabelo — diferencial único.",gancho:"A maioria faz a make e depois 'resolve' o cabelo. Eu faço o caminho inverso — e isso muda o look inteiro.",dev:"Volume e cor do cabelo definem o peso da maquiagem, o ponto de luz, a sobrancelha. Em pele negra com crespo volumoso, a make precisa de presença pra não sumir. Mostra um look onde os dois conversam.",cta:"Isso é o que quase ninguém integra. Me segue que eu mostro como.",contrib:"Comunica a integração que SÓ você ensina. Categoria própria."},
+{p:"a",code:"A5",fmt:"Carrossel · 6 slides (flat lay)",title:"Os produtos da minha fitagem — e o porquê de cada um",obj:"Bastidor do saber. Crença 3.",gancho:"Não é sobre marca. É sobre função.",dev:"Um produto por slide com a função: acidificante (fecha cutícula/pH), protetor térmico (obrigatório antes do calor), gelatina (mais em mecha grossa, menos em fina), óleo reparador (lubrifica a mão), alta fixação (\"produto que só molha não segura\"). Em cacheada, evitar spray de brilho.",cta:"Salva esse kit. E me conta: qual desses faltava no seu?",contrib:"Salvamento + prova de método (o raciocínio, não só a lista)."},
+{p:"a",code:"A6",fmt:"Reel talking head · 40s",title:"Teoria x prática: o que o vídeo nunca vai te mostrar",obj:"Pré-quebra objeção YouTube. Crença 6.",gancho:"Você pode assistir mil vídeos de cacho. Nenhum vai te avisar que você está errando AGORA, no fio que tá na sua mão.",dev:"3 coisas que só a prática corrige: pressão da mão na fitagem, leitura da elasticidade ao vivo, ajuste de produto pela resposta do fio. \"Teoria te dá o mapa. Prática corrigida te dá o caminho.\"",cta:"Concorda? Comenta o vídeo que você assistiu e mesmo assim travou.",contrib:"Planta o valor do presencial antes do anúncio."},
+{p:"a",code:"A7",fmt:"Reel narrativo · 45–60s",title:"A noiva que chegou querendo alisar",obj:"Caso real (storytelling). Crenças 2+6.",gancho:"Ela chegou na prévia decidida a alisar tudo. Saiu querendo casar com os próprios cachos.",dev:"O medo dela (experiência ruim anterior), o que você fez (mostrou o cacho definido, explicou a estrutura, fez a prévia), a virada (ela se reconheceu). Sem nome sem autorização.",cta:"Se você já se sentiu assim, me manda mensagem antes de decidir alisar.",contrib:"Crença 2 em prova emocional. Bridge perfeito."},
+{p:"a",code:"A8",fmt:"Reel técnico · 40–50s",title:"Subtom da pele + cor do crespo: harmonizar os dois",obj:"Tríade pele negra + cabelo + make.",gancho:"Pele melanada com crespo volumoso pede uma decisão que quase ninguém pensa: harmonizar o subtom da pele com o tom do cabelo.",dev:"Como subtom (frio/neutro/quente) conversa com a base e como o tom/brilho do cabelo influencia blush, iluminador e batom. Cita spray de cor como recurso de acabamento quando faz sentido.",cta:"Salva. Esse nível de detalhe é o que diferencia o resultado.",contrib:"Demonstra o cruzamento de especialidades que ninguém mais tem."},
+{p:"a",code:"A9",fmt:"Carrossel · 9 slides",title:"Dicionário da cacheada e crespa: 8 termos essenciais",obj:"Vocabulário = autoridade. Filtro de nível.",gancho:"Se você atende textura e não sabe esses 8 termos, tá na hora.",dev:"Um por slide: Fitagem · Fator encolhimento · Porosidade · Transição capilar · BC (big chop) · Scab hair · Triconodose (nós de fada) · Day after / Blowout. Definição curta + por que importa.",cta:"Salva e marca alguém que precisa dominar esse vocabulário.",contrib:"Altíssimo salvamento. Posiciona você como referência didática = professora natural."},
+{p:"a",code:"A10",fmt:"Reel rápido · 25–35s",title:"Secagem: por que pontas primeiro e raiz por último",obj:"Detalhe de ordem que decide o resultado.",gancho:"A ordem da secagem muda o cacho. E quase todo mundo faz ao contrário.",dev:"Difusor nas pontas primeiro (preserva a forma), raiz por último (volume controlado). Se a cliente quer volume, não aplicar muito produto na raiz. Explica o porquê físico.",cta:"Testa e me conta o resultado.",contrib:"Microdetalhe que sinaliza \"ela pensa em coisas que eu nem sabia que existiam\"."},
+{p:"a",code:"A11",fmt:"Reel de processo · 45–60s",title:"Semi-preso cascata com babyliss em textura",obj:"Técnica de penteado de assinatura. Crença 4.",gancho:"O semi-preso cascata que faço em cacheada começa com um detalhe: solto a raiz com pente garfo.",dev:"Passo a passo: soltar a raiz com pente garfo, babyliss começando pelas pontas e subindo, mão perto do babyliss, mecha uma ao lado da outra, na lateral modelar desde a raiz. Resultado em close, luz quente.",cta:"Quer ver mais penteado em textura? Comenta 'cascata'.",contrib:"Mostra penteado autoral em textura — o coração do curso."},
+{p:"a",code:"A12",fmt:"Story series · 5 frames",title:"A bancada de penteado para textura",obj:"Bastidor premium + autoridade de ferramentas.",gancho:"Tudo na minha bancada de penteado tem um motivo. Nada é por acaso.",dev:"Difusor (mantém forma natural, ameniza frizz), modeladores 10/13/19/cônico, protetor térmico, gelatina, alta fixação. Tom Sábia.",cta:"Qual ferramenta você ainda não tem? Me conta.",contrib:"Mostra preparo = percepção premium + desejo de aprender."},
+{p:"a",code:"A13",fmt:"Reel pessoal · 30–40s",title:"\"Recebi essa mensagem e precisei compartilhar\" (semente)",obj:"Plantar o ensino sem anunciar. Crença 7.",gancho:"Recebi mais uma mensagem de uma profissional perguntando como eu trabalho com cacho. E isso tá acontecendo muito.",dev:"Lê (sem expor) a mensagem, responde com generosidade, e fecha: \"Fico feliz em ajudar. E ando pensando em formas de fazer isso de um jeito mais completo.\" — sem anunciar nada.",cta:"Você é profissional e também tem essa dúvida? Me conta o que mais te trava.",contrib:"Faz a audiência começar a pedir. Coleta as dores reais (insumo de venda)."},
+{p:"a",code:"A14",fmt:"Reel processo + resultado · 45s",title:"Coque em crespo. Sem alisar nenhum fio.",obj:"Prova visual de domínio em crespo 4.",gancho:"Coque alto em crespo. Nenhum fio alisado.",dev:"\"Quanto mais alto o coque, menor o topo.\" Mostra a estrutura que segura sem domar, a fixação. Resultado editorial.",cta:"Crespo no alto da cabeça é poder. Comenta 👑.",contrib:"Quebra a ideia de que crespo \"não rende penteado sofisticado\". Portfólio de nível."},
+{p:"a",code:"A15",fmt:"Reel talking head · 30s",title:"Volume ou definição? A pergunta antes de toda fitagem",obj:"Construção de beleza individual.",gancho:"Eu nunca começo uma fitagem sem fazer uma pergunta. E a resposta muda toda a aplicação do produto.",dev:"Volume x definição. Mecha fina pede menos gelatina, grossa pede mais. Quem quer volume não recebe muito produto na raiz. \"Não existe resultado certo. Existe o resultado que ELA quer.\"",cta:"Você prefere volume ou definição? Comenta.",contrib:"Mostra escuta + customização = o que o curso individual entrega."},
+{p:"a",code:"A16",fmt:"Reel talking head · 45–60s",title:"7 anos de beleza + 10 de publicidade me deram um olho diferente",obj:"Storytelling de autoridade. Crença 7.",gancho:"Antes de maquiar, eu passei 10 anos na publicidade. Isso mudou a forma como eu enxergo um rosto.",dev:"Publicidade ensinou a ler o que uma imagem precisa comunicar antes de escolher produto. Por isso você pensa harmonização, leitura de imagem, presença — não só técnica. \"Técnica sem leitura é só repetição.\"",cta:"É esse olhar que eu quero passar adiante. Me segue.",contrib:"Constrói a expert que vai lançar — base da crença 7."},
+{p:"d",code:"D1",fmt:"Reel talking head · 40s",title:"A diferença entre 'fazer cacho' e dominar textura",obj:"Abrir o abismo de conhecimento. Crença 6.",gancho:"Tem profissional que faz cacho. E tem profissional que domina textura. Não é o mesmo trabalho — nem o mesmo preço.",dev:"Quem \"faz\" segue passo a passo; quem domina lê o fio, prevê o comportamento, ajusta ao vivo e garante durabilidade. \"Dominar é o que te deixa cobrar mais e dizer sim sem medo.\"",cta:"Em qual time você quer estar? Comenta.",contrib:"Cria a tensão que o curso resolve. Fala direto com a aluna."},
+{p:"d",code:"D2",fmt:"Story enquete · 3–4 frames",title:"Quantos aqui são profissionais?",obj:"Segmentar a audiência e fazê-la se identificar.",gancho:"Pergunta rápida pra quem trabalha com beleza...",dev:"Enquete 1: \"Você é profissional de beleza?\" Enquete 2: \"Já travou num atendimento de cacho/crespo?\" F3: \"Me conta no direct qual textura mais te desafia.\"",cta:"Responde a caixinha 👇",contrib:"Mapeia o público de alunas e aquece DMs. Insumo de venda."},
+{p:"d",code:"D3",fmt:"Reel talking head · 40–50s",title:"3 erros que eu cometia quando comecei com textura",obj:"Vulnerabilidade + crença \"dá pra aprender\".",gancho:"Eu já estraguei penteado por não entender o que tô prestes a te contar.",dev:"3 erros reais: (1) tratar cacheado e crespo igual; (2) ignorar a porosidade/pH antes do produto; (3) achar que volume na raiz = mais produto. O que mudou: \"não foi talento. Foi entender a estrutura.\"",cta:"Qual desses você ainda comete? Sem vergonha — comenta.",contrib:"Mostra que o curso é caminho, não dom. Quebra \"não tenho talento\"."},
+{p:"d",code:"D4",fmt:"Reel bastidor · 30–40s",title:"O espaço onde tudo acontece",obj:"Reframe do home studio (sem dizer curso). Crença 6.",gancho:"Esse é o espaço onde eu recebo as noivas. Onde cada detalhe é pensado pra uma pessoa de cada vez.",dev:"Mostra o home studio com a estética da marca. \"Aqui não tem fila, não tem pressa. Tem atenção. E é isso que muda um resultado — e um aprendizado.\"",cta:"Comenta ☕ se você valoriza atendimento que é só seu.",contrib:"Prepara o reframe \"individual por escolha, não por limitação\"."},
+{p:"d",code:"D5",fmt:"Reel talking head · 40s",title:"Por que cobro diferente para cacheada",obj:"Precificação/posicionamento. Crença 5.",gancho:"Eu cobro mais para cacheada do que para liso. E não, não é injustiça — é técnica.",dev:"Cacheada exige preparo (umectação, acidificante), tempo (fitagem ~30min), técnica específica e alta fixação. \"Cobrar igual liso é desvalorizar o seu próprio trabalho — e o tempo que textura exige.\"",cta:"Profissional: você cobra diferente por textura? Comenta sua realidade.",contrib:"Toca na dor de renda da aluna. Mostra que você ensina negócio, não só técnica."},
+{p:"d",code:"D6",fmt:"Carrossel · 5 slides",title:"O que muda quando você domina textura",obj:"Pintar o 'depois' da aluna (desejo). Crença 5.",gancho:"Dizer 'sim' sem medo muda o seu negócio inteiro.",dev:"S2: você para de recusar cliente de cacho/crespo. S3: você cobra mais. S4: você vira referência na sua cidade. S5: \"Isso não é sobre um penteado. É sobre uma nova fonte de renda e autoridade.\"",cta:"Salva isso como meta.",contrib:"Constrói o desejo concreto (renda + autoridade) que o curso entrega."},
+{p:"d",code:"D7",fmt:"Reel de processo · 50–60s",title:"Look completo: pele negra, cacho, make — tudo conversando",obj:"Prova máxima da integração (diferencial único).",gancho:"Quando cabelo, pele e make falam a mesma língua.",dev:"Cortes do processo integrado: preparo do fio → make construída a partir do cabelo → penteado → resultado. Voz over conectando as decisões. Pele negra, crespo, acabamento premium.",cta:"Isso é o que eu faço — e o que ando pensando em ensinar. Me segue de perto essa semana.",contrib:"Pico de desejo + teaser. Prepara o anúncio da semana seguinte."},
+{p:"d",code:"D8",fmt:"Story series · 5–7 frames",title:"Respondendo vocês (DMs públicas)",obj:"Generosidade + prova de demanda.",gancho:"Recebi tantas perguntas de profissionais que vou responder aqui.",dev:"Responde 3–4 dúvidas técnicas reais com profundidade (porosidade, durabilidade, modelador, precificação). Cada resposta mostra domínio.",cta:"Tem mais dúvida? Manda. Eu leio todas.",contrib:"Mostra publicamente que a audiência já PEDE — escassez social antes do anúncio."},
+{p:"d",code:"D9",fmt:"Reel talking head · 40s",title:"A pergunta que mais recebo: 'como você aprendeu cachos?'",obj:"Semente quase madura. Crença 7.",gancho:"A pergunta que mais chega no meu direct ultimamente não é de noiva. É de profissional: 'Carol, como você aprendeu cachos?'",dev:"Conta o caminho resumido (estudo de estrutura do fio, prática, erro, integração com make). Fecha: \"E é por isso que decidi montar um jeito de passar isso adiante. Semana que vem eu te conto.\"",cta:"Ativa as notificações 🔔 — semana que vem tem novidade.",contrib:"Anuncia que vem anúncio (curiosidade). Transição para a Fase 4."},
+{p:"d",code:"D10",fmt:"Reel · 30–40s",title:"O penteado é o fim. A leitura do fio é o que ninguém ensina.",obj:"Reforço final do gap. Crença 3.",gancho:"Todo mundo quer aprender o penteado. Mas o penteado é a parte fácil.",dev:"O difícil: diagnóstico, porosidade, pH, fator encolhimento, escolha de produto. \"Se você só aprende o penteado, você copia. Se você aprende a ler o fio, você cria.\"",cta:"Comenta: você foca no penteado ou no diagnóstico?",contrib:"Posiciona o valor do curso como método, não receita."},
+{p:"d",code:"D11",fmt:"Carrossel · 7 slides",title:"Anatomia de um penteado que dura 12 horas",obj:"Consolidar 'etapas invisíveis'. Salvamento.",gancho:"Por que o penteado da noiva cai? Quase sempre por uma destas 6 etapas.",dev:"1 umectação (1 sem antes) · 2 lavar no dia · 3 acidificante/pH · 4 protetor térmico · 5 fitagem + alta fixação · 6 finalização sem peso. Slide final: \"Penteado que dura é processo, não sorte.\"",cta:"Salva — e marca quem precisa ver isso antes do próximo casamento.",contrib:"Última grande prova de método antes da venda. Salvamento + alcance."},
+{p:"d",code:"D12",fmt:"Reel manifesto · 30–40s",title:"Revelar, não domar (manifesto aplicado)",obj:"Amarrar DNA da marca ao tema do curso, no auge do desejo.",gancho:"A maioria aprende a domar o cabelo. Eu escolhi aprender a revelá-lo.",dev:"Cenas de resultados em diversas texturas. Voz over: cacho não é problema a resolver, é assinatura a honrar. \"Beleza que faz você se reconhecer — começa no fio.\"",cta:"Comenta 🌀 se você acredita nisso também.",contrib:"Clímax emocional que conecta marca + produto na véspera do anúncio."},
+{p:"v",code:"V1",fmt:"Story sequence · 6 frames",title:"Sequência de stories de ANÚNCIO",obj:"Abertura oficial. Converter quem já está aquecida.",gancho:"Depois de tantas mensagens de profissionais, chegou a hora.",dev:"F2 O que é: \"Formação VIP Individual. Um dia. No meu home studio. Para uma profissional.\" F3 Formato: \"8h30 às 17h30. Modelo incluso.\" F4 Inclui: \"Apostila, vídeos de revisão, suporte 30 dias, certificado.\" F5 Preço: \"3 vagas: R$680. Depois: R$850.\" F6 CTA.",cta:"Me manda 'FORMAÇÃO VIP' no direct e eu te explico tudo.",contrib:"É a colheita. Tudo construído nas 7 semanas converte aqui."},
+{p:"v",code:"V2",fmt:"Post editorial (feed) + legenda",title:"Post de abertura no feed",obj:"Âncora permanente do lançamento.",gancho:"Uma aluna. Um dia inteiro. A atenção completa.",dev:"Imagem editorial do home studio ou de você trabalhando textura. Legenda narrativa: por que individual, o que é, o que inclui, para quem, preço fundador. Sem \"últimas vagas\", sem desconto.",cta:"Comenta 'QUERO SABER MAIS' ou me chama no direct.",contrib:"Ponto de conversão fixo para quem chega pelo perfil."},
+{p:"v",code:"V3",fmt:"Reel talking head · 40s",title:"Por que individual, e não turma",obj:"Quebrar objeção \"esperar a turma\". Reframe.",gancho:"Muita gente me pergunta por que eu não faço turma. A resposta é o contrário do que parece.",dev:"Não é \"o espaço é pequeno\" — é \"aprendizado real precisa de atenção real\". Em turma você divide a atenção por 10 e tem vergonha de errar. Aqui é só você, no seu ritmo. \"Quanto você progride quando alguém olha só pra você?\"",cta:"Faz sentido pra você? Me chama.",contrib:"Transforma a \"limitação\" no maior diferencial de venda."},
+{p:"v",code:"V4",fmt:"Reel talking head · 40–50s",title:"É caro? Vamos fazer a conta.",obj:"Quebrar objeção preço com lógica.",gancho:"R$680 por um dia parece caro — até você fazer a conta do que isso te devolve.",dev:"Você não paga uma cadeira numa sala de 10 — paga um dia inteiro de atenção só sua, com modelo incluso e suporte de 30 dias. Se você passa a cobrar diferente por textura, o curso se paga em poucas clientes. \"É investimento com retorno, não custo.\"",cta:"Quer entender o retorno pro seu caso? Me chama.",contrib:"Remove a maior barreira de compra mantendo o tom premium."},
+{p:"v",code:"V5",fmt:"Carrossel · 8 slides",title:"O que está incluso na Formação VIP",obj:"Tangibilizar o produto. Reduzir incerteza.",gancho:"Um dia inteiro, desenhado só pra você.",dev:"Cronograma do dia (recepção → teoria/leitura de fio → preparação → finalização → penteados → integração make → ensaio fotográfico → certificado). Materiais: apostila, vídeos de revisão, guia de precificação, fotos profissionais, suporte 30 dias, modelo incluso.",cta:"Salva. E me chama pra ver as datas disponíveis.",contrib:"Mostra o valor real (combate \"caro\") e o cuidado premium."},
+{p:"v",code:"V6",fmt:"Reel · 30–40s",title:"O YouTube te mostra. Não te corrige.",obj:"Quebrar objeção YouTube no momento de decisão.",gancho:"Tudo que eu ensino tem no YouTube. Então por que pagar?",dev:"Porque vídeo não para o seu erro em tempo real, não ajusta a SUA mão no fio que você está segurando. \"Informação é grátis. Correção é o que você está comprando.\"",cta:"Me chama se você já se cansou de tentar sozinha.",contrib:"Fecha a objeção mais comum de produto educacional."},
+{p:"v",code:"V7",fmt:"Story series · 4–6 frames",title:"Prova social (interesse recebido)",obj:"Escassez social + validação.",gancho:"O direct não para desde ontem. Tô emocionada.",dev:"Prints (com permissão/anonimizados) de profissionais demonstrando interesse e perguntas respondidas publicamente. Tom Cuidadora.",cta:"Ainda dá tempo de garantir uma das 3 vagas fundadoras. Me chama.",contrib:"\"Outras já estão querendo\" reduz a hesitação da indecisa."},
+{p:"v",code:"V8",fmt:"Reel emocional · 45–60s",title:"Por que eu criei esse formato",obj:"História por trás do produto. Crenças 5+7.",gancho:"Eu criei essa formação por causa de uma coisa que me incomoda há anos.",dev:"Tanta gente de cacho/crespo mal atendida, tanta profissional insegura, tão pouca formação real integrando make + penteado. \"Eu não quero formar gente que copia penteado. Quero formar gente que entende textura e se posiciona.\"",cta:"Se isso é você, me chama. As vagas fundadoras fecham em [X] dias.",contrib:"Conecta propósito + produto. Captura quem compra por identificação."},
+{p:"v",code:"V9",fmt:"Reel ou story · 30–40s",title:"E depois do curso? Você não fica sozinha.",obj:"Quebrar objeção \"não vou conseguir praticar\".",gancho:"O maior medo de quem faz curso: 'e se eu travar quando estiver sozinha com a cliente?'",dev:"A rede de segurança: vídeos de revisão + 30 dias de suporte por WhatsApp direto, para as primeiras clientes reais. \"Você aprende comigo no dia — e me tem do seu lado no primeiro mês.\"",cta:"Esse suporte é parte do que você leva. Me chama pra saber mais.",contrib:"Remove a insegurança pós-compra que trava a decisão."},
+{p:"v",code:"V10",fmt:"Story · 1–3 frames",title:"Contagem regressiva das vagas fundadoras",obj:"Urgência real (escassez, não desconto).",gancho:"Restam [2] das 3 vagas fundadoras.",dev:"Lembrete elegante: o preço fundador (R$680) existe para as 3 primeiras, depois sobe para R$850. \"Não é promoção. É reconhecimento de quem confia primeiro.\" Sem \"corre!\".",cta:"Se você sabe que é sua vaga, me chama agora.",contrib:"Converte a indecisa pela escassez legítima."},
+{p:"v",code:"V11",fmt:"Carrossel · 5 slides ou Reel",title:"Essa formação é pra você se...",obj:"Espelho da aluna ideal (auto-seleção).",gancho:"Essa formação não é pra todo mundo. É pra você se...",dev:"\"...você já atende, mas trava em cacho/crespo\"; \"...quer dizer sim sem medo\"; \"...quer cobrar mais e se posicionar\"; \"...quer aprender make + penteado integrados\". Final: \"Se você se reconheceu, a gente precisa conversar.\"",cta:"Se reconheceu? Me chama com a palavra 'SOU EU'.",contrib:"Qualifica leads e faz a aluna certa se identificar."},
+{p:"v",code:"V12",fmt:"Post no feed + legenda",title:"Post de fechamento (transição de preço)",obj:"Última chamada elegante + transição fundador→cheio.",gancho:"As vagas fundadoras estão encerrando.",dev:"Agradece quem confiou primeiro, confirma que o preço fundador encerra e o valor passa a R$850, reforça que o convite segue aberto para a próxima data.",cta:"Última chance no valor fundador: me chama hoje.",contrib:"Captura o último grupo de indecisas sem pressão deselegante."}
+];
+function renderIdeas(f){
+  const w=document.getElementById('L-ideas'); if(!w) return;
+  w.innerHTML='';
+  LIDEAS.filter(i=>f==='all'||i.p===f).forEach(i=>{
+    const el=document.createElement('article');
+    el.className='idea'; el.dataset.phase=i.p;
+    el.innerHTML='<div class="idea-h"><div class="idea-m"><span class="idea-code">'+i.code+'</span><span class="idea-fmt">'+i.fmt+'</span></div><div class="idea-t">'+i.title+'</div></div>'+
+      '<div class="idea-b">'+
+      '<div class="idea-f"><span class="fl">Objetivo estratégico</span>'+i.obj+'</div>'+
+      '<div class="idea-f"><span class="fl">Gancho</span><div class="idea-g">'+i.gancho+'</div></div>'+
+      '<div class="idea-f"><span class="fl">Desenvolvimento</span>'+i.dev+'</div>'+
+      '<div class="idea-f"><div class="idea-cta"><span class="fl">CTA</span>'+i.cta+'</div></div>'+
+      '<div class="idea-f"><span class="fl">Como contribui para o lançamento</span><em>'+i.contrib+'</em></div>'+
+      '</div>';
+    w.appendChild(el);
+  });
+}
+function filterIdeas(f,btn){
+  document.querySelectorAll('#L-filter .fbtn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  renderIdeas(f);
+}
+
 buildSidebar('brand');
+renderIdeas('all');
 </script>
 </body>
 </html>
