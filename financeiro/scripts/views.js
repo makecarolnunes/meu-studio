@@ -644,6 +644,8 @@ function renderResumo() {
     const lucroNegTotal = fatTotal - despProf;       // faturamento total − saídas profissionais
     const lucroNegReal  = fatReal  - despProfPago;   // só o que já entrou/saiu
     const margemNeg     = fatTotal>0?Math.round(lucroNegTotal/fatTotal*100):0;
+    const mesesRange = resumoPeriodo==='mes'?1:resumoPeriodo==='ultimos3'?3:resumoPeriodo==='ultimos6'?6:resumoPeriodo==='acumulado'?selMonth+1:resumoPeriodo==='ano'?12:Math.max(1,(fim.getFullYear()-ini.getFullYear())*12+(fim.getMonth()-ini.getMonth())+1);
+    const fatMedio = mesesRange > 1 ? fatTotal / mesesRange : 0;
     const byOri={}, bySai={};
     ['Produção Social','Noiva','Assistência'].forEach(o=>byOri[o]=me.filter(e=>e.origem===o).reduce((t,e)=>t+Number(e.valor||0),0));
     ms.forEach(s=>bySai[s.tipo]=(bySai[s.tipo]||0)+Number(s.valor||0));
@@ -745,6 +747,7 @@ function renderResumo() {
         </div>
         ${['Produção Social','Noiva','Assistência'].map(o=>bar(o,byOri[o],fatTotal,'var(--ok)')).join('')}
         <div class="rrow total" style="margin-top:8px;padding-top:10px;border-top:2px solid #f0f0f0"><span class="rlbl">TOTAL</span><span class="rval" style="font-size:1.05rem;color:var(--ok)">${brl(fatTotal)}</span></div>
+        ${fatMedio > 0 ? `<div class="rrow" style="margin-top:6px;padding-top:8px;border-top:1px solid #f0f0f0"><span class="rlbl" style="color:var(--muted);font-size:.78rem">Média mensal (${mesesRange} meses)</span><span class="rval" style="font-size:.88rem;color:var(--ok)">${brl(fatMedio)}</span></div>` : ''}
     </div>
     <div class="card">
         <div class="card-title">Saídas</div>
@@ -765,32 +768,34 @@ function renderResumo() {
             <div style="background:#efe5dd;padding:9px 11px;border-radius:9px"><div style="font-size:.65rem;color:#6b4a36;letter-spacing:.1em;text-transform:uppercase;margin-bottom:3px">Pessoal</div><div style="font-weight:700;color:#3e2c20">${brl(despPess)}</div></div>
             ${despMista>0?`<div style="background:#fbeed3;padding:9px 11px;border-radius:9px"><div style="font-size:.65rem;color:#7a5408;letter-spacing:.1em;text-transform:uppercase;margin-bottom:3px">Mista</div><div style="font-weight:700;color:#3e2c20">${brl(despMista)}</div></div>`:''}
         </div>`:''}
-        ${Object.entries(bySai).map(([k,v])=>bar(saidaStyle(k).ico+' '+k,v,despTotal,'var(--red)')).join('')}
+        ${Object.keys(bySai).length > 0 ? `<button onclick="(function(b){var d=document.getElementById('resumo-sai-det');var open=d.style.display!=='none';d.style.display=open?'none':'block';b.innerHTML=open?'&#9660; Ver por categoria':'&#9650; Recolher';})(this)" style="background:none;border:1px solid var(--border);border-radius:8px;padding:5px 12px;font-size:.73rem;color:var(--muted);cursor:pointer;margin-bottom:6px;width:100%;text-align:left">&#9660; Ver por categoria</button><div id="resumo-sai-det" style="display:none">${Object.entries(bySai).map(([k,v])=>bar(saidaStyle(k).ico+' '+k,v,despTotal,'var(--red)')).join('')}</div>` : ''}
         <div class="rrow total" style="margin-top:8px;padding-top:10px;border-top:2px solid #f0f0f0"><span class="rlbl">TOTAL${saidasNaturezaFilter!=='todas'?' (filtrado)':''}</span><span class="rval" style="font-size:1.05rem;color:var(--red)">${brl(despTotal)}</span></div>
     </div>
-    <div class="card" style="background:linear-gradient(135deg,${lucroReal>=0?'#f1faf1,#e8f5e9':'#fff0f0,#ffebee'})">
-        <div class="card-title">${tituloResultado}</div>
-        <div class="rrow"><span class="rlbl">Faturamento total</span><span class="rval">${brl(fatTotal)}</span></div>
-        <div class="rrow"><span class="rlbl">Saídas totais</span><span class="rval" style="color:var(--red)">- ${brl(despTotal)}</span></div>
-        <div class="rrow total" style="margin-top:6px;padding-top:10px;border-top:2px solid rgba(0,0,0,.08)"><span class="rlbl">LUCRO PREVISTO</span><span class="rval" style="font-size:1.1rem;color:${lucroTotal>=0?'var(--ok)':'var(--red)'}">${brl(lucroTotal)}</span></div>
-        <div class="rrow total"><span class="rlbl">LUCRO REALIZADO</span><span class="rval" style="font-size:1.1rem;color:${lucroReal>=0?'var(--ok)':'var(--red)'}">${brl(lucroReal)}</span></div>
-        <div style="text-align:center;margin-top:8px;font-size:1.5rem;font-weight:800;color:${lucroTotal>=0?'var(--ok)':'var(--red)'}">${margem}% margem</div>
-        ${lucroReal > 0 ? `
-        <div style="margin-top:10px;padding:10px 12px;background:rgba(255,255,255,.55);border-radius:10px;text-align:center;font-size:.78rem;color:var(--text)">
+    <div class="card" style="background:linear-gradient(135deg,${lucroReal>=0?'#f1faf1,#e8f5e9':'#fff0f0,#ffebee'});padding-bottom:18px">
+        <div class="card-title" style="margin-bottom:14px">${tituloResultado}</div>
+        <div class="rrow" style="margin-bottom:3px"><span class="rlbl">Faturamento total</span><span class="rval">${brl(fatTotal)}</span></div>
+        <div class="rrow" style="margin-bottom:12px"><span class="rlbl">Saídas totais</span><span class="rval" style="color:var(--red)">- ${brl(despTotal)}</span></div>
+        <div style="height:1px;background:rgba(0,0,0,.08);margin:0 0 14px"></div>
+        <div class="rrow" style="margin-bottom:8px"><span class="rlbl" style="font-size:.8rem;color:var(--muted)">LUCRO PREVISTO</span><span class="rval" style="font-size:1.15rem;font-weight:800;color:${lucroTotal>=0?'var(--ok)':'var(--red)'}">${brl(lucroTotal)}</span></div>
+        <div class="rrow"><span class="rlbl" style="font-size:.8rem;color:var(--muted)">LUCRO REALIZADO</span><span class="rval" style="font-size:1.28rem;font-weight:900;color:${lucroReal>=0?'var(--ok)':'var(--red)'}">${brl(lucroReal)}</span></div>
+        <div style="text-align:center;margin-top:14px;font-size:1.6rem;font-weight:800;color:${lucroTotal>=0?'var(--ok)':'var(--red)'};letter-spacing:-.5px">${margem}%<span style="font-size:1rem;font-weight:600;margin-left:5px">margem</span></div>
+    </div>
+    <div class="card" style="border:2px solid ${lucroNegReal>=0?'rgba(76,175,80,.22)':'rgba(229,57,53,.15)'};margin-top:4px">
+        <div class="card-title" style="margin-bottom:4px">Lucro do negócio</div>
+        <div style="font-size:.72rem;color:var(--muted);margin-bottom:14px">Faturamento − saídas profissionais · o que o trabalho realmente rende</div>
+        <div class="rrow" style="margin-bottom:3px"><span class="rlbl">Faturamento total</span><span class="rval">${brl(fatTotal)}</span></div>
+        <div class="rrow" style="margin-bottom:12px"><span class="rlbl">Saídas profissionais</span><span class="rval" style="color:var(--red)">- ${brl(despProf)}</span></div>
+        <div style="height:1px;background:#f0f0f0;margin:0 0 14px"></div>
+        <div class="rrow" style="margin-bottom:8px"><span class="rlbl" style="font-size:.8rem;color:var(--muted)">LUCRO DO NEGÓCIO</span><span class="rval" style="font-size:1.15rem;font-weight:800;color:${lucroNegTotal>=0?'var(--ok)':'var(--red)'}">${brl(lucroNegTotal)}</span></div>
+        <div class="rrow"><span class="rlbl" style="font-size:.8rem;color:var(--muted)">JÁ REALIZADO</span><span class="rval" style="font-size:1.28rem;font-weight:900;color:${lucroNegReal>=0?'var(--ok)':'var(--red)'}">${brl(lucroNegReal)}</span></div>
+        <div style="text-align:center;margin-top:12px;font-size:1rem;font-weight:700;color:${lucroNegTotal>=0?'var(--ok)':'var(--red)'}">${margemNeg}%<span style="font-size:.8rem;font-weight:500;color:var(--muted);margin-left:4px">margem do negócio</span></div>
+        ${(despPess>0||despMista>0)?`<div style="margin-top:10px;padding:8px 11px;background:#faf6f2;border-radius:9px;font-size:.7rem;color:var(--muted);text-align:center">Fora desta conta: ${despPess>0?`pessoais ${brl(despPess)}`:''}${(despPess>0&&despMista>0)?' · ':''}${despMista>0?`mistas ${brl(despMista)}`:''}</div>`:''}
+        ${lucroNegReal > 0 ? `
+        <div style="margin-top:14px;padding:11px 14px;background:rgba(76,175,80,.08);border-radius:10px;text-align:center;font-size:.78rem;color:var(--text)">
             <span style="color:var(--muted)">Equivale a um salário CLT de</span>
-            <strong style="color:var(--ok);font-size:.95rem;display:block;margin-top:2px">${brl(lucroReal / 0.72)} bruto</strong>
+            <strong style="color:var(--ok);font-size:.97rem;display:block;margin-top:3px">${brl(lucroNegReal / 0.72)} bruto</strong>
             <span style="font-size:.68rem;color:var(--muted);display:block;margin-top:2px">Considerando INSS + IRRF típicos (fator 0,72)</span>
         </div>` : ''}
-    </div>
-    <div class="card">
-        <div class="card-title">Lucro do negócio</div>
-        <div style="font-size:.72rem;color:var(--muted);margin:-2px 0 11px">Quanto o trabalho realmente rende — descontando só as saídas profissionais, sem as pessoais.</div>
-        <div class="rrow"><span class="rlbl">Faturamento total</span><span class="rval">${brl(fatTotal)}</span></div>
-        <div class="rrow"><span class="rlbl">Saídas profissionais</span><span class="rval" style="color:var(--red)">- ${brl(despProf)}</span></div>
-        <div class="rrow total" style="margin-top:6px;padding-top:10px;border-top:2px solid #f0f0f0"><span class="rlbl">LUCRO DO NEGÓCIO</span><span class="rval" style="font-size:1.1rem;color:${lucroNegTotal>=0?'var(--ok)':'var(--red)'}">${brl(lucroNegTotal)}</span></div>
-        <div class="rrow" style="margin-top:2px"><span class="rlbl" style="font-size:.72rem;color:var(--muted)">Só o que já entrou/saiu (realizado)</span><span class="rval" style="font-size:.9rem;color:${lucroNegReal>=0?'var(--ok)':'var(--red)'}">${brl(lucroNegReal)}</span></div>
-        ${(despPess>0||despMista>0)?`<div style="margin-top:10px;padding:8px 11px;background:#faf6f2;border-radius:9px;font-size:.7rem;color:var(--muted);text-align:center">Fora desta conta: ${despPess>0?`pessoais ${brl(despPess)}`:''}${(despPess>0&&despMista>0)?' · ':''}${despMista>0?`mistas ${brl(despMista)}`:''}</div>`:''}
-        <div style="text-align:right;margin-top:8px;font-size:.78rem;color:var(--muted)">Margem do negócio: <strong style="color:${lucroNegTotal>=0?'var(--ok)':'var(--red)'}">${margemNeg}%</strong></div>
     </div>
     <div class="card">
         <div class="card-title">Visão Anual ${anoVisaoAnual}</div>
