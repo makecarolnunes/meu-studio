@@ -1,6 +1,6 @@
 # Backlog · Meu Studio
 
-> Última revisão: 2026-05-30 (Sistema de Alertas Fase 1+2; auditoria do código marcou +6 itens já prontos)
+> Última revisão: 2026-06-10 (Validador de Post: reavaliação iterativa + chat de aprofundamento)
 > Fonte da verdade do que está pendente, em ordem de prioridade.
 > Atualize ao concluir um item, mover prioridade ou adicionar novo escopo.
 
@@ -47,6 +47,11 @@
 
 ### Conteúdo
 - [x] Sincronização de categorias/plataformas personalizadas no Supabase (ideias já sincronizavam)
+
+### Instagram · Validador de Post (2026-06-10)
+- [x] **Reavaliar conteúdo** · reanálise iterativa mantendo o contexto da versão anterior · bloco `reavaliacao` (corrigidos / pendentes / novos problemas) + régua de progressão de score
+- [x] **Chat de aprofundamento** · conversa acoplada a cada análise (questionar feedback, aprofundar, testar abordagens) sem perder histórico · `callClaudeChat` (texto livre)
+- [x] Persistência: campos `revisions`/`chat` na validação · sync Supabase com upsert resiliente (`supabase-instagram-reavaliacao-chat.sql`) · refator `claudeRequest` (multi-turno + system)
 
 ---
 
@@ -247,6 +252,11 @@ Pool de melhorias pequenas (esforço ≤ 3h cada) baseadas em inspeção dos mó
 - [ ] **6.H.2** · **Histórico de versões da entrada** — vê quem mudou o quê e quando (audit log básico). Esforço: ~3h
 - [ ] **6.H.3** · **Indicador de sincronização visível** — "Sincronizado · 14:32" no header. Esforço: ~30min
 - [ ] **6.H.4** · **Backup manual** — botão "Baixar tudo (JSON)" no config (peace of mind). Esforço: ~30min
+
+### 6.I · Instagram / Validador
+
+- [ ] **6.I.1** · **Chat na aba Insights IA** — levar o mesmo chat de aprofundamento (já feito no Validador) para a Análise Estratégica, pra aprofundar/contestar insights sem refazer a análise. Reaproveita `callClaudeChat` + componente de thread. Esforço: ~1h30
+- [ ] **6.I.2** · **Guardar mídia das reavaliações no Storage** — hoje a mídia (carrossel/reel) precisa ser reanexada a cada reavaliação. Persistir no Supabase Storage pra comparar versões com imagem. Esforço: ~2h
 
 ---
 
