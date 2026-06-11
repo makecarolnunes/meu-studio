@@ -1,6 +1,26 @@
 # CLAUDE.md — Conteúdo
 
-Módulo de planejamento de posts e ideias para redes sociais. Duas views: lista e calendário mensal.
+Módulo de planejamento de posts e ideias para redes sociais, reorganizado como **Centro de Comando** (2026-06): a home é o painel **Hoje** (o que gravar/publicar/editar + stories do dia + próximos dias); o acervo (lista/board/calendário) virou seção secundária.
+
+## Views
+
+| View | O que é | Acesso |
+|---|---|---|
+| `hoje` | Painel do dia (default). Desktop: 3 zonas (Hoje 45% · Stories 26% · Próximos dias 29%) + gaveta do banco de ideias. Mobile: herói "próxima ação" + seções empilhadas | tab ☀️ Hoje / sidebar |
+| `stories` | Checklist de stories dos próximos 7 dias (mobile; no desktop a coluna da view Hoje cobre) | tab 📱 Stories |
+| `cal` | Calendário mensal (inalterado) | tab/nav 📅 Agenda |
+| `list` / `board` / `inbox` | Acervo de ideias + quick notes (os antigos) | tab/nav 💡 Ideias · 📥 Inbox |
+
+Navegação: **mobile** = tabs fixas inferiores (`.m-tabs`); **desktop** = nav na sidebar + pipeline com contadores (`buildSidebar`). O header mobile some no desktop (`.hdr{display:none}` ≥1024px).
+
+### Regras do painel Hoje (`hojeData()` — seções mutuamente exclusivas)
+1. 🔴 Atrasados: `scheduledDate < hoje` e não Publicado
+2. 📤 Publicar hoje: `scheduledDate === hoje`
+3. ✂️ Em edição: `status === 'Editando'`
+4. ✅ Prontos sem data → alerta "agendar agora" na zona Próximos dias
+5. 🎬 Gravar hoje: `gravarDate <= hoje`, OU Fila de Gravação sem gravarDate com publicação ≤ hoje+3d
+
+Ações de 1 toque nos cards: `advanceTo(id, status)` (✓ Gravei → Editando · ✓ Editado → Pronto · ✓ Publiquei → Publicado), `openRoteiro` (modo gravação direto), `copyLegenda` (clipboard), `reagendarIdea`. Promover ideia: menu ⤴ (`openPromo`) em qualquer card do acervo/banco, ou drag-and-drop da gaveta (desktop) para Gravar hoje / Stories / um dia.
 
 ---
 
@@ -42,23 +62,36 @@ var editId     = null;     // idea em edição no modal
   status:        string,      // ver STATUS_KEYS abaixo
   notes:         string,
   platforms:     string[],    // ex: ['Instagram', 'TikTok']
-  scheduledDate: string,      // YYYY-MM-DD ou ''
+  scheduledDate: string,      // data de PUBLICAÇÃO — YYYY-MM-DD ou ''
+  gravarDate:    string,      // data de GRAVAÇÃO — YYYY-MM-DD ou ''
   createdAt:     string,
 }
 ```
 
-### Status válidos
+### Status válidos (funil `ST_ORDER`)
 
 ```js
 var ST = {
-  'Nao Iniciado':     { bg, color, dot, cls: 's-nao'  },
-  'Fila de Gravacao': { bg, color, dot, cls: 's-fila' },
-  'Editando':         { bg, color, dot, cls: 's-edit' },
-  'Publicado':        { bg, color, dot, cls: 's-pub'  },
+  'Nao Iniciado':     { bg, color, dot, cls: 's-nao'    },  // 💡 Ideia
+  'Fila de Gravacao': { bg, color, dot, cls: 's-fila'   },  // 🎬 Gravar
+  'Editando':         { bg, color, dot, cls: 's-edit'   },  // ✂️ Editando
+  'Pronto':           { bg, color, dot, cls: 's-pronto' },  // ✅ Pronto p/ publicar
+  'Publicado':        { bg, color, dot, cls: 's-pub'    },  // 📤 Publicado
 }
 ```
 
 `'Nao Iniciado'` é o default. Atenção: sem acento em `'Nao'` (legado).
+
+---
+
+## Estrutura de um Story (checklist diário)
+
+```js
+{ id, date: 'YYYY-MM-DD', texto, ideaId: '' /* opcional, vínculo c/ idea */, done: bool, ordem: int, createdAt }
+```
+
+- localStorage `mk_content_stories` + Supabase `conteudo_stories` (`DB.stories.list/upsert/delete`)
+- ⚠ Requer a migration manual **`sql/conteudo-centro-comando.sql`** (cria a tabela + coluna `gravar_date` em `conteudo_ideas`). Sem ela, stories ficam só locais e salvar ideia com data de gravação falha silencioso (PGRST204).
 
 ---
 
@@ -67,22 +100,17 @@ var ST = {
 ### localStorage (cache local)
 ```
 mk_content_ideas         → JSON das ideas
+mk_content_stories       → JSON dos stories (checklist diário)
 mk_content_cats          → categorias personalizadas
 mk_content_platforms     → plataformas personalizadas
 mk_content_cur_platform  → plataforma ativa no filtro
 ```
 
 ### Supabase (fonte de verdade)
-`DB.conteudo.list()` / `DB.conteudo.upsert()` / `DB.conteudo.delete()` — definidos em `shared/js/db.js`, tabela `conteudo_ideas`.
+- `DB.conteudo.list()` / `.upsert()` / `.delete()` — tabela `conteudo_ideas` (com `gravar_date`)
+- `DB.stories.list()` / `.upsert()` / `.delete()` — tabela `conteudo_stories`
 
-**Status atual:** `conteudo.js` usa `readLS()` / `writeLS()` para localStorage. A integração com Supabase via `DB.conteudo` está definida no `db.js` mas **ainda não chamada** em `conteudo.js`. A migração está pendente.
-
-### Para migrar conteudo.js → Supabase
-
-1. Substituir `readLS()` por `await DB.conteudo.list()` no boot
-2. Substituir `saveIdeas()` por `await DB.conteudo.upsert(idea)` em saves
-3. Substituir delete local por `await DB.conteudo.delete(id)`
-4. Adicionar `checkAuth()` (atualmente sem auth guard)
+**Status atual:** integrado. `loadData()` renderiza do cache local primeiro e depois mescla do Supabase (servidor vence; itens só-locais sobem). Todo write é local imediato + `persistIdea()` / `persistStory()` async com catch silencioso.
 
 ### GAS (legado, desativado)
 

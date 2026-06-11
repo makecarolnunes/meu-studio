@@ -1057,3 +1057,375 @@
 @media (min-width: 1024px) {
   .d-filter-dds { display: flex; gap: 8px; align-items: center; margin-left: 4px; }
 }
+
+/* ============================================================
+   CENTRO DE COMANDO — view "Hoje" + Stories + Banco de ideias
+   ============================================================ */
+
+/* Status Pronto */
+.idea-card.s-pronto { border-left-color: #00897b; }
+.gbtn.st-pronto.on  { border-color: #00897b; background: #00897b; }
+
+/* ⤴ promover no card do acervo */
+.idea-promote {
+  margin-left: auto; background: none; border: 1px solid var(--border);
+  border-radius: 7px; font-size: .78rem; line-height: 1; color: var(--muted);
+  padding: 3px 8px; cursor: pointer; flex-shrink: 0;
+}
+.idea-promote:hover { border-color: var(--brand); color: var(--brand); }
+
+/* ── HOJE VIEW ── */
+.hoje-view { padding: 14px 14px 130px; }
+
+.hj-hdr { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+.hj-kicker { display: none; }
+.hj-date   { display: none; }
+.hj-resume { font-size: .82rem; color: var(--muted); line-height: 1.5; }
+.hj-resume b { color: var(--brand); font-weight: 700; }
+.hj-resume .hj-late-txt { color: var(--danger); }
+.hj-nova { display: none; }
+
+/* Herói (mobile): a próxima ação */
+.hero {
+  background: linear-gradient(135deg, var(--brand-dark) 0%, #5a2f17 100%);
+  color: #fff; border-radius: 20px; padding: 17px 17px 15px; margin-bottom: 20px;
+  box-shadow: 0 4px 16px rgba(56,25,11,.22); cursor: pointer;
+}
+.hero-lbl { font-size: .6rem; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; opacity: .72; margin-bottom: 7px; }
+.hero-title { font-size: 1.06rem; font-weight: 700; line-height: 1.3; }
+.hero-title .verb { color: #f0c9a8; }
+.hero-meta { font-size: .72rem; opacity: .8; margin-top: 5px; }
+.hero-actions { display: flex; gap: 8px; margin-top: 13px; }
+.h-btn { flex: 1; border: none; border-radius: 10px; padding: 11px 0; font-size: .8rem; font-weight: 700; cursor: pointer; font-family: inherit; }
+.h-btn-ghost { background: rgba(255,255,255,.15); color: #fff; }
+.h-btn-go    { background: #fff; color: var(--brand-dark); }
+.h-btn:active { opacity: .85; }
+
+/* Zonas */
+.hj-zones { display: block; }
+.hj-zone { margin-bottom: 24px; }
+.hj-zone-title {
+  font-size: .68rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--text-subtle); margin-bottom: 12px; padding-bottom: 7px;
+  border-bottom: 1px solid var(--border);
+}
+.hj-zone-hoje .hj-zone-title { color: var(--brand-dark); border-color: var(--brand); }
+
+/* Seções (verbo + contador) */
+.sec { margin-bottom: 20px; }
+.sec-hdr { display: flex; align-items: baseline; gap: 7px; margin-bottom: 9px; }
+.sec-hdr .ico { font-size: .82rem; }
+.sec-hdr h2 { font-size: .7rem; font-weight: 800; letter-spacing: .13em; text-transform: uppercase; color: var(--brand-dark); }
+.sec-hdr .cnt { font-size: 1rem; font-weight: 800; color: var(--brand); margin-left: 2px; }
+.sec-empty {
+  border: 1px dashed var(--border-strong); border-radius: 12px; padding: 12px;
+  font-size: .74rem; color: var(--text-subtle); text-align: center; line-height: 1.5;
+}
+
+/* Card de ação */
+.acard {
+  background: var(--card); border: .5px solid var(--border); border-left: 3px solid var(--brand);
+  border-radius: 14px; padding: 12px 13px 11px; margin-bottom: 9px;
+  box-shadow: 0 1px 3px rgba(56,25,11,.06); cursor: pointer;
+}
+.acard:active { opacity: .9; }
+.acard-title { font-size: .9rem; font-weight: 600; color: var(--text); line-height: 1.35; }
+.acard-meta { font-size: .69rem; color: var(--muted); margin-top: 4px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.pilar { background: var(--surface-2); color: var(--brand-dark); font-size: .62rem; font-weight: 700; padding: 1px 8px; border-radius: 99px; white-space: nowrap; }
+.acard-actions { display: flex; gap: 8px; margin-top: 10px; }
+.a-btn { border: none; border-radius: 9px; padding: 8px 12px; font-size: .73rem; font-weight: 700; cursor: pointer; font-family: inherit; }
+.a-btn-sec { background: var(--surface-2); color: var(--brand-dark); }
+.a-btn-sec:hover { background: var(--border); }
+.a-btn-go  { background: var(--brand); color: #fff; margin-left: auto; }
+.a-btn-go:hover { background: var(--brand-dark); }
+
+/* Atrasado */
+.acard-late { border-left-color: var(--danger); background: #fffafa; }
+.late-flag { color: var(--danger); font-size: .64rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; margin-bottom: 5px; }
+.acard-late .a-btn-go { background: var(--danger); }
+
+/* Badges no título */
+.badge-pronto { background: var(--success-soft); color: var(--success); font-size: .6rem; font-weight: 800; padding: 2px 8px; border-radius: 99px; white-space: nowrap; vertical-align: middle; }
+.badge-alerta { background: var(--warning-soft); color: var(--warning); font-size: .6rem; font-weight: 800; padding: 2px 8px; border-radius: 99px; white-space: nowrap; vertical-align: middle; }
+
+/* Em edição — linhas compactas */
+.erow {
+  display: flex; align-items: center; gap: 9px; background: var(--card);
+  border: .5px solid var(--border); border-radius: 11px; padding: 10px 11px;
+  margin-bottom: 7px; cursor: pointer;
+}
+.erow-dot { width: 8px; height: 8px; border-radius: 50%; background: #7d3c6e; flex-shrink: 0; }
+.erow-title { font-size: .8rem; font-weight: 500; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.erow-date { font-size: .64rem; color: var(--text-subtle); white-space: nowrap; }
+.erow-done {
+  background: none; border: 1px solid var(--border-strong); border-radius: 8px;
+  font-size: .66rem; font-weight: 700; color: var(--muted); padding: 5px 8px;
+  white-space: nowrap; cursor: pointer; font-family: inherit; flex-shrink: 0;
+}
+.erow-done:hover { border-color: #00897b; color: #00897b; }
+
+/* ── STORIES ── */
+.stories-box {
+  background: var(--card); border: .5px solid var(--border); border-radius: 14px;
+  padding: 13px 13px 12px; box-shadow: 0 1px 3px rgba(56,25,11,.06);
+}
+.stories-day {
+  font-size: .62rem; font-weight: 800; letter-spacing: .13em; text-transform: uppercase;
+  color: var(--text-subtle); margin: 2px 0 8px;
+}
+.stories-day .prog { float: right; color: var(--brand); letter-spacing: 0; }
+.stories-empty { font-size: .72rem; color: var(--text-subtle); padding: 4px 2px 8px; }
+.story {
+  display: flex; align-items: center; gap: 10px; padding: 8px 2px;
+  border-bottom: 1px dashed var(--border); cursor: pointer; user-select: none;
+}
+.story:last-of-type { border-bottom: none; }
+.story-chk {
+  width: 20px; height: 20px; border-radius: 6px; border: 1.5px solid var(--border-strong);
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  font-size: .7rem; color: transparent; transition: all .15s ease;
+}
+.story.done .story-chk { background: var(--success); border-color: var(--success); color: #fff; }
+.story-txt { font-size: .82rem; flex: 1; min-width: 0; line-height: 1.35; }
+.story.done .story-txt { color: var(--text-subtle); text-decoration: line-through; }
+.story-link { font-size: .62rem; color: var(--text-subtle); flex-shrink: 0; }
+.story-del {
+  background: none; border: none; color: var(--text-subtle); font-size: .95rem;
+  line-height: 1; padding: 2px 5px; cursor: pointer; flex-shrink: 0;
+}
+.story-del:hover { color: var(--danger); }
+.story-add-inp {
+  width: 100%; margin-top: 9px; padding: 9px 11px;
+  border: 1px dashed var(--border-strong); border-radius: 9px;
+  font-size: .78rem; font-family: inherit; background: none; color: var(--text);
+}
+.story-add-inp::placeholder { color: var(--text-subtle); }
+.story-add-inp:focus { outline: none; border-color: var(--brand); border-style: solid; }
+.stories-bank-btn {
+  width: 100%; margin-top: 8px; padding: 8px 0;
+  border: 1px dashed var(--border-strong); background: none; border-radius: 9px;
+  font-size: .7rem; font-weight: 700; color: var(--muted); cursor: pointer; font-family: inherit;
+}
+.stories-bank-btn:hover { border-color: var(--brand); color: var(--brand); }
+.stories-tmr { border-top: 1px solid var(--border); margin-top: 13px; padding-top: 11px; }
+.stories-tmr .story { opacity: .7; }
+
+/* Stories view (tab mobile) */
+.stories-view { padding: 14px 14px 130px; }
+.stories-box-page { margin-bottom: 12px; }
+
+/* ── PRÓXIMOS DIAS ── */
+.nd-mobile-line {
+  background: var(--card); border: .5px solid var(--border); border-radius: 14px;
+  padding: 13px 14px; font-size: .8rem; color: var(--muted);
+  display: flex; align-items: center; gap: 7px; cursor: pointer;
+}
+.nd-mobile-line b { color: var(--brand-dark); white-space: nowrap; }
+.nd-ml-txt { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nd-mobile-line .arrow { color: var(--text-subtle); font-size: 1rem; }
+.nd-full { display: none; }
+
+.nd-day { margin-bottom: 13px; border-radius: 10px; }
+.nd-lbl { font-size: .62rem; font-weight: 800; letter-spacing: .13em; text-transform: uppercase; color: var(--text-subtle); margin-bottom: 6px; cursor: pointer; }
+.nd-lbl b { color: var(--brand-dark); }
+.nd-card {
+  background: var(--card); border: .5px solid var(--border); border-radius: 10px;
+  padding: 8px 11px; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; cursor: pointer;
+}
+.nd-card:hover { border-color: var(--brand); }
+.nd-ico { font-size: .76rem; flex-shrink: 0; }
+.nd-title { font-size: .74rem; font-weight: 500; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nd-card-st .nd-title { color: var(--muted); }
+.nd-empty {
+  border: 1px dashed var(--border-strong); border-radius: 10px; padding: 9px 11px;
+  font-size: .72rem; color: var(--text-subtle); text-align: center;
+}
+.nd-empty button { background: none; border: none; color: var(--brand); font-weight: 700; font-size: .72rem; cursor: pointer; font-family: inherit; }
+.nd-alert {
+  background: var(--warning-soft); border-radius: 11px; padding: 10px 12px; margin-top: 14px;
+  font-size: .73rem; color: var(--amber-dark); line-height: 1.5;
+}
+.nd-alert button { background: none; border: none; color: var(--warning); font-weight: 800; font-size: .73rem; text-decoration: underline; cursor: pointer; font-family: inherit; }
+
+/* Alvo de drop ativo */
+.sec-drop.drop-on { outline: 2px dashed var(--brand); outline-offset: 3px; border-radius: 12px; }
+
+/* ── TABS INFERIORES (mobile) ── */
+.m-tabs {
+  position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+  width: 100%; max-width: 480px; background: var(--card);
+  border-top: .5px solid var(--border); display: flex; z-index: 300;
+  padding-bottom: env(safe-area-inset-bottom);
+  box-shadow: 0 -4px 16px rgba(56,25,11,.07);
+}
+.m-tab { flex: 1; background: none; border: none; border-top: 2px solid transparent; padding: 8px 0 7px; display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer; font-family: inherit; }
+.m-tab-ico { font-size: 1.05rem; opacity: .5; }
+.m-tab-lbl { font-size: .58rem; font-weight: 700; color: var(--text-subtle); }
+.m-tab.on { border-top-color: var(--brand); }
+.m-tab.on .m-tab-ico { opacity: 1; }
+.m-tab.on .m-tab-lbl { color: var(--brand); }
+
+/* FAB acima das tabs */
+.fab { bottom: 118px; }
+
+/* Widgets de notas (shared) também sobem acima das tabs no mobile */
+@media (max-width: 1023px) {
+  #qn-fab  { bottom: 60px !important; }
+  #lqn-fab { bottom: 60px !important; }
+  #qn-panel  { bottom: 114px !important; }
+  #lqn-panel { bottom: 114px !important; }
+}
+
+/* Conteúdo das views existentes não fica atrás das tabs */
+.list-view, .board-wrap, .cal-wrap, .inbox-view { padding-bottom: 140px; }
+
+/* ── MENU PROMOVER (⤴) — bottom sheet ── */
+.promo-bg {
+  position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 1200;
+  display: flex; align-items: flex-end; justify-content: center;
+  visibility: hidden; opacity: 0; transition: opacity .18s; pointer-events: none;
+}
+.promo-bg.open { visibility: visible; opacity: 1; pointer-events: auto; }
+.promo-menu {
+  background: var(--card); border-radius: 20px 20px 0 0; padding: 16px 16px 30px;
+  width: 100%; max-width: 480px;
+  transform: translateY(100%); transition: transform .22s cubic-bezier(.32,.72,0,1);
+}
+.promo-bg.open .promo-menu { transform: translateY(0); }
+.promo-title {
+  font-size: .78rem; font-weight: 700; color: var(--muted);
+  margin-bottom: 12px; padding: 0 4px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.promo-opt {
+  display: block; width: 100%; text-align: left;
+  background: var(--surface-2); border: none; border-radius: 11px;
+  padding: 13px 14px; margin-bottom: 7px;
+  font-size: .88rem; font-weight: 600; color: var(--text); cursor: pointer; font-family: inherit;
+}
+.promo-opt:hover { background: var(--brand-soft); }
+.promo-cancel {
+  display: block; width: 100%; background: none; border: none;
+  padding: 11px 0 0; font-size: .8rem; font-weight: 600; color: var(--text-subtle);
+  cursor: pointer; font-family: inherit; text-align: center;
+}
+
+/* ── GAVETA — BANCO DE IDEIAS (desktop) ── */
+.bank-drawer { display: none; }
+
+/* ════════ DESKTOP ≥1024px — Centro de Comando ════════ */
+@media (min-width: 1024px) {
+  /* header mobile some; sidebar + headers das views assumem */
+  .hdr { display: none; }
+  .m-tabs { display: none; }
+  .fab { display: none; }
+
+  /* Navegação da sidebar */
+  .d-sb-nav { display: flex; flex-direction: column; gap: 2px; margin-bottom: 6px; }
+  .d-sb-nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 10px; border-radius: 10px;
+    background: transparent; border: none; width: 100%; text-align: left;
+    font-size: .86rem; font-weight: 600; color: rgba(255,255,255,.82);
+    cursor: pointer; font-family: inherit;
+  }
+  .d-sb-nav-item:hover { background: rgba(255,255,255,.1); }
+  .d-sb-nav-item.on { background: rgba(255,255,255,.2); color: #fff; font-weight: 800; }
+  .d-sb-nav-ico { font-size: .9rem; width: 20px; text-align: center; }
+  .d-sb-nav-item .inbox-badge-sb { margin-left: auto; }
+
+  /* Pipeline */
+  .d-sb-st-ico { font-size: .8rem; width: 18px; text-align: center; flex-shrink: 0; }
+  .d-sb-st-dim .d-sb-st-name, .d-sb-st-dim .d-sb-st-cnt { opacity: .55; }
+
+  /* HOJE: header do dia */
+  .hoje-view { padding: 24px 28px 56px; }
+  .hj-hdr { margin-bottom: 20px; }
+  .hj-kicker { display: block; font-size: .6rem; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; color: var(--text-subtle); margin-bottom: 3px; }
+  .hj-date { display: block; font-size: 1.45rem; font-weight: 800; color: var(--brand-dark); line-height: 1.15; }
+  .hj-resume { margin-top: 6px; font-size: .8rem; }
+  .hj-nova {
+    display: inline-flex; align-items: center; gap: 7px;
+    background: linear-gradient(135deg, var(--purple-d), var(--purple));
+    color: #fff; border: none; padding: 11px 18px; border-radius: 11px;
+    font-size: .82rem; font-weight: 700; cursor: pointer; font-family: inherit;
+    box-shadow: 0 3px 10px rgba(125,60,110,.3); white-space: nowrap;
+  }
+  .hj-nova:hover { opacity: .9; }
+
+  /* herói é conceito mobile */
+  .hero { display: none; }
+
+  /* 3 zonas lado a lado */
+  .hj-zones { display: grid; grid-template-columns: 45fr 26fr 29fr; gap: 24px; align-items: start; }
+  .hj-zone { margin-bottom: 0; }
+
+  /* Próximos dias completos */
+  .nd-mobile-line { display: none; }
+  .nd-full { display: block; }
+
+  /* Stories view nunca aparece no desktop (coluna da view Hoje cobre) */
+  .stories-view { padding: 24px 28px 56px; max-width: 560px; }
+
+  /* ── Gaveta do banco ── */
+  .bank-drawer.show {
+    display: block;
+    position: sticky; bottom: 0; margin-top: auto; z-index: 80;
+    background: var(--card); border-top: .5px solid var(--border-strong);
+    box-shadow: 0 -8px 28px rgba(56,25,11,.1);
+  }
+  .bank-hdr {
+    display: flex; align-items: center; gap: 12px;
+    padding: 11px 24px; cursor: pointer; user-select: none;
+  }
+  .bank-title { font-size: .72rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--brand-dark); }
+  .bank-cnt { font-size: .72rem; color: var(--text-subtle); }
+  .bank-hint { margin-left: auto; font-size: .7rem; color: var(--text-subtle); }
+  .bank-caret { font-size: .8rem; color: var(--brand); transition: transform .25s ease; }
+  .bank-drawer.open .bank-caret { transform: rotate(180deg); }
+  .bank-body { display: none; padding: 2px 24px 18px; }
+  .bank-drawer.open .bank-body { display: block; }
+  .bank-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+  .bank-chip {
+    border: 1px solid var(--border); background: var(--card); border-radius: 99px;
+    padding: 5px 12px; font-size: .68rem; font-weight: 700; color: var(--muted);
+    cursor: pointer; font-family: inherit;
+  }
+  .bank-chip.on { background: var(--brand-dark); border-color: var(--brand-dark); color: #fff; }
+  .bank-chip:hover:not(.on) { border-color: var(--brand); color: var(--brand); }
+  .bank-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(195px, 1fr));
+    gap: 9px; max-height: 200px; overflow-y: auto;
+  }
+  .bank-empty { font-size: .76rem; color: var(--text-subtle); padding: 8px 2px; }
+  .bcard {
+    background: var(--bg); border: .5px solid var(--border); border-radius: 11px;
+    padding: 10px 11px; cursor: grab;
+  }
+  .bcard:hover { border-color: var(--brand); box-shadow: 0 1px 4px rgba(56,25,11,.08); }
+  .bcard:active { cursor: grabbing; }
+  .bcard-title { font-size: .76rem; font-weight: 600; line-height: 1.3; margin-bottom: 7px; }
+  .bcard-foot { display: flex; align-items: center; gap: 6px; }
+  .bcard-promote {
+    margin-left: auto; background: none; border: none; font-size: .82rem;
+    color: var(--text-subtle); cursor: pointer; padding: 1px 4px; font-family: inherit;
+  }
+  .bcard-promote:hover { color: var(--brand); }
+
+  /* Promo menu vira popup central no desktop */
+  .promo-bg { align-items: center; }
+  .promo-menu { border-radius: 18px; max-width: 360px; padding: 16px 16px 18px; transform: translateY(8px); }
+  .promo-bg.open .promo-menu { transform: translateY(0); }
+
+  /* paddings das views (tabs mobile não existem) */
+  .list-view { padding-bottom: 48px; }
+  .cal-wrap, .inbox-view { padding-bottom: 48px; }
+}
+
+/* Tablet (700–1023px): zonas em 2 colunas, Hoje em cima */
+@media (min-width: 700px) and (max-width: 1023px) {
+  .hj-zones { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .hj-zone-hoje { grid-column: 1 / -1; }
+  .nd-mobile-line { display: none; }
+  .nd-full { display: block; }
+}

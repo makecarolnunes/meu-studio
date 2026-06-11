@@ -18,7 +18,7 @@
   <title>Lista de Conteúdos · Meu Studio</title>
   <link rel="stylesheet" href="../shared/css/tokens.css">
   <link rel="stylesheet" href="../shared/css/base.css">
-  <link rel="stylesheet" href="./styles/conteudo.css?v=ux2">
+  <link rel="stylesheet" href="./styles/conteudo.css?v=cmd1">
 </head>
 <body>
 
@@ -61,22 +61,16 @@
     Nova Ideia
   </button>
 
-  <button class="d-sb-inbox-btn" id="d-sb-inbox-btn" onclick="setView('inbox')">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
-    Inbox<span class="inbox-badge inbox-badge-sb" id="inbox-badge-sb"></span>
-  </button>
+  <!-- Navegação principal (desktop) -->
+  <nav class="d-sb-nav">
+    <button class="d-sb-nav-item" data-nav="hoje"  onclick="setView('hoje')"><span class="d-sb-nav-ico">☀️</span>Hoje</button>
+    <button class="d-sb-nav-item" data-nav="cal"   onclick="setView('cal')"><span class="d-sb-nav-ico">📅</span>Agenda</button>
+    <button class="d-sb-nav-item" data-nav="list"  onclick="setView('list')"><span class="d-sb-nav-ico">💡</span>Ideias</button>
+    <button class="d-sb-nav-item" data-nav="inbox" onclick="setView('inbox')"><span class="d-sb-nav-ico">📥</span>Inbox<span class="inbox-badge inbox-badge-sb" id="inbox-badge-sb"></span></button>
+  </nav>
 
-  <!-- Stats (preenchido por buildSidebar) -->
-  <div id="d-sb-stats"></div>
-
-  <!-- Plataforma (preenchido por buildSidebar) -->
-  <div id="d-sb-plats"></div>
-
-  <!-- Status (preenchido por buildSidebar) -->
-  <div id="d-sb-status"></div>
-
-  <!-- Temas (preenchido por buildSidebar) -->
-  <div id="d-sb-cats"></div>
+  <!-- Pipeline de produção (preenchido por buildSidebar) -->
+  <div id="d-sb-pipe"></div>
 </aside>
 
 <div class="cont-main-wrap">
@@ -91,10 +85,9 @@
     <div class="hdr-sub" id="hdr-count"></div>
   </div>
   <div class="hdr-right">
-    <div class="view-toggle">
+    <div class="view-toggle" id="view-toggle">
       <button class="vbtn on" id="btn-list"  onclick="setView('list')">Lista</button>
       <button class="vbtn"    id="btn-board" onclick="setView('board')">Board</button>
-      <button class="vbtn"    id="btn-cal"   onclick="setView('cal')">Cal.</button>
       <button class="vbtn"    id="btn-inbox" onclick="setView('inbox')">Inbox<span class="inbox-badge" id="inbox-badge-mob"></span></button>
     </div>
   </div>
@@ -106,9 +99,10 @@
 <!-- STATUS TABS (mobile) -->
 <div class="stabs" id="stabs">
   <button class="stab on" data-s="todos"            onclick="setSF(this)">Todos</button>
-  <button class="stab"    data-s="Nao Iniciado"     onclick="setSF(this)">Nao Iniciado</button>
-  <button class="stab"    data-s="Fila de Gravacao" onclick="setSF(this)">Fila de Grav.</button>
+  <button class="stab"    data-s="Nao Iniciado"     onclick="setSF(this)">Ideias</button>
+  <button class="stab"    data-s="Fila de Gravacao" onclick="setSF(this)">Gravar</button>
   <button class="stab"    data-s="Editando"         onclick="setSF(this)">Editando</button>
+  <button class="stab"    data-s="Pronto"           onclick="setSF(this)">Pronto</button>
   <button class="stab"    data-s="Publicado"        onclick="setSF(this)">Publicado</button>
 </div>
 
@@ -135,11 +129,16 @@
     <div class="d-view-toggle">
       <button class="d-vbtn on" data-v="list"  onclick="setView('list')">Lista</button>
       <button class="d-vbtn"    data-v="board" onclick="setView('board')">Board</button>
-      <button class="d-vbtn"    data-v="cal"   onclick="setView('cal')">Calendário</button>
       <button class="d-vbtn"    data-v="inbox" onclick="setView('inbox')">Inbox<span class="inbox-badge" id="inbox-badge-desk"></span></button>
     </div>
   </div>
 </div>
+
+<!-- HOJE VIEW — painel do dia / centro de comando -->
+<div class="hoje-view" id="hoje-view" style="display:none"></div>
+
+<!-- STORIES VIEW (mobile: checklist em tela cheia) -->
+<div class="stories-view" id="stories-view" style="display:none"></div>
 
 <!-- LIST VIEW -->
 <div class="list-view" id="list-view"></div>
@@ -212,8 +211,12 @@
         <div id="fmt-dd"></div>
       </div>
       <div class="ed-meta-field">
-        <label class="fl">Data programada</label>
+        <label class="fl">Publicação</label>
         <input type="date" class="fi" id="f-date">
+      </div>
+      <div class="ed-meta-field">
+        <label class="fl">Gravação</label>
+        <input type="date" class="fi" id="f-gravar">
       </div>
     </div>
     <div class="new-cat-row">
@@ -223,10 +226,11 @@
     <div class="fg">
       <label class="fl">Status</label>
       <div class="btn-group" id="st-btns">
-        <button class="gbtn on st-nao"  data-v="Nao Iniciado">Nao Iniciado</button>
-        <button class="gbtn st-fila"    data-v="Fila de Gravacao">Fila de Grav.</button>
-        <button class="gbtn st-edit"    data-v="Editando">Editando</button>
-        <button class="gbtn st-pub"     data-v="Publicado">Publicado</button>
+        <button class="gbtn on st-nao"  data-v="Nao Iniciado">💡 Ideia</button>
+        <button class="gbtn st-fila"    data-v="Fila de Gravacao">🎬 Gravar</button>
+        <button class="gbtn st-edit"    data-v="Editando">✂️ Editando</button>
+        <button class="gbtn st-pronto"  data-v="Pronto">✅ Pronto</button>
+        <button class="gbtn st-pub"     data-v="Publicado">📤 Publicado</button>
       </div>
     </div>
     <!-- EDITOR RICO — Roteiro / Legenda / Notas -->
@@ -280,7 +284,34 @@
 
 <div class="toast" id="toast"></div>
 
+<!-- GAVETA — BANCO DE IDEIAS (desktop, só na view Hoje) -->
+<div class="bank-drawer" id="bank-drawer">
+  <div class="bank-hdr" onclick="toggleBank()">
+    <span class="bank-title">💡 Banco de ideias</span>
+    <span class="bank-cnt" id="bank-cnt"></span>
+    <span class="bank-hint">arraste para o painel ou use ⤴ para promover</span>
+    <span class="bank-caret">▲</span>
+  </div>
+  <div class="bank-body">
+    <div class="bank-chips" id="bank-chips"></div>
+    <div class="bank-grid" id="bank-grid"></div>
+  </div>
+</div>
+
 </div><!-- /cont-main-wrap -->
+
+<!-- TABS INFERIORES (mobile) -->
+<nav class="m-tabs" id="m-tabs">
+  <button class="m-tab on" data-nav="hoje"    onclick="setView('hoje')"><span class="m-tab-ico">☀️</span><span class="m-tab-lbl">Hoje</span></button>
+  <button class="m-tab"    data-nav="stories" onclick="setView('stories')"><span class="m-tab-ico">📱</span><span class="m-tab-lbl">Stories</span></button>
+  <button class="m-tab"    data-nav="cal"     onclick="setView('cal')"><span class="m-tab-ico">📅</span><span class="m-tab-lbl">Agenda</span></button>
+  <button class="m-tab"    data-nav="list"    onclick="setView('list')"><span class="m-tab-ico">💡</span><span class="m-tab-lbl">Ideias</span></button>
+</nav>
+
+<!-- MENU PROMOVER IDEIA (⤴) -->
+<div class="promo-bg" id="promo-bg">
+  <div class="promo-menu" id="promo-menu"></div>
+</div>
 
 <!-- ── MODO GRAVAÇÃO ── -->
 <div class="gravacao-bg" id="gravacao-bg">
@@ -323,8 +354,8 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="../config.js"></script>
-<script src="../shared/js/db.js"></script>
-<script src="./scripts/conteudo.js?v=ux2"></script>
+<script src="../shared/js/db.js?v=cmd1"></script>
+<script src="./scripts/conteudo.js?v=cmd1"></script>
 <script src="../shared/js/quick-notes.js"></script>
 <script>QuickNotes.init('conteudo');</script>
 <script src="../shared/js/global-search.js"></script>

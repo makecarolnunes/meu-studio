@@ -485,6 +485,7 @@ window.DB = {
         legenda:       r.legenda       || '',
         platforms:     r.platforms     || [],
         scheduledDate: r.scheduled_date || '',
+        gravarDate:    r.gravar_date   || '',
         createdAt:     r.created_at    || '',
       }));
     },
@@ -501,6 +502,7 @@ window.DB = {
         legenda:        idea.legenda       || '',
         platforms:      Array.isArray(idea.platforms)  ? idea.platforms  : [],
         scheduled_date: idea.scheduledDate || null,
+        gravar_date:    idea.gravarDate    || null,
         created_at:     idea.createdAt     || new Date().toISOString(),
       };
       const { error } = await _sb.from('conteudo_ideas').upsert(row, { onConflict: 'id' });
@@ -509,6 +511,48 @@ window.DB = {
     async delete(id) {
       _guard();
       const { error } = await _sb.from('conteudo_ideas').delete().eq('id', String(id));
+      if (error) throw error;
+    },
+  },
+
+  // ──────────────────────────────────────────────────────────────
+  //  Stories — checklist diário (tabela conteudo_stories)
+  //  Requer migration sql/conteudo-centro-comando.sql
+  stories: {
+    async list() {
+      _guard();
+      const { data, error } = await _sb
+        .from('conteudo_stories').select('*')
+        .order('date', { ascending: true })
+        .order('ordem', { ascending: true });
+      if (error) throw error;
+      return data.map(r => ({
+        id:        r.id,
+        date:      r.date       || '',
+        texto:     r.texto      || '',
+        ideaId:    r.idea_id    || '',
+        done:      !!r.done,
+        ordem:     r.ordem      || 0,
+        createdAt: r.created_at || '',
+      }));
+    },
+    async upsert(story) {
+      _guard();
+      const row = {
+        id:         String(story.id),
+        date:       story.date || null,
+        texto:      story.texto || '',
+        idea_id:    story.ideaId || null,
+        done:       !!story.done,
+        ordem:      story.ordem || 0,
+        created_at: story.createdAt || new Date().toISOString(),
+      };
+      const { error } = await _sb.from('conteudo_stories').upsert(row, { onConflict: 'id' });
+      if (error) throw error;
+    },
+    async delete(id) {
+      _guard();
+      const { error } = await _sb.from('conteudo_stories').delete().eq('id', String(id));
       if (error) throw error;
     },
   },

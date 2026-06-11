@@ -11,8 +11,11 @@ var ST = {
   'Nao Iniciado':    {bg:'#f3f4f6',color:'#6b7280',dot:'#9e9e9e',cls:'s-nao'},
   'Fila de Gravacao':{bg:'#ffebee',color:'#c62828',dot:'#e53935',cls:'s-fila'},
   'Editando':        {bg:'#f5edf3',color:'#7d3c6e',dot:'#7d3c6e',cls:'s-edit'},
+  'Pronto':          {bg:'#e0f2f1',color:'#00695c',dot:'#00897b',cls:'s-pronto'},
   'Publicado':       {bg:'#e8f5e9',color:'#2d7d3a',dot:'#2d7d3a',cls:'s-pub'}
 };
+/* Ordem do funil de produção (avanço com 1 toque) */
+var ST_ORDER = ['Nao Iniciado','Fila de Gravacao','Editando','Pronto','Publicado'];
 var DEFAULT_PLATFORMS = ['Instagram','TikTok'];
 var MONTHS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 var DAYS_PT = ['domingo','segunda','terça','quarta','quinta','sexta','sábado'];
@@ -22,8 +25,12 @@ var DOW = ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
    STATE
    ============================================================ */
 var QN_KEY='mk_quick_notes';
+var STORIES_KEY='mk_content_stories';
 var ideas=[], customCats=[], customPlats=[];
-var curView='list', curSF='todos', curCF=[], curPlats=[];
+var stories=[];               // checklist diário de stories
+var bankCat='todos';          // filtro de tema da gaveta do banco
+var promoIdeaId=null;         // ideia alvo do menu "promover" (⤴)
+var curView='hoje', curSF='todos', curCF=[], curPlats=[];
 var curSort='status'; // 'date' | 'category' | 'status' | 'scheduled' — padrão: por etapa de produção
 var colIdx=0, editId=null;
 var fCats=[CATS[0]], fFmts=['Reels'], fSt='Nao Iniciado', fPlats=['Instagram'];
@@ -183,6 +190,7 @@ function pushToSheets(){
    ============================================================ */
 function readLS(){
   try{ideas      =JSON.parse(localStorage.getItem('mk_content_ideas')||'[]');}catch(e){ideas=[];}
+  try{stories    =JSON.parse(localStorage.getItem(STORIES_KEY)||'[]');}catch(e){stories=[];}
   try{customCats =JSON.parse(localStorage.getItem('mk_content_cats') ||'[]');}catch(e){customCats=[];}
   try{customPlats=JSON.parse(localStorage.getItem('mk_content_platforms')||'[]');}catch(e){customPlats=[];}
   // Filtro de plataforma agora é multiseleção (array). Migra o valor único antigo.
@@ -200,6 +208,15 @@ function writeLS(){
   try{localStorage.setItem('mk_content_cur_platform',JSON.stringify(curPlats));}catch(e){}
 }
 function saveIdeas(){try{localStorage.setItem('mk_content_ideas',JSON.stringify(ideas));}catch(e){} scheduleSync();}
+function saveStoriesLS(){try{localStorage.setItem(STORIES_KEY,JSON.stringify(stories));}catch(e){}}
+function persistIdea(idea){
+  saveIdeas();
+  if(idea && typeof DB!=='undefined' && !window._SB_ERROR) DB.conteudo.upsert(idea).catch(function(){});
+}
+function persistStory(s){
+  saveStoriesLS();
+  if(s && typeof DB!=='undefined' && DB.stories && !window._SB_ERROR) DB.stories.upsert(s).catch(function(){});
+}
 // Persiste categorias/plataformas personalizadas no Supabase (tabela configuracoes) p/ sync entre devices
 function syncCfg(chave,val){ if(typeof DB!=='undefined' && DB.config && DB.config.set && !window._SB_ERROR){ DB.config.set(chave, JSON.stringify(val)).catch(function(){}); } }
 function saveCats() {try{localStorage.setItem('mk_content_cats', JSON.stringify(customCats));}catch(e){} syncCfg('conteudo_custom_cats', customCats); scheduleSync();}
@@ -226,6 +243,7 @@ function saveDraft(){
     legenda: getRteHtml('rte-legenda'),
     notas:   getRteHtml('rte-notas'),
     sdate:   (document.getElementById('f-date').value)||'',
+    gdate:   (document.getElementById('f-gravar').value)||'',
     fCats:   fCats.slice(),
     fFmts:   fFmts.slice(),
     fSt:     fSt,
@@ -252,6 +270,7 @@ function restoreDraft(id){
     if(Date.now() - new Date(d.savedAt).getTime() > 7*86400000){ clearDraft(); return false; }
     document.getElementById('f-title').value = d.title||'';
     document.getElementById('f-date').value  = d.sdate||'';
+    document.getElementById('f-gravar').value= d.gdate||'';
     setRteHtml('rte-roteiro', d.roteiro||'');
     setRteHtml('rte-legenda', d.legenda||'');
     setRteHtml('rte-notas',   d.notas||'');
@@ -285,6 +304,8 @@ function migrate(){
     if(!idea.formatos||!idea.formatos.length){ idea.formatos=idea.formato?[idea.formato]:['Reels']; }
     // scheduledDate
     if(idea.scheduledDate===undefined) idea.scheduledDate='';
+    // gravarDate (data de gravação — separada da publicação)
+    if(idea.gravarDate===undefined) idea.gravarDate='';
   }
 }
 function validateCurPlat(){ var all=allPlats(); curPlats=curPlats.filter(function(p){ return all.indexOf(p)!==-1; }); }
@@ -416,8 +437,27 @@ function loadData(){
       migrate(); validateCurPlat(); writeLS();
       updateSyncDot('ok'); render();
       loadCustomFromCloud();   // categorias/plataformas personalizadas (cross-device)
+      loadStoriesFromCloud();  // checklist de stories (cross-device)
     })
     .catch(function(){ updateSyncDot('offline'); });
+}
+
+// Stories: Supabase é fonte de verdade; itens locais ainda não enviados sobem.
+function loadStoriesFromCloud(){
+  if(typeof DB==='undefined' || !DB.stories || window._SB_ERROR) return;
+  DB.stories.list()
+    .then(function(data){
+      var sbIds={};
+      for(var i=0;i<data.length;i++) sbIds[data[i].id]=true;
+      var localOnly=stories.filter(function(s){ return !sbIds[s.id]; });
+      stories=data.concat(localOnly);
+      for(var j=0;j<localOnly.length;j++){
+        (function(s){ DB.stories.upsert(s).catch(function(){}); })(localOnly[j]);
+      }
+      saveStoriesLS();
+      if(curView==='hoje'||curView==='stories') render();
+    })
+    .catch(function(){ /* tabela ainda não criada — segue só local */ });
 }
 
 // Mescla categorias/plataformas personalizadas vindas do Supabase (união — não perde nada)
@@ -536,17 +576,27 @@ function buildFilters(){
    ============================================================ */
 function setView(v){
   curView=v;
-  document.getElementById('btn-list').className ='vbtn'+(v==='list'?' on':'');
-  document.getElementById('btn-board').className='vbtn'+(v==='board'?' on':'');
-  document.getElementById('btn-cal').className  ='vbtn'+(v==='cal'?' on':'');
-  document.getElementById('btn-inbox').className='vbtn'+(v==='inbox'?' on':'');
+  // Toggle do header mobile (Lista/Board/Inbox) — só visível no acervo
+  var ideiasCtx=(v==='list'||v==='board'||v==='inbox');
+  var vt=document.getElementById('view-toggle');
+  if(vt) vt.style.display=ideiasCtx?'':'none';
+  var bl=document.getElementById('btn-list');  if(bl) bl.className ='vbtn'+(v==='list'?' on':'');
+  var bb=document.getElementById('btn-board'); if(bb) bb.className='vbtn'+(v==='board'?' on':'');
+  var bi=document.getElementById('btn-inbox'); if(bi) bi.className='vbtn'+(v==='inbox'?' on':'');
   // Desktop toolbar toggle
   document.querySelectorAll('.d-vbtn').forEach(function(b){ b.classList.toggle('on', b.dataset.v===v); });
-  // Sort controls só na lista
+  // Toolbar desktop só no acervo; sort só na lista
   var toolbar=document.querySelector('.d-toolbar');
-  if(toolbar) toolbar.classList.toggle('hide-sort', v!=='list');
-  var showListUI=(v==='list');
-  document.getElementById('list-view').style.display=showListUI?'':'none';
+  if(toolbar){
+    toolbar.style.display=ideiasCtx?'':'none';
+    toolbar.classList.toggle('hide-sort', v!=='list');
+  }
+  // Views novas
+  var hojeEl=document.getElementById('hoje-view');
+  if(hojeEl) hojeEl.style.display=(v==='hoje')?'':'none';
+  var stEl=document.getElementById('stories-view');
+  if(stEl) stEl.style.display=(v==='stories')?'':'none';
+  document.getElementById('list-view').style.display=(v==='list')?'':'none';
   // Filtros (Plataforma/Temas + Status) só fazem sentido em lista e board
   var showFilters=(v==='list'||v==='board');
   var fbar=document.getElementById('ptabs'); if(fbar) fbar.style.display=showFilters?'':'none';
@@ -560,8 +610,38 @@ function setView(v){
   // Inbox
   var inboxEl=document.getElementById('inbox-view');
   if(inboxEl){ inboxEl.style.display=(v==='inbox')?'':'none'; if(v==='inbox') renderInbox(); }
+  // Gaveta do banco (desktop) — só na view Hoje
+  var drawer=document.getElementById('bank-drawer');
+  if(drawer) drawer.classList.toggle('show', v==='hoje');
+  // Header mobile: título contextual
+  var h1=document.querySelector('.hdr h1');
+  if(h1){
+    var titles={hoje:'Hoje',stories:'Stories',cal:'Agenda',inbox:'Inbox',list:'Ideias',board:'Ideias'};
+    h1.textContent=titles[v]||'Conteúdo';
+  }
+  if(v==='hoje'||v==='stories'||v==='cal'||v==='inbox'){
+    var hc=document.getElementById('hdr-count');
+    if(hc){
+      var today=new Date();
+      hc.textContent=(v==='hoje')
+        ? DAYS_PT[today.getDay()]+', '+today.getDate()+' de '+MONTHS[today.getMonth()].toLowerCase()
+        : '';
+    }
+  }
+  // Tabs mobile + nav sidebar
+  syncNavStates();
   if(v==='board') colIdx=0;
-  if(v!=='inbox') render();
+  if(v!=='inbox') render(); else buildSidebar();
+}
+
+function syncNavStates(){
+  var group=(curView==='board')?'list':curView; // board pertence ao grupo Ideias
+  document.querySelectorAll('.d-sb-nav-item').forEach(function(b){
+    b.classList.toggle('on', b.dataset.nav===group || (group==='stories'&&b.dataset.nav==='hoje'));
+  });
+  document.querySelectorAll('.m-tab').forEach(function(b){
+    b.classList.toggle('on', b.dataset.nav===group || (group==='inbox'&&b.dataset.nav==='list'));
+  });
 }
 function setSF(btn){ curSF=btn.getAttribute('data-s'); var tabs=document.querySelectorAll('.stab'); for(var i=0;i<tabs.length;i++) tabs[i].classList.toggle('on',tabs[i]===btn); render(); }
 
@@ -587,54 +667,44 @@ function isDesktop(){ return window.innerWidth >= 1024; }
    SIDEBAR DESKTOP
    ============================================================ */
 function buildSidebar(){
-  var sbStats = document.getElementById('d-sb-stats');
-  if(!sbStats) return;
-  var platIdeas=ideas.filter(ideaInCurPlat), total=platIdeas.length;
-  var nao =platIdeas.filter(function(i){return i.status==='Nao Iniciado';}).length;
-  var fila=platIdeas.filter(function(i){return i.status==='Fila de Gravacao';}).length;
-  var edit=platIdeas.filter(function(i){return i.status==='Editando';}).length;
-  var pub =platIdeas.filter(function(i){return i.status==='Publicado';}).length;
-
-  // Stats
-  sbStats.innerHTML=
-    '<div class="d-sb-stats-grid">'+
-      '<div class="d-sb-stat"><div class="d-sb-stat-lbl">Total</div><span class="d-sb-stat-val">'+total+'</span></div>'+
-      '<div class="d-sb-stat"><div class="d-sb-stat-lbl">Publicado</div><span class="d-sb-stat-val c-pub">'+pub+'</span></div>'+
-      '<div class="d-sb-stat"><div class="d-sb-stat-lbl">Editando</div><span class="d-sb-stat-val c-edit">'+edit+'</span></div>'+
-      '<div class="d-sb-stat"><div class="d-sb-stat-lbl">Na fila</div><span class="d-sb-stat-val c-fila">'+fila+'</span></div>'+
-    '</div>';
-
-  // Plataforma e Temas agora são dropdowns compactos na toolbar (buildFilters).
-  // A sidebar mantém só Stats + Status para ficar limpa.
-
-  // Status
-  var statuses=[
-    {v:'todos',  lbl:'Todos',             dot:'#aaa',      cnt:platIdeas.length},
-    {v:'Nao Iniciado',    lbl:'Não iniciado', dot:'#9e9e9e', cnt:nao},
-    {v:'Fila de Gravacao',lbl:'Fila de gravação', dot:'#e53935', cnt:fila},
-    {v:'Editando',lbl:'Editando',         dot:'#7d3c6e',   cnt:edit},
-    {v:'Publicado',lbl:'Publicado',       dot:'#2d7d3a',   cnt:pub},
-  ];
-  var stHtml='<div class="d-sb-lbl">Status</div>';
-  for(var s=0;s<statuses.length;s++){
-    var st=statuses[s];
-    stHtml+='<button class="d-sb-st-item'+(curSF===st.v?' active':'')+'" onclick="setSFD(\''+safe(st.v)+'\')">'+
-      '<div class="d-sb-st-dot" style="background:'+st.dot+'"></div>'+
-      '<span class="d-sb-st-name">'+st.lbl+'</span>'+
-      '<span class="d-sb-st-cnt">'+st.cnt+'</span>'+
-    '</button>';
+  var pipeEl = document.getElementById('d-sb-pipe');
+  if(pipeEl){
+    var cnt=function(st){ return ideas.filter(function(i){return i.status===st;}).length; };
+    var rows=[
+      {v:'Nao Iniciado',    ico:'💡', lbl:'Ideias',   n:cnt('Nao Iniciado')},
+      {v:'Fila de Gravacao',ico:'🎬', lbl:'Gravar',   n:cnt('Fila de Gravacao')},
+      {v:'Editando',        ico:'✂️', lbl:'Editar',   n:cnt('Editando')},
+      {v:'Pronto',          ico:'✅', lbl:'Pronto',   n:cnt('Pronto')},
+      {v:'Publicado',       ico:'📤', lbl:'Publicado',n:cnt('Publicado'), dim:true},
+    ];
+    var html='<div class="d-sb-lbl">Pipeline</div>';
+    for(var r=0;r<rows.length;r++){
+      var row=rows[r];
+      html+='<button class="d-sb-st-item'+(row.dim?' d-sb-st-dim':'')+'" onclick="pipeGo(\''+safe(row.v)+'\')">'+
+        '<span class="d-sb-st-ico">'+row.ico+'</span>'+
+        '<span class="d-sb-st-name">'+row.lbl+'</span>'+
+        '<span class="d-sb-st-cnt">'+row.n+'</span>'+
+      '</button>';
+    }
+    pipeEl.innerHTML=html;
   }
-  document.getElementById('d-sb-status').innerHTML=stHtml;
 
-  // Toolbar
-  var filterNames={todos:'Todos','Nao Iniciado':'Não iniciado','Fila de Gravacao':'Fila de gravação','Editando':'Editando','Publicado':'Publicado'};
+  // Toolbar (acervo)
+  var filterNames={todos:'Todos','Nao Iniciado':'Ideias','Fila de Gravacao':'Fila de gravação','Editando':'Editando','Pronto':'Pronto','Publicado':'Publicado'};
   var dTitle=document.getElementById('d-toolbar-title');
   var dCnt=document.getElementById('d-toolbar-cnt');
   if(dTitle) dTitle.textContent=filterNames[curSF]||'Todos';
   if(dCnt){
-    var cnt=filtered().length;
-    dCnt.textContent=cnt+' ideia'+(cnt!==1?'s':'');
+    var n=filtered().length;
+    dCnt.textContent=n+' ideia'+(n!==1?'s':'');
   }
+}
+
+// Clique num estágio do pipeline → abre o acervo já filtrado por aquele status
+function pipeGo(s){
+  curSF=s;
+  document.querySelectorAll('.stab').forEach(function(b){b.classList.toggle('on',b.dataset.s===s);});
+  setView('list');
 }
 
 function setSFD(s){
@@ -650,10 +720,11 @@ function renderBoardDesktop(){
   var el=document.getElementById('d-board-wrap');
   if(!el) return;
   var cols=[
-    {v:'Nao Iniciado',    lbl:'Não iniciado',    dot:'#9e9e9e', bg:'rgba(0,0,0,.04)'},
+    {v:'Nao Iniciado',    lbl:'Ideias',           dot:'#9e9e9e', bg:'rgba(0,0,0,.04)'},
     {v:'Fila de Gravacao',lbl:'Fila de gravação', dot:'#e53935', bg:'rgba(198,40,40,.05)'},
     {v:'Editando',        lbl:'Editando',         dot:'#7d3c6e', bg:'rgba(126,87,194,.06)'},
-    {v:'Publicado',       lbl:'Publicado',         dot:'#2d7d3a', bg:'rgba(59,109,17,.05)'},
+    {v:'Pronto',          lbl:'Pronto',           dot:'#00897b', bg:'rgba(0,137,123,.06)'},
+    {v:'Publicado',       lbl:'Publicado',        dot:'#2d7d3a', bg:'rgba(59,109,17,.05)'},
   ];
   var html='';
   for(var ci=0;ci<cols.length;ci++){
@@ -699,16 +770,21 @@ function renderBoardDesktop(){
 function render(){
   buildFilters();
   attachHorizWheel(document.getElementById('stabs'));
-  var platIdeas=ideas.filter(ideaInCurPlat), total=platIdeas.length;
-  var label=curPlats.length?curPlats.join(', '):'Todas plataformas';
-  document.getElementById('hdr-count').textContent=total+' ideia'+(total!==1?'s':'')+' • '+label;
+  if(curView==='list'||curView==='board'){
+    var platIdeas=ideas.filter(ideaInCurPlat), total=platIdeas.length;
+    var label=curPlats.length?curPlats.join(', '):'Todas plataformas';
+    var hc=document.getElementById('hdr-count');
+    if(hc) hc.textContent=total+' ideia'+(total!==1?'s':'')+' • '+label;
+  }
   buildSidebar();
-  if(curView==='list')  renderList();
+  if(curView==='hoje'){ renderHoje(); buildBank(); }
+  else if(curView==='stories') renderStoriesView();
+  else if(curView==='list')  renderList();
   else if(curView==='board'){
     if(isDesktop()){ renderBoardDesktop(); }
     else { renderBoard(); }
   }
-  else renderCalendar();
+  else if(curView==='cal') renderCalendar();
   applyDDOpen();
 }
 
@@ -740,7 +816,7 @@ function renderList(){
   } else if(curSort==='status'){
     // Agrupar por etapa de produção. Ordem do fluxo: o que precisa de ação
     // primeiro, e Publicado por último (apagadinho, pois já saiu).
-    var stOrder=['Fila de Gravacao','Editando','Nao Iniciado','Publicado'];
+    var stOrder=['Fila de Gravacao','Editando','Pronto','Nao Iniciado','Publicado'];
     for(var si=0;si<stOrder.length;si++){
       var sv=stOrder[si], sc2=ST[sv]||ST['Nao Iniciado'];
       var stList=list.filter(function(i){ return i.status===sv; });
@@ -791,11 +867,12 @@ function ideaCardHTML(idea, extraCls){
     '<div class="idea-card-bot">'+
       dateStr+
       (cat?'<span class="idea-cat-sm">'+safe(cat)+'</span>':'')+
+      '<button class="idea-promote" title="Promover (gravar hoje, story, agendar)" onclick="openPromo(\''+safe(idea.id)+'\',event)">⤴</button>'+
     '</div>'+
   '</div>';
 }
 function stLabel(s){
-  var map={'Nao Iniciado':'Ideia','Fila de Gravacao':'Gravar','Editando':'Editando','Publicado':'Publicado'};
+  var map={'Nao Iniciado':'Ideia','Fila de Gravacao':'Gravar','Editando':'Editando','Pronto':'Pronto','Publicado':'Publicado'};
   return map[s]||safe(s);
 }
 
@@ -906,7 +983,10 @@ function openDayModal(ds){
   renderDayContent();
   document.getElementById('day-bg').classList.add('open');
 }
-function closeDayModal(){ document.getElementById('day-bg').classList.remove('open'); curDayDate=null; }
+function closeDayModal(){
+  document.getElementById('day-bg').classList.remove('open'); curDayDate=null;
+  if(curView==='hoje') render(); // o painel pode ter mudado (ex: ideia agendada num dia)
+}
 
 function renderDayContent(){
   if(!curDayDate) return;
@@ -969,6 +1049,413 @@ function removeFromCal(id){
 function editFromDay(id){ closeDayModal(); setTimeout(function(){openModal(id);},200); }
 
 /* ============================================================
+   CENTRO DE COMANDO — view "Hoje"
+   ============================================================ */
+function byIdIdea(id){ for(var i=0;i<ideas.length;i++) if(ideas[i].id===id) return ideas[i]; return null; }
+function todayISO(){ var d=new Date(); return dateStr(d.getFullYear(),d.getMonth(),d.getDate()); }
+function addDaysISO(iso,n){ var p=iso.split('-'); var d=new Date(+p[0],+p[1]-1,+p[2]+n); return dateStr(d.getFullYear(),d.getMonth(),d.getDate()); }
+function dowOf(iso){ var p=iso.split('-'); return new Date(+p[0],+p[1]-1,+p[2]).getDay(); }
+function cap(s){ return s.charAt(0).toUpperCase()+s.slice(1); }
+function dayLabel(iso){
+  var t=todayISO();
+  if(iso===t) return 'Hoje';
+  if(iso===addDaysISO(t,1)) return 'Amanhã';
+  return cap(DAYS_PT[dowOf(iso)])+' · '+fmtDate(iso);
+}
+
+/* Regras determinísticas do painel (seções mutuamente exclusivas) */
+function hojeData(){
+  var t=todayISO(), lim=addDaysISO(t,3);
+  var atrasados=[],gravar=[],publicar=[],editando=[],prontos=[];
+  for(var k=0;k<ideas.length;k++){
+    var i=ideas[k];
+    if(i.status==='Publicado') continue;
+    if(i.scheduledDate && i.scheduledDate<t){ atrasados.push(i); continue; }
+    if(i.scheduledDate===t){ publicar.push(i); continue; }
+    if(i.status==='Editando'){ editando.push(i); continue; }
+    if(i.status==='Pronto'){ if(!i.scheduledDate) prontos.push(i); continue; }
+    if(i.gravarDate && i.gravarDate<=t){ gravar.push(i); continue; }
+    if(i.status==='Fila de Gravacao' && !i.gravarDate && i.scheduledDate && i.scheduledDate<=lim){ gravar.push(i); }
+  }
+  var bySched=function(a,b){ var x=a.scheduledDate||'9999',y=b.scheduledDate||'9999'; return x<y?-1:(x>y?1:0); };
+  atrasados.sort(bySched); gravar.sort(bySched); editando.sort(bySched);
+  return {atrasados:atrasados,gravar:gravar,publicar:publicar,editando:editando,prontos:prontos};
+}
+
+function nextDayItems(dt){
+  var pubs=ideas.filter(function(i){ return i.scheduledDate===dt && i.status!=='Publicado'; });
+  var gravs=ideas.filter(function(i){ return i.gravarDate===dt && i.status!=='Publicado' && i.scheduledDate!==dt; });
+  return {pubs:pubs, gravs:gravs, st:storiesFor(dt).length};
+}
+
+/* ── Ações de 1 toque ── */
+function advanceTo(id,st,ev){
+  if(ev) ev.stopPropagation();
+  var i=byIdIdea(id); if(!i) return;
+  i.status=st;
+  persistIdea(i);
+  var msg={'Editando':'🎬 Gravado! Foi para a edição','Pronto':'✅ Pronto para publicar!','Publicado':'🎉 Publicado!'}[st]||('Status: '+stLabel(st));
+  showToast(msg);
+  render();
+}
+function reagendarIdea(id,ev){
+  if(ev) ev.stopPropagation();
+  openModal(id);
+  setTimeout(function(){ var f=document.getElementById('f-date'); if(f) f.focus(); },380);
+}
+function openRoteiro(id,ev){
+  if(ev) ev.stopPropagation();
+  var i=byIdIdea(id); if(!i) return;
+  if(!i.roteiro){ openModal(id); setTimeout(function(){ switchRteTab('roteiro'); },380); return; }
+  editId=id;
+  setRteHtml('rte-roteiro', i.roteiro||'');
+  document.getElementById('grav-title-lbl').textContent=i.title||'Modo Gravação';
+  var b=document.getElementById('gravacao-body');
+  b.innerHTML=i.roteiro;
+  b.style.fontSize=gravFontSize+'rem';
+  document.getElementById('gravacao-bg').classList.add('open');
+}
+function copyLegenda(id,ev){
+  if(ev) ev.stopPropagation();
+  var i=byIdIdea(id); if(!i) return;
+  var div=document.createElement('div'); div.innerHTML=i.legenda||'';
+  var txt=(div.innerText||'').trim();
+  if(!txt){ showToast('Sem legenda ainda — escreva no editor'); openModal(id); setTimeout(function(){ switchRteTab('legenda'); },380); return; }
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(function(){ showToast('📋 Legenda copiada!'); },function(){ showToast('Não consegui copiar'); });
+  } else {
+    var ta=document.createElement('textarea'); ta.value=txt; document.body.appendChild(ta); ta.select();
+    try{ document.execCommand('copy'); showToast('📋 Legenda copiada!'); }catch(e){ showToast('Não consegui copiar'); }
+    document.body.removeChild(ta);
+  }
+}
+
+/* ── Stories (checklist diário) ── */
+function storiesFor(date){
+  return stories.filter(function(s){ return s.date===date; })
+    .sort(function(a,b){ return (a.ordem-b.ordem) || (a.createdAt<b.createdAt?-1:1); });
+}
+function addStory(date,texto,ideaId){
+  if(!texto) return;
+  var s={id:uid(),date:date,texto:texto,ideaId:ideaId||'',done:false,ordem:storiesFor(date).length,createdAt:new Date().toISOString()};
+  stories.push(s);
+  persistStory(s);
+}
+function storyInpKey(ev,date){
+  if(ev.key!=='Enter') return;
+  var v=ev.target.value.trim(); if(!v) return;
+  addStory(date,v,'');
+  render();
+  var inp=document.getElementById('st-inp-'+date);
+  if(inp) inp.focus();
+}
+function toggleStoryDone(id){
+  for(var i=0;i<stories.length;i++) if(stories[i].id===id){ stories[i].done=!stories[i].done; persistStory(stories[i]); break; }
+  render();
+}
+function removeStory(id,ev){
+  if(ev) ev.stopPropagation();
+  stories=stories.filter(function(s){ return s.id!==id; });
+  saveStoriesLS();
+  if(typeof DB!=='undefined' && DB.stories && !window._SB_ERROR) DB.stories.delete(id).catch(function(){});
+  render();
+}
+function storiesBlockHTML(date,label){
+  var list=storiesFor(date), done=list.filter(function(s){return s.done;}).length;
+  var h='<div class="stories-day">'+safe(label)+(list.length?'<span class="prog">'+done+'/'+list.length+'</span>':'')+'</div>';
+  if(!list.length) h+='<div class="stories-empty">nenhum story planejado</div>';
+  for(var k=0;k<list.length;k++){
+    var s=list[k];
+    h+='<div class="story'+(s.done?' done':'')+'" onclick="toggleStoryDone(\''+safe(s.id)+'\')">'+
+      '<span class="story-chk">✓</span>'+
+      '<span class="story-txt">'+safe(s.texto)+'</span>'+
+      (s.ideaId?'<span class="story-link" title="Veio do banco de ideias">↗</span>':'')+
+      '<button class="story-del" title="Remover" onclick="removeStory(\''+safe(s.id)+'\',event)">×</button>'+
+    '</div>';
+  }
+  h+='<input class="story-add-inp" id="st-inp-'+date+'" placeholder="＋ story rápido… (Enter)" onkeydown="storyInpKey(event,\''+date+'\')">';
+  return h;
+}
+function renderStoriesView(){
+  var el=document.getElementById('stories-view'); if(!el) return;
+  var t=todayISO(), html='<div class="stories-page">';
+  for(var k=0;k<7;k++){
+    var dt=addDaysISO(t,k);
+    html+='<div class="stories-box stories-box-page">'+storiesBlockHTML(dt,dayLabel(dt))+'</div>';
+  }
+  html+='</div>';
+  el.innerHTML=html;
+}
+
+/* ── Cards de ação do painel ── */
+function acardHTML(i,mode){
+  var cat=catsOf(i)[0]||'';
+  var pilar=cat?'<span class="pilar">'+safe(cat)+'</span>':'';
+  var flag='',extra='',meta='',actions='';
+  if(mode==='late'){
+    flag='<div class="late-flag">🔴 Atrasado · era para '+fmtDate(i.scheduledDate)+'</div>';
+    meta=pilar+'<span>'+stLabel(i.status)+'</span>';
+    actions='<button class="a-btn a-btn-sec" onclick="reagendarIdea(\''+safe(i.id)+'\',event)">📅 Reagendar</button>'+
+            '<button class="a-btn a-btn-go" onclick="advanceTo(\''+safe(i.id)+'\',\'Publicado\',event)">✓ Publiquei</button>';
+  } else if(mode==='gravar'){
+    var pub=i.scheduledDate?('publica '+fmtDate(i.scheduledDate)):'sem data de publicação';
+    var rot=i.roteiro?' · roteiro ●':' · sem roteiro';
+    meta=pilar+'<span>'+fmtsOf(i).map(safe).join(', ')+' · '+pub+rot+'</span>';
+    actions='<button class="a-btn a-btn-sec" onclick="openRoteiro(\''+safe(i.id)+'\',event)">'+(i.roteiro?'📖 Roteiro':'✍️ Escrever roteiro')+'</button>'+
+            '<button class="a-btn a-btn-go" onclick="advanceTo(\''+safe(i.id)+'\',\'Editando\',event)">✓ Gravei</button>';
+  } else { /* publicar */
+    extra=(i.status==='Pronto')
+      ?'<span class="badge-pronto">✅ Pronto</span>'
+      :'<span class="badge-alerta">⚠ '+stLabel(i.status)+'</span>';
+    meta=pilar+'<span>'+fmtsOf(i).map(safe).join(', ')+' · '+platsOf(i).map(safe).join(', ')+'</span>';
+    actions='<button class="a-btn a-btn-sec" onclick="copyLegenda(\''+safe(i.id)+'\',event)">📋 Legenda</button>'+
+            '<button class="a-btn a-btn-go" onclick="advanceTo(\''+safe(i.id)+'\',\'Publicado\',event)">✓ Publiquei</button>';
+  }
+  return '<div class="acard'+(mode==='late'?' acard-late':'')+'" onclick="openModal(\''+safe(i.id)+'\')">'+flag+
+    '<div class="acard-title">'+safe(i.title)+(extra?' '+extra:'')+'</div>'+
+    '<div class="acard-meta">'+meta+'</div>'+
+    '<div class="acard-actions">'+actions+'</div>'+
+  '</div>';
+}
+function erowHTML(i){
+  return '<div class="erow" onclick="openModal(\''+safe(i.id)+'\')">'+
+    '<span class="erow-dot"></span>'+
+    '<span class="erow-title">'+safe(i.title)+'</span>'+
+    '<span class="erow-date">'+(i.scheduledDate?('publica '+fmtDate(i.scheduledDate)):'sem data')+'</span>'+
+    '<button class="erow-done" onclick="advanceTo(\''+safe(i.id)+'\',\'Pronto\',event)">✓ Editado</button>'+
+  '</div>';
+}
+
+/* ── Herói mobile: a próxima ação ── */
+function heroHTML(d){
+  var t=todayISO(), i=null, verb='', actions='';
+  if(d.atrasados.length){ i=d.atrasados[0]; verb='⚠️ Resolver:';
+    actions='<button class="h-btn h-btn-ghost" onclick="reagendarIdea(\''+safe(i.id)+'\',event)">📅 Reagendar</button>'+
+            '<button class="h-btn h-btn-go" onclick="advanceTo(\''+safe(i.id)+'\',\'Publicado\',event)">✓ Publiquei</button>';
+  } else if(d.publicar.length){ i=d.publicar[0]; verb='📤 Publicar:';
+    actions='<button class="h-btn h-btn-ghost" onclick="copyLegenda(\''+safe(i.id)+'\',event)">📋 Legenda</button>'+
+            '<button class="h-btn h-btn-go" onclick="advanceTo(\''+safe(i.id)+'\',\'Publicado\',event)">✓ Publiquei</button>';
+  } else if(d.gravar.length){ i=d.gravar[0]; verb='🎬 Gravar:';
+    actions='<button class="h-btn h-btn-ghost" onclick="openRoteiro(\''+safe(i.id)+'\',event)">📖 Roteiro</button>'+
+            '<button class="h-btn h-btn-go" onclick="advanceTo(\''+safe(i.id)+'\',\'Editando\',event)">✓ Gravei</button>';
+  } else if(d.editando.length){ i=d.editando[0]; verb='✂️ Editar:';
+    actions='<button class="h-btn h-btn-go" onclick="advanceTo(\''+safe(i.id)+'\',\'Pronto\',event)">✓ Editado</button>';
+  } else {
+    var st=storiesFor(t).filter(function(s){return !s.done;});
+    if(st.length){
+      return '<div class="hero" onclick="setView(\'stories\')"><div class="hero-lbl">⭐ Próxima ação</div>'+
+        '<div class="hero-title"><span class="verb">📱 Story:</span> '+safe(st[0].texto)+'</div>'+
+        '<div class="hero-meta">'+st.length+' storie'+(st.length>1?'s':'')+' pendente'+(st.length>1?'s':'')+' hoje</div></div>';
+    }
+    return '';
+  }
+  var cat=catsOf(i)[0]||'';
+  var meta=[cat,fmtsOf(i).map(safe).join(', '),i.scheduledDate?('publica '+fmtDate(i.scheduledDate)):''].filter(Boolean).join(' · ');
+  return '<div class="hero" onclick="openModal(\''+safe(i.id)+'\')">'+
+    '<div class="hero-lbl">⭐ Próxima ação</div>'+
+    '<div class="hero-title"><span class="verb">'+verb+'</span> '+safe(i.title)+'</div>'+
+    '<div class="hero-meta">'+safe(meta)+'</div>'+
+    '<div class="hero-actions">'+actions+'</div>'+
+  '</div>';
+}
+
+/* ── Render do painel Hoje ── */
+function renderHoje(){
+  var el=document.getElementById('hoje-view'); if(!el) return;
+  var t=todayISO(), d=hojeData(), today=new Date();
+  var dateLbl=cap(DAYS_PT[today.getDay()])+', '+today.getDate()+' de '+MONTHS[today.getMonth()].toLowerCase();
+  var stHoje=storiesFor(t);
+
+  var parts=[];
+  if(d.gravar.length)   parts.push('<b>'+d.gravar.length+' gravaç'+(d.gravar.length>1?'ões':'ão')+'</b>');
+  if(d.publicar.length) parts.push('<b>'+d.publicar.length+' publicaç'+(d.publicar.length>1?'ões':'ão')+'</b>');
+  if(stHoje.length)     parts.push('<b>'+stHoje.length+' storie'+(stHoje.length>1?'s':'')+'</b>');
+  if(d.atrasados.length)parts.push('<b class="hj-late-txt">'+d.atrasados.length+' atrasado'+(d.atrasados.length>1?'s':'')+'</b>');
+  var resume=parts.length?('☀️ Hoje: '+parts.join(' · ')):'☀️ Dia livre — nada programado para hoje.';
+
+  var html=
+    '<div class="hj-hdr">'+
+      '<div>'+
+        '<div class="hj-kicker">Centro de comando</div>'+
+        '<div class="hj-date">'+dateLbl+'</div>'+
+        '<div class="hj-resume">'+resume+'</div>'+
+      '</div>'+
+      '<button class="hj-nova" onclick="openModal(null)">＋ Nova ideia</button>'+
+    '</div>';
+
+  html+=heroHTML(d);
+
+  html+='<div class="hj-zones">';
+
+  /* ZONA 1 — O que eu faço hoje */
+  html+='<section class="hj-zone hj-zone-hoje"><div class="hj-zone-title">O que eu faço hoje</div>';
+  if(d.atrasados.length){
+    html+='<div class="sec">';
+    for(var a=0;a<d.atrasados.length;a++) html+=acardHTML(d.atrasados[a],'late');
+    html+='</div>';
+  }
+  html+='<div class="sec sec-drop" ondragover="dragOverZ(event)" ondragleave="dragLeaveZ(event)" ondrop="dropOn(event,\'gravar\')">'+
+    '<div class="sec-hdr"><span class="ico">🎬</span><h2>Gravar hoje</h2><span class="cnt">'+d.gravar.length+'</span></div>';
+  if(!d.gravar.length) html+='<div class="sec-empty">Nada para gravar hoje — arraste uma ideia do banco ou use ⤴ para promover.</div>';
+  for(var g=0;g<d.gravar.length;g++) html+=acardHTML(d.gravar[g],'gravar');
+  html+='</div>';
+  html+='<div class="sec"><div class="sec-hdr"><span class="ico">📤</span><h2>Publicar hoje</h2><span class="cnt">'+d.publicar.length+'</span></div>';
+  if(!d.publicar.length) html+='<div class="sec-empty">Nenhuma publicação agendada para hoje.</div>';
+  for(var p=0;p<d.publicar.length;p++) html+=acardHTML(d.publicar[p],'publicar');
+  html+='</div>';
+  if(d.editando.length){
+    html+='<div class="sec"><div class="sec-hdr"><span class="ico">✂️</span><h2>Em edição</h2><span class="cnt">'+d.editando.length+'</span></div>';
+    for(var e=0;e<d.editando.length;e++) html+=erowHTML(d.editando[e]);
+    html+='</div>';
+  }
+  html+='</section>';
+
+  /* ZONA 2 — Stories */
+  var tm=addDaysISO(t,1);
+  html+='<section class="hj-zone hj-zone-stories"><div class="hj-zone-title">📱 Stories</div>'+
+    '<div class="stories-box sec-drop" ondragover="dragOverZ(event)" ondragleave="dragLeaveZ(event)" ondrop="dropOn(event,\'story\')">'+
+      storiesBlockHTML(t,'Hoje')+
+      '<button class="stories-bank-btn" onclick="bankFromStories()">⤵ trazer do banco de ideias</button>'+
+      '<div class="stories-tmr">'+storiesBlockHTML(tm,'Amanhã')+'</div>'+
+    '</div>'+
+  '</section>';
+
+  /* ZONA 3 — Próximos dias */
+  html+='<section class="hj-zone hj-zone-next">';
+  var tmIt=nextDayItems(tm);
+  var tmParts=[];
+  for(var x=0;x<tmIt.pubs.length;x++)  tmParts.push(safe(tmIt.pubs[x].title));
+  for(var y=0;y<tmIt.gravs.length;y++) tmParts.push('gravar '+safe(tmIt.gravs[y].title));
+  if(tmIt.st) tmParts.push(tmIt.st+' storie'+(tmIt.st>1?'s':''));
+  html+='<div class="nd-mobile-line" onclick="setView(\'cal\')">📅 <b>Amanhã:</b>&nbsp;<span class="nd-ml-txt">'+(tmParts.length?tmParts.join(' · '):'nada planejado')+'</span><span class="arrow">›</span></div>';
+  html+='<div class="nd-full"><div class="hj-zone-title">Próximos dias</div>';
+  for(var k=1;k<=4;k++){
+    var dt=addDaysISO(t,k), it=nextDayItems(dt);
+    html+='<div class="nd-day sec-drop" ondragover="dragOverZ(event)" ondragleave="dragLeaveZ(event)" ondrop="dropOn(event,\'day\',\''+dt+'\')">'+
+      '<div class="nd-lbl" onclick="openDayModal(\''+dt+'\')"><b>'+safe(dayLabel(dt))+'</b></div>';
+    var has=false;
+    for(var p2=0;p2<it.pubs.length;p2++){ has=true; html+='<div class="nd-card" onclick="openModal(\''+safe(it.pubs[p2].id)+'\')"><span class="nd-ico">📤</span><span class="nd-title">'+safe(it.pubs[p2].title)+'</span></div>'; }
+    for(var g2=0;g2<it.gravs.length;g2++){ has=true; html+='<div class="nd-card" onclick="openModal(\''+safe(it.gravs[g2].id)+'\')"><span class="nd-ico">🎬</span><span class="nd-title">Gravar: '+safe(it.gravs[g2].title)+'</span></div>'; }
+    if(it.st){ has=true; html+='<div class="nd-card nd-card-st" onclick="setView(\'stories\')"><span class="nd-ico">📱</span><span class="nd-title">'+it.st+' storie'+(it.st>1?'s':'')+' planejado'+(it.st>1?'s':'')+'</span></div>'; }
+    if(!has) html+='<div class="nd-empty">nada planejado · <button onclick="openDayModal(\''+dt+'\')">+ planejar</button></div>';
+    html+='</div>';
+  }
+  if(d.prontos.length){
+    html+='<div class="nd-alert">⚠️ <b>'+d.prontos.length+' conteúdo'+(d.prontos.length>1?'s':'')+' pronto'+(d.prontos.length>1?'s':'')+' sem data.</b> '+
+      '<button onclick="pipeGo(\'Pronto\')">agendar agora</button></div>';
+  }
+  html+='</div></section>';
+
+  html+='</div>'; /* /hj-zones */
+  el.innerHTML=html;
+}
+
+/* ── Menu Promover (⤴) ── */
+function openPromo(id,ev){
+  if(ev){ ev.stopPropagation(); ev.preventDefault(); }
+  var i=byIdIdea(id); if(!i) return;
+  promoIdeaId=id;
+  var m=document.getElementById('promo-menu');
+  m.innerHTML='<div class="promo-title">'+safe(i.title)+'</div>'+
+    '<button class="promo-opt" onclick="promoAction(\'gravar\')">🎬 Gravar hoje</button>'+
+    '<button class="promo-opt" onclick="promoAction(\'story\')">📱 Virar story de hoje</button>'+
+    '<button class="promo-opt" onclick="promoAction(\'amanha\')">📤 Publicar amanhã</button>'+
+    '<button class="promo-opt" onclick="promoAction(\'data\')">📅 Escolher data…</button>'+
+    '<button class="promo-cancel" onclick="closePromo()">Cancelar</button>';
+  document.getElementById('promo-bg').classList.add('open');
+}
+function closePromo(){
+  promoIdeaId=null;
+  document.getElementById('promo-bg').classList.remove('open');
+}
+function promoAction(act){
+  var id=promoIdeaId, i=byIdIdea(id);
+  if(!i){ closePromo(); return; }
+  var t=todayISO();
+  if(act==='gravar'){
+    i.gravarDate=t;
+    if(i.status==='Nao Iniciado') i.status='Fila de Gravacao';
+    persistIdea(i); showToast('🎬 Na pauta de gravação de hoje!');
+  } else if(act==='story'){
+    addStory(t,i.title,i.id); showToast('📱 Story de hoje adicionado!');
+  } else if(act==='amanha'){
+    i.scheduledDate=addDaysISO(t,1);
+    persistIdea(i); showToast('📤 Publicação marcada para amanhã');
+  } else if(act==='data'){
+    closePromo(); reagendarIdea(id); return;
+  }
+  closePromo(); render();
+}
+
+/* ── Banco de ideias (gaveta desktop) ── */
+function toggleBank(){ document.getElementById('bank-drawer').classList.toggle('open'); }
+function setBankCat(c){ bankCat=c; buildBank(); }
+function bankFromStories(){
+  if(isDesktop()){
+    var dEl=document.getElementById('bank-drawer');
+    if(dEl) dEl.classList.add('open');
+    buildBank();
+    showToast('Arraste uma ideia para os Stories ou use ⤴');
+  } else {
+    pipeGo('Nao Iniciado');
+    showToast('Toque em ⤴ numa ideia para promover');
+  }
+}
+function buildBank(){
+  var grid=document.getElementById('bank-grid'); if(!grid) return;
+  var all=ideas.filter(function(i){ return i.status==='Nao Iniciado'; });
+  var cntEl=document.getElementById('bank-cnt');
+  if(cntEl) cntEl.textContent=all.length+' ideia'+(all.length!==1?'s':'');
+  var chipsEl=document.getElementById('bank-chips');
+  if(chipsEl){
+    var cats=allCats();
+    if(bankCat!=='todos' && cats.indexOf(bankCat)===-1) bankCat='todos';
+    var ch='<button class="bank-chip'+(bankCat==='todos'?' on':'')+'" onclick="setBankCat(\'todos\')">Todos</button>';
+    for(var c=0;c<cats.length;c++)
+      ch+='<button class="bank-chip'+(bankCat===cats[c]?' on':'')+'" onclick="setBankCat(\''+safe(cats[c])+'\')">'+safe(cats[c])+'</button>';
+    chipsEl.innerHTML=ch;
+  }
+  var list=(bankCat==='todos')?all:all.filter(function(i){ return catsOf(i).indexOf(bankCat)!==-1; });
+  var h='';
+  if(!list.length) h='<div class="bank-empty">Nenhuma ideia aqui ainda — crie em ＋ Nova Ideia.</div>';
+  for(var k=0;k<list.length;k++){
+    var i=list[k], cat=catsOf(i)[0]||'';
+    h+='<div class="bcard" draggable="true" ondragstart="bankDrag(event,\''+safe(i.id)+'\')" onclick="openModal(\''+safe(i.id)+'\')">'+
+      '<div class="bcard-title">'+safe(i.title)+'</div>'+
+      '<div class="bcard-foot">'+(cat?'<span class="pilar">'+safe(cat)+'</span>':'')+
+      '<button class="bcard-promote" title="Promover" onclick="openPromo(\''+safe(i.id)+'\',event)">⤴</button></div>'+
+    '</div>';
+  }
+  grid.innerHTML=h;
+}
+
+/* ── Drag-and-drop banco → painel ── */
+function bankDrag(ev,id){
+  ev.dataTransfer.setData('text/plain',id);
+  ev.dataTransfer.effectAllowed='move';
+}
+function dragOverZ(ev){ ev.preventDefault(); ev.currentTarget.classList.add('drop-on'); }
+function dragLeaveZ(ev){ ev.currentTarget.classList.remove('drop-on'); }
+function dropOn(ev,kind,arg){
+  ev.preventDefault();
+  ev.currentTarget.classList.remove('drop-on');
+  var id=ev.dataTransfer.getData('text/plain'); if(!id) return;
+  var i=byIdIdea(id); if(!i) return;
+  var t=todayISO();
+  if(kind==='gravar'){
+    i.gravarDate=t;
+    if(i.status==='Nao Iniciado') i.status='Fila de Gravacao';
+    persistIdea(i); showToast('🎬 Na pauta de gravação de hoje!');
+  } else if(kind==='story'){
+    addStory(t,i.title,i.id); showToast('📱 Story de hoje adicionado!');
+  } else if(kind==='day'){
+    i.scheduledDate=arg;
+    persistIdea(i); showToast('📅 Publicação agendada para '+fmtDate(arg));
+  }
+  render();
+}
+
+/* ============================================================
    MODAL — idea
    ============================================================ */
 var FMT_OPTS=['Reels','Carrossel','Stories','Feed'];
@@ -996,6 +1483,7 @@ function openModal(id){
   document.getElementById('modal-title').textContent=idea?'Editar Ideia':'Nova Ideia';
   document.getElementById('f-title').value=idea?idea.title:'';
   document.getElementById('f-date').value=idea?(idea.scheduledDate||''):'';
+  document.getElementById('f-gravar').value=idea?(idea.gravarDate||''):'';
   document.getElementById('new-cat-inp').value='';
   document.getElementById('btn-del').style.display=idea?'block':'none';
   fCats = idea ? catsOf(idea).slice() : (fCats.length?fCats:[CATS[0]]);
@@ -1027,12 +1515,13 @@ function saveIdea(){
   var legenda=getRteHtml('rte-legenda');
   var notas  =getRteHtml('rte-notas');
   var sdate=document.getElementById('f-date').value||'';
+  var gdate=document.getElementById('f-gravar').value||'';
   if(editId){
     for(var i=0;i<ideas.length;i++){
       if(ideas[i].id===editId){
         ideas[i].title=title; ideas[i].categories=fCats.slice(); ideas[i].formatos=fFmts.slice();
         ideas[i].status=fSt; ideas[i].notes=notas; ideas[i].roteiro=roteiro; ideas[i].legenda=legenda;
-        ideas[i].platforms=fPlats.slice(); ideas[i].scheduledDate=sdate;
+        ideas[i].platforms=fPlats.slice(); ideas[i].scheduledDate=sdate; ideas[i].gravarDate=gdate;
         break;
       }
     }
@@ -1040,7 +1529,7 @@ function saveIdea(){
   } else {
     ideas.unshift({id:uid(),title:title,categories:fCats.slice(),formatos:fFmts.slice(),status:fSt,
       notes:notas,roteiro:roteiro,legenda:legenda,platforms:fPlats.slice(),scheduledDate:sdate,
-      createdAt:new Date().toISOString()});
+      gravarDate:gdate,createdAt:new Date().toISOString()});
     showToast('Ideia salva!');
   }
   var syncIdea = editId ? ideas.find(function(i){return i.id===editId;}) : ideas[0];
@@ -1197,9 +1686,15 @@ document.getElementById('btn-del').onclick=deleteIdea;
 document.getElementById('btn-add-cat').onclick=addCustomCat;
 document.getElementById('day-bg').onclick=function(e){if(e.target===document.getElementById('day-bg'))closeDayModal();};
 
-// Auto-save do rascunho: título e data
+// Auto-save do rascunho: título e datas
 document.getElementById('f-title').addEventListener('input', scheduleDraft);
 document.getElementById('f-date').addEventListener('change', scheduleDraft);
+document.getElementById('f-gravar').addEventListener('change', scheduleDraft);
+
+// Menu Promover (⤴): clicar fora fecha
+document.getElementById('promo-bg').addEventListener('click', function(e){
+  if(e.target===this) closePromo();
+});
 // Auto-save do rascunho: editores ricos (contenteditable)
 ['rte-roteiro','rte-legenda','rte-notas'].forEach(function(id){
   var el = document.getElementById(id);
@@ -1210,6 +1705,7 @@ document.getElementById('f-date').addEventListener('change', scheduleDraft);
 document.addEventListener('keydown',function(e){
   if(e.key==='Escape'){
     if(_openDD){ _openDD=null; applyDDOpen(); }
+    else if(document.getElementById('promo-bg').classList.contains('open')) closePromo();
     else if(document.getElementById('tp-bg').classList.contains('open')) closeTeleprompter();
     else if(document.getElementById('gravacao-bg').classList.contains('open')) closeGravacao();
     else if(document.getElementById('modal-bg').classList.contains('open')) closeModal();
@@ -1227,6 +1723,7 @@ for(var si=0;si<stBtns.length;si++){(function(btn){btn.onclick=function(){
    INIT
    ============================================================ */
 loadData();
+setView('hoje');   // home = painel do dia (ajusta visibilidade de todas as views)
 updateInboxBadges();
 
 // Atualiza badge do inbox quando storage muda (ex: nota salva no Instagram)
