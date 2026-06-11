@@ -18,7 +18,7 @@
   <title>Lista de Conteúdos · Meu Studio</title>
   <link rel="stylesheet" href="../shared/css/tokens.css">
   <link rel="stylesheet" href="../shared/css/base.css">
-  <link rel="stylesheet" href="./styles/conteudo.css?v=cmd1">
+  <link rel="stylesheet" href="./styles/conteudo.css?v=acv1">
 </head>
 <body>
 
@@ -66,6 +66,7 @@
     <button class="d-sb-nav-item" data-nav="hoje"  onclick="setView('hoje')"><span class="d-sb-nav-ico">☀️</span>Hoje</button>
     <button class="d-sb-nav-item" data-nav="cal"   onclick="setView('cal')"><span class="d-sb-nav-ico">📅</span>Agenda</button>
     <button class="d-sb-nav-item" data-nav="list"  onclick="setView('list')"><span class="d-sb-nav-ico">💡</span>Ideias</button>
+    <button class="d-sb-nav-item" data-nav="acervo" onclick="setView('acervo')"><span class="d-sb-nav-ico">🎞️</span>Acervo<span class="acv-nav-badge" id="acv-nav-badge"></span></button>
     <button class="d-sb-nav-item" data-nav="inbox" onclick="setView('inbox')"><span class="d-sb-nav-ico">📥</span>Inbox<span class="inbox-badge inbox-badge-sb" id="inbox-badge-sb"></span></button>
   </nav>
 
@@ -163,6 +164,9 @@
 
 <!-- INBOX VIEW -->
 <div class="inbox-view" id="inbox-view" style="display:none"></div>
+
+<!-- ACERVO VIEW — banco de matéria-prima -->
+<div class="acervo-view" id="acervo-view" style="display:none"></div>
 
 <!-- CALENDAR VIEW -->
 <div class="cal-wrap" id="cal-wrap">
@@ -282,6 +286,19 @@
   </div>
 </div>
 
+<!-- ACERVO — MODAL NOVO/EDITAR MATERIAL -->
+<div class="acv-modal-bg" id="acv-modal-bg">
+  <div class="acv-modal" id="acv-modal"></div>
+</div>
+
+<!-- ACERVO — MODAL DETALHE DO MATERIAL (galeria + oportunidades) -->
+<div class="acv-detail-bg" id="acv-detail-bg">
+  <div class="acv-detail" id="acv-detail"></div>
+</div>
+
+<!-- input de arquivo reutilizado pela captura (fotos + vídeos) -->
+<input type="file" id="acv-file-input" accept="image/*,video/*" multiple style="display:none">
+
 <div class="toast" id="toast"></div>
 
 <!-- GAVETA — BANCO DE IDEIAS (desktop, só na view Hoje) -->
@@ -306,6 +323,7 @@
   <button class="m-tab"    data-nav="stories" onclick="setView('stories')"><span class="m-tab-ico">📱</span><span class="m-tab-lbl">Stories</span></button>
   <button class="m-tab"    data-nav="cal"     onclick="setView('cal')"><span class="m-tab-ico">📅</span><span class="m-tab-lbl">Agenda</span></button>
   <button class="m-tab"    data-nav="list"    onclick="setView('list')"><span class="m-tab-ico">💡</span><span class="m-tab-lbl">Ideias</span></button>
+  <button class="m-tab"    data-nav="acervo"  onclick="setView('acervo')"><span class="m-tab-ico">🎞️</span><span class="m-tab-lbl">Acervo</span></button>
 </nav>
 
 <!-- MENU PROMOVER IDEIA (⤴) -->
@@ -354,8 +372,8 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="../config.js"></script>
-<script src="../shared/js/db.js?v=cmd1"></script>
-<script src="./scripts/conteudo.js?v=cmd1"></script>
+<script src="../shared/js/db.js?v=acv1"></script>
+<script src="./scripts/conteudo.js?v=acv1"></script>
 <script src="../shared/js/quick-notes.js"></script>
 <script>QuickNotes.init('conteudo');</script>
 <script src="../shared/js/global-search.js"></script>

@@ -263,16 +263,15 @@
   html, body { height: 100%; overflow: hidden; }
   body {
     max-width: none;
-    background: linear-gradient(135deg, #f0ebe8 0%, #e8e0db 100%);
+    background: var(--bg);
     overflow-x: hidden;
   }
 
+  /* Tela cheia: o app ocupa toda a largura da janela */
   #cont-app {
-    max-width: 1180px;
-    margin: 0 auto;
+    max-width: none;
+    margin: 0;
     background: var(--bg);
-    box-shadow: 0 8px 48px rgba(56,25,11,.13);
-    border-radius: 0 0 20px 20px;
     height: 100vh;
     display: flex;
     flex-direction: row;
@@ -288,7 +287,6 @@
     flex-shrink: 0;
     background: linear-gradient(160deg, #3d1e12 0%, #5a2e1e 55%, #8B6B61 100%);
     padding: 22px 15px 28px;
-    border-radius: 0 0 0 20px;
     height: 100%;
     overflow-y: auto;
   }
@@ -1420,6 +1418,14 @@
   /* paddings das views (tabs mobile não existem) */
   .list-view { padding-bottom: 48px; }
   .cal-wrap, .inbox-view { padding-bottom: 48px; }
+}
+
+/* Telas bem largas: mais respiro nas zonas */
+@media (min-width: 1500px) {
+  .hoje-view { padding: 30px 44px 64px; }
+  .hj-zones { gap: 34px; }
+  .list-view { padding-left: 36px; padding-right: 36px; }
+  .cal-wrap { padding-left: 36px; padding-right: 36px; }
 }
 
 /* Tablet (700–1023px): zonas em 2 colunas, Hoje em cima */
