@@ -1,6 +1,6 @@
 # Backlog · Meu Studio
 
-> Última revisão: 2026-06-10 (Validador; consolidação dos roadmaps; + descrições em linguagem simples e novas sugestões 🆕 no pool por módulo)
+> Última revisão: 2026-06-11 (2.2 ✅ auth Conteúdo · 2.1 e 4.1 adiados · 5.6 evoluiu para o Épico 7 · Assistente de Publicação + Feed Planner)
 > Fonte da verdade do que está pendente, em ordem de prioridade.
 > Atualize ao concluir um item, mover prioridade ou adicionar novo escopo.
 
@@ -139,14 +139,15 @@ Generalizar painel teto MEI pra outros regimes:
 ## 🟡 P2 · Design System (outros módulos)
 
 ### 4.1 · Onda 7 · Refactor visual de outros módulos
-Não inspecionados nesta rodada. Cada um tem CSS próprio.
+> ⏸️ **Adiado (2026-06-11)** — a inspeção mostrou que os módulos **já estão na mesma faixa do Financeiro** no uso de tokens (Clientes ~79%, Orçamentos ~75%, Conteúdo ~70% vs Financeiro ~84%) e carregam os mesmos `tokens.css`/`base.css`, então provavelmente já parecem consistentes. Padronização visual é julgamento de aparência e precisa de **teste na tela** (não dá pra fazer no ambiente atual): trocar cores "no escuro" arrisca piorar. Retomar quando a Carol **apontar telas/elementos específicos** que destoam. Mais divergentes hoje (mais cores fixas): `centro-de-marca.html` (118) e `direcao-criativa.html` (63).
+
+Escopo provável por módulo:
 
 | Módulo | Path | Provável escopo |
 |---|---|---|
 | **Clientes** | `clientes/` | CTAs, listas, filtros — aplicar `.ftab`, `.add-btn--*` |
 | **Orçamentos** | `orcamentos/` | Tem upload de comprovantes. Padronizar UI |
-| **Confirmação** | `confirmacao/` | HTML estático com agendamentos |
-| **Conteúdo** | `conteudo/` | Brand-brain, centro-de-marca, concorrentes, direcao-criativa |
+| **Conteúdo** | `conteudo/` | brand-brain, centro-de-marca, concorrentes, direcao-criativa |
 
 **Esforço**: ~1–2h por módulo · **Por que P2**: Financeiro/Fiscal são uso diário; outros menos.
 
@@ -178,8 +179,8 @@ Setup Vitest/Playwright cobrindo fluxos críticos (Noiva, Import OFX, Save Entry
 ### 5.5 · Modularização JS / build step (roadmap raiz)
 Hoje é vanilla sem bundler. Arquivos grandes (`instagram.js` ~4k linhas, `conteudo.js` ~1.5k). Avaliar split em ES modules ou um build mínimo. **Por que P3**: funciona bem assim; só vale quando a manutenção pesar.
 
-### 5.6 · Publicação direta no Instagram (roadmap Conteúdo)
-Integrar com a Instagram Graph API pra publicar/agendar direto do módulo Conteúdo (hoje só planeja). **Grande** · depende de permissões de publishing da API · **Por que P3**: alto esforço/risco vs. ganho.
+### 5.6 · → evoluiu para o Épico 7
+Era "publicar direto via Graph API". A Carol expandiu (2026-06-11) para um **Assistente de Publicação + Feed Planner** completo. Ver **Épico 7** (abaixo). O "publicar direto" virou o sub-item opcional 7.C.
 
 ---
 
@@ -311,6 +312,41 @@ Pool de melhorias pequenas (esforço ≤ 3h cada). Cada item tem uma descrição
 - [ ] **6.L.3** · **Notificação D-1 da data agendada** — lembrete na véspera *(depende do 5.1 PWA)*. Esforço: ~1h
 - [ ] **6.L.4** · **Drag-and-drop no calendário em iOS** — hoje só funciona no computador; faltam os toques pra arrastar no iPhone. Esforço: ~2h
 - [ ] 🆕 **6.L.5 · Banco de ideias rápidas** — joga uma ideia solta (só o título) sem preencher tudo, pra organizar e agendar depois. Não perde insight de conteúdo na correria. ~45min
+
+---
+
+## 🚀 7 · Épico · Assistente de Publicação + Feed Planner (Instagram)
+
+> Evolução do antigo 5.6. Deixa de ser "publicar via API" e vira um **estrategista de conteúdo + gestor de Instagram + planejador visual de feed**: ajuda a decidir **antes** de publicar, não só gera texto.
+>
+> **Reaproveita muito do que já existe:** o **Validador de Post** (mídia + briefing → análise, legenda, hook, CTA, capa, potencial de performance), o **heatmap de melhores horários** e a aba **Performance** do módulo Instagram, e o **Brand Brain**. Boa parte do **7.A é estender o Validador**; o **7.B (Feed Planner) é o pedaço realmente novo**.
+>
+> É um **épico** — fazer em fatias; cada sub-item entrega valor sozinho.
+
+### 7.A · Assistente de Conteúdo (evolução do Validador)
+- [ ] **7.A.1 · Legenda em 4 estilos** — além da legenda única de hoje, gerar versões **educativa / emocional / persuasiva / conversacional** pra você escolher. ~2h
+- [ ] **7.A.2 · SEO do Instagram** — descrição/texto alternativo, palavras-chave principais e termos que devem aparecer na legenda pro alcance. ~2h
+- [ ] **7.A.3 · Hashtags + potencial de alcance** — conjunto recomendado (mix de nicho e volume) + leitura do potencial de alcance. ~2h
+- [ ] **7.A.4 · Melhor dia e horário** — cruza com o heatmap de pico que o módulo Instagram já calcula pra recomendar quando postar. ~1h30
+- [ ] **7.A.5 · Formato + impulsionamento** — recomenda Reel/Carrossel/Foto/Stories (o Validador já indica formato) e sugere impulsionar quando fizer sentido. ~1h
+- [ ] **7.A.6 · Plano de distribuição** — stories de apoio, enquete, caixa de perguntas e repost posterior pra cada publicação. ~2h
+- [ ] **7.A.7 · Análise estratégica estendida** — potenciais de **alcance / conexão / autoridade / conversão**, clareza da mensagem e aderência ao posicionamento + pontos fortes/fracos/oportunidades/sugestões (o Validador já cobre parte; aqui explicita "conexão" e "autoridade"). ~2h
+
+### 7.B · Feed Planner + Preview (módulo novo — o coração do pedido)
+- [ ] **7.B.1 · Grid de preview do feed (3 colunas)** — simula o feed real: posts já publicados (puxados via Graph API, que o módulo já usa) + posts futuros do planejamento. ~4h
+- [ ] **7.B.2 · Arrastar e reorganizar / simular sequências** — drag-and-drop pra testar a ordem antes de publicar e salvar o plano. ~3h
+- [ ] **7.B.3 · Marcar cada post por pilar** — autoridade / bastidores / prova social / venda / pessoal (base pra análise de equilíbrio). ~1h30
+- [ ] **7.B.4 · Análise automática do feed (IA)** — equilíbrio de pilares, excesso de um tipo, pilar faltando, harmonia visual (cores/formatos repetidos), se transmite autoridade e conexão, e coerência com o posicionamento. ~3h
+- [ ] **7.B.5 · Sugestão dos próximos conteúdos** — o que postar a seguir pra equilibrar o feed (estratégico + visual). ~2h
+
+### 7.C · Publicar/agendar direto (o 5.6 original) — opcional, por último
+- [ ] **7.C.1 · Publicação via Graph API** — postar/agendar direto do app. Depende de **permissões de publishing da Meta** (app review) — maior risco/burocracia. Pode ficar fora do MVP do épico. ~grande
+
+**Observações / dependências:**
+- **Custo de IA**: a análise do feed (7.B.4) manda várias imagens pro Claude Vision — pesar custo por análise.
+- **Integração de dados**: 7.B precisa casar mídias publicadas (Graph API) com o planejamento (`conteudo_ideas` / módulo Conteúdo).
+- **Ordem sugerida**: 7.A (rápidos, reusam o Validador) → 7.B (módulo novo) → 7.C por último (se valer a burocracia da Meta).
+- **Onde mora**: provável aba nova no módulo **Instagram** (já tem token, performance, heatmap e o Validador) integrada ao **Conteúdo** (planejamento).
 
 ---
 
