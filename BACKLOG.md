@@ -92,6 +92,8 @@ Cartão no painel MEI que aparece em Jan–Abr com "Prazo IR se aproxima · falt
 ## 🟢 P1 · Tech debt urgente
 
 ### 2.1 · Onda 5 · Refactor modais (`_pick` extraído)
+> ⏸️ **Adiado (2026-06-11)** — benefício só interno (Carol não vê diferença), risco médio no coração financeiro e refatorar sem ambiente de teste não compensa agora. Retomar **quando for criar modais novos** (é o gatilho abaixo).
+
 Helper `openFormModal({title, fields, onSave})` substitui ~200 linhas duplicadas em 5 modais (`openEditEntry`, `openEditSaida`, `openAddNoiva`, `openNoivaPgto`, `openEditNoivaContrato`).
 
 **Por que P1**: antes de criar modais novos pra Sprint 4 polishing (ex: "Marcar como pessoal" no atalho do checklist), refatorar evita escrever código que vai ser jogado fora.
