@@ -1,6 +1,6 @@
 # Backlog · Meu Studio
 
-> Última revisão: 2026-06-10 (Validador de Post: reavaliação iterativa + chat de aprofundamento)
+> Última revisão: 2026-06-10 (Validador; + consolidação dos roadmaps espalhados nos CLAUDE.md dos módulos)
 > Fonte da verdade do que está pendente, em ordem de prioridade.
 > Atualize ao concluir um item, mover prioridade ou adicionar novo escopo.
 
@@ -100,6 +100,11 @@ Helper `openFormModal({title, fields, onSave})` substitui ~200 linhas duplicadas
 
 **Quando NÃO fazer**: se não pretende adicionar modais novos tão cedo.
 
+### 2.2 · `checkAuth()` no boot do Conteúdo
+O módulo `conteudo/` carrega **sem guard de login** (diferente dos outros módulos). Qualquer um com a URL vê o planejamento. Adicionar `checkAuth()` no boot, igual ao Financeiro/Instagram.
+
+**Por que P1**: gap de consistência/segurança, e é barato. **Esforço**: ~15min · **Arquivo**: `conteudo/scripts/conteudo.js` (boot).
+
 ---
 
 ## 🟡 P2 · Funcionalidades novas (Fiscal)
@@ -170,6 +175,12 @@ Setup Vitest/Playwright cobrindo fluxos críticos (Noiva, Import OFX, Save Entry
 
 **Esforço**: ~1 semana setup razoável · **Por que P3**: usuária única, mas valeria pra dormir tranquila.
 
+### 5.5 · Modularização JS / build step (roadmap raiz)
+Hoje é vanilla sem bundler. Arquivos grandes (`instagram.js` ~4k linhas, `conteudo.js` ~1.5k). Avaliar split em ES modules ou um build mínimo. **Por que P3**: funciona bem assim; só vale quando a manutenção pesar.
+
+### 5.6 · Publicação direta no Instagram (roadmap Conteúdo)
+Integrar com a Instagram Graph API pra publicar/agendar direto do módulo Conteúdo (hoje só planeja). **Grande** · depende de permissões de publishing da API · **Por que P3**: alto esforço/risco vs. ganho.
+
 ---
 
 ## 🟢 P1 · Sugestões pequenas por módulo
@@ -200,6 +211,7 @@ Pool de melhorias pequenas (esforço ≤ 3h cada) baseadas em inspeção dos mó
 - [ ] **6.B.7** · **Anotações por cliente** — campo livre (preferências: cor batom, alérgica a Y, gosta de chá). Esforço: ~1h30
 - [ ] **6.B.8** · **Tags por cliente** — VIP, social, casamento, formatura. Filtro por tag. Esforço: ~1h30
 - [x] **6.B.9** · ✅ Feito — painel "Follow Up": templates de mensagem, edição, copiar, enviar via `wa.me` + histórico de envios.
+- [ ] **6.B.10** · **Follow-up automático no módulo Tarefas** (roadmap Clientes) — ao registrar um atendimento, oferecer criar uma tarefa de retorno (ex.: "Chamar Ana em 30d"). Esforço: ~1h30
 
 ### 6.C · Orçamentos
 
@@ -211,6 +223,9 @@ Pool de melhorias pequenas (esforço ≤ 3h cada) baseadas em inspeção dos mó
 - [x] **6.C.6** · ✅ Coberto pelo Sistema de Alertas (regra "orçamento parado" 7d/14d).
 - [ ] **6.C.7** · **Reapresentar orçamento** — botão "reenviar com novo valor" reusa template, gera novo `id`. Esforço: ~1h
 - [ ] **6.C.8** · **Histórico de preços por cliente** — "Maria pagou R$ 350 nesse serviço da última vez". Esforço: ~1h
+- [ ] **6.C.9** · **Preview do evento Google Agenda** (roadmap Orçamentos) — mostrar como vai ficar o evento antes de criar no fechamento. Esforço: ~1h
+- [ ] **6.C.10** · **Histórico de mudanças de status** (roadmap Orçamentos) — log de quando o orçamento passou por enviado → fechado/perdido. Esforço: ~1h30
+- [ ] **6.C.11** · **Follow-up vencendo → Tarefas** (roadmap Orçamentos) — ao salvar orçamento com `prox_followup`, criar tarefa automática de retorno. Esforço: ~1h · *(par do 6.B.10 / 6.K)*
 
 ### 6.D · Estoque
 
@@ -222,6 +237,8 @@ Pool de melhorias pequenas (esforço ≤ 3h cada) baseadas em inspeção dos mó
 - [ ] **6.D.6** · **Link de compra externo** — URL no card (Amazon, Mercado Livre). 1 clique abre a página. Esforço: ~20min
 - [ ] **6.D.7** · **Soma do estoque + soma da wishlist** — totais no header ("Custo do estoque: R$ X · Comprar tudo da wishlist: R$ Y"). Esforço: ~30min
 - [ ] **6.D.8** · **Última compra + data** — vê quando foi a última reposição de cada produto. Esforço: ~45min
+- [ ] **6.D.9** · **Categorias personalizáveis** (roadmap Estoque) — igual ao módulo Conteúdo, criar/filtrar categorias próprias de produtos. Esforço: ~1h30
+- [ ] **6.D.10** · **Fornecedores/lojas** (roadmap Estoque) — cadastro de lojas com link de compra, reaproveitável entre produtos (amplia o 6.D.6). Esforço: ~1h30
 
 ### 6.E · Insights de dinheiro (Financeiro/Fiscal)
 
@@ -257,6 +274,35 @@ Pool de melhorias pequenas (esforço ≤ 3h cada) baseadas em inspeção dos mó
 
 - [ ] **6.I.1** · **Chat na aba Insights IA** — levar o mesmo chat de aprofundamento (já feito no Validador) para a Análise Estratégica, pra aprofundar/contestar insights sem refazer a análise. Reaproveita `callClaudeChat` + componente de thread. Esforço: ~1h30
 - [ ] **6.I.2** · **Guardar mídia das reavaliações no Storage** — hoje a mídia (carrossel/reel) precisa ser reanexada a cada reavaliação. Persistir no Supabase Storage pra comparar versões com imagem. Esforço: ~2h
+
+### 6.J · Financeiro · lista / resumo / export
+
+> Recuperados do roadmap em `financeiro/CLAUDE.md`.
+
+- [ ] **6.J.1** · **Filtro por serviço/tipo na tela Lista** — filtrar entradas por tipo de serviço. Esforço: ~45min
+- [ ] **6.J.2** · **Export CSV do Resumo** — botão "Baixar CSV" pra abrir no Excel/Sheets. Esforço: ~45min
+- [ ] **6.J.3** · **Gráfico mensal no Resumo** — linha de faturamento ao longo do ano (Chart.js já usado no Instagram). Esforço: ~1h30
+- [ ] **6.J.4** · **Comissão de assistente** — campo `comissao_assistente` em entries pra descontar do bruto e ver líquido real. Esforço: ~1h30
+
+### 6.K · Tarefas
+
+> Recuperados do roadmap em `tarefas/CLAUDE.md`.
+
+- [ ] **6.K.1** · **Tarefas recorrentes** — campo `recorrencia` (diária/semanal/mensal) + geração automática. Esforço: ~2h
+- [ ] **6.K.2** · **Categorias/projetos** — agrupar (Studio, Pessoal, Finanças) com filtro. Esforço: ~1h30
+- [ ] **6.K.3** · **Subnotes por tarefa** — textarea de notas no painel. Esforço: ~45min
+- [ ] **6.K.4** · **Arrastar pra reordenar** — drag-and-drop na lista Pendentes. Esforço: ~1h30
+- [ ] **6.K.5** · **Confetti ao concluir** — micro-detalhe de UX ao marcar feita. Esforço: ~30min
+- [ ] **6.K.6** · **Push quando o prazo chega** — service worker / PWA *(depende do 5.1)*. Esforço: incluído no 5.1
+
+### 6.L · Conteúdo (planejamento de posts)
+
+> Recuperados do roadmap em `conteudo/CLAUDE.md`. (Migração p/ Supabase **já feita** — removida da lista.)
+
+- [ ] **6.L.1** · **Campo de caption** — texto da legenda na ideia do post. Esforço: ~45min
+- [ ] **6.L.2** · **Exportar agenda do mês como imagem** — render do calendário em canvas pra compartilhar. Esforço: ~2h
+- [ ] **6.L.3** · **Notificação D-1 da data agendada** — lembrete na véspera *(depende do 5.1 PWA)*. Esforço: ~1h
+- [ ] **6.L.4** · **Drag-and-drop no calendário em iOS** — hoje só funciona em desktop (faltam touch events). Esforço: ~2h
 
 ---
 
