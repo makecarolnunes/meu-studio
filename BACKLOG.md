@@ -100,10 +100,8 @@ Helper `openFormModal({title, fields, onSave})` substitui ~200 linhas duplicadas
 
 **Quando NÃO fazer**: se não pretende adicionar modais novos tão cedo.
 
-### 2.2 · `checkAuth()` no boot do Conteúdo
-O módulo `conteudo/` carrega **sem guard de login** (diferente dos outros módulos). Qualquer um com a URL vê o planejamento. Adicionar `checkAuth()` no boot, igual ao Financeiro/Instagram.
-
-**Por que P1**: gap de consistência/segurança, e é barato. **Esforço**: ~15min · **Arquivo**: `conteudo/scripts/conteudo.js` (boot).
+### 2.2 · ✅ Auth guard no Conteúdo (feito 2026-06-10)
+O `conteudo/index.html` (lista de conteúdos) já tinha guard inline no `<head>`. As 6 sub-páginas — `brand-brain`, `centro-de-marca`, `concorrentes`, `direcao-criativa`, `tiktok`, `tiktok-radar` — **não tinham** e foram o gap real; agora têm o mesmo guard (redireciona ao Hub se a sessão for inválida).
 
 ---
 

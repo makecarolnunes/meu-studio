@@ -4,6 +4,17 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
+  <script>
+  /* Auth guard — redireciona ao hub se não houver sessão válida */
+  (function(){
+    try {
+      var s = JSON.parse(localStorage.getItem('mk_session') || 'null');
+      if (s && s.expires && Date.now() < s.expires) return;
+    } catch(e) {}
+    localStorage.removeItem('mk_session');
+    window.location.href = '../';
+  })();
+  </script>
   <title>Análise de Marca · Meu Studio</title>
   <link rel="stylesheet" href="../shared/css/tokens.css">
   <link rel="stylesheet" href="../shared/css/base.css">

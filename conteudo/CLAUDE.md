@@ -124,7 +124,7 @@ Mantida para compatibilidade com dados importados via GAS.
 
 ## Issues conhecidos
 
-- **Sem auth guard** — `checkAuth()` não é chamado no boot
+- ~~Sem auth guard~~ ✅ resolvido: guard inline no `<head>` de `index.html` e das 6 sub-páginas (redireciona ao Hub sem sessão)
 - **Sem Supabase** — dados ficam apenas no localStorage do dispositivo
 - Status `'Nao Iniciado'` sem acento — cuidado ao comparar (usar exatamente essa string)
 - Drag-and-drop no calendário não funciona em iOS (touch events não implementados)
@@ -148,7 +148,7 @@ Categorias customizadas ficam em `customCats` (localStorage). A lista final é `
 ## Roadmap
 
 - [ ] Migrar persistência para Supabase (`DB.conteudo`)
-- [ ] Adicionar `checkAuth()` no boot
+- [x] Auth guard no boot (inline no `<head>` de index.html + 6 sub-páginas)
 - [ ] Touch drag-and-drop no calendário (iOS)
 - [ ] Exportar agenda do mês como imagem (canvas)
 - [ ] Integração com Instagram API para publicação direta
