@@ -534,20 +534,33 @@ window.DB = {
           inputs:      r.inputs || {},
           result:      r.result || {},
           usage:       r.usage_json || null,
+          revisions:   r.revisions || [],
+          chat:        r.chat || [],
         }));
       },
       async upsert(v) {
         _guard();
-        const row = {
+        const base = {
           id:           String(v.id || Date.now()),
           generated_at: new Date(v.generatedAt || Date.now()).toISOString(),
           inputs:       v.inputs || {},
           result:       v.result || {},
           usage_json:   v.usage || null,
         };
-        const { error } = await _sb
+        const row = { ...base, revisions: v.revisions || [], chat: v.chat || [] };
+        let { error } = await _sb
           .from('instagram_validations')
           .upsert(row, { onConflict: 'id' });
+        // Resiliência: se as colunas revisions/chat ainda não existem
+        // (migration supabase-instagram-reavaliacao-chat.sql não rodada),
+        // o Supabase devolve PGRST204. Refaz o upsert sem essas colunas
+        // pra não quebrar o sync principal — reaval/chat ficam só locais.
+        if (error && (error.code === 'PGRST204' || /revisions|chat|schema cache|column/i.test(error.message || ''))) {
+          console.warn('[db] colunas revisions/chat ausentes — sync sem elas. Rode supabase-instagram-reavaliacao-chat.sql.');
+          ({ error } = await _sb
+            .from('instagram_validations')
+            .upsert(base, { onConflict: 'id' }));
+        }
         if (error) throw error;
       },
       async remove(id) {

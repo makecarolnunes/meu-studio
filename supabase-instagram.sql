@@ -17,8 +17,13 @@ CREATE TABLE IF NOT EXISTS instagram_validations (
   inputs       JSONB NOT NULL,
   result       JSONB NOT NULL,
   usage_json   JSONB,
+  revisions    JSONB DEFAULT '[]'::jsonb,  -- histórico de reavaliações (snapshots leves)
+  chat         JSONB DEFAULT '[]'::jsonb,  -- conversa de aprofundamento da análise
   created_at   TIMESTAMPTZ DEFAULT now()
 );
+
+-- Para tabelas já existentes (instalações antigas), rode também:
+--   supabase-instagram-reavaliacao-chat.sql
 
 CREATE INDEX IF NOT EXISTS idx_instagram_validations_generated_at
   ON instagram_validations (generated_at DESC);

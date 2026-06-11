@@ -1778,12 +1778,19 @@
     return out.replace(/,(\s*[}\]])/g, '$1'); // remove vírgula sobrando antes de } ou ]
   }
 
-  async function callClaude(promptOrContent) {
+  // Núcleo da chamada à Claude API. Aceita a lista de messages completa
+  // (multi-turno) + system opcional. Retorna { text, usage, json }.
+  async function claudeRequest(messages, opts) {
+    opts = opts || {};
     var key = getClaudeKey();
     if (!key) throw new Error('Chave Claude não configurada. Clica no botão de chave 🔑 pra configurar.');
 
-    // promptOrContent pode ser string (texto puro) ou array de content blocks (texto + imagens)
-    var content = typeof promptOrContent === 'string' ? promptOrContent : promptOrContent;
+    var body = {
+      model: 'claude-sonnet-4-5-20250929',
+      max_tokens: opts.maxTokens || 32000,
+      messages: messages
+    };
+    if (opts.system) body.system = opts.system;
 
     var res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -1794,11 +1801,7 @@
         'anthropic-beta': 'output-128k-2025-02-19',
         'anthropic-dangerous-direct-browser-access': 'true'
       },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-5-20250929',
-        max_tokens: 32000,
-        messages: [{ role: 'user', content: content }]
-      })
+      body: JSON.stringify(body)
     });
 
     var json = await res.json();
@@ -1814,25 +1817,54 @@
       throw new Error(em || 'Erro na Claude API');
     }
     if (!json.content || !json.content.length) throw new Error('Resposta vazia da Claude');
-    if (json.stop_reason === 'max_tokens') throw new Error('Resposta cortada (muitas imagens ou briefing longo). Tente com menos imagens ou um briefing mais curto.');
+    if (json.stop_reason === 'max_tokens' && !opts.allowTruncated) {
+      throw new Error('Resposta cortada (muitas imagens ou briefing longo). Tente com menos imagens ou um briefing mais curto.');
+    }
     var text = json.content.map(function(c) { return c.text || ''; }).join('');
+    return { text: text, usage: json.usage || null, json: json };
+  }
+
+  // Chamada que espera JSON estruturado (validador + análise estratégica).
+  // promptOrContent pode ser string (texto puro) ou array de content blocks (texto + imagens).
+  async function callClaude(promptOrContent) {
+    var resp = await claudeRequest([{ role: 'user', content: promptOrContent }], { maxTokens: 32000 });
+    var text = resp.text;
 
     // Extrai JSON (caso venha com cercas markdown apesar das instruções)
     var match = text.match(/\{[\s\S]*\}/);
     if (!match) throw new Error('JSON não encontrado na resposta. Texto:\n' + text.slice(0, 300));
     try {
       var parsed = JSON.parse(match[0]);
-      return { parsed: parsed, raw: text, usage: json.usage || null };
+      return { parsed: parsed, raw: text, usage: resp.usage };
     } catch (e) {
       // Tenta consertar JSON malformado pelo modelo (aspas internas, quebras de linha cruas)
       try {
         var repaired = JSON.parse(repairJson(match[0]));
         console.warn('[ig] JSON reparado após erro de parse:', e.message);
-        return { parsed: repaired, raw: text, usage: json.usage || null };
+        return { parsed: repaired, raw: text, usage: resp.usage };
       } catch (e2) {
         throw new Error('JSON inválido: ' + e.message + '\nTexto: ' + match[0].slice(0, 300));
       }
     }
+  }
+
+  // Chamada conversacional (chat de aprofundamento). Resposta em texto livre.
+  // turns = [{ role:'user'|'assistant', text }]; systemText = contexto da análise.
+  async function callClaudeChat(systemText, turns) {
+    // A API exige papéis alternados e começar com 'user'. Funde turnos
+    // consecutivos do mesmo papel (ex.: 2 perguntas seguidas após um erro).
+    var messages = [];
+    turns.forEach(function(t) {
+      var role = t.role === 'assistant' ? 'assistant' : 'user';
+      var last = messages[messages.length - 1];
+      if (last && last.role === role) last.content += '\n\n' + t.text;
+      else messages.push({ role: role, content: t.text });
+    });
+    if (!messages.length || messages[0].role !== 'user') {
+      messages.unshift({ role: 'user', content: '(início da conversa)' });
+    }
+    var resp = await claudeRequest(messages, { system: systemText, maxTokens: 3000, allowTruncated: true });
+    return { text: (resp.text || '').trim(), usage: resp.usage };
   }
 
   window.generateAnalysis = async function() {
@@ -2669,13 +2701,35 @@
   }
 
   // assetKind: 'images' | 'video' | null; assetMeta: { n?, duration? }
-  function buildValidatorPrompt(briefing, visual, assetKind, assetMeta) {
+  // prevValidation: validação anterior (quando é uma REAVALIAÇÃO) — opcional.
+  function buildValidatorPrompt(briefing, visual, assetKind, assetMeta, prevValidation) {
     var sections = [
       brandToText(),
       dataToText().split('### Insights da conta')[0],
     ].filter(Boolean);
 
     var ctx = sections.join('\n\n---\n\n');
+
+    // Bloco de contexto da reavaliação — passa a análise anterior pra IA comparar
+    var reavalBlock = '';
+    if (prevValidation) {
+      var pr = prevValidation.result || {};
+      var pin = prevValidation.inputs || {};
+      var probsTxt = (pr.problemas_identificados || []).map(function(p) {
+        return '  - [' + (p.gravidade || '?') + '] ' + (p.categoria ? p.categoria + ': ' : '') + (p.problema || '');
+      }).join('\n');
+      var melhoriasTxt = (pr.melhorias_sugeridas || []).map(function(m) {
+        return '  - ' + (m.antes ? '"' + m.antes + '" → ' : '') + (m.depois || '') + (m.porque ? ' (' + m.porque + ')' : '');
+      }).join('\n');
+      reavalBlock = '\n\n---\n\n## REAVALIAÇÃO — CONTEXTO DA ANÁLISE ANTERIOR\n\n' +
+        'Este post JÁ foi avaliado antes. A Carol ajustou o conteúdo com base no feedback e quer saber se evoluiu. Compare a versão NOVA (acima, em "POST EM AVALIAÇÃO") com a versão ANTERIOR abaixo.\n\n' +
+        '**Veredito anterior:** ' + (pr.veredito || '—') + (pr.score_geral != null ? ' · ' + pr.score_geral + '/10' : '') + '\n' +
+        (pr.veredito_resumo ? '**Resumo anterior:** ' + pr.veredito_resumo + '\n' : '') +
+        '**Briefing anterior:**\n' + (pin.briefing || '—') + '\n' +
+        (probsTxt ? '\n**Problemas apontados antes:**\n' + probsTxt + '\n' : '') +
+        (melhoriasTxt ? '\n**Melhorias sugeridas antes:**\n' + melhoriasTxt + '\n' : '') +
+        '\nALÉM da análise completa normal, preencha OBRIGATORIAMENTE o bloco `reavaliacao` no JSON: o que foi corrigido (com evidência na nova versão), o que AINDA falta, e quais problemas NOVOS surgiram. Seja honesta — se algo piorou ou não mudou, diga.\n';
+    }
 
     var assetBlock = '';
     if (assetKind === 'images') {
@@ -2705,12 +2759,22 @@
 '**Briefing / ideia:**\n' + briefing + '\n\n' +
 (visual ? '**Descrição visual (texto):**\n' + visual + '\n\n' : '') +
 assetBlock +
-'## OUTPUT — JSON ESTRUTURADO\n\n' +
+reavalBlock +
+'\n## OUTPUT — JSON ESTRUTURADO\n\n' +
 'Retorne SOMENTE JSON válido (sem markdown ```json```, sem prefácio). Use APENAS os blocos relevantes ao tipo de mídia anexada (carrossel → `analise_carrossel`; vídeo → `analise_reel`; imagem única → `analise_visual`; sem mídia → omita todos os 3 blocos visuais). Estrutura:\n\n' +
 '```json\n{\n' +
 '  "score_geral": 0,\n' +
 '  "veredito": "PUBLICAR|AJUSTAR|REPENSAR",\n' +
 '  "veredito_resumo": "1 frase justificando o veredito",\n' +
+(prevValidation ?
+'  "reavaliacao": {\n' +
+'    "nota_anterior": 0,\n' +
+'    "nota_atual": 0,\n' +
+'    "evolucao_resumo": "1-2 frases sobre o progresso desde a versão anterior",\n' +
+'    "pontos_corrigidos": [ { "ponto": "problema/recomendação anterior que foi resolvido", "evidencia": "o que na nova versão resolveu" } ],\n' +
+'    "pontos_pendentes": [ { "ponto": "ponto anterior que ainda NÃO foi resolvido", "o_que_falta": "o que ainda precisa mudar" } ],\n' +
+'    "novos_problemas": [ { "problema": "problema que NÃO existia antes e surgiu agora", "gravidade": "alta|media|baixa" } ]\n' +
+'  },\n' : '') +
 '  "pilar_identificado": { "pilar": "Noivas Premium|Autoridade Técnica|Cachos & Crespos|Carol-Presença|Produtos|Social Beauty", "justificativa": "por que esse pilar" },\n' +
 '  "alinhamento_brand_brain": { "score_0_10": 0, "pontos_fortes": ["..."], "pontos_fracos": ["..."] },\n' +
 '  "persona_atrai": { "principal": "P1|P2|P3|P4", "secundaria": "...", "justificativa": "..." },\n' +
@@ -2850,10 +2914,14 @@ assetBlock +
         var brief = (v.inputs && v.inputs.briefing || '').replace(/\n/g, ' ').slice(0, 60);
         var ver = (v.result && v.result.veredito) || '—';
         var verCls = ver === 'PUBLICAR' ? 'pub' : ver === 'AJUSTAR' ? 'adj' : ver === 'REPENSAR' ? 'rep' : '';
+        var revN = (v.revisions && v.revisions.length) || 0;
+        var chatN = (v.chat && v.chat.length) || 0;
+        var badges = (revN > 1 ? '<span class="hist-i-badge">🔄' + revN + '</span>' : '') +
+                     (chatN ? '<span class="hist-i-badge">💬' + chatN + '</span>' : '');
         return '<div class="hist-item" onclick="loadValidation(' + i + ')">' +
           '<div class="hist-i-l">' +
             '<div class="hist-i-brief">' + esc(brief) + (brief.length >= 60 ? '...' : '') + '</div>' +
-            '<div class="hist-i-meta">' + humanAgo(d) + ' · ' + esc(v.inputs && v.inputs.formato || '?') + '</div>' +
+            '<div class="hist-i-meta">' + humanAgo(d) + ' · ' + esc(v.inputs && v.inputs.formato || '?') + (badges ? ' · ' + badges : '') + '</div>' +
           '</div>' +
           '<div class="hist-i-ver ver-' + verCls + '">' + esc(ver) + '</div>' +
         '</div>';
@@ -2893,7 +2961,64 @@ assetBlock +
     toast('Histórico apagado');
   };
 
-  window.validatePost = async function() {
+  // Id da validação sendo reavaliada (null = validação nova).
+  var REVAL_TARGET = null;
+
+  function valBtnLabel() {
+    return REVAL_TARGET ? '🔄 Reavaliar com IA' : '✨ Validar com IA';
+  }
+
+  // Inicia o modo reavaliação: pré-preenche o form com a versão anterior
+  // pra Carol editar o que mudou e reanalisar mantendo o contexto.
+  window.startReavaliacao = function(id) {
+    var list = loadValidations();
+    var v = null;
+    for (var i = 0; i < list.length; i++) { if (list[i].id === id) { v = list[i]; break; } }
+    if (!v) { toast('Validação não encontrada', true); return; }
+
+    REVAL_TARGET = id;
+    if (v.inputs) {
+      var bf = document.getElementById('val-briefing');
+      var vs = document.getElementById('val-visual');
+      if (bf) bf.value = v.inputs.briefing || '';
+      if (vs) vs.value = v.inputs.visual || '';
+      if (v.inputs.formato) setValFormat(v.inputs.formato);
+      if (v.inputs.pilar) setValPilar(v.inputs.pilar);
+      if (v.inputs.objetivo) setValObj(v.inputs.objetivo);
+    }
+    clearValidatorAssets(); // File objects não são restauráveis — reanexar se mudou
+
+    var brief = (v.inputs && v.inputs.briefing || '').replace(/\n/g, ' ').slice(0, 70);
+    var banner = document.getElementById('val-reval-banner');
+    if (banner) {
+      banner.style.display = 'block';
+      banner.innerHTML =
+        '<div class="val-reval-banner-in">' +
+          '<div class="val-reval-banner-txt">🔄 <strong>Reavaliando</strong> · edite o conteúdo abaixo e clique em Reavaliar.' +
+            (brief ? '<div class="val-reval-banner-brief">“' + esc(brief) + (brief.length >= 70 ? '…' : '') + '”</div>' : '') +
+            '<div class="val-reval-banner-hint">📷 Se a mídia mudou, reanexe as fotos/vídeo.</div>' +
+          '</div>' +
+          '<button class="val-reval-banner-x" onclick="cancelReavaliacao()" aria-label="Cancelar reavaliação">✕</button>' +
+        '</div>';
+    }
+    var btn = document.getElementById('btn-validate');
+    if (btn) btn.textContent = valBtnLabel();
+    var form = document.querySelector('.validator-form');
+    if (form) form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    toast('Modo reavaliação — ajuste e reavalie');
+  };
+
+  window.cancelReavaliacao = function() {
+    REVAL_TARGET = null;
+    var banner = document.getElementById('val-reval-banner');
+    if (banner) { banner.style.display = 'none'; banner.innerHTML = ''; }
+    var btn = document.getElementById('btn-validate');
+    if (btn) btn.textContent = valBtnLabel();
+  };
+
+  window.validatePost = function() { runValidation(!!REVAL_TARGET); };
+
+  async function runValidation(isReval) {
     var briefing = (document.getElementById('val-briefing').value || '').trim();
     if (!briefing) {
       toast('Cole a ideia/briefing primeiro', true);
@@ -2909,13 +3034,21 @@ assetBlock +
       return;
     }
 
+    // Reavaliação: recupera a versão anterior pra IA comparar
+    var prevValidation = null;
+    if (isReval && REVAL_TARGET) {
+      var all = loadValidations();
+      for (var k = 0; k < all.length; k++) { if (all[k].id === REVAL_TARGET) { prevValidation = all[k]; break; } }
+      if (!prevValidation) { isReval = false; REVAL_TARGET = null; }
+    }
+
     var visual = (document.getElementById('val-visual').value || '').trim();
     var btn = document.getElementById('btn-validate');
     var statusEl = document.getElementById('validate-status');
     var resultEl = document.getElementById('validate-result');
 
-    if (btn) { btn.disabled = true; btn.textContent = '✨ Analisando...'; }
-    if (statusEl) statusEl.innerHTML = '<div class="spinner-sm"></div> Cruzando com Brand Brain + performance recente...';
+    if (btn) { btn.disabled = true; btn.textContent = isReval ? '🔄 Reavaliando...' : '✨ Analisando...'; }
+    if (statusEl) statusEl.innerHTML = '<div class="spinner-sm"></div> ' + (isReval ? 'Comparando com a análise anterior...' : 'Cruzando com Brand Brain + performance recente...');
     if (resultEl) resultEl.innerHTML = '';
 
     try {
@@ -2941,8 +3074,8 @@ assetBlock +
         });
       }
 
-      var prompt = buildValidatorPrompt(briefing, visual, assetKind, assetMeta);
-      console.log('[ig] validator prompt size:', prompt.length, '· mídia:', assetKind, assetMeta);
+      var prompt = buildValidatorPrompt(briefing, visual, assetKind, assetMeta, isReval ? prevValidation : null);
+      console.log('[ig] validator prompt size:', prompt.length, '· mídia:', assetKind, assetMeta, '· reaval:', isReval);
 
       var callPayload;
       if (visionBlocks.length) {
@@ -2970,40 +3103,79 @@ assetBlock +
         };
       }
 
-      var validation = {
-        id: String(Date.now()),
-        generatedAt: Date.now(),
-        inputs: {
-          briefing: briefing,
-          visual: visual,
-          formato: VAL_STATE.formato,
-          pilar: VAL_STATE.pilar,
-          objetivo: VAL_STATE.objetivo,
-          assets: inputAssets
-        },
-        result: result.parsed,
-        usage: result.usage
+      var now = Date.now();
+      var newInputs = {
+        briefing: briefing,
+        visual: visual,
+        formato: VAL_STATE.formato,
+        pilar: VAL_STATE.pilar,
+        objetivo: VAL_STATE.objetivo,
+        assets: inputAssets
       };
-      // Salva no histórico local (novo no topo) + Supabase
       var hist = loadValidations();
-      hist.unshift(validation);
+      var validation;
+
+      if (isReval && prevValidation) {
+        // Reavaliação: mesma análise, nova rodada. Mantém id + chat,
+        // espelha o topo na rodada nova e empilha o snapshot da progressão.
+        validation = prevValidation;
+        validation.revisions = Array.isArray(validation.revisions) && validation.revisions.length
+          ? validation.revisions
+          : [{ n: 1, generatedAt: validation.generatedAt, score: (validation.result && validation.result.score_geral) || 0, veredito: (validation.result && validation.result.veredito) || '' }];
+        validation.revisions.push({ n: validation.revisions.length + 1, generatedAt: now, score: result.parsed.score_geral || 0, veredito: result.parsed.veredito || '' });
+        validation.inputs = newInputs;
+        validation.result = result.parsed;
+        validation.usage = result.usage;
+        validation.generatedAt = now;
+        // Move pro topo do histórico (atividade mais recente)
+        hist = hist.filter(function(it) { return it.id !== validation.id; });
+        hist.unshift(validation);
+      } else {
+        validation = {
+          id: String(now),
+          generatedAt: now,
+          inputs: newInputs,
+          result: result.parsed,
+          usage: result.usage,
+          revisions: [{ n: 1, generatedAt: now, score: result.parsed.score_geral || 0, veredito: result.parsed.veredito || '' }],
+          chat: []
+        };
+        hist.unshift(validation);
+      }
+
       saveValidations(hist);
       pushValidationToSupabase(validation);
-      renderValidatorResult(result.parsed, validation.generatedAt, validation.id);
+
+      // Sai do modo reavaliação ANTES de renderizar (label do botão + barra de decisão)
+      if (isReval) {
+        REVAL_TARGET = null;
+        var banner = document.getElementById('val-reval-banner');
+        if (banner) { banner.style.display = 'none'; banner.innerHTML = ''; }
+      }
+
+      renderValidatorResult(validation.result, validation.generatedAt, validation.id);
       renderValidationHistory();
-      if (statusEl) statusEl.innerHTML = '<span class="t-caption">✓ Análise salva · ' + (result.usage ? fmtNum(result.usage.input_tokens) + ' → ' + fmtNum(result.usage.output_tokens) + ' tokens' : '') + '</span>';
+      if (statusEl) statusEl.innerHTML = '<span class="t-caption">✓ ' + (isReval ? 'Reavaliação salva' : 'Análise salva') + ' · ' + (result.usage ? fmtNum(result.usage.input_tokens) + ' → ' + fmtNum(result.usage.output_tokens) + ' tokens' : '') + '</span>';
     } catch (err) {
       console.error('[ig] validator error:', err);
       if (statusEl) statusEl.innerHTML = '<span style="color:var(--danger)">Erro: ' + esc(err.message) + '</span>';
       toast('Erro: ' + err.message, true);
     } finally {
-      if (btn) { btn.disabled = false; btn.textContent = '✨ Validar com IA'; }
+      if (btn) { btn.disabled = false; btn.textContent = valBtnLabel(); }
     }
-  };
+  }
 
   function renderValidatorResult(r, generatedAt, validationId) {
     var el = document.getElementById('validate-result');
     if (!el) return;
+
+    // Recupera a validação completa (chat + revisions) pelo id
+    var validation = null;
+    if (validationId) {
+      var vlist = loadValidations();
+      for (var vi = 0; vi < vlist.length; vi++) { if (vlist[vi].id === validationId) { validation = vlist[vi]; break; } }
+    }
+    var revisions = (validation && validation.revisions) || [];
 
     var verCls = r.veredito === 'PUBLICAR' ? 'ver-publish' :
                  r.veredito === 'AJUSTAR' ? 'ver-adjust' : 'ver-rethink';
@@ -3025,9 +3197,30 @@ assetBlock +
           (sentMark
             ? '<button class="btn btn-secondary" disabled>✓ Enviado ao Planejamento</button>'
             : '<button class="btn btn-primary" onclick="sendValidationToContent(\'' + esc(validationId) + '\', this)">📅 Enviar para Planejamento</button>') +
+          '<button class="btn btn-outline val-reval-btn" onclick="startReavaliacao(\'' + esc(validationId) + '\')">🔄 Reavaliar conteúdo</button>' +
           '<button class="btn btn-ghost" onclick="discardValidation(\'' + esc(validationId) + '\')">🗑 Descartar</button>' +
         '</div>' +
       '</div>';
+    }
+
+    // Régua de progressão (aparece a partir da 2ª rodada)
+    if (revisions.length > 1) {
+      html += '<div class="val-progress"><div class="val-progress-h">📈 Evolução do score</div><div class="val-progress-track">' +
+        revisions.map(function(rv, i) {
+          var rvCls = rv.veredito === 'PUBLICAR' ? 'vp-pub' : rv.veredito === 'AJUSTAR' ? 'vp-adj' : 'vp-rep';
+          var isLast = i === revisions.length - 1;
+          return '<div class="val-progress-step ' + rvCls + (isLast ? ' vp-current' : '') + '">' +
+              '<div class="val-progress-score">' + (rv.score != null ? rv.score : '—') + '</div>' +
+              '<div class="val-progress-lbl">' + (i === 0 ? 'Original' : 'Rev ' + (i + 1)) + '</div>' +
+            '</div>' +
+            (isLast ? '' : '<div class="val-progress-arrow">→</div>');
+        }).join('') +
+      '</div></div>';
+    }
+
+    // Bloco de reavaliação — o que evoluiu desde a versão anterior
+    if (r.reavaliacao) {
+      html += renderReavaliacaoBlock(r.reavaliacao);
     }
 
     html += '<div class="val-hero ' + verCls + '">' +
@@ -3495,8 +3688,187 @@ assetBlock +
       '</div>';
     }
 
+    // Chat de aprofundamento — conversa acoplada a esta análise
+    if (validationId) {
+      html += buildChatSectionHTML(validationId, (validation && validation.chat) || []);
+    }
+
     el.innerHTML = html;
     el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  // ── Bloco "O que evoluiu" (reavaliação) ───────────────────
+  function renderReavaliacaoBlock(rv) {
+    var na = rv.nota_anterior, nat = rv.nota_atual;
+    var delta = (typeof na === 'number' && typeof nat === 'number') ? (nat - na) : null;
+    var deltaCls = delta == null ? '' : delta > 0 ? 'rv-up' : delta < 0 ? 'rv-down' : 'rv-flat';
+    var deltaTxt = delta == null ? '' : (delta > 0 ? '▲ +' + delta : delta < 0 ? '▼ ' + delta : '= 0');
+
+    var html = '<div class="analysis-block val-reval-block">' +
+      '<div class="analysis-h">🔄 O que evoluiu desde a versão anterior</div>';
+
+    if (na != null || nat != null) {
+      html += '<div class="val-reval-scores">' +
+        '<div class="val-reval-score"><span class="val-reval-score-v">' + (na != null ? na : '—') + '</span><span class="val-reval-score-l">antes</span></div>' +
+        '<div class="val-reval-score-arrow ' + deltaCls + '">→' + (deltaTxt ? ' <span class="val-reval-delta">' + deltaTxt + '</span>' : '') + '</div>' +
+        '<div class="val-reval-score val-reval-score-now"><span class="val-reval-score-v">' + (nat != null ? nat : '—') + '</span><span class="val-reval-score-l">agora</span></div>' +
+      '</div>';
+    }
+    if (rv.evolucao_resumo) html += '<div class="diag-text">' + esc(rv.evolucao_resumo) + '</div>';
+
+    html += '<div class="val-reval-cols">';
+    // Corrigidos
+    html += '<div class="aud-col aud-col-good"><div class="aud-col-h">✓ Corrigidos</div>' +
+      ((rv.pontos_corrigidos && rv.pontos_corrigidos.length)
+        ? '<ul>' + rv.pontos_corrigidos.map(function(p) {
+            return '<li>' + esc(p.ponto || '') + (p.evidencia ? '<br><em class="val-reval-ev">↳ ' + esc(p.evidencia) + '</em>' : '') + '</li>';
+          }).join('') + '</ul>'
+        : '<div class="val-reval-empty">Nenhum ponto anterior resolvido ainda.</div>') +
+    '</div>';
+    // Pendentes
+    html += '<div class="aud-col aud-col-med"><div class="aud-col-h">⚠ Ainda pendentes</div>' +
+      ((rv.pontos_pendentes && rv.pontos_pendentes.length)
+        ? '<ul>' + rv.pontos_pendentes.map(function(p) {
+            return '<li>' + esc(p.ponto || '') + (p.o_que_falta ? '<br><em class="val-reval-ev">↳ ' + esc(p.o_que_falta) + '</em>' : '') + '</li>';
+          }).join('') + '</ul>'
+        : '<div class="val-reval-empty">Tudo o que foi apontado foi endereçado. 🎉</div>') +
+    '</div>';
+    // Novos problemas
+    html += '<div class="aud-col aud-col-bad"><div class="aud-col-h">🆕 Novos problemas</div>' +
+      ((rv.novos_problemas && rv.novos_problemas.length)
+        ? '<ul>' + rv.novos_problemas.map(function(p) {
+            return '<li>[' + esc(p.gravidade || '?') + '] ' + esc(p.problema || '') + '</li>';
+          }).join('') + '</ul>'
+        : '<div class="val-reval-empty">Nenhum problema novo surgiu.</div>') +
+    '</div>';
+    html += '</div></div>';
+    return html;
+  }
+
+  // ── Chat de aprofundamento ────────────────────────────────
+  function buildChatSectionHTML(id, chat) {
+    var thread = renderChatThreadHTML(chat);
+    return '<div class="analysis-block val-chat-block">' +
+      '<div class="analysis-h">💬 Conversar sobre esta análise</div>' +
+      '<div class="val-chat-hint">Questione um feedback, peça exemplos, aprofunde um ponto ou teste outra abordagem. O contexto desta análise é mantido.</div>' +
+      '<div class="val-chat-thread" id="val-chat-thread-' + esc(id) + '">' + thread + '</div>' +
+      '<div class="val-chat-input-row">' +
+        '<textarea class="input val-chat-input" id="val-chat-input-' + esc(id) + '" rows="2" placeholder="Pergunte ou conteste algo desta análise..." onkeydown="valChatKeydown(event, \'' + esc(id) + '\')"></textarea>' +
+        '<button class="btn btn-primary val-chat-send" id="val-chat-send-' + esc(id) + '" onclick="sendValChat(\'' + esc(id) + '\')">Enviar</button>' +
+      '</div>' +
+    '</div>';
+  }
+
+  function renderChatThreadHTML(chat) {
+    if (!chat || !chat.length) {
+      return '<div class="val-chat-empty">Ainda sem mensagens. Comece a conversa abaixo. 👇</div>';
+    }
+    return chat.map(function(m) {
+      var cls = m.role === 'assistant' ? 'val-chat-msg val-chat-ai' : 'val-chat-msg val-chat-user';
+      var body = m.role === 'assistant' ? mdLite(m.text || '') : esc(m.text || '');
+      return '<div class="' + cls + '"><div class="val-chat-bubble">' + body + '</div></div>';
+    }).join('');
+  }
+
+  window.valChatKeydown = function(e, id) {
+    // Enter envia, Shift+Enter quebra linha
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendValChat(id); }
+  };
+
+  function setChatThread(id, html) {
+    var t = document.getElementById('val-chat-thread-' + id);
+    if (t) { t.innerHTML = html; t.scrollTop = t.scrollHeight; }
+  }
+
+  window.sendValChat = async function(id) {
+    var inp = document.getElementById('val-chat-input-' + id);
+    var sendBtn = document.getElementById('val-chat-send-' + id);
+    if (!inp) return;
+    var text = (inp.value || '').trim();
+    if (!text) return;
+    if (!getClaudeKey()) {
+      toast('Configure sua chave Claude primeiro', true);
+      openClaudeKeyModal();
+      return;
+    }
+
+    var list = loadValidations();
+    var v = null;
+    for (var i = 0; i < list.length; i++) { if (list[i].id === id) { v = list[i]; break; } }
+    if (!v) { toast('Análise não encontrada', true); return; }
+    if (!Array.isArray(v.chat)) v.chat = [];
+
+    // Otimista: mostra a pergunta + "digitando" e persiste a pergunta
+    v.chat.push({ role: 'user', text: text, ts: Date.now() });
+    saveValidations(list);
+    inp.value = '';
+    if (sendBtn) sendBtn.disabled = true;
+    inp.disabled = true;
+    setChatThread(id, renderChatThreadHTML(v.chat) +
+      '<div class="val-chat-msg val-chat-ai"><div class="val-chat-bubble val-chat-typing"><span></span><span></span><span></span></div></div>');
+
+    try {
+      var systemText = buildChatSystem(v);
+      var turns = v.chat.map(function(m) { return { role: m.role, text: m.text }; });
+      var reply = await callClaudeChat(systemText, turns);
+      v.chat.push({ role: 'assistant', text: reply.text || '(sem resposta)', ts: Date.now() });
+      saveValidations(list);
+      pushValidationToSupabase(v);
+      setChatThread(id, renderChatThreadHTML(v.chat));
+      renderValidationHistory(); // atualiza o badge 💬 no histórico
+    } catch (err) {
+      console.error('[ig] chat error:', err);
+      // Remove a "digitando" e mostra erro inline, mantendo a pergunta no histórico
+      setChatThread(id, renderChatThreadHTML(v.chat) +
+        '<div class="val-chat-msg val-chat-ai"><div class="val-chat-bubble val-chat-err">⚠ ' + esc(err.message) + '</div></div>');
+      toast('Erro: ' + err.message, true);
+    } finally {
+      if (sendBtn) sendBtn.disabled = false;
+      inp.disabled = false;
+      inp.focus();
+    }
+  };
+
+  function buildChatSystem(v) {
+    var r = v.result || {};
+    var ins = v.inputs || {};
+    var parts = [];
+    parts.push('Você é a estrategista de marca + diretora criativa que produziu a análise de validação de post abaixo, para a Carol (maquiadora profissional premium @makecarolnunes). Agora você está num chat de aprofundamento sobre ESTA análise específica.');
+    parts.push('Como agir: responda perguntas, aprofunde pontos, dê exemplos concretos, defenda OU reconsidere conclusões quando a Carol trouxer contexto novo. Pode discordar dela com argumento. Seja específica e prática. NÃO repita a análise inteira — foque no que ela perguntar. Português brasileiro, tom direto. Use markdown leve (negrito, listas) quando ajudar. Respostas curtas a médias.');
+    parts.push('\n--- CONTEXTO DA MARCA ---\n' + brandToText());
+    parts.push('\n--- BRIEFING/POST AVALIADO ---\nFormato: ' + (ins.formato || '?') + ' · Pilar: ' + (ins.pilar || '?') + ' · Objetivo: ' + (ins.objetivo || '?') + '\nBriefing:\n' + (ins.briefing || '—') + (ins.visual ? '\nVisual: ' + ins.visual : ''));
+    parts.push('\n--- ANÁLISE GERADA (JSON) ---\n' + JSON.stringify(r));
+    return parts.join('\n');
+  }
+
+  // Markdown mínimo e seguro pras bolhas da IA (esc primeiro, depois formata)
+  function mdLite(s) {
+    var safe = esc(s);
+    // bold **x** / __x__
+    safe = safe.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    safe = safe.replace(/__([^_]+)__/g, '<strong>$1</strong>');
+    // italic *x* / _x_
+    safe = safe.replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<em>$2</em>');
+    safe = safe.replace(/(^|[^_])_([^_\n]+)_/g, '$1<em>$2</em>');
+    // inline code `x`
+    safe = safe.replace(/`([^`]+)`/g, '<code>$1</code>');
+    // bullets: linhas começando com - ou *
+    var lines = safe.split('\n');
+    var out = [];
+    var inList = false;
+    for (var i = 0; i < lines.length; i++) {
+      var ln = lines[i];
+      var m = ln.match(/^\s*[-*]\s+(.*)$/);
+      if (m) {
+        if (!inList) { out.push('<ul>'); inList = true; }
+        out.push('<li>' + m[1] + '</li>');
+      } else {
+        if (inList) { out.push('</ul>'); inList = false; }
+        out.push(ln);
+      }
+    }
+    if (inList) out.push('</ul>');
+    return out.join('\n').replace(/\n/g, '<br>').replace(/<br>(<\/?ul>|<li>)/g, '$1').replace(/(<\/ul>|<\/li>)<br>/g, '$1');
   }
 
   function nearestFrameByTime(frames, tSec) {
