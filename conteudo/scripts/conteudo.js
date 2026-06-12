@@ -613,6 +613,10 @@ function setView(v){
   // Acervo
   var acvEl=document.getElementById('acervo-view');
   if(acvEl) acvEl.style.display=(v==='acervo')?'':'none';
+  // FAB "+ nova ideia" não faz sentido no Acervo (criação é "+ Novo material");
+  // escondê-lo evita o atropelo com as ações dos cards de oportunidade no mobile
+  var fabBtn=document.getElementById('fab-btn');
+  if(fabBtn) fabBtn.style.display=(v==='acervo')?'none':'';
   // Gaveta do banco (desktop) — só na view Hoje
   var drawer=document.getElementById('bank-drawer');
   if(drawer) drawer.classList.toggle('show', v==='hoje');

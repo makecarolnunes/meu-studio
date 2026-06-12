@@ -1439,7 +1439,8 @@
 /* ============================================================
    ACERVO — Banco de Matéria-Prima
    ============================================================ */
-.acervo-view { padding: 14px 14px 90px; }
+/* padding-bottom generoso: limpa as tabs + os FABs de notas (cantos, bottom:60px) */
+.acervo-view { padding: 14px 14px 124px; }
 @media (min-width: 1024px){ .acervo-view { padding: 22px 26px 40px; } }
 
 /* badge na nav (qtd de oportunidades pendentes) */
