@@ -1736,6 +1736,36 @@ function materialEsgotado(m){
   return todos && !sugPendentes(m).length;
 }
 
+/* ── camada estratégica (Brand Brain) ── */
+function brandPilares(){ return (window.BRAND&&BRAND.pilares)||[]; }
+function pilarDeTexto(txt){
+  var t=String(txt||'').toLowerCase(), ps=brandPilares();
+  for(var i=0;i<ps.length;i++){ for(var j=0;j<ps[i].aliases.length;j++){ if(t.indexOf(ps[i].aliases[j])!==-1) return ps[i].nome; } }
+  return null;
+}
+function pilarToCat(pilar){
+  var map={'Noivas Premium':'Noivas','Cachos e Crespos':'Cachos e Crespos','Pele Negra':'Maquiagem Profissional','Autoridade Técnica':'Maquiagem Profissional','Humanização':'Vida e Lifestyle'};
+  return map[pilar] || CATS[0];
+}
+// Resumo do que já foi publicado por pilar + lacunas (entra no prompt do garimpo)
+function brandContentState(){
+  var ps=brandPilares(); if(!ps.length) return '';
+  var pub={}, total=0; ps.forEach(function(p){ pub[p.nome]=0; });
+  ideas.forEach(function(i){
+    if(i.status!=='Publicado') return;
+    var pn=pilarDeTexto((i.categories||[]).join(' ')+' '+(i.title||''));
+    if(pn){ pub[pn]++; total++; }
+  });
+  var linhas=ps.map(function(p){
+    var n=pub[p.nome]||0, pct=total?Math.round(n/total*100):0;
+    var dir = pct < p.peso-7 ? '⚠ ABAIXO do ideal (LACUNA)' : (pct > p.peso+10 ? 'acima do ideal' : 'ok');
+    return '- '+p.nome+': '+n+' publicados ('+pct+'% vs ideal '+p.peso+'%) — '+dir;
+  });
+  var fila=ideas.filter(function(i){ return i.status!=='Publicado'; }).length;
+  return 'ESTADO ATUAL DO CONTEÚDO (publicados='+total+', em produção/fila='+fila+'):\n'+
+    linhas.join('\n')+'\nQuando o material permitir, PRIORIZE os pilares marcados como LACUNA.';
+}
+
 /* ── persistência ── */
 function readMateriaisLS(){ try{ materiais=JSON.parse(localStorage.getItem(MAT_KEY)||'[]')||[]; }catch(e){ materiais=[]; } }
 function saveMateriaisLS(){ try{ localStorage.setItem(MAT_KEY, JSON.stringify(materiais)); }catch(e){} }
@@ -1831,18 +1861,25 @@ function renderAcervoGrid(){
 function renderOportunidades(){
   var items=[];
   materiais.forEach(function(m){ sugPendentes(m).forEach(function(s){ items.push({m:m,s:s}); }); });
+  items.sort(function(a,b){ return (b.s.prioridade||0)-(a.s.prioridade||0); });
   var hdr='<div class="acv-opps-hdr">⚡ Oportunidades <span class="acv-opps-cnt">'+items.length+'</span></div>';
   if(!items.length) return hdr+'<div class="acv-opps-empty">Sem oportunidades agora. Abra um material e toque em <b>⛏️ Garimpar</b> para a IA sugerir posts.</div>';
   return hdr+'<div class="acv-opps-list">'+items.map(function(it){ return oppCardHtml(it.m,it.s); }).join('')+'</div>';
 }
+function prioStars(n){ n=parseInt(n,10)||0; return n?('<span class="acv-prio" title="prioridade '+n+'/5">'+new Array(n+1).join('★')+'</span>'):''; }
+function pilarChip(p){ return p?('<span class="acv-opp-pilar">🎯 '+safe(p)+'</span>'):''; }
+function alignLine(s){ return s.alinhamento?('<div class="acv-opp-align">🧭 '+safe(s.alinhamento)+'</div>'):''; }
 function oppCardHtml(m,s){
   var obj=OBJETIVOS[s.objetivo]||OBJETIVOS.Autoridade;
   return '<div class="acv-opp">'+
       '<div class="acv-opp-tags">'+
+        prioStars(s.prioridade)+
         '<span class="acv-opp-fmt">'+(FMT_EMOJI[s.formato]||'')+' '+safe(s.formato)+'</span>'+
         '<span class="acv-opp-obj" style="background:'+obj.bg+';color:'+obj.cor+'">'+obj.emoji+' '+safe(s.objetivo)+'</span>'+
+        pilarChip(s.pilar)+
       '</div>'+
       '<div class="acv-opp-tit">'+safe(s.titulo)+'</div>'+
+      alignLine(s)+
       '<div class="acv-opp-src">de: '+safe(m.titulo||'material')+'</div>'+
       '<div class="acv-opp-acts">'+
         '<button class="acv-opp-plan" onclick="promoverOportunidade(\''+safe(m.id)+'\',\''+safe(s.id)+'\')">→ Planejar</button>'+
@@ -2039,8 +2076,13 @@ function renderMaterialDetail(){
     var inner='<div class="acv-gal-thumb"'+(u?(' style="background-image:url(\''+safe(u)+'\')"'):'')+'>'+(a.kind==='video'?'<span class="acv-asset-play">▶</span>':'')+'</div>';
     return '<a class="acv-gal-item" href="'+safe(full)+'" target="_blank" rel="noopener">'+inner+'<span class="acv-gal-tip">'+tipoEmoji(a.tipo)+'</span></a>';
   }).join('') || '<div class="acv-opps-empty">Sem mídias.</div>';
-  var sugHtml=(m.sugestoes||[]).length
-    ? (m.sugestoes||[]).map(function(s){ return detailSugHtml(m,s); }).join('')
+  var sorted=(m.sugestoes||[]).slice().sort(function(a,b){
+    var rank={pendente:0,planejada:1,descartada:2}, ra=rank[a.status]||0, rb=rank[b.status]||0;
+    if(ra!==rb) return ra-rb;
+    return (b.prioridade||0)-(a.prioridade||0);
+  });
+  var sugHtml=sorted.length
+    ? sorted.map(function(s){ return detailSugHtml(m,s); }).join('')
     : '<div class="acv-opps-empty">Ainda não garimpado. Toque em <b>⛏️ Garimpar ideias</b> acima.</div>';
   var html='<div class="acv-detail-top">'+
       '<button class="acv-x" onclick="closeMaterialDetail()">✕</button>'+
@@ -2052,6 +2094,7 @@ function renderMaterialDetail(){
       '<div class="acv-gallery">'+gal+'</div>'+
       '<button class="acv-garimpar-big" onclick="garimpar(\''+safe(m.id)+'\',event)"'+(acvBusy?' disabled':'')+'>⛏️ '+(acvBusy?'Garimpando…':('Garimpar '+((m.sugestoes||[]).length?'mais ':'')+'ideias'))+'</button>'+
       (acvErrors[m.id]?('<div class="acv-err">⚠ '+safe(acvErrors[m.id])+'</div>'):'')+
+      (m.diagnostico?diagnosticoHtml(m.diagnostico):'')+
       '<div class="acv-detail-sec">Oportunidades</div>'+
       '<div class="acv-detail-sugs">'+sugHtml+'</div>'+
       '<button class="acv-del-mat" onclick="excluirMaterial(\''+safe(m.id)+'\')">Excluir material</button>'+
@@ -2071,11 +2114,22 @@ function detailSugHtml(m,s){
   var leg=s.legenda?('<div class="acv-sug-leg">📝 '+safe(s.legenda)+(s.hashtags?('\n'+safe(s.hashtags)):'')+'</div>'):'';
   return '<div class="acv-sug'+(s.status!=='pendente'?' acv-sug-off':'')+'">'+
       '<div class="acv-opp-tags">'+
+        prioStars(s.prioridade)+
         '<span class="acv-opp-fmt">'+(FMT_EMOJI[s.formato]||'')+' '+safe(s.formato)+'</span>'+
-        '<span class="acv-opp-obj" style="background:'+obj.bg+';color:'+obj.cor+'">'+obj.emoji+' '+safe(s.objetivo)+'</span>'+badge+
+        '<span class="acv-opp-obj" style="background:'+obj.bg+';color:'+obj.cor+'">'+obj.emoji+' '+safe(s.objetivo)+'</span>'+
+        pilarChip(s.pilar)+badge+
       '</div>'+
-      '<div class="acv-sug-tit">'+safe(s.titulo)+'</div>'+rot+leg+acts+
+      '<div class="acv-sug-tit">'+safe(s.titulo)+'</div>'+alignLine(s)+rot+leg+acts+
     '</div>';
+}
+function diagnosticoHtml(d){
+  if(!d) return '';
+  var pil=(d.pilares_a_fortalecer||[]).join(' · '), rows='';
+  if(d.comunicar_agora)       rows+='<div class="acv-diag-row">'+safe(d.comunicar_agora)+'</div>';
+  if(pil)                     rows+='<div class="acv-diag-row"><b>Fortalecer:</b> '+safe(pil)+'</div>';
+  if(d.lacunas)               rows+='<div class="acv-diag-row"><b>Lacunas:</b> '+safe(d.lacunas)+'</div>';
+  if(d.como_o_material_ajuda) rows+='<div class="acv-diag-row"><b>Este material:</b> '+safe(d.como_o_material_ajuda)+'</div>';
+  return '<div class="acv-diag"><div class="acv-diag-tit">🧠 O que sua marca precisa agora</div>'+rows+'</div>';
 }
 
 /* ── ações sobre sugestões ── */
@@ -2089,14 +2143,15 @@ function promoverOportunidade(mid,sid){
   var m=_matById(mid); if(!m) return;
   var s=null; (m.sugestoes||[]).forEach(function(x){ if(x.id===sid) s=x; }); if(!s) return;
   var now=new Date();
-  var cat = m.origemTipo==='noiva' ? 'Noivas' : CATS[0];
+  var cat = s.pilar ? pilarToCat(s.pilar) : (m.origemTipo==='noiva' ? 'Noivas' : CATS[0]);
+  var nota = (s.alinhamento?('🧭 '+s.alinhamento):'') + (s.pilar?((s.alinhamento?' · ':'')+'Pilar: '+s.pilar):'');
   var idea={
     id:'op_'+now.getTime()+'_'+Math.random().toString(36).slice(2,6),
     title:s.titulo||'Oportunidade',
     categories:[cat],
     formatos:[FORMATOS_ALL.indexOf(s.formato)>=0?s.formato:'Reels'],
     status:'Fila de Gravacao',
-    notes:'',
+    notes:nota,
     roteiro:s.roteiro?('<p>'+safe(s.roteiro).replace(/\n/g,'<br>')+'</p>'):'',
     legenda:(s.legenda?('<p>'+safe(s.legenda).replace(/\n/g,'<br>')+'</p>'):'')+(s.hashtags?('<p>'+safe(s.hashtags)+'</p>'):''),
     platforms:['Instagram'],
@@ -2157,16 +2212,22 @@ function garimpar(id,ev){
     imgs=imgs.filter(Boolean);
     if(!imgs.length) throw new Error('não consegui ler as mídias. Você rodou a migration sql/conteudo-acervo.sql no Supabase?');
     return callGarimpoIA(key,m,imgs);
-  }).then(function(sugs){
+  }).then(function(result){
     acvBusy=false;
-    if(!sugs||!sugs.length){ showToast('A IA não retornou ideias. Tente de novo.'); finalizeGarimpoUI(m); return; }
+    var sugs=(result&&result.ideias)||[];
+    if(!sugs.length){ showToast('A IA não retornou ideias. Tente de novo.'); finalizeGarimpoUI(m); return; }
+    m.diagnostico=(result&&result.diagnostico)||null;
     var now=Date.now();
     sugs.forEach(function(s,i){
+      var prio=(typeof s.prioridade==='number')?s.prioridade:parseInt(s.prioridade,10);
       m.sugestoes.push({
         id:'sg_'+now+'_'+i,
         titulo:String(s.titulo||'').slice(0,140),
         formato:FORMATOS_ALL.indexOf(s.formato)>=0?s.formato:'Reels',
         objetivo:OBJ_KEYS.indexOf(s.objetivo)>=0?s.objetivo:'Autoridade',
+        pilar:String(s.pilar||''),
+        alinhamento:String(s.alinhamento||''),
+        prioridade:(prio>=1&&prio<=5)?prio:3,
         roteiro:String(s.roteiro||''),
         legenda:String(s.legenda||''),
         hashtags:String(s.hashtags||''),
@@ -2177,7 +2238,7 @@ function garimpar(id,ev){
     if(_matIndex(m.id)<0) materiais.unshift(m);
     persistMaterial(m);
     finalizeGarimpoUI(m);
-    showToast('✨ '+sugs.length+' ideia'+(sugs.length!==1?'s':'')+' garimpada'+(sugs.length!==1?'s':'')+'!');
+    showToast('✨ '+sugs.length+' oportunidade'+(sugs.length!==1?'s':'')+' garimpada'+(sugs.length!==1?'s':'')+'!');
   }).catch(function(err){
     acvBusy=false;
     var msg=(err&&err.message)||'tente de novo';
@@ -2192,43 +2253,70 @@ function finalizeGarimpoUI(m){
   if(acvDraft&&acvDraft.id===m.id){ acvDraft=m; renderMaterialModal(); }
 }
 function callGarimpoIA(apiKey,m,images){
-  var ctx='Material: '+(m.titulo||'(sem título)')+'\nOrigem: '+acvOrigemPlain(m)+
+  var brandDna=(window.BRAND&&BRAND.dna)||'';
+  var estado=brandContentState();
+  var ctxMidias='MATERIAL BRUTO: '+(m.titulo||'(sem título)')+'\nOrigem: '+acvOrigemPlain(m)+
     '\nMídias ('+images.length+'): '+images.map(function(im){ return (im.kind==='video'?'vídeo':'foto')+' de '+tipoLabel(im.tipo); }).join(', ');
-  var content=[{type:'text',text:
-    'Você é estrategista de conteúdo de uma maquiadora profissional freelancer (noivas, automaquiagem, cachos e crespos, penteados). '+
-    'Analise as imagens deste material bruto e gere de 4 a 6 IDEIAS DE POST distintas que ela consegue publicar USANDO este material. '+
-    'Para cada ideia: escolha o formato ideal (Reels, Stories, Carrossel ou Post) e o objetivo (Autoridade, Relacionamento, Engajamento ou Venda), '+
-    'escreva um roteiro curto e prático (cenas/passos, em linhas) e uma legenda pronta com CTA. Varie os formatos e objetivos entre as ideias. '+
-    'Tom brasileiro, próximo e natural — sem cara de texto gerado por IA.\n\n'+ctx
-  }];
+
+  var system =
+    'Você é a estrategista-chefe de conteúdo da marca Carol Nunes — NÃO um gerador genérico de ideias para redes sociais. '+
+    'Você parte SEMPRE da estratégia da marca e trata o material enviado apenas como matéria-prima. '+
+    'Toda oportunidade precisa servir a um PILAR e a um OBJETIVO de negócio reais da marca. '+
+    'Nada de "antes e depois / bastidores / transformação" soltos: explique como cada peça fortalece a marca AGORA.'+
+    (brandDna ? ('\n\n════ CÉREBRO DA MARCA ════\n'+brandDna) : '');
+
+  var instr =
+    'Analise as imagens deste material e gere de 4 a 6 OPORTUNIDADES de conteúdo para a marca.\n\n'+
+    'ANTES de gerar, preencha o diagnóstico, respondendo internamente: (1) quais os objetivos estratégicos atuais da marca; '+
+    '(2) o que a marca precisa comunicar agora; (3) quais pilares precisam ser fortalecidos; (4) quais lacunas existem no planejamento; '+
+    '(5) como ESTE material ajuda nesses objetivos.\n\n'+
+    'Para cada oportunidade: escolha o formato (Reels/Stories/Carrossel/Post) e o objetivo (Autoridade/Relacionamento/Engajamento/Venda); '+
+    'aponte o PILAR que reforça; escreva o ALINHAMENTO em uma frase (por que serve à marca AGORA — pilar, objeção do público que combate, lacuna que preenche ou contribuição ao curso Formação VIP); '+
+    'dê uma PRIORIDADE de 1 a 5 (5 = mais estratégica), priorizando nesta ordem: alinhamento aos objetivos > autoridade > venda > relacionamento > engajamento; '+
+    'traga roteiro curto (cenas/passos em linhas) e legenda pronta com CTA, no tom da marca. Varie formatos e objetivos entre as oportunidades.\n\n'+
+    estado+'\n\n'+ctxMidias;
+
+  var content=[{type:'text',text:instr}];
   images.forEach(function(im){
     var mt=(im.mime==='image/png'||im.mime==='image/webp'||im.mime==='image/gif')?im.mime:'image/jpeg';
     content.push({type:'image',source:{type:'base64',media_type:mt,data:im.base64}});
   });
+
   var tool={
-    name:'registrar_ideias',
-    description:'Registra as ideias de conteúdo geradas a partir do material.',
+    name:'registrar_oportunidades',
+    description:'Registra o diagnóstico estratégico e as oportunidades de conteúdo geradas a partir do material.',
     input_schema:{ type:'object', properties:{
+      diagnostico:{ type:'object', properties:{
+        objetivos_do_momento:{type:'string'},
+        comunicar_agora:{type:'string'},
+        pilares_a_fortalecer:{type:'array',items:{type:'string'}},
+        lacunas:{type:'string'},
+        como_o_material_ajuda:{type:'string'}
+      }, required:['objetivos_do_momento','comunicar_agora','pilares_a_fortalecer','como_o_material_ajuda'] },
       ideias:{ type:'array', items:{ type:'object', properties:{
         titulo:{type:'string'},
         formato:{type:'string',enum:FORMATOS_ALL},
         objetivo:{type:'string',enum:OBJ_KEYS},
+        pilar:{type:'string'},
+        alinhamento:{type:'string'},
+        prioridade:{type:'integer'},
         roteiro:{type:'string'},
         legenda:{type:'string'},
         hashtags:{type:'string'}
-      }, required:['titulo','formato','objetivo','roteiro','legenda'] } }
-    }, required:['ideias'] }
+      }, required:['titulo','formato','objetivo','pilar','alinhamento','prioridade','roteiro','legenda'] } }
+    }, required:['diagnostico','ideias'] }
   };
   var ctrl=(typeof AbortController!=='undefined')?new AbortController():null;
-  var to=ctrl?setTimeout(function(){ try{ctrl.abort();}catch(e){} },90000):null;
+  var to=ctrl?setTimeout(function(){ try{ctrl.abort();}catch(e){} },120000):null;
   var opts={
     method:'POST',
     headers:{ 'content-type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true' },
     body:JSON.stringify({
       model:'claude-sonnet-4-6',
       max_tokens:8000,
+      system:system,
       tools:[tool],
-      tool_choice:{type:'tool',name:'registrar_ideias'},
+      tool_choice:{type:'tool',name:'registrar_oportunidades'},
       messages:[{role:'user',content:content}]
     })
   };
@@ -2245,12 +2333,12 @@ function callGarimpoIA(apiKey,m,images){
     return res.json();
   }).then(function(data){
     var blocks=(data&&data.content)||[];
-    for(var i=0;i<blocks.length;i++){ if(blocks[i].type==='tool_use'&&blocks[i].input&&blocks[i].input.ideias) return blocks[i].input.ideias; }
+    for(var i=0;i<blocks.length;i++){ if(blocks[i].type==='tool_use'&&blocks[i].input&&blocks[i].input.ideias) return blocks[i].input; }
     var sr=(data&&data.stop_reason)||'';
     throw new Error('a IA respondeu sem ideias'+(sr?(' (stop_reason: '+sr+')'):''));
   }).catch(function(e){
     if(to){ clearTimeout(to); to=null; }
-    if(e&&e.name==='AbortError') throw new Error('tempo esgotado (90s) — verifique sua conexão/chave');
+    if(e&&e.name==='AbortError') throw new Error('tempo esgotado (120s) — verifique sua conexão/chave');
     throw e;
   });
 }
