@@ -1689,6 +1689,7 @@ var acvDetailId = null;    // material aberto no modal de detalhe
 var acvDraft    = null;    // material em edição no modal de captura
 var acvBusy     = false;   // trava durante upload/garimpo
 var acvUrlCache = {};      // path -> URL assinada (cache de sessão)
+var acvErrors   = {};      // id do material -> última mensagem de erro do garimpo
 var MAT_KEY     = 'mk_content_materiais';
 
 var OBJETIVOS = {
@@ -1891,7 +1892,7 @@ function renderMaterialModal(){
       '<label class="acv-fl">Mídias <span class="acv-fl-hint">(fotos e vídeos)</span></label>'+
       '<button class="acv-drop" onclick="acvPickFiles()"'+(acvBusy?' disabled':'')+'>'+(acvBusy?'⏳ enviando…':'＋ Adicionar fotos / vídeos')+'</button>'+
       midiasBlock+
-      (d.assets.length?('<button class="acv-garimpar-big" onclick="garimparDraft()"'+(acvBusy?' disabled':'')+'>⛏️ Garimpar ideias com IA</button>'):'')+
+      (d.assets.length?('<button class="acv-garimpar-big" onclick="garimparDraft()"'+(acvBusy?' disabled':'')+'>⛏️ Garimpar ideias com IA</button>'+(acvErrors[d.id]?('<div class="acv-err">⚠ '+safe(acvErrors[d.id])+'</div>'):'')):'')+
     '</div>';
   document.getElementById('acv-modal').innerHTML=html;
   var t=document.getElementById('acv-f-tit'); if(t) t.addEventListener('input',function(){ acvDraft.titulo=this.value; });
@@ -2050,6 +2051,7 @@ function renderMaterialDetail(){
       '<div class="acv-detail-meta">'+acvOrigemLabel(m)+' · '+(m.data?fmtDate(m.data):'sem data')+' · '+(m.assets||[]).length+' mídias</div>'+
       '<div class="acv-gallery">'+gal+'</div>'+
       '<button class="acv-garimpar-big" onclick="garimpar(\''+safe(m.id)+'\',event)"'+(acvBusy?' disabled':'')+'>⛏️ '+(acvBusy?'Garimpando…':('Garimpar '+((m.sugestoes||[]).length?'mais ':'')+'ideias'))+'</button>'+
+      (acvErrors[m.id]?('<div class="acv-err">⚠ '+safe(acvErrors[m.id])+'</div>'):'')+
       '<div class="acv-detail-sec">Oportunidades</div>'+
       '<div class="acv-detail-sugs">'+sugHtml+'</div>'+
       '<button class="acv-del-mat" onclick="excluirMaterial(\''+safe(m.id)+'\')">Excluir material</button>'+
@@ -2141,16 +2143,20 @@ function garimpar(id,ev){
   if(!key){ showToast('Configure sua chave Claude (⚙️ no Financeiro) primeiro'); return; }
   if(!(m.assets||[]).length){ showToast('Adicione mídias antes de garimpar'); return; }
   acvBusy=true;
+  delete acvErrors[m.id];
   showToast('⛏️ Garimpando ideias…');
   if(document.getElementById('acv-detail-bg').classList.contains('open')) renderMaterialDetail();
   if(acvDraft&&acvDraft.id===m.id) renderMaterialModal();
   var thumbs=[]; (m.assets||[]).forEach(function(a){ var p=a.thumbPath||a.path; if(p) thumbs.push({p:p,tipo:a.tipo,kind:a.kind}); });
   thumbs=thumbs.slice(0,6);
-  var paths=thumbs.map(function(t){ return t.p; });
-  DB.storage.signMaterials(paths,1800).then(function(map){
-    var urls=[]; thumbs.forEach(function(t){ if(map[t.p]) urls.push(map[t.p]); });
-    if(!urls.length) throw new Error('não consegui assinar as mídias');
-    return callGarimpoIA(key,m,thumbs,urls);
+  // baixa os bytes de cada mídia (robusto: não depende de URL pública)
+  var jobs=thumbs.map(function(t){ return DB.storage.materialBytes(t.p)
+    .then(function(b){ return {tipo:t.tipo,kind:t.kind,base64:b.base64,mime:b.mime}; })
+    .catch(function(){ return null; }); });
+  Promise.all(jobs).then(function(imgs){
+    imgs=imgs.filter(Boolean);
+    if(!imgs.length) throw new Error('não consegui ler as mídias. Você rodou a migration sql/conteudo-acervo.sql no Supabase?');
+    return callGarimpoIA(key,m,imgs);
   }).then(function(sugs){
     acvBusy=false;
     if(!sugs||!sugs.length){ showToast('A IA não retornou ideias. Tente de novo.'); finalizeGarimpoUI(m); return; }
@@ -2173,17 +2179,21 @@ function garimpar(id,ev){
     finalizeGarimpoUI(m);
     showToast('✨ '+sugs.length+' ideia'+(sugs.length!==1?'s':'')+' garimpada'+(sugs.length!==1?'s':'')+'!');
   }).catch(function(err){
-    acvBusy=false; finalizeGarimpoUI(m);
-    showToast('Erro no garimpo: '+((err&&err.message)||'tente de novo'));
+    acvBusy=false;
+    var msg=(err&&err.message)||'tente de novo';
+    try{ console.error('[garimpo] falhou:', err); }catch(e){}
+    acvErrors[m.id]=msg;
+    finalizeGarimpoUI(m);
+    showToast('Erro no garimpo — veja o detalhe do material');
   });
 }
 function finalizeGarimpoUI(m){
   refreshAcv();
   if(acvDraft&&acvDraft.id===m.id){ acvDraft=m; renderMaterialModal(); }
 }
-function callGarimpoIA(apiKey,m,thumbs,imageUrls){
+function callGarimpoIA(apiKey,m,images){
   var ctx='Material: '+(m.titulo||'(sem título)')+'\nOrigem: '+acvOrigemPlain(m)+
-    '\nMídias ('+thumbs.length+'): '+thumbs.map(function(t){ return (t.kind==='video'?'vídeo':'foto')+' de '+tipoLabel(t.tipo); }).join(', ');
+    '\nMídias ('+images.length+'): '+images.map(function(im){ return (im.kind==='video'?'vídeo':'foto')+' de '+tipoLabel(im.tipo); }).join(', ');
   var content=[{type:'text',text:
     'Você é estrategista de conteúdo de uma maquiadora profissional freelancer (noivas, automaquiagem, cachos e crespos, penteados). '+
     'Analise as imagens deste material bruto e gere de 4 a 6 IDEIAS DE POST distintas que ela consegue publicar USANDO este material. '+
@@ -2191,7 +2201,10 @@ function callGarimpoIA(apiKey,m,thumbs,imageUrls){
     'escreva um roteiro curto e prático (cenas/passos, em linhas) e uma legenda pronta com CTA. Varie os formatos e objetivos entre as ideias. '+
     'Tom brasileiro, próximo e natural — sem cara de texto gerado por IA.\n\n'+ctx
   }];
-  imageUrls.forEach(function(u){ content.push({type:'image',source:{type:'url',url:u}}); });
+  images.forEach(function(im){
+    var mt=(im.mime==='image/png'||im.mime==='image/webp'||im.mime==='image/gif')?im.mime:'image/jpeg';
+    content.push({type:'image',source:{type:'base64',media_type:mt,data:im.base64}});
+  });
   var tool={
     name:'registrar_ideias',
     description:'Registra as ideias de conteúdo geradas a partir do material.',
@@ -2206,7 +2219,9 @@ function callGarimpoIA(apiKey,m,thumbs,imageUrls){
       }, required:['titulo','formato','objetivo','roteiro','legenda'] } }
     }, required:['ideias'] }
   };
-  return fetch('https://api.anthropic.com/v1/messages',{
+  var ctrl=(typeof AbortController!=='undefined')?new AbortController():null;
+  var to=ctrl?setTimeout(function(){ try{ctrl.abort();}catch(e){} },90000):null;
+  var opts={
     method:'POST',
     headers:{ 'content-type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true' },
     body:JSON.stringify({
@@ -2216,13 +2231,27 @@ function callGarimpoIA(apiKey,m,thumbs,imageUrls){
       tool_choice:{type:'tool',name:'registrar_ideias'},
       messages:[{role:'user',content:content}]
     })
-  }).then(function(res){
-    if(!res.ok) return res.json().catch(function(){ return {error:{message:res.statusText}}; }).then(function(e){ throw new Error((e&&e.error&&e.error.message)||res.statusText); });
+  };
+  if(ctrl) opts.signal=ctrl.signal;
+  return fetch('https://api.anthropic.com/v1/messages',opts).then(function(res){
+    if(to){ clearTimeout(to); to=null; }
+    if(!res.ok){
+      return res.text().then(function(txt){
+        var msg=String(res.status);
+        try{ var j=JSON.parse(txt); if(j&&j.error&&j.error.message) msg=j.error.message; }catch(e){ if(txt) msg=txt.slice(0,180); }
+        throw new Error('API '+res.status+': '+msg);
+      });
+    }
     return res.json();
   }).then(function(data){
     var blocks=(data&&data.content)||[];
     for(var i=0;i<blocks.length;i++){ if(blocks[i].type==='tool_use'&&blocks[i].input&&blocks[i].input.ideias) return blocks[i].input.ideias; }
-    return [];
+    var sr=(data&&data.stop_reason)||'';
+    throw new Error('a IA respondeu sem ideias'+(sr?(' (stop_reason: '+sr+')'):''));
+  }).catch(function(e){
+    if(to){ clearTimeout(to); to=null; }
+    if(e&&e.name==='AbortError') throw new Error('tempo esgotado (90s) — verifique sua conexão/chave');
+    throw e;
   });
 }
 

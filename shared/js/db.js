@@ -502,6 +502,19 @@ window.DB = {
       (data || []).forEach(d => { if (d && d.signedUrl) out[d.path] = d.signedUrl; });
       return out;
     },
+    // Baixa os bytes de uma mídia (browser-safe, sem URL pública) → { base64, mime }
+    async materialBytes(path) {
+      const { data, error } = await _sb.storage.from('materiais').download(path);
+      if (error) throw error;
+      const buf = await data.arrayBuffer();
+      const bytes = new Uint8Array(buf);
+      let bin = '';
+      const chunk = 0x8000;
+      for (let i = 0; i < bytes.length; i += chunk) {
+        bin += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+      }
+      return { base64: btoa(bin), mime: data.type || 'image/jpeg' };
+    },
     async deleteMaterial(paths) {
       const arr = (Array.isArray(paths) ? paths : [paths]).filter(p => p && p.includes('/'));
       if (!arr.length) return;
