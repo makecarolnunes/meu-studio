@@ -9,7 +9,8 @@ Módulo de planejamento de posts e ideias para redes sociais, reorganizado como 
 | `hoje` | Painel do dia (default). Desktop: 3 zonas (Hoje 45% · Stories 26% · Próximos dias 29%) + gaveta do banco de ideias. Mobile: herói "próxima ação" + seções empilhadas | tab ☀️ Hoje / sidebar |
 | `stories` | Checklist de stories dos próximos 7 dias (mobile; no desktop a coluna da view Hoje cobre) | tab 📱 Stories |
 | `cal` | Calendário mensal (inalterado) | tab/nav 📅 Agenda |
-| `list` / `board` / `inbox` | Acervo de ideias + quick notes (os antigos) | tab/nav 💡 Ideias · 📥 Inbox |
+| `list` / `board` / `inbox` | Lista de ideias + quick notes (os antigos) | tab/nav 💡 Ideias · 📥 Inbox |
+| `acervo` | **Acervo** — banco de matéria-prima: materiais (lotes de fotos/vídeos) → IA garima oportunidades classificadas por formato+objetivo → promove p/ Planejamento | tab/nav 🎞️ Acervo |
 
 Navegação: **mobile** = tabs fixas inferiores (`.m-tabs`); **desktop** = nav na sidebar + pipeline com contadores (`buildSidebar`). O header mobile some no desktop (`.hdr{display:none}` ≥1024px).
 
@@ -101,14 +102,28 @@ var ST = {
 ```
 mk_content_ideas         → JSON das ideas
 mk_content_stories       → JSON dos stories (checklist diário)
+mk_content_materiais     → JSON dos materiais do Acervo
 mk_content_cats          → categorias personalizadas
 mk_content_platforms     → plataformas personalizadas
 mk_content_cur_platform  → plataforma ativa no filtro
 ```
 
 ### Supabase (fonte de verdade)
-- `DB.conteudo.list()` / `.upsert()` / `.delete()` — tabela `conteudo_ideas` (com `gravar_date`)
+- `DB.conteudo.list()` / `.upsert()` / `.delete()` — tabela `conteudo_ideas` (com `gravar_date`, `objetivo`, `material_id`)
 - `DB.stories.list()` / `.upsert()` / `.delete()` — tabela `conteudo_stories`
+- `DB.materiais.list()` / `.upsert()` / `.delete()` — tabela `conteudo_materiais` (Acervo)
+- `DB.storage.uploadMaterial/signMaterials/deleteMaterial` — bucket **privado** `materiais` (URLs assinadas)
+
+---
+
+## Acervo (banco de matéria-prima) — `scripts/conteudo.js` (seção ACERVO)
+
+Transforma mídia bruta em conteúdo publicável. Fluxo: **Material** (lote de fotos/vídeos) → `garimpar()` chama a Claude API com visão (`claude-sonnet-4-6`, `tool_choice` forçado p/ `registrar_ideias`) → **oportunidades** (`sugestoes` em JSONB) classificadas por `formato`×`objetivo` → `promoverOportunidade()` cria uma idea em `conteudo_ideas` (`status:'Fila de Gravacao'`, `materialId`, `objetivo`) — mesmo padrão do `saveAsIdea()` do Brand Brain.
+
+- **Mídia:** redimensionada p/ JPEG ≤1280px no client; vídeo → extrai 1 frame (canvas) p/ IA/thumb + sobe o original. A API recebe imagens via `source:{type:'url'}` com URLs assinadas (sem vídeo direto).
+- **Medidor de exploração:** chips de formato acendem conforme `ideias` geradas (`materialId`) e sugestões `planejada`s; `materialEsgotado()` = todos os formatos cobertos e sem pendentes.
+- **Privacidade:** bucket `materiais` é privado (rosto de cliente) — só URLs assinadas, nunca público.
+- ⚠ **Requer migration manual `sql/conteudo-acervo.sql`** (tabela + colunas em `conteudo_ideas` + bucket). Sem ela, upload/salvar retorna 400 e os materiais ficam só locais.
 
 **Status atual:** integrado. `loadData()` renderiza do cache local primeiro e depois mescla do Supabase (servidor vence; itens só-locais sobem). Todo write é local imediato + `persistIdea()` / `persistStory()` async com catch silencioso.
 

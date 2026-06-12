@@ -466,6 +466,92 @@ window.DB = {
       const { error } = await _sb.storage.from('fiscal-documentos').remove([fileId]);
       if (error) throw error;
     },
+
+    // ── Acervo — bucket PRIVADO "materiais" (URLs assinadas) ──
+    // Recebe base64 (já redimensionado pelo client). Retorna o path.
+    async uploadMaterial(materialId, base64Data, mimeType, ext) {
+      const ts   = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+      const rnd  = Math.random().toString(36).slice(2, 7);
+      const path = `${materialId}/${ts}_${rnd}.${ext || 'bin'}`;
+      const byteChars = atob(base64Data);
+      const bytes = new Uint8Array(byteChars.length);
+      for (let i = 0; i < byteChars.length; i++) bytes[i] = byteChars.charCodeAt(i);
+      const blob = new Blob([bytes], { type: mimeType || 'application/octet-stream' });
+      const { error } = await _sb.storage.from('materiais').upload(path, blob, {
+        cacheControl: '3600', upsert: false,
+      });
+      if (error) throw error;
+      return path;
+    },
+    // URL assinada (default 1h) para exibir/enviar à IA
+    async signMaterial(path, secs) {
+      if (!path) return '';
+      const { data, error } = await _sb.storage.from('materiais')
+        .createSignedUrl(path, secs || 3600);
+      if (error) throw error;
+      return data.signedUrl;
+    },
+    // Assina vários paths de uma vez → { path: url }
+    async signMaterials(paths, secs) {
+      const out = {};
+      const clean = (paths || []).filter(Boolean);
+      if (!clean.length) return out;
+      const { data, error } = await _sb.storage.from('materiais')
+        .createSignedUrls(clean, secs || 3600);
+      if (error) throw error;
+      (data || []).forEach(d => { if (d && d.signedUrl) out[d.path] = d.signedUrl; });
+      return out;
+    },
+    async deleteMaterial(paths) {
+      const arr = (Array.isArray(paths) ? paths : [paths]).filter(p => p && p.includes('/'));
+      if (!arr.length) return;
+      const { error } = await _sb.storage.from('materiais').remove(arr);
+      if (error) throw error;
+    },
+  },
+
+  // ──────────────────────────────────────────────────────────────
+  //  Acervo — materiais (tabela conteudo_materiais)
+  //  Requer migration sql/conteudo-acervo.sql
+  materiais: {
+    async list() {
+      _guard();
+      const { data, error } = await _sb
+        .from('conteudo_materiais').select('*').order('created_at', { ascending: false });
+      if (error) throw error;
+      return (data || []).map(r => ({
+        id:         r.id,
+        titulo:     r.titulo      || '',
+        origemTipo: r.origem_tipo || 'livre',
+        origemRef:  r.origem_ref  || '',
+        data:       r.data        || '',
+        assets:     r.assets      || [],
+        sugestoes:  r.sugestoes   || [],
+        status:     r.status      || 'novo',
+        createdAt:  r.created_at  || '',
+      }));
+    },
+    async upsert(m) {
+      _guard();
+      const row = {
+        id:          String(m.id),
+        titulo:      m.titulo     || '',
+        origem_tipo: m.origemTipo || 'livre',
+        origem_ref:  m.origemRef  || '',
+        data:        m.data       || null,
+        assets:      Array.isArray(m.assets)    ? m.assets    : [],
+        sugestoes:   Array.isArray(m.sugestoes) ? m.sugestoes : [],
+        status:      m.status     || 'novo',
+        created_at:  m.createdAt  || new Date().toISOString(),
+      };
+      const { error } = await _sb.from('conteudo_materiais').upsert(row, { onConflict: 'id' });
+      if (error) throw error;
+    },
+    async delete(id) {
+      _guard();
+      const { error } = await _sb.from('conteudo_materiais').delete().eq('id', String(id));
+      if (error) throw error;
+    },
   },
 
   conteudo: {
@@ -486,6 +572,8 @@ window.DB = {
         platforms:     r.platforms     || [],
         scheduledDate: r.scheduled_date || '',
         gravarDate:    r.gravar_date   || '',
+        objetivo:      r.objetivo      || '',
+        materialId:    r.material_id   || '',
         createdAt:     r.created_at    || '',
       }));
     },
@@ -503,6 +591,8 @@ window.DB = {
         platforms:      Array.isArray(idea.platforms)  ? idea.platforms  : [],
         scheduled_date: idea.scheduledDate || null,
         gravar_date:    idea.gravarDate    || null,
+        objetivo:       idea.objetivo      || null,
+        material_id:    idea.materialId    || null,
         created_at:     idea.createdAt     || new Date().toISOString(),
       };
       const { error } = await _sb.from('conteudo_ideas').upsert(row, { onConflict: 'id' });

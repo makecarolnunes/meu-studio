@@ -1435,3 +1435,143 @@
   .nd-mobile-line { display: none; }
   .nd-full { display: block; }
 }
+
+/* ============================================================
+   ACERVO — Banco de Matéria-Prima
+   ============================================================ */
+.acervo-view { padding: 14px 14px 90px; }
+@media (min-width: 1024px){ .acervo-view { padding: 22px 26px 40px; } }
+
+/* badge na nav (qtd de oportunidades pendentes) */
+.acv-nav-badge{ display:none; min-width:17px; height:17px; padding:0 5px; margin-left:6px;
+  border-radius:9px; background:#e07b00; color:#fff; font-size:.66rem; font-weight:800;
+  line-height:17px; text-align:center; }
+
+/* herói */
+.acv-hero{ display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+  background:linear-gradient(135deg, var(--brand-soft,#f5edf3), #fff);
+  border:1px solid var(--border,#eadfe6); border-radius:16px; padding:14px 16px; margin-bottom:16px; }
+.acv-hero-txt{ flex:1; min-width:200px; font-size:.92rem; line-height:1.45; color:var(--text,#3a2f36); }
+.acv-hero-txt b{ color:var(--brand-dark,#7d3c6e); }
+.acv-hero-btn{ border:none; cursor:pointer; background:var(--brand,#7d3c6e); color:#fff;
+  font-weight:700; font-size:.85rem; padding:10px 16px; border-radius:11px; white-space:nowrap; }
+.acv-hero-btn:active{ transform:scale(.97); }
+
+/* layout 2 colunas (desktop) */
+.acv-cols{ display:block; }
+@media (min-width:1024px){
+  .acv-cols{ display:grid; grid-template-columns:1.55fr 1fr; gap:22px; align-items:start; }
+}
+
+/* grade de materiais */
+.acv-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(150px,1fr)); gap:12px; }
+@media (min-width:1024px){ .acv-grid{ grid-template-columns:repeat(auto-fill, minmax(190px,1fr)); } }
+.acv-card{ background:var(--card,#fff); border:1px solid var(--border,#eadfe6); border-radius:14px;
+  overflow:hidden; cursor:pointer; transition:transform .12s, box-shadow .12s; display:flex; flex-direction:column; }
+.acv-card:active{ transform:scale(.985); }
+.acv-card:hover{ box-shadow:0 4px 16px rgba(0,0,0,.08); }
+.acv-card-thumb{ width:100%; aspect-ratio:4/3; object-fit:cover; display:block; background:#f3eef2; }
+.acv-ph{ display:flex; align-items:center; justify-content:center; font-size:1.7rem; color:#c9b9c5; }
+.acv-card-body{ padding:9px 10px 11px; display:flex; flex-direction:column; gap:6px; }
+.acv-card-tit{ font-size:.84rem; font-weight:700; color:var(--text,#3a2f36); line-height:1.25;
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+.acv-card-meta{ font-size:.68rem; color:var(--muted,#9b8b96); }
+.acv-chips{ display:flex; flex-wrap:wrap; gap:4px; }
+.acv-chip{ font-size:.6rem; font-weight:700; padding:3px 6px; border-radius:7px;
+  background:#f3eef2; color:#b6a4b1; border:1px solid transparent; }
+.acv-chip.on{ background:#e8f5e9; color:#2d7d3a; border-color:#bfe3c4; }
+.acv-card-foot{ margin-top:2px; }
+.acv-restantes{ font-size:.7rem; font-weight:700; color:#e07b00; }
+.acv-esgotado{ font-size:.7rem; font-weight:700; color:var(--muted,#9b8b96); }
+.acv-garimpar-mini{ border:1px solid var(--brand,#7d3c6e); background:#fff; color:var(--brand,#7d3c6e);
+  font-size:.7rem; font-weight:700; padding:5px 9px; border-radius:8px; cursor:pointer; }
+
+/* coluna de oportunidades */
+.acv-col-opps{ margin-top:22px; }
+@media (min-width:1024px){
+  .acv-col-opps{ margin-top:0; position:sticky; top:14px; }
+}
+.acv-opps-hdr{ font-size:.82rem; font-weight:800; color:var(--text,#3a2f36); margin-bottom:10px;
+  display:flex; align-items:center; gap:8px; }
+.acv-opps-cnt{ background:#e07b00; color:#fff; font-size:.66rem; font-weight:800;
+  min-width:18px; height:18px; line-height:18px; text-align:center; border-radius:9px; padding:0 5px; }
+.acv-opps-empty{ font-size:.78rem; color:var(--muted,#9b8b96); line-height:1.5;
+  background:var(--card,#fff); border:1px dashed var(--border,#eadfe6); border-radius:12px; padding:14px; }
+.acv-opps-list{ display:flex; flex-direction:column; gap:10px; }
+.acv-opp{ background:var(--card,#fff); border:1px solid var(--border,#eadfe6); border-radius:13px; padding:11px 12px; }
+.acv-opp-tags{ display:flex; flex-wrap:wrap; gap:6px; margin-bottom:6px; }
+.acv-opp-fmt{ font-size:.66rem; font-weight:700; padding:3px 7px; border-radius:7px; background:#eef0f4; color:#4a5160; }
+.acv-opp-obj{ font-size:.66rem; font-weight:700; padding:3px 7px; border-radius:7px; }
+.acv-opp-tit{ font-size:.86rem; font-weight:700; color:var(--text,#3a2f36); line-height:1.3; }
+.acv-opp-src{ font-size:.68rem; color:var(--muted,#9b8b96); margin-top:3px; }
+.acv-opp-acts{ display:flex; gap:7px; margin-top:9px; }
+.acv-opp-plan{ flex:1; border:none; cursor:pointer; background:var(--brand,#7d3c6e); color:#fff;
+  font-weight:700; font-size:.76rem; padding:7px 10px; border-radius:9px; }
+.acv-opp-mini{ border:1px solid var(--border,#eadfe6); background:#fff; color:var(--muted,#7c6c77);
+  font-size:.76rem; padding:7px 9px; border-radius:9px; cursor:pointer; }
+
+/* vazio */
+.acv-empty{ text-align:center; padding:36px 18px; background:var(--card,#fff);
+  border:1px dashed var(--border,#eadfe6); border-radius:16px; }
+.acv-empty-emoji{ font-size:2.4rem; }
+.acv-empty-tit{ font-weight:800; font-size:1rem; margin:8px 0 4px; color:var(--text,#3a2f36); }
+.acv-empty-sub{ font-size:.82rem; color:var(--muted,#9b8b96); line-height:1.5; max-width:340px; margin:0 auto 16px; }
+
+/* ── modais do Acervo ── */
+.acv-modal-bg, .acv-detail-bg{ position:fixed; inset:0; background:rgba(40,28,38,.5);
+  z-index:9000; display:none; align-items:flex-end; justify-content:center; }
+.acv-modal-bg.open, .acv-detail-bg.open{ display:flex; }
+@media (min-width:700px){ .acv-modal-bg, .acv-detail-bg{ align-items:center; } }
+.acv-modal, .acv-detail{ background:var(--bg,#faf7f9); width:100%; max-width:560px; max-height:92vh;
+  overflow:auto; border-radius:18px 18px 0 0; }
+@media (min-width:700px){ .acv-modal, .acv-detail{ border-radius:18px; } }
+.acv-modal-top, .acv-detail-top{ position:sticky; top:0; background:var(--bg,#faf7f9); z-index:2;
+  display:flex; align-items:center; gap:10px; padding:13px 14px; border-bottom:1px solid var(--border,#eadfe6); }
+.acv-modal-tit, .acv-detail-tit{ flex:1; font-weight:800; font-size:.96rem; color:var(--text,#3a2f36);
+  text-align:center; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.acv-x{ width:32px; height:32px; border:none; background:#f0e9ee; border-radius:9px; cursor:pointer;
+  font-size:.9rem; color:var(--text,#3a2f36); }
+.acv-save, .acv-detail-edit{ border:none; cursor:pointer; background:var(--brand,#7d3c6e); color:#fff;
+  font-weight:700; font-size:.8rem; padding:8px 14px; border-radius:9px; }
+.acv-detail-edit{ background:#f0e9ee; color:var(--brand-dark,#7d3c6e); }
+.acv-modal-body, .acv-detail-body{ padding:14px 14px 24px; }
+.acv-fl{ display:block; font-size:.72rem; font-weight:700; color:var(--muted,#9b8b96); margin:10px 0 5px; }
+.acv-fl-hint{ font-weight:500; }
+.acv-fi{ width:100%; box-sizing:border-box; border:1px solid var(--border,#eadfe6); border-radius:10px;
+  padding:10px 11px; font-size:.88rem; background:#fff; color:var(--text,#3a2f36); font-family:inherit; }
+.acv-fi-tit{ font-weight:700; font-size:.96rem; }
+.acv-row2{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:4px; }
+.acv-drop{ width:100%; margin-top:6px; border:1.6px dashed var(--brand,#7d3c6e); background:var(--brand-soft,#f7eef4);
+  color:var(--brand-dark,#7d3c6e); font-weight:700; font-size:.85rem; padding:16px; border-radius:12px; cursor:pointer; }
+.acv-asset-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(120px,1fr)); gap:10px; margin-top:10px; }
+.acv-asset{ border:1px solid var(--border,#eadfe6); border-radius:11px; overflow:hidden; background:#fff; }
+.acv-asset-thumb{ width:100%; aspect-ratio:1/1; object-fit:cover; display:block; background:#f3eef2; position:relative; }
+.acv-asset-play{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+  font-size:1.3rem; color:#fff; text-shadow:0 1px 4px rgba(0,0,0,.6); }
+.acv-asset-tipo{ width:100%; border:none; border-top:1px solid var(--border,#eadfe6); padding:6px;
+  font-size:.7rem; background:#fff; color:var(--text,#3a2f36); }
+.acv-asset-del{ width:100%; border:none; border-top:1px solid var(--border,#eadfe6); padding:6px;
+  font-size:.68rem; background:#fff; color:var(--danger,#c62828); cursor:pointer; }
+.acv-garimpar-big{ width:100%; margin-top:14px; border:none; cursor:pointer;
+  background:linear-gradient(135deg,#7d3c6e,#a0517f); color:#fff; font-weight:800; font-size:.9rem;
+  padding:13px; border-radius:12px; }
+.acv-garimpar-big:active{ transform:scale(.99); }
+
+/* detalhe — galeria + sugestões */
+.acv-detail-meta{ font-size:.75rem; color:var(--muted,#9b8b96); margin-bottom:10px; }
+.acv-gallery{ display:grid; grid-template-columns:repeat(auto-fill, minmax(86px,1fr)); gap:7px; margin-bottom:6px; }
+.acv-gal-item{ position:relative; display:block; border-radius:9px; overflow:hidden; aspect-ratio:1/1; }
+.acv-gal-thumb{ width:100%; height:100%; display:block; background:#f3eef2 center/cover no-repeat;
+  position:relative; }
+.acv-gal-tip{ position:absolute; left:4px; bottom:4px; font-size:.8rem; }
+.acv-detail-sec{ font-size:.8rem; font-weight:800; color:var(--text,#3a2f36); margin:16px 0 9px; }
+.acv-detail-sugs{ display:flex; flex-direction:column; gap:9px; }
+.acv-sug{ background:var(--card,#fff); border:1px solid var(--border,#eadfe6); border-radius:12px; padding:11px 12px; }
+.acv-sug-off{ opacity:.62; }
+.acv-sug-tit{ font-size:.85rem; font-weight:700; color:var(--text,#3a2f36); line-height:1.3; margin-top:2px; }
+.acv-sug-rot{ font-size:.76rem; color:var(--text-muted,#6c5d67); line-height:1.45; margin-top:6px; white-space:pre-wrap; }
+.acv-sug-leg{ font-size:.74rem; color:var(--muted,#9b8b96); line-height:1.45; margin-top:6px; white-space:pre-wrap; }
+.acv-sug-pl{ font-size:.64rem; font-weight:700; color:#2d7d3a; background:#e8f5e9; padding:3px 7px; border-radius:7px; }
+.acv-sug-dis{ font-size:.64rem; font-weight:700; color:var(--muted,#9b8b96); background:#f0eef1; padding:3px 7px; border-radius:7px; }
+.acv-del-mat{ width:100%; margin-top:20px; border:1px solid var(--danger,#c62828); background:#fff;
+  color:var(--danger,#c62828); font-weight:700; font-size:.8rem; padding:11px; border-radius:11px; cursor:pointer; }
