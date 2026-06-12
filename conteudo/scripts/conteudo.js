@@ -2226,7 +2226,7 @@ function callGarimpoIA(apiKey,m,images){
     headers:{ 'content-type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true' },
     body:JSON.stringify({
       model:'claude-sonnet-4-6',
-      max_tokens:2500,
+      max_tokens:8000,
       tools:[tool],
       tool_choice:{type:'tool',name:'registrar_ideias'},
       messages:[{role:'user',content:content}]
