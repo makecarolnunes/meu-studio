@@ -143,6 +143,11 @@
         '<path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>' +
         '<path d="M15 5l3 3"/>' +
       '</svg>',
+    acervo:
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+        '<rect x="2" y="4" width="20" height="16" rx="2"/>' +
+        '<path d="M7 4v16M17 4v16M2 9h5M2 15h5M17 9h5M17 15h5"/>' +
+      '</svg>',
     arrow:
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
         '<path d="M5 12h14M13 6l6 6-6 6"/>' +
@@ -213,7 +218,8 @@
 
     var CREATIVE = [
       { key: 'conteudo',  nome: 'Lista de Conteúdos',   desc: 'Fila de conteúdo pronto para gravar ou postar',               url: contUrl,                               cls: 'card-cont'  },
-      { key: 'direcao',  nome: 'Direção Criativa',     desc: 'Transforme intenção em ideias estratégicas — brainstorm com IA', url: 'conteudo/direcao-criativa.html',     cls: 'card-dc'    },
+      { key: 'acervo',    nome: 'Acervo',               desc: 'Banco de matéria-prima — vire fotos e vídeos em ideias',      url: 'conteudo/index.html?view=acervo',     cls: 'card-cont'  },
+      { key: 'direcao',  nome: 'Laboratório Criativo',  desc: 'Transforme intenção em ideias estratégicas — brainstorm com IA', url: 'conteudo/direcao-criativa.html',     cls: 'card-dc'    },
       { key: 'validador', nome: 'Validador de Conteúdo', desc: 'Valide antes de postar — feedback estratégico IA',             url: 'instagram/?tab=validador',            cls: 'card-val'   },
     ];
     document.getElementById('creative-section').innerHTML = CREATIVE.map(function(c) {
@@ -226,14 +232,30 @@
     }).join('');
   }
 
-  // ── Redes Sociais ──
-  function buildSocial() {
-    var SOCIAL = [
-      { key: 'instagram',   nome: 'Instagram',    desc: 'Dashboard, métricas e análise de performance',                              url: 'instagram/',                 cls: 'card-insta'        },
-      { key: 'tiktok',     nome: 'TikTok',       desc: 'Diretor criativo estratégico — ideias e plano de conteúdo com IA',         url: 'conteudo/tiktok.html',       cls: 'card-tiktok'       },
-      { key: 'radar',      nome: 'Radar TikTok', desc: 'Tendências, sons, hooks e oportunidades filtrados pela sua marca com IA',  url: 'conteudo/tiktok-radar.html', cls: 'card-tiktok-radar' },
+  // ── Performance (métricas das redes) ──
+  function buildPerformance() {
+    var PERF = [
+      { key: 'instagram', nome: 'Instagram', desc: 'Dashboard, métricas e análise de performance',          url: 'instagram/', cls: 'card-insta'  },
+      { key: 'tiktok',    nome: 'TikTok',    desc: 'Métricas e desempenho dos vídeos',                       url: '',           cls: 'card-tiktok', soon: true },
     ];
-    document.getElementById('social-section').innerHTML = SOCIAL.map(function(c) {
+    document.getElementById('performance-section').innerHTML = PERF.map(function(c) {
+      var inner =
+        '<div class="sys-icon-wrap">' + iconSvg(c.key) + '</div>' +
+        '<div class="sys-name">' + esc(c.nome) +
+          (c.soon ? ' <span class="soon-badge">Em breve</span>' : '') +
+        '</div>' +
+        '<div class="sys-desc">' + esc(c.desc) + '</div>' +
+        '<div class="sys-arrow">' + iconSvg('arrow') + '</div>';
+      if (c.soon) {
+        return '<div class="sys-card ' + c.cls + ' is-soon">' + inner + '</div>';
+      }
+      return '<a href="' + esc(c.url) + '" class="sys-card ' + c.cls + '">' + inner + '</a>';
+    }).join('');
+  }
+
+  // ── Helper de render de cards simples (lista → grid) ──
+  function renderCards(targetId, cards) {
+    document.getElementById(targetId).innerHTML = cards.map(function(c) {
       return '<a href="' + esc(c.url) + '" class="sys-card ' + c.cls + '">' +
         '<div class="sys-icon-wrap">' + iconSvg(c.key) + '</div>' +
         '<div class="sys-name">' + esc(c.nome) + '</div>' +
@@ -243,21 +265,20 @@
     }).join('');
   }
 
-  // ── Estratégia ──
-  function buildEstrategia() {
-    var ESTRATEGIA = [
-      { key: 'insights',     nome: 'Insights de Mercado',        desc: 'Referências de mercado e análise de concorrentes com IA',      url: 'conteudo/brand-brain.html',     cls: 'card-radar'   },
-      { key: 'centromarca', nome: 'Análise de Marca',            desc: 'Analise sua marca, tom de voz e posicionamento com IA',               url: 'conteudo/centro-de-marca.html', cls: 'card-cdc'     },
-      { key: 'cdc',         nome: 'Manual de Marca',            desc: 'Base da empresa — DNA, posicionamento e pilares estratégicos', url: 'estrategia/centro-de-comando.html', cls: 'card-cdc' },
-    ];
-    document.getElementById('estrategia-section').innerHTML = ESTRATEGIA.map(function(c) {
-      return '<a href="' + esc(c.url) + '" class="sys-card ' + c.cls + '">' +
-        '<div class="sys-icon-wrap">' + iconSvg(c.key) + '</div>' +
-        '<div class="sys-name">' + esc(c.nome) + '</div>' +
-        '<div class="sys-desc">' + esc(c.desc) + '</div>' +
-        '<div class="sys-arrow">' + iconSvg('arrow') + '</div>' +
-      '</a>';
-    }).join('');
+  // ── Marca (posicionamento + identidade) ──
+  function buildMarca() {
+    renderCards('marca-section', [
+      { key: 'cdc',         nome: 'Manual de Marca',  desc: 'Base da empresa — DNA, posicionamento e pilares estratégicos',     url: 'estrategia/centro-de-comando.html', cls: 'card-cdc' },
+      { key: 'centromarca', nome: 'Raio-X da Marca',  desc: 'Diagnóstico por perspectiva — Brand Brain, Instagram e Curso VIP', url: 'conteudo/centro-de-marca.html',     cls: 'card-cdc' },
+    ]);
+  }
+
+  // ── Pesquisa (tendências + inteligência de mercado) ──
+  function buildPesquisa() {
+    renderCards('pesquisa-section', [
+      { key: 'radar',    nome: 'Insights de Mercado', desc: 'Referências de mercado e análise de concorrentes com IA',          url: 'conteudo/brand-brain.html',  cls: 'card-radar'        },
+      { key: 'tiktok',   nome: 'TikTok',              desc: 'Radar de tendências + diretor criativo da sua marca com IA',       url: 'conteudo/tiktok-radar.html', cls: 'card-tiktok-radar' },
+    ]);
   }
 
   function esc(s) {
@@ -387,8 +408,9 @@
     buildCards(FALLBACK);
     buildOrganizacao();
     buildGestao();
-    buildSocial();
-    buildEstrategia();
+    buildPerformance();
+    buildMarca();
+    buildPesquisa();
   }
 
   // ── Data ──

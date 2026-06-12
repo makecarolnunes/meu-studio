@@ -2404,7 +2404,12 @@ for(var si=0;si<stBtns.length;si++){(function(btn){btn.onclick=function(){
    ============================================================ */
 loadData();
 loadMateriais();   // Acervo — banco de matéria-prima (carrega em paralelo)
-setView('hoje');   // home = painel do dia (ajusta visibilidade de todas as views)
+// Deep-link: ?view=acervo (atalho do hub) abre direto na view pedida; senão, painel do dia
+(function(){
+  var qv = new URLSearchParams(location.search).get('view');
+  var allowed = ['hoje','stories','cal','list','board','inbox','acervo'];
+  setView(allowed.indexOf(qv) >= 0 ? qv : 'hoje');
+})();
 updateInboxBadges();
 
 // Atualiza badge do inbox quando storage muda (ex: nota salva no Instagram)

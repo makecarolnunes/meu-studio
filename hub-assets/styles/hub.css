@@ -210,6 +210,16 @@
     .card-tiktok       { --accent: #00B2C8; --icon-bg: #E0F9FC; }
     .card-tiktok-radar { --accent: #EE1D52; --icon-bg: #FFEAEE; }
 
+    /* Card "em breve" — desativado (sem navegação) */
+    .sys-card.is-soon { opacity: .58; cursor: default; pointer-events: none; }
+    .sys-card.is-soon:hover { transform: none; box-shadow: none; }
+    .soon-badge {
+      display: inline-block; vertical-align: middle; margin-left: 6px;
+      font-size: .58rem; font-weight: 700; letter-spacing: .03em; text-transform: uppercase;
+      color: var(--subtle); background: var(--icon-bg, #eee);
+      padding: 2px 7px; border-radius: 999px;
+    }
+
     /* ─── SVG icons (substituem emojis) ──────────── */
     .sys-icon-wrap { color: var(--accent, var(--rose)); }
     .sys-icon-wrap svg { width: 23px; height: 23px; display: block; }
