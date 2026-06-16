@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Prévia do Grid — @makecarolnunes</title>
+<style>
+  :root{
+    --bg:#faf8f5; --card:#fff; --ink:#2b2622; --mut:#8c7f73;
+    --line:#e9e2d8; --terra:#a8744f; --terra-d:#7c5436; --pin:#c08a3e;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    -webkit-font-smoothing:antialiased}
+  header{padding:18px 16px 10px;max-width:560px;margin:0 auto}
+  h1{font-size:19px;margin:0 0 4px}
+  .sub{font-size:13px;color:var(--mut);line-height:1.5;margin:0}
+  .wrap{max-width:560px;margin:0 auto;padding:0 16px 60px}
+
+  .bar{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 6px}
+  .btn{appearance:none;border:1px solid var(--line);background:var(--card);
+    color:var(--ink);font-size:13px;font-weight:600;padding:9px 13px;border-radius:10px;
+    cursor:pointer;line-height:1}
+  .btn.primary{background:var(--terra);border-color:var(--terra);color:#fff}
+  .btn:active{transform:translateY(1px)}
+
+  .hint{font-size:12px;color:var(--mut);margin:8px 2px 0;line-height:1.5}
+
+  /* GRID 3 colunas estilo Instagram (proporção 4:5) */
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;margin-top:12px}
+  .cell{position:relative;aspect-ratio:4/5;background:#ece4d8;overflow:hidden;border-radius:4px}
+  .cell img{width:100%;height:100%;object-fit:cover;display:block}
+  .ph{width:100%;height:100%;display:flex;align-items:center;justify-content:center;
+    text-align:center;font-size:10px;color:#fff;padding:6px;
+    background:linear-gradient(135deg,#b08a6a,#8a6a4d)}
+  .pos{position:absolute;top:4px;left:4px;background:rgba(0,0,0,.62);color:#fff;
+    font-size:11px;font-weight:700;min-width:19px;height:19px;border-radius:6px;
+    display:flex;align-items:center;justify-content:center;padding:0 4px}
+  .pin{position:absolute;top:4px;right:4px;background:var(--pin);color:#fff;
+    font-size:10px;font-weight:700;padding:2px 5px;border-radius:6px}
+  .tag{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(transparent,rgba(0,0,0,.66));
+    color:#fff;font-size:9.5px;line-height:1.2;padding:14px 4px 3px}
+  .mv{position:absolute;bottom:3px;display:flex;gap:3px;right:3px}
+  .mv button{width:22px;height:22px;border:none;border-radius:6px;background:rgba(255,255,255,.92);
+    color:#2b2622;font-size:13px;font-weight:800;line-height:1;cursor:pointer;padding:0}
+  .mv button:disabled{opacity:.35}
+
+  /* separadores "primeiros 9/12/15" */
+  .divider{grid-column:1 / -1;display:flex;align-items:center;gap:8px;margin:5px 0 2px}
+  .divider span{font-size:11px;font-weight:700;color:var(--terra-d);white-space:nowrap;
+    text-transform:uppercase;letter-spacing:.04em}
+  .divider:before,.divider:after{content:"";height:1px;background:var(--line);flex:1}
+
+  .state{padding:26px 14px;text-align:center;color:var(--mut);font-size:14px;line-height:1.6}
+  .state b{color:var(--ink)}
+
+  /* export */
+  .export{margin-top:18px;border:1px solid var(--line);border-radius:12px;background:var(--card);
+    padding:12px;display:none}
+  .export h2{font-size:14px;margin:0 0 8px}
+  .export ol{margin:0;padding-left:22px;font-size:12.5px;line-height:1.7}
+  .export a{color:var(--terra-d)}
+  .export .pinrow{font-weight:700}
+  textarea{width:100%;height:120px;margin-top:10px;border:1px solid var(--line);border-radius:8px;
+    padding:8px;font-size:11px;font-family:ui-monospace,monospace;resize:vertical}
+</style>
+</head>
+<body>
+<header>
+  <h1>🖼️ Prévia do Grid</h1>
+  <p class="sub">Veja como seu perfil vai ficar <b>antes</b> de mexer no Instagram.
+  Use ← → pra ajustar a ordem até ficar bonito visualmente. Depois é só replicar essa ordem no app.</p>
+</header>
+
+<div class="wrap">
+  <div class="bar">
+    <button class="btn" onclick="resetOrder()">↺ Voltar à sugestão</button>
+    <button class="btn primary" onclick="showExport()">📋 Ver ordem final</button>
+    <button class="btn" onclick="reload()">🔄 Recarregar miniaturas</button>
+  </div>
+  <p class="hint">Dica: se as miniaturas aparecerem quebradas, abra o dashboard do Instagram
+  uma vez (pra atualizar o snapshot) e recarregue esta página.</p>
+
+  <div id="grid" class="grid"></div>
+  <div id="state" class="state" style="display:none"></div>
+
+  <div class="export" id="export">
+    <h2>Ordem final — de cima pra baixo no seu perfil</h2>
+    <ol id="export-list"></ol>
+    <textarea id="export-text" readonly></textarea>
+    <div class="bar"><button class="btn primary" onclick="copyText()">Copiar lista</button></div>
+  </div>
+</div>
+
+<!-- Dependências (mesmo padrão do módulo) -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="../config.js"></script>
+<script src="../shared/js/db.js"></script>
+<script>
+(function(){
+  'use strict';
+
+  // Ordem sugerida (por shortcode do permalink) — performance + posicionamento
+  var SUGESTAO = [
+    'DZLe1_PGehj','DW4tUv0iB5d','DYk0d1xIvqT','DZTPf_MmacO','DXX1B5UDV16',
+    'DXP7EzyCCo8','DXxeqpqo_qx','DYVZ252oJWu','DXUZXgOjaKg','DXkaCrWiOqx',
+    'DUKDRNjjNqX','DXNQP1zmWni','DVOVD7WjcD0','DX2jCXSotTK','DSVzwnljXJJ',
+    'DX7mnVKIKsN','DTLTOptDYct','DXu1GrCCJ8K','DXpgievmYMB','DYCwM_ljXVQ'
+  ];
+
+  var items = [];   // itens na ordem atual
+  var byCode = {};
+
+  function shortcode(url){
+    var m = (url||'').match(/\/(?:p|reel|tv)\/([^\/?#]+)/);
+    return m ? m[1] : (url||'');
+  }
+  function shortCaption(c){
+    c = (c||'').replace(/\s+/g,' ').trim();
+    return c.length > 46 ? c.slice(0,46)+'…' : (c || '(sem legenda)');
+  }
+  function fmtDate(ts){
+    try{ var d=new Date(ts); return ('0'+d.getDate()).slice(-2)+'/'+('0'+(d.getMonth()+1)).slice(-2); }
+    catch(e){ return ''; }
+  }
+
+  function build(snap){
+    var posts = (snap && snap.posts) || [];
+    var insights = (snap && snap.insights) || {};
+    var arr = posts.map(function(p){
+      var code = shortcode(p.permalink);
+      var ins = insights[p.id] || {};
+      return {
+        id:p.id, code:code, link:p.permalink,
+        thumb:(p.thumbnail_url || p.media_url || ''),
+        date:fmtDate(p.timestamp),
+        caption:shortCaption(p.caption),
+        reach:ins.reach||0, saves:ins.saved||0, shares:ins.shares||0
+      };
+    });
+    byCode = {};
+    arr.forEach(function(it){ byCode[it.code]=it; });
+    return arr;
+  }
+
+  function orderBy(codes){
+    var seen={}, out=[];
+    codes.forEach(function(c){ if(byCode[c]){ out.push(byCode[c]); seen[c]=1; } });
+    // qualquer post fora da lista sugerida vai pro fim, mantendo ordem original
+    items.forEach(function(it){ if(!seen[it.code]){ out.push(it); seen[it.code]=1; } });
+    return out;
+  }
+
+  function render(){
+    var g = document.getElementById('grid');
+    g.innerHTML='';
+    var marks = {9:'fim dos 9 primeiros',12:'fim dos 12',15:'fim dos 15'};
+    items.forEach(function(it, i){
+      var pos = i+1;
+      var cell = document.createElement('div');
+      cell.className='cell';
+
+      // overlays (sem a mídia ainda)
+      cell.innerHTML =
+        '<div class="pos">'+pos+'</div>' +
+        (pos<=3 ? '<div class="pin">📌 FIXAR</div>' : '') +
+        '<div class="tag">'+it.date+' · '+it.caption+'</div>' +
+        '<div class="mv">' +
+          '<button '+(i===0?'disabled':'')+' onclick="move('+i+',-1)">←</button>' +
+          '<button '+(i===items.length-1?'disabled':'')+' onclick="move('+i+',1)">→</button>' +
+        '</div>';
+
+      // mídia (imagem com fallback de placeholder se o CDN expirar)
+      var media;
+      if(it.thumb){
+        media = document.createElement('img');
+        media.src = it.thumb; media.alt=''; media.loading='lazy';
+        media.onerror = function(){
+          var ph=document.createElement('div');
+          ph.className='ph'; ph.innerHTML=it.date+'<br>'+it.caption;
+          media.replaceWith(ph);
+        };
+      } else {
+        media = document.createElement('div');
+        media.className='ph'; media.innerHTML=it.date+'<br>'+it.caption;
+      }
+      cell.insertBefore(media, cell.firstChild);
+      g.appendChild(cell);
+
+      if(marks[pos]){
+        var d=document.createElement('div');
+        d.className='divider';
+        d.innerHTML='<span>▲ '+marks[pos]+'</span>';
+        g.appendChild(d);
+      }
+    });
+  }
+
+  window.move = function(i, dir){
+    var j=i+dir;
+    if(j<0||j>=items.length) return;
+    var t=items[i]; items[i]=items[j]; items[j]=t;
+    render();
+    document.getElementById('export').style.display='none';
+  };
+  window.resetOrder = function(){ items = orderBy(SUGESTAO); render();
+    document.getElementById('export').style.display='none'; };
+  window.reload = function(){ location.reload(); };
+
+  window.showExport = function(){
+    var ol=document.getElementById('export-list'); ol.innerHTML='';
+    var txt='NOVA ORDEM DO FEED — @makecarolnunes\n(de cima pra baixo no perfil)\n\n';
+    items.forEach(function(it,i){
+      var pin = i<3 ? ' 📌FIXAR' : '';
+      var li=document.createElement('li');
+      if(i<3) li.className='pinrow';
+      li.innerHTML='<a href="'+it.link+'" target="_blank">'+it.date+' · '+it.caption+'</a>'+pin;
+      ol.appendChild(li);
+      txt += (i+1)+'. '+it.date+' · '+it.caption+pin+'\n   '+it.link+'\n';
+    });
+    document.getElementById('export-text').value=txt;
+    document.getElementById('export').style.display='block';
+    document.getElementById('export').scrollIntoView({behavior:'smooth'});
+  };
+  window.copyText = function(){
+    var ta=document.getElementById('export-text');
+    ta.select(); ta.setSelectionRange(0,99999);
+    try{ navigator.clipboard.writeText(ta.value); }catch(e){ document.execCommand('copy'); }
+    alert('Lista copiada! 📋');
+  };
+
+  function fail(msg){
+    document.getElementById('grid').style.display='none';
+    var s=document.getElementById('state'); s.style.display='block'; s.innerHTML=msg;
+  }
+
+  // BOOT
+  (async function(){
+    if(typeof DB==='undefined' || !DB.instagram || window._SB_ERROR){
+      return fail('Não consegui conectar ao Supabase.<br>Confira o <b>config.js</b>.');
+    }
+    try{
+      var snap = await DB.instagram.getState('feed_snapshot');
+      if(!snap || !snap.posts || !snap.posts.length){
+        return fail('Ainda não há snapshot de posts.<br>Abra o <b>dashboard do Instagram</b> uma vez (ele salva os dados) e volte aqui.');
+      }
+      items = build(snap);
+      items = orderBy(SUGESTAO);
+      render();
+    }catch(e){
+      fail('Erro ao carregar: '+(e.message||e));
+    }
+  })();
+})();
+</script>
+</body>
+</html>
