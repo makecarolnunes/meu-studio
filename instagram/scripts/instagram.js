@@ -149,6 +149,24 @@
     });
   }
 
+  // Persiste o snapshot de métricas reais (perfil + posts + insights + conta +
+  // demografia) no Supabase sempre que a API entrega dados frescos. Assim a
+  // análise estratégica pode ler os números reais fora do browser (a routine
+  // semanal e o assistente não alcançam graph.instagram.com diretamente).
+  function pushFeedSnapshotToSupabase() {
+    if (typeof DB === 'undefined' || !DB.instagram || window._SB_ERROR) return;
+    if (!state.profile || !state.posts || !state.posts.length) return;
+    pushStateToSupabase('feed_snapshot', {
+      schema: 1,
+      profile: state.profile,
+      posts: state.posts,
+      insights: state.insights || {},
+      accountInsights: state.accountInsights || null,
+      audience: state.audience || null,
+      updatedAt: state.updatedAt
+    });
+  }
+
   // ── UI STATES ─────────────────────────────────────────────
   function showSetup() { swap('setup-screen'); }
   function showLoading(msg) {
@@ -338,6 +356,7 @@
       state.accountInsights = cached.accountInsights || null;
       state.audience = cached.audience || null;
       state.updatedAt = cached.updatedAt;
+      pushFeedSnapshotToSupabase();
       render();
       return;
     }
@@ -412,6 +431,7 @@
 
       state.updatedAt = Date.now();
       writeCache();
+      pushFeedSnapshotToSupabase();
       render();
     } catch (err) {
       console.error('[ig] fetch error:', err);
