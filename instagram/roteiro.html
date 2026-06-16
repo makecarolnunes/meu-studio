@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Roteiro do Feed — @makecarolnunes</title>
+<style>
+  :root{
+    --bg:#faf8f5; --card:#fff; --ink:#2b2622; --mut:#8c7f73;
+    --line:#e9e2d8; --terra:#a8744f; --terra-d:#7c5436; --gold:#c08a3e;
+    --done:#dfe7df; --done-ink:#3f6b46;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    -webkit-font-smoothing:antialiased}
+  .wrap{max-width:520px;margin:0 auto;padding:18px 16px 70px}
+  h1{font-size:19px;margin:0 0 2px}
+  .sub{font-size:12.5px;color:var(--mut);margin:0 0 14px;line-height:1.5}
+
+  .meta{display:flex;gap:8px;align-items:center;font-size:12px;color:var(--mut);margin-bottom:10px}
+  .pill{background:#f1eae1;border-radius:999px;padding:4px 10px;font-weight:700;color:var(--terra-d)}
+
+  /* progresso (9 bolinhas) */
+  .dots{display:flex;gap:6px;margin:6px 0 16px}
+  .dot{flex:1;height:6px;border-radius:99px;background:var(--line)}
+  .dot.done{background:var(--terra)}
+  .dot.cur{background:var(--gold);box-shadow:0 0 0 2px rgba(192,138,62,.25)}
+
+  /* cartão do próximo post */
+  .next{background:var(--card);border:1px solid var(--line);border-radius:16px;
+    padding:18px;box-shadow:0 4px 18px rgba(120,90,60,.06)}
+  .next .lbl{font-size:11px;font-weight:800;letter-spacing:.08em;color:var(--gold);text-transform:uppercase}
+  .next .big{font-size:26px;font-weight:800;margin:6px 0 2px;line-height:1.15}
+  .next .role{font-size:13.5px;color:var(--mut);margin:0 0 12px}
+  .brief{font-size:13.5px;line-height:1.55;background:#f7f2ec;border-radius:10px;padding:11px 12px;margin:0 0 10px}
+  .brief b{color:var(--terra-d)}
+  .ex{font-size:12.5px;margin:0}
+  .ex a{color:var(--terra-d);font-weight:600}
+  .warn{margin-top:10px;font-size:12.5px;background:#fbeede;border:1px solid #f0d8b4;
+    color:#8a5a1f;border-radius:10px;padding:9px 11px;font-weight:600}
+
+  .actions{display:flex;gap:8px;margin:14px 0 4px}
+  .btn{flex:1;appearance:none;border:1px solid var(--line);background:var(--card);
+    color:var(--ink);font-size:14px;font-weight:700;padding:13px 10px;border-radius:12px;cursor:pointer}
+  .btn.primary{background:var(--terra);border-color:var(--terra);color:#fff;flex:2}
+  .btn:active{transform:translateY(1px)}
+  .btn:disabled{opacity:.5}
+  .ghost{background:none;border:none;color:var(--mut);font-size:12.5px;text-decoration:underline;
+    cursor:pointer;padding:6px;width:100%;margin-top:4px}
+
+  /* mini grid do ciclo */
+  h2{font-size:13px;text-transform:uppercase;letter-spacing:.05em;color:var(--terra-d);margin:26px 0 8px}
+  .cycle{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+  .slot{border:1px solid var(--line);border-radius:10px;background:var(--card);padding:9px 7px;
+    text-align:center;font-size:11px;line-height:1.25;min-height:64px;display:flex;
+    flex-direction:column;justify-content:center;gap:2px}
+  .slot .em{font-size:18px}
+  .slot .nm{font-weight:700}
+  .slot.done{background:var(--done);border-color:#cfe0cf;color:var(--done-ink)}
+  .slot.cur{border-color:var(--gold);box-shadow:0 0 0 2px rgba(192,138,62,.25);background:#fff8ec}
+  .slot .n{font-size:9px;color:var(--mut)}
+
+  .hist{margin-top:24px}
+  .hist ul{list-style:none;padding:0;margin:8px 0 0;font-size:12.5px}
+  .hist li{display:flex;justify-content:space-between;padding:7px 2px;border-bottom:1px solid var(--line);color:var(--mut)}
+  .hist li b{color:var(--ink);font-weight:600}
+
+  .state{padding:30px 14px;text-align:center;color:var(--mut);font-size:14px;line-height:1.6}
+</style>
+</head>
+<body>
+<div class="wrap" id="app">
+  <h1>🧭 Roteiro do Feed</h1>
+  <p class="sub">Siga o ciclo de 9 e o feed se padroniza sozinho. Marque cada post e eu te aviso o próximo.</p>
+  <div id="content" style="display:none">
+    <div class="meta">
+      <span class="pill" id="cyclePill">Ciclo 1</span>
+      <span id="posInfo">post 1 de 9</span>
+    </div>
+    <div class="dots" id="dots"></div>
+
+    <div class="next" id="nextCard"></div>
+
+    <div class="actions">
+      <button class="btn primary" id="btnDone" onclick="markDone()">✓ Postei esse — avançar</button>
+      <button class="btn" onclick="skip()">Pular ⏭</button>
+    </div>
+    <button class="ghost" onclick="undo()">← desfazer último</button>
+
+    <h2>O ciclo completo</h2>
+    <div class="cycle" id="cycle"></div>
+
+    <div class="hist">
+      <h2 style="margin-bottom:0">Últimos posts marcados</h2>
+      <ul id="hist"></ul>
+    </div>
+  </div>
+  <div id="loading" class="state">Carregando roteiro…</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="../config.js"></script>
+<script src="../shared/js/db.js"></script>
+<script>
+(function(){
+  'use strict';
+
+  // ── Os 9 slots do ciclo ──────────────────────────────────────
+  var SLOTS = [
+    { em:'👰', nm:'Noiva — resultado', role:'Conversão nº1 · emoção',
+      brief:'Resultado de noiva, <b>close em luz quente</b>. Legenda: nome + o que te emocionou no dia. Nada de "transformação".',
+      ex:'https://www.instagram.com/p/DZLe1_PGehj/', exl:'Karina (4 saves + 6 shares)' },
+    { em:'🫧', nm:'Respiro', role:'Descanso visual · bancada/detalhe',
+      brief:'<b>Bancada organizada</b>, produto ou detalhe (mão, textura). Luz de janela. É a pausa que deixa o grid respirar — sempre na coluna do meio.',
+      ex:'https://www.instagram.com/reel/DXu1GrCCJ8K/', exl:'Bancada dos sonhos' },
+    { em:'🤎', nm:'Pele negra — editorial', role:'Especialização · pilar forte',
+      brief:'Retrato editorial de <b>pele negra</b>: luz lateral quente, fundo neutro off-white, foco no rosto. Nível "tornar o belo ainda mais belo".',
+      ex:'https://www.instagram.com/reel/DXP7EzyCCo8/', exl:'Tornar o belo' },
+    { em:'✨', nm:'Natural beauty', role:'Posicionamento · "glow sem pesar"',
+      brief:'<b>Beleza natural</b> e iluminada, clima diurno/dia a dia. Reforça sua frase: glow sem pesar.',
+      ex:'https://www.instagram.com/reel/DW4tUv0iB5d/', exl:'Natural pra evento diurno' },
+    { em:'📚', nm:'Técnica', role:'Autoridade · esquenta o curso',
+      brief:'Reel educacional no formato <b>"erro + correção"</b> ou dica. Capa com texto curto (serif). CTA suave pra formação. Carol na câmera converte mais.',
+      ex:'https://www.instagram.com/reel/DXxeqpqo_qx/', exl:'"O mais importante é performance"' },
+    { em:'🌀', nm:'Cachos & crespos', role:'Especialidade · SEU GAP',
+      brief:'<b>Cachos/crespos valorizados, sem alisar nenhum fio</b>. Penteado ou beleza em cabelo cacheado. Hoje é ZERO no feed — é o que mais falta provar.',
+      ex:'', exl:'(criar o primeiro — referência sua ainda não existe)' },
+    { em:'👰', nm:'Noiva — making of', role:'O processo é o produto',
+      brief:'<b>Bastidor do dia</b>: chegada da noiva, processo em cortes, o momento do espelho. Narrativa real na legenda. Processo > resultado isolado.',
+      ex:'https://www.instagram.com/reel/DYk0d1xIvqT/', exl:'Isabel — "me reconhecer"' },
+    { em:'💬', nm:'Prova social', role:'Feedback = gatilho de orçamento',
+      brief:'<b>Print de feedback</b> estilizado na paleta da marca (não captura crua) + foto da cliente. Salve também no destaque "Feedbacks".',
+      ex:'https://www.instagram.com/p/DTLTOptDYct/', exl:'Carol — maquiagem natural' },
+    { em:'🤎', nm:'Pele negra — editorial', role:'Constrói a SÉRIE, não post isolado',
+      brief:'Segundo <b>ângulo ou tom de pele negra</b>, diferente do slot 3. Duas no ciclo = vira prova de especialização, não exceção.',
+      ex:'https://www.instagram.com/reel/DXUZXgOjaKg/', exl:'#maquiadorapelenegra' }
+  ];
+
+  var KEY='feed_roteiro';
+  var st={ count:0, history:[] };  // count = total marcados; slot atual = count % 9
+
+  function slotIdx(){ return st.count % 9; }
+  function cycleNum(){ return Math.floor(st.count/9)+1; }
+
+  // ── persistência (Supabase + fallback localStorage) ──────────
+  async function load(){
+    var loaded=null;
+    try{
+      if(typeof DB!=='undefined' && DB.instagram && !window._SB_ERROR){
+        loaded = await DB.instagram.getState(KEY);
+      }
+    }catch(e){ console.warn('[roteiro] supabase load falhou', e); }
+    if(!loaded){
+      try{ loaded = JSON.parse(localStorage.getItem('mk_'+KEY)||'null'); }catch(e){}
+    }
+    if(loaded && typeof loaded.count==='number'){ st=loaded; if(!st.history) st.history=[]; }
+  }
+  function save(){
+    st.updatedAt=Date.now();
+    try{ localStorage.setItem('mk_'+KEY, JSON.stringify(st)); }catch(e){}
+    if(typeof DB!=='undefined' && DB.instagram && !window._SB_ERROR){
+      DB.instagram.setState(KEY, st).catch(function(e){ console.warn('[roteiro] save falhou', e); });
+    }
+  }
+
+  // ── ações ────────────────────────────────────────────────────
+  window.markDone=function(){
+    var s=SLOTS[slotIdx()];
+    st.history.unshift({ nm:s.nm, em:s.em, at:Date.now() });
+    if(st.history.length>30) st.history.pop();
+    st.count++;
+    save(); render();
+  };
+  window.skip=function(){ st.count++; save(); render(); };
+  window.undo=function(){
+    if(st.count<=0) return;
+    st.count--;
+    if(st.history.length) st.history.shift();
+    save(); render();
+  };
+
+  function fmt(ts){ var d=new Date(ts);
+    return ('0'+d.getDate()).slice(-2)+'/'+('0'+(d.getMonth()+1)).slice(-2); }
+
+  // ── render ───────────────────────────────────────────────────
+  function render(){
+    var i=slotIdx(), s=SLOTS[i];
+    document.getElementById('cyclePill').textContent='Ciclo '+cycleNum();
+    document.getElementById('posInfo').textContent='post '+(i+1)+' de 9';
+
+    // dots
+    var dots=''; for(var d=0; d<9; d++){
+      var cls = d<i ? 'done' : (d===i ? 'cur' : '');
+      dots+='<div class="dot '+cls+'"></div>';
+    }
+    document.getElementById('dots').innerHTML=dots;
+
+    // próximo card
+    var exHtml = s.ex
+      ? '<p class="ex">📌 Referência: <a href="'+s.ex+'" target="_blank">'+s.exl+'</a></p>'
+      : '<p class="ex">📌 Referência: '+s.exl+'</p>';
+    var warn = (s.nm.indexOf('Cachos')>=0)
+      ? '<div class="warn">⚠️ Prioridade máxima: esse tema ainda é zero no seu feed.</div>' : '';
+    document.getElementById('nextCard').innerHTML =
+      '<div class="lbl">Próximo post</div>'+
+      '<div class="big">'+s.em+' '+s.nm+'</div>'+
+      '<p class="role">'+s.role+'</p>'+
+      '<div class="brief">'+s.brief+'</div>'+
+      exHtml + warn;
+
+    // ciclo 3x3
+    var cy=''; for(var k=0;k<9;k++){
+      var c = k<i ? 'done' : (k===i ? 'cur' : '');
+      cy+='<div class="slot '+c+'"><span class="n">'+(k+1)+'</span>'+
+          '<span class="em">'+SLOTS[k].em+'</span>'+
+          '<span class="nm">'+SLOTS[k].nm.split(' — ')[0]+'</span></div>';
+    }
+    document.getElementById('cycle').innerHTML=cy;
+
+    // histórico
+    var h=''; st.history.slice(0,8).forEach(function(it){
+      h+='<li><b>'+it.em+' '+it.nm+'</b><span>'+fmt(it.at)+'</span></li>';
+    });
+    document.getElementById('hist').innerHTML = h || '<li><span>nenhum ainda — marque seu primeiro post</span></li>';
+  }
+
+  (async function(){
+    await load();
+    document.getElementById('loading').style.display='none';
+    document.getElementById('content').style.display='block';
+    render();
+  })();
+})();
+</script>
+</body>
+</html>
