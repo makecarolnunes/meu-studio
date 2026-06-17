@@ -711,6 +711,10 @@
       min-height: 0.85rem; padding-left: 2px;
     }
     .slot-resumo:empty { display: none; }
+    /* ── Data do slot em listas (Dia / Mês / Ano) + Hora ── */
+    .slot-date-row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+    .slot-date-row .form-input { flex: 1 1 0; min-width: 56px; padding-left: 8px; padding-right: 6px; }
+    .slot-date-row .slot-sel-hora { flex: 1 1 72px; min-width: 72px; }
     /* ── Aviso de conflito de agenda no slot ── */
     .slot-conflict { display: flex; flex-direction: column; gap: 4px; }
     .slot-conflict:empty { display: none; }

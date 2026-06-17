@@ -1208,6 +1208,63 @@ function slotConflictHTML(cand, excludeId) {
   return lines.join('');
 }
 
+// ── Data do slot via listas Dia / Mês / Ano (evita ano digitado errado) ──
+const MESES_ABREV = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+function daysInMonth(y, m) {
+  if (!m) return 31;
+  const yy = Number(y) || new Date().getFullYear();
+  return new Date(yy, Number(m), 0).getDate();
+}
+function yearOptionsList(selected) {
+  const cy = new Date().getFullYear();
+  const list = [];
+  for (let y = cy - 1; y <= cy + 3; y++) list.push(String(y));
+  if (selected && !list.includes(String(selected))) list.unshift(String(selected)); // preserva ano fora do range (dado antigo)
+  return list;
+}
+// Quebra a data do slot em {y,m,d}; ano vazio assume o ano atual (autopreenchido).
+function slotDateParts(s) {
+  let y = '', m = '', d = '';
+  if (s && /^\d{4}-\d{2}-\d{2}$/.test(s.data || '')) {
+    const a = s.data.split('-'); y = a[0]; m = a[1]; d = a[2];
+  } else if (s) {
+    y = s._y || ''; m = s._m || ''; d = s._d || '';
+  }
+  if (!y) y = String(new Date().getFullYear());
+  return { y, m, d };
+}
+function buildSlotDateSelects(s, syncFn) {
+  const p = slotDateParts(s);
+  let dias = '<option value="">Dia</option>';
+  const maxD = daysInMonth(p.y, p.m);
+  for (let i = 1; i <= maxD; i++) {
+    const dd = pad2(i);
+    dias += '<option value="' + dd + '"' + (dd === p.d ? ' selected' : '') + '>' + i + '</option>';
+  }
+  let meses = '<option value="">Mês</option>';
+  MESES_ABREV.forEach((nm, i) => {
+    const mm = pad2(i + 1);
+    meses += '<option value="' + mm + '"' + (mm === p.m ? ' selected' : '') + '>' + nm + '</option>';
+  });
+  const anos = yearOptionsList(p.y).map(y =>
+    '<option value="' + y + '"' + (y === p.y ? ' selected' : '') + '>' + y + '</option>').join('');
+  return (
+    '<select class="form-input slot-sel" onchange="' + syncFn + '(' + s.id + ', \'dia\', this.value)" title="Dia">' + dias + '</select>' +
+    '<select class="form-input slot-sel" onchange="' + syncFn + '(' + s.id + ', \'mes\', this.value)" title="Mês">' + meses + '</select>' +
+    '<select class="form-input slot-sel" onchange="' + syncFn + '(' + s.id + ', \'ano\', this.value)" title="Ano">' + anos + '</select>'
+  );
+}
+// Data (se houver) precisa ter ano plausível e ser um dia real do calendário.
+function slotDateYearValid(dateStr) {
+  if (!dateStr) return true;
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateStr);
+  if (!m) return false;
+  const y = Number(m[1]), cy = new Date().getFullYear();
+  if (y < cy - 1 || y > cy + 5) return false;
+  const dt = new Date(y, Number(m[2]) - 1, Number(m[3]));
+  return dt.getFullYear() === y && (dt.getMonth() + 1) === Number(m[2]) && dt.getDate() === Number(m[3]);
+}
+
 // HTML de uma linha de slot (compartilhado entre Novo Orçamento e Fechar)
 function renderSlotRow(s, idx, count, syncFn, removeFn) {
   const opts = services.map(svc =>
@@ -1234,9 +1291,9 @@ function renderSlotRow(s, idx, count, syncFn, removeFn) {
             '<input class="form-input" type="number" min="0" step="5" placeholder="min" value="' + dur + '" oninput="' + syncFn + '(' + s.id + ', \'duracao\', this.value)">' +
           '</label>' +
         '</div>' +
-        '<div class="form-row">' +
-          '<input class="form-input" type="date" value="' + (s.data || '') + '" oninput="' + syncFn + '(' + s.id + ', \'data\', this.value)">' +
-          '<input class="form-input" type="time" placeholder="Início" value="' + (s.horario || '') + '" oninput="' + syncFn + '(' + s.id + ', \'horario\', this.value)">' +
+        '<div class="slot-date-row">' +
+          buildSlotDateSelects(s, syncFn) +
+          '<input class="form-input slot-sel-hora" type="time" placeholder="Início" value="' + (s.horario || '') + '" oninput="' + syncFn + '(' + s.id + ', \'horario\', this.value)">' +
         '</div>' +
         '<div class="slot-resumo" id="resumo-' + s.id + '">' + esc(slotResumoLinha(s)) + '</div>' +
         '<div class="slot-conflict" id="conflict-' + s.id + '">' + slotConflictHTML(s, slotCheckExcludeId) + '</div>' +
@@ -1277,8 +1334,21 @@ function syncSlotField(arr, id, campo, valor, rerender, recalc) {
     s.duracao = Math.max(0, parseInt(valor) || 0);
     s._durManual = true;
     updateSlotResumo(s);
+  } else if (campo === 'dia' || campo === 'mes' || campo === 'ano') {
+    const p = slotDateParts(s);
+    if (campo === 'dia') p.d = valor;
+    if (campo === 'mes') p.m = valor;
+    if (campo === 'ano') p.y = valor;
+    if (p.m && p.d) {                       // não deixa o dia passar do fim do mês
+      const maxD = daysInMonth(p.y, p.m);
+      if (Number(p.d) > maxD) p.d = pad2(maxD);
+    }
+    s._y = p.y; s._m = p.m; s._d = p.d;
+    s.data = (p.y && p.m && p.d) ? (p.y + '-' + p.m + '-' + p.d) : '';
+    if (campo === 'mes' || campo === 'ano') rerender();   // atualiza a lista de dias
+    else updateSlotResumo(s);
   } else {
-    s[campo] = valor;            // data / horario
+    s[campo] = valor;            // horario
     updateSlotResumo(s);
   }
   recalc();
@@ -1408,6 +1478,8 @@ async function saveNew() {
   if (!tel && !semTel) { toast('⚠️ Informe o telefone'); return; }
   const slotsValidos = addSlots.filter(s => s.servico);
   if (!slotsValidos.length) { toast('⚠️ Adicione pelo menos um serviço'); return; }
+  const dataInvalida = slotsValidos.find(s => s.data && !slotDateYearValid(s.data));
+  if (dataInvalida) { toast('⚠️ Confira a data do serviço — ano fora do intervalo: ' + fmtDate(dataInvalida.data)); return; }
 
   const total = slotsValidos.reduce((s, x) => s + (parseFloat(x.valorUnit) || 0) * slotQtd(x), 0);
   const servicoDesc = descreveSlots(slotsValidos);
@@ -1802,6 +1874,8 @@ async function confirmarFechamento() {
 
   const slotsValidos = fechSlots.filter(s => s.servico);
   if (!slotsValidos.length) { toast('⚠️ Adicione pelo menos um serviço'); return; }
+  const dataInvalida = slotsValidos.find(s => s.data && !slotDateYearValid(s.data));
+  if (dataInvalida) { toast('⚠️ Confira a data do serviço — ano fora do intervalo: ' + fmtDate(dataInvalida.data)); return; }
 
   const total = parseFloat(document.getElementById('fech-total').value) || 0;
   const sinal = parseFloat(document.getElementById('fech-sinal').value) || 0;
@@ -1881,7 +1955,9 @@ async function confirmarFechamento() {
   let finResult = { ok: true };
   const local = fechLocal === 'studio' ? 'Studio' : 'Domicílio';
   const dataEvento = e.DataEvento || todayStr();
-  const dataPagSinal = fechSinalRecebido ? todayStr() : dataEvento;
+  // Sinal sempre na data do fechamento (hoje), recebido ou a receber.
+  // Só o status muda; o restante é que vai para o dia do evento.
+  const dataPagSinal = todayStr();
 
   if (sinal > 0) {
     const eSinal = {
