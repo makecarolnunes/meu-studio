@@ -747,6 +747,20 @@
       flex-shrink: 0; margin-top: 2px;
     }
     .slot-fields { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 7px; }
+    /* Qtd · R$ unitário · Duração — três campos compactos lado a lado */
+    .slot-qty-row { display: grid; grid-template-columns: 0.7fr 1fr 1fr; gap: 7px; }
+    .slot-mini-lbl {
+      display: flex; flex-direction: column; gap: 2px;
+      font-size: 0.6rem; font-weight: 700; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.04em;
+    }
+    .slot-mini-lbl .form-input { font-size: 0.85rem; padding: 8px 9px; }
+    /* Linha-resumo: "6 × R$ 500,00 = R$ 3.000,00 · 12:30–18:30" */
+    .slot-resumo {
+      font-size: 0.68rem; font-weight: 600; color: var(--purple);
+      min-height: 0.85rem; padding-left: 2px;
+    }
+    .slot-resumo:empty { display: none; }
     .slot-del {
       width: 26px; height: 26px; flex-shrink: 0;
       border: none; background: #f5edf3; color: #b07aa0;

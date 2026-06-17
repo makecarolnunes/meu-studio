@@ -627,32 +627,27 @@ function buildConfirmacaoMessage(nome, slots, total, sinal, saldo, endereco, loc
     linhas.push('');
 
     // Contar tipos de serviço no grupo
-    let nMaquiagem = 0, nCabelo = 0, nNoiva = 0, nOutro = 0;
-    grupo.forEach(s => {
-      const low = (s.servico || '').toLowerCase();
-      const hasMake   = low.includes('maquiagem') || low.includes('make');
-      const hasCabelo = low.includes('cabelo')    || low.includes('penteado');
-      const hasNoiva  = low.includes('noiva');
-      if (hasNoiva)                  { nNoiva++; }
-      else if (hasMake && hasCabelo) { nMaquiagem++; nCabelo++; }
-      else if (hasMake)              { nMaquiagem++; }
-      else if (hasCabelo)            { nCabelo++; }
-      else                           { nOutro++; }
-    });
-
-    const partes = [];
-    if (nNoiva > 0)     partes.push(nNoiva     + (nNoiva     === 1 ? ' noiva'     : ' noivas'));
-    if (nMaquiagem > 0) partes.push(nMaquiagem + (nMaquiagem === 1 ? ' maquiagem' : ' maquiagens'));
-    if (nCabelo > 0)    partes.push(nCabelo    + (nCabelo    === 1 ? ' cabelo'    : ' cabelos'));
-    if (nOutro > 0)     partes.push(nOutro     + (nOutro     === 1 ? ' serviço'   : ' serviços'));
+    const partes = contarServicosGrupo(grupo).partes;
     const descServico = (partes.join(' e ') || grupo.length + ' serviços') + ' ' + tipoLocalStr;
     linhas.push('*Serviço:* ' + descServico);
 
-    // Horário mais cedo do grupo
-    const firstSlot = grupo.reduce((min, s) =>
-      (!min.horario || (s.horario && s.horario < min.horario)) ? s : min, grupo[0]);
+    // Período do grupo: início (menor horário) e fim (maior horário + duração)
+    let iniMin = null, fimMax = null;
+    grupo.forEach(s => {
+      if (!s.horario) return;
+      const [hh, mm] = s.horario.split(':').map(Number);
+      const start = hh * 60 + mm;
+      const end   = start + slotDuracao(s);
+      if (iniMin === null || start < iniMin) iniMin = start;
+      if (fimMax === null || end   > fimMax) fimMax = end;
+    });
     if (dataKey !== '__semdata__') linhas.push('*Data:* ' + fmtDateWeekFull(dataKey));
-    if (firstSlot.horario)         linhas.push('*Horário de início:* ' + fmtHorario(firstSlot.horario));
+    if (iniMin !== null) {
+      const horaIni = pad2(Math.floor(iniMin / 60) % 24) + ':' + pad2(iniMin % 60);
+      const horaFim = pad2(Math.floor(fimMax / 60) % 24) + ':' + pad2(fimMax % 60);
+      if (grupo.length > 1) linhas.push('*Horário:* ' + fmtHorario(horaIni) + ' às ' + fmtHorario(horaFim));
+      else                  linhas.push('*Horário de início:* ' + fmtHorario(horaIni));
+    }
     linhas.push('*Endereço:* ' + (endereco || '[endereço]'));
 
     // Valores por tipo de serviço (preço unitário, sem repetir)
@@ -768,40 +763,170 @@ function simplifyServiceName(servName) {
   return servName.replace(/\s+(em domicílio|no studio|no estúdio|em domicilio|no estudio)\s*$/i, '').trim();
 }
 
+// Duração de uma slot: usa a duração gravada ou deriva do serviço.
+function slotDuracao(s) {
+  return parseInt(s && s.duracao) || getServiceDuration(s && s.servico);
+}
+
+// Conta os serviços de um grupo (mesma data) por categoria.
+// Reaproveitado pelo evento da agenda e pela mensagem de WhatsApp.
+function contarServicosGrupo(grupo) {
+  let nMaquiagem = 0, nCabelo = 0, nNoiva = 0, nOutro = 0;
+  grupo.forEach(s => {
+    const low = (s.servico || '').toLowerCase();
+    const hasMake   = low.includes('maquiagem') || low.includes('make');
+    const hasCabelo = low.includes('cabelo')    || low.includes('penteado');
+    const hasNoiva  = low.includes('noiva');
+    if (hasNoiva)                  { nNoiva++; }
+    else if (hasMake && hasCabelo) { nMaquiagem++; nCabelo++; }
+    else if (hasMake)              { nMaquiagem++; }
+    else if (hasCabelo)            { nCabelo++; }
+    else                           { nOutro++; }
+  });
+  const partes = [];
+  if (nNoiva > 0)     partes.push(nNoiva     + (nNoiva     === 1 ? ' noiva'     : ' noivas'));
+  if (nMaquiagem > 0) partes.push(nMaquiagem + (nMaquiagem === 1 ? ' maquiagem' : ' maquiagens'));
+  if (nCabelo > 0)    partes.push(nCabelo    + (nCabelo    === 1 ? ' cabelo'    : ' cabelos'));
+  if (nOutro > 0)     partes.push(nOutro     + (nOutro     === 1 ? ' serviço'   : ' serviços'));
+  return { nMaquiagem, nCabelo, nNoiva, nOutro, partes };
+}
+
+// Resumo curto para o título do evento da agenda (ex: "6 Make e Cabelo").
+function resumoServicosGrupo(grupo) {
+  if (!grupo || !grupo.length) return 'Serviço';
+  const todosCombo = grupo.every(s => {
+    const low = (s.servico || '').toLowerCase();
+    return (low.includes('maquiagem') || low.includes('make')) &&
+           (low.includes('cabelo')    || low.includes('penteado'));
+  });
+  if (todosCombo) return grupo.length + ' Make e Cabelo';
+  const c = contarServicosGrupo(grupo);
+  const partes = [];
+  if (c.nNoiva)     partes.push(c.nNoiva     + ' Noiva' + (c.nNoiva   > 1 ? 's' : ''));
+  if (c.nMaquiagem) partes.push(c.nMaquiagem + ' Make');
+  if (c.nCabelo)    partes.push(c.nCabelo    + ' Cabelo' + (c.nCabelo > 1 ? 's' : ''));
+  if (c.nOutro)     partes.push(c.nOutro     + ' Serviço' + (c.nOutro > 1 ? 's' : ''));
+  return partes.join(', ') || abrevServico(grupo[0].servico);
+}
+
+// Descrição agrupada de um evento único (vários serviços na mesma data).
+function buildGrupoDescricao(grupo, endereco, total, sinal, saldo, telefone, equipe, inicioFmt, fimFmt) {
+  const c = contarServicosGrupo(grupo);
+  const desc = [];
+  desc.push('Serviços: ' + (c.partes.join(' e ') || (grupo.length + ' serviços')));
+  if (equipe) desc.push('Equipe responsável: ' + equipe);
+  desc.push('Data: ' + (fmtDateWeek(grupo[0].data) || ''));
+  desc.push('Horário: ' + inicioFmt + ' às ' + fimFmt);
+  desc.push('Endereço: ' + (endereco || ''));
+
+  // Valor unitário por tipo de serviço (sem repetir)
+  const tiposValor = {};
+  grupo.forEach(s => {
+    const v = parseFloat(s.valorUnit) || 0;
+    const label = simplifyServiceName(s.servico);
+    if (v > 0 && !tiposValor[label]) tiposValor[label] = v;
+  });
+  const tiposEntries = Object.entries(tiposValor);
+  if (tiposEntries.length) {
+    desc.push('');
+    desc.push('Valor por serviço:');
+    tiposEntries.forEach(([label, v]) => desc.push('• ' + label + ': R$ ' + fmt(v)));
+  }
+
+  desc.push('');
+  desc.push('Valor total do orçamento: R$ ' + (total > 0 ? fmt(total) : ''));
+  desc.push('Valor pago na reserva: R$ '    + (sinal > 0 ? fmt(sinal) : ''));
+  desc.push('Restante a ser pago no dia: R$ ' + (saldo > 0 ? fmt(saldo) : ''));
+
+  // Restante por tipo de serviço (rateado pelo valor unitário)
+  if (saldo > 0 && total > 0 && grupo.length > 1) {
+    const tiposSaldo = {};
+    grupo.forEach(s => {
+      const v = parseFloat(s.valorUnit) || 0;
+      if (v > 0) {
+        const label = simplifyServiceName(s.servico);
+        const saldoUnit = Math.round(saldo * (v / total) * 100) / 100;
+        if (!tiposSaldo[label]) tiposSaldo[label] = { saldoUnit, count: 0 };
+        tiposSaldo[label].count++;
+      }
+    });
+    desc.push('Restante por serviço:');
+    Object.entries(tiposSaldo).forEach(([label, info]) => {
+      const prefix = info.count > 1 ? info.count + '× ' : '';
+      const suffix = info.count > 1 ? ' cada' : '';
+      desc.push('  • ' + prefix + label + ': R$ ' + fmt(info.saldoUnit) + suffix);
+    });
+  }
+
+  if (telefone) { desc.push(''); desc.push('Contato: ' + telefone); }
+  return desc.join('\n');
+}
+
+// Constrói eventos da agenda agrupando slots por data:
+// mesma data com vários serviços → UM evento (12h30–18h30); datas diferentes → eventos separados.
 function buildEventos(nome, slots, endereco, total, sinal, saldo, telefone, equipe) {
   const eventos = [];
+  const local = fechLocal === 'studio' ? 'Studio' : 'Domicílio';
+  const nomeComEquipe = (nome || '[nome]') + (equipe ? ' — Equipe ' + equipe : '');
+
+  // Agrupa por data, preservando a ordem de aparição
+  const byData = {};
+  const ordem = [];
   slots.forEach(s => {
-    if (!s.data || !s.horario) return;
-    const dur = getServiceDuration(s.servico);
-    const inicio = fmtHorario(s.horario);
-    const fim = addMinutesFmt(s.horario, dur);
-    const local = fechLocal === 'studio' ? 'Studio' : 'Domicílio';
-    const abrev = abrevServico(s.servico);
-    const nomeComEquipe = (nome || '[nome]') + (equipe ? ' — Equipe ' + equipe : '');
-    const titulo = inicio + ' - ' + fim + ' | ' + nomeComEquipe + ' | ' + abrev + ' | ' + local;
+    if (!s.data || !s.horario) return;   // sem data/horário não vira evento
+    if (!byData[s.data]) { byData[s.data] = []; ordem.push(s.data); }
+    byData[s.data].push(s);
+  });
 
-    const desc = [];
-    desc.push('Serviço: ' + (s.servico || ''));
-    if (equipe) desc.push('Equipe responsável: ' + equipe);
-    desc.push('Data: ' + (fmtDateWeek(s.data) || ''));
-    desc.push('Horário de início: ' + inicio);
-    desc.push('Endereço: ' + (endereco || ''));
-    if (parseFloat(s.valorUnit) > 0) desc.push('Valor deste serviço: R$ ' + fmt(s.valorUnit));
-    desc.push('Valor total do orçamento: R$ ' + (total > 0 ? fmt(total) : ''));
-    desc.push('Valor pago na reserva: R$ '   + (sinal > 0 ? fmt(sinal) : ''));
-    desc.push('Restante a ser pago no dia: R$ ' + (saldo > 0 ? fmt(saldo) : ''));
-    if (telefone) { desc.push(''); desc.push('Contato: ' + telefone); }
+  ordem.forEach(dataKey => {
+    const grupo = byData[dataKey];
 
-    const endHora = addMinutes(s.horario, dur);
+    // início = menor horário do grupo; fim = maior (horário + duração)
+    let iniMin = null, fimMax = null;
+    grupo.forEach(s => {
+      const [hh, mm] = s.horario.split(':').map(Number);
+      const start = hh * 60 + mm;
+      const end   = start + slotDuracao(s);
+      if (iniMin === null || start < iniMin) iniMin = start;
+      if (fimMax === null || end   > fimMax) fimMax = end;
+    });
+    const horaInicio = pad2(Math.floor(iniMin / 60) % 24) + ':' + pad2(iniMin % 60);
+    const horaFim    = pad2(Math.floor(fimMax / 60) % 24) + ':' + pad2(fimMax % 60);
+    const inicioFmt  = fmtHorario(horaInicio);
+    const fimFmt     = fmtHorario(horaFim);
+
+    let titulo, descricao;
+    if (grupo.length === 1) {
+      // Um único serviço na data — comportamento padrão
+      const s = grupo[0];
+      titulo = inicioFmt + ' - ' + fimFmt + ' | ' + nomeComEquipe + ' | ' + abrevServico(s.servico) + ' | ' + local;
+      const desc = [];
+      desc.push('Serviço: ' + (s.servico || ''));
+      if (equipe) desc.push('Equipe responsável: ' + equipe);
+      desc.push('Data: ' + (fmtDateWeek(s.data) || ''));
+      desc.push('Horário de início: ' + inicioFmt);
+      desc.push('Endereço: ' + (endereco || ''));
+      if (parseFloat(s.valorUnit) > 0) desc.push('Valor deste serviço: R$ ' + fmt(s.valorUnit));
+      desc.push('Valor total do orçamento: R$ ' + (total > 0 ? fmt(total) : ''));
+      desc.push('Valor pago na reserva: R$ '    + (sinal > 0 ? fmt(sinal) : ''));
+      desc.push('Restante a ser pago no dia: R$ ' + (saldo > 0 ? fmt(saldo) : ''));
+      if (telefone) { desc.push(''); desc.push('Contato: ' + telefone); }
+      descricao = desc.join('\n');
+    } else {
+      // Vários serviços na mesma data — UM evento agrupado
+      titulo = inicioFmt + ' - ' + fimFmt + ' | ' + nomeComEquipe + ' | ' + resumoServicosGrupo(grupo) + ' | ' + local;
+      descricao = buildGrupoDescricao(grupo, endereco, total, sinal, saldo, telefone, equipe, inicioFmt, fimFmt);
+    }
+
     eventos.push({
       titulo,
-      startISO: toISO(s.data, s.horario),
-      endISO:   toISO(s.data, endHora),
+      startISO: toISO(dataKey, horaInicio),
+      endISO:   toISO(dataKey, horaFim),
       endereco,
-      descricao: desc.join('\n'),
-      durMinutes: dur,
-      data: s.data,
-      horario: s.horario,
+      descricao,
+      durMinutes: fimMax - iniMin,
+      data: dataKey,
+      horario: horaInicio,
     });
   });
   return eventos;
@@ -1249,6 +1374,93 @@ function toggleActEquipeInput(checked) {
   });
 }
 
+// ── Slots: total de ocorrências de uma linha = valorUnit × qtd ──
+function slotQtd(s) { return Math.max(1, parseInt(s && s.qtd) || 1); }
+
+// Linha-resumo por slot: "6 × R$ 500,00 = R$ 3.000,00 · 12:30–18:30"
+function slotResumoLinha(s) {
+  const qtd = slotQtd(s);
+  const val = parseFloat(s.valorUnit) || 0;
+  const dur = parseInt(s.duracao) || getServiceDuration(s.servico);
+  const parts = [];
+  if (val > 0 || qtd > 1) parts.push(qtd + ' × R$ ' + fmt(val) + ' = R$ ' + fmt(qtd * val));
+  if (s.horario) parts.push(fmtHorario(s.horario) + '–' + addMinutesFmt(s.horario, qtd * dur));
+  return parts.join(' · ');
+}
+
+// HTML de uma linha de slot (compartilhado entre Novo Orçamento e Fechar)
+function renderSlotRow(s, idx, count, syncFn, removeFn) {
+  const opts = services.map(svc =>
+    '<option value="' + esc(svc.nome) + '"' + (svc.nome === s.servico ? ' selected' : '') + '>' + esc(svc.nome) + '</option>'
+  ).join('');
+  const qtd = slotQtd(s);
+  const dur = parseInt(s.duracao) || getServiceDuration(s.servico);
+  return (
+    '<div class="slot-row">' +
+      '<div class="slot-num">' + (idx + 1) + '</div>' +
+      '<div class="slot-fields">' +
+        '<select class="form-input" onchange="' + syncFn + '(' + s.id + ', \'servico\', this.value)">' +
+          '<option value="">— Selecione o serviço —</option>' +
+          opts +
+        '</select>' +
+        '<div class="slot-qty-row">' +
+          '<label class="slot-mini-lbl">Qtd' +
+            '<input class="form-input" type="number" min="1" step="1" value="' + qtd + '" oninput="' + syncFn + '(' + s.id + ', \'qtd\', this.value)">' +
+          '</label>' +
+          '<label class="slot-mini-lbl">R$ un.' +
+            '<input class="form-input" type="number" step="0.01" min="0" placeholder="valor" value="' + (s.valorUnit || '') + '" oninput="' + syncFn + '(' + s.id + ', \'valorUnit\', this.value)">' +
+          '</label>' +
+          '<label class="slot-mini-lbl">Duração' +
+            '<input class="form-input" type="number" min="0" step="5" placeholder="min" value="' + dur + '" oninput="' + syncFn + '(' + s.id + ', \'duracao\', this.value)">' +
+          '</label>' +
+        '</div>' +
+        '<div class="form-row">' +
+          '<input class="form-input" type="date" value="' + (s.data || '') + '" oninput="' + syncFn + '(' + s.id + ', \'data\', this.value)">' +
+          '<input class="form-input" type="time" placeholder="Início" value="' + (s.horario || '') + '" oninput="' + syncFn + '(' + s.id + ', \'horario\', this.value)">' +
+        '</div>' +
+        '<div class="slot-resumo" id="resumo-' + s.id + '">' + esc(slotResumoLinha(s)) + '</div>' +
+      '</div>' +
+      (count > 1
+        ? '<button class="slot-del" onclick="' + removeFn + '(' + s.id + ')" title="Remover">✕</button>'
+        : '<div style="width:26px"></div>') +
+    '</div>');
+}
+
+// Atualiza só a linha-resumo (sem re-render — preserva o foco nos inputs)
+function updateSlotResumo(s) {
+  const el = document.getElementById('resumo-' + s.id);
+  if (el) el.textContent = slotResumoLinha(s);
+}
+
+// Trata mudança em um campo de slot. Recebe o array (addSlots/fechSlots),
+// a função de re-render e a de recálculo de total.
+function syncSlotField(arr, id, campo, valor, rerender, recalc) {
+  const s = arr.find(x => x.id === id);
+  if (!s) return;
+  if (campo === 'servico') {
+    s.servico = valor;
+    const svc = services.find(x => x.nome === valor);
+    if (svc && !s._manual) s.valorUnit = svc.valor || 0;
+    if (!s._durManual) s.duracao = getServiceDuration(valor);
+    rerender();
+  } else if (campo === 'valorUnit') {
+    s.valorUnit = parseFloat(valor) || 0;
+    s._manual = true;
+    updateSlotResumo(s);
+  } else if (campo === 'qtd') {
+    s.qtd = Math.max(1, parseInt(valor) || 1);
+    updateSlotResumo(s);
+  } else if (campo === 'duracao') {
+    s.duracao = Math.max(0, parseInt(valor) || 0);
+    s._durManual = true;
+    updateSlotResumo(s);
+  } else {
+    s[campo] = valor;            // data / horario
+    updateSlotResumo(s);
+  }
+  recalc();
+}
+
 function addAddSlot() {
   const first = services[0] || { nome: '', valor: 0 };
   addSlots.push({
@@ -1257,6 +1469,8 @@ function addAddSlot() {
     valorUnit: first.valor || 0,
     data: '',
     horario: '',
+    qtd: 1,
+    duracao: getServiceDuration(first.nome || ''),
   });
   renderAddSlots();
   recalcAddTotal();
@@ -1270,65 +1484,92 @@ function removerAddSlot(id) {
 }
 
 function renderAddSlots() {
-  const list = document.getElementById('add-slots-list');
-  list.innerHTML = addSlots.map((s, idx) => {
-    const opts = services.map(svc =>
-      '<option value="' + esc(svc.nome) + '"' + (svc.nome === s.servico ? ' selected' : '') + '>' + esc(svc.nome) + '</option>'
-    ).join('');
-    return (
-      '<div class="slot-row">' +
-        '<div class="slot-num">' + (idx + 1) + '</div>' +
-        '<div class="slot-fields">' +
-          '<select class="form-input" onchange="syncAddSlot(' + s.id + ', \'servico\', this.value)">' +
-            '<option value="">— Selecione o serviço —</option>' +
-            opts +
-          '</select>' +
-          '<div class="form-row">' +
-            '<input class="form-input" type="number" step="0.01" min="0" placeholder="R$ valor" value="' + (s.valorUnit || '') + '" oninput="syncAddSlot(' + s.id + ', \'valorUnit\', this.value)">' +
-            '<input class="form-input" type="date" value="' + (s.data || '') + '" oninput="syncAddSlot(' + s.id + ', \'data\', this.value)">' +
-          '</div>' +
-          '<input class="form-input" type="time" placeholder="Horário" value="' + (s.horario || '') + '" oninput="syncAddSlot(' + s.id + ', \'horario\', this.value)">' +
-        '</div>' +
-        (addSlots.length > 1
-          ? '<button class="slot-del" onclick="removerAddSlot(' + s.id + ')" title="Remover">✕</button>'
-          : '<div style="width:26px"></div>') +
-      '</div>');
-  }).join('');
+  document.getElementById('add-slots-list').innerHTML =
+    addSlots.map((s, idx) => renderSlotRow(s, idx, addSlots.length, 'syncAddSlot', 'removerAddSlot')).join('');
 }
 
 function syncAddSlot(id, campo, valor) {
-  const s = addSlots.find(x => x.id === id);
-  if (!s) return;
-  if (campo === 'servico') {
-    s.servico = valor;
-    const svc = services.find(x => x.nome === valor);
-    if (svc && !s._manual) s.valorUnit = svc.valor || 0;
-    renderAddSlots();
-  } else if (campo === 'valorUnit') {
-    s.valorUnit = parseFloat(valor) || 0;
-    s._manual = true;
-  } else {
-    s[campo] = valor;
-  }
-  recalcAddTotal();
+  syncSlotField(addSlots, id, campo, valor, renderAddSlots, recalcAddTotal);
 }
 
 function recalcAddTotal() {
-  const total = addSlots.reduce((sum, s) => sum + (parseFloat(s.valorUnit) || 0), 0);
+  const total = addSlots.reduce((sum, s) => sum + (parseFloat(s.valorUnit) || 0) * slotQtd(s), 0);
   document.getElementById('add-valor').value = total ? fmt(total) : '';
+}
+
+// Expande as linhas (com qtd) em slots atômicas (uma por ocorrência),
+// sequenciando os horários por data: cada ocorrência ocupa `duracao` minutos.
+function expandRows(rows) {
+  const valid = (rows || []).filter(r => r.servico);
+  const byData = {};
+  const ordem = [];
+  valid.forEach(r => {
+    const key = r.data || '';
+    if (!byData[key]) { byData[key] = []; ordem.push(key); }
+    byData[key].push(r);
+  });
+  const out = [];
+  ordem.forEach(dataKey => {
+    let cursor = '';
+    byData[dataKey].forEach(r => {
+      const qtd = slotQtd(r);
+      const dur = parseInt(r.duracao) || getServiceDuration(r.servico);
+      if (r.horario) cursor = r.horario;   // linha com horário próprio reposiciona o cursor
+      for (let i = 0; i < qtd; i++) {
+        out.push({
+          servico: r.servico,
+          valorUnit: parseFloat(r.valorUnit) || 0,
+          data: r.data || '',
+          horario: cursor || '',
+          duracao: dur,
+        });
+        if (cursor) cursor = addMinutes(cursor, dur);
+      }
+    });
+  });
+  return out;
+}
+
+// Inverso: recolhe slots atômicas consecutivas e iguais em uma linha com qtd.
+function collapseSlots(slots) {
+  const rows = [];
+  (slots || []).forEach(s => {
+    const dur = parseInt(s.duracao) || getServiceDuration(s.servico);
+    const val = parseFloat(s.valorUnit) || 0;
+    const last = rows[rows.length - 1];
+    if (last && last.servico === s.servico && last.data === (s.data || '') &&
+        last.duracao === dur && last.valorUnit === val) {
+      last.qtd += 1;
+    } else {
+      rows.push({
+        id: Date.now() + Math.random(),
+        servico: s.servico || '',
+        valorUnit: val,
+        data: s.data || '',
+        horario: s.horario || '',
+        duracao: dur,
+        qtd: 1,
+      });
+    }
+  });
+  return rows;
 }
 
 function descreveSlots(slots) {
   if (!slots || !slots.length) return '';
   const grupos = {};
+  const ordem = [];
   slots.forEach(s => {
     const key = s.servico || 'Serviço';
-    if (!grupos[key]) grupos[key] = [];
-    if (s.data) grupos[key].push(fmtDate(s.data));
+    if (!grupos[key]) { grupos[key] = { qtd: 0, datas: {} }; ordem.push(key); }
+    grupos[key].qtd += slotQtd(s);
+    if (s.data) grupos[key].datas[fmtDate(s.data)] = 1;
   });
-  return Object.entries(grupos).map(([nome, datas]) => {
-    if (!datas.length) return nome;
-    return nome + ' (' + datas.join(', ') + ')';
+  return ordem.map(nome => {
+    const g = grupos[nome];
+    const q = g.qtd > 1 ? ' ×' + g.qtd : '';
+    const datas = Object.keys(g.datas);
+    return nome + q + (datas.length ? ' (' + datas.join(', ') + ')' : '');
   }).join(', ');
 }
 
@@ -1346,17 +1587,13 @@ async function saveNew() {
   const slotsValidos = addSlots.filter(s => s.servico);
   if (!slotsValidos.length) { toast('⚠️ Adicione pelo menos um serviço'); return; }
 
-  const total = slotsValidos.reduce((s, x) => s + (parseFloat(x.valorUnit) || 0), 0);
+  const total = slotsValidos.reduce((s, x) => s + (parseFloat(x.valorUnit) || 0) * slotQtd(x), 0);
   const servicoDesc = descreveSlots(slotsValidos);
   const datasOrdenadas = slotsValidos.map(s => s.data).filter(Boolean).sort();
   const dataEvento = datasOrdenadas[0] || '';
 
-  const slotsToStore = slotsValidos.map(s => ({
-    servico: s.servico,
-    valorUnit: parseFloat(s.valorUnit) || 0,
-    data: s.data || '',
-    horario: s.horario || '',
-  }));
+  // Expande qtd → slots atômicas (uma por ocorrência, horários sequenciados)
+  const slotsToStore = expandRows(slotsValidos);
 
   const entry = {
     ID:           String(Date.now()),
@@ -1615,13 +1852,14 @@ function abrirFechamento() {
   document.getElementById('fech-forma').value  = 'PIX';
   document.getElementById('fech-valor-enviado').value = e.ValorProp || '';
 
+  // Recolhe slots atômicas em linhas com qtd (reabre já agrupado)
   const existingSlots = entrySlots(e);
   fechSlots = existingSlots.length
-    ? existingSlots.map(s => Object.assign({}, s, { id: Date.now() + Math.random() }))
-    : [{ id: Date.now(), servico: (services[0] && services[0].nome) || '', valorUnit: (services[0] && services[0].valor) || 0, data: e.DataEvento || '', horario: '' }];
+    ? collapseSlots(existingSlots)
+    : [{ id: Date.now(), servico: (services[0] && services[0].nome) || '', valorUnit: (services[0] && services[0].valor) || 0, data: e.DataEvento || '', horario: '', qtd: 1, duracao: getServiceDuration((services[0] && services[0].nome) || '') }];
   renderFechSlots();
 
-  const totalSlots = fechSlots.reduce((s, x) => s + (parseFloat(x.valorUnit) || 0), 0);
+  const totalSlots = fechSlots.reduce((s, x) => s + (parseFloat(x.valorUnit) || 0) * slotQtd(x), 0);
   const totalFinal = totalSlots || parseFloat(e.ValorFechado) || parseFloat(e.ValorProp) || 0;
   document.getElementById('fech-total').value = totalFinal || '';
   calcFechSinal();
@@ -1707,6 +1945,8 @@ function addFechSlot() {
     valorUnit: first.valor || 0,
     data: '',
     horario: '',
+    qtd: 1,
+    duracao: getServiceDuration(first.nome || ''),
   });
   renderFechSlots();
   recalcFechTotalFromSlots();
@@ -1720,30 +1960,8 @@ function removerFechSlot(id) {
 }
 
 function renderFechSlots() {
-  const list = document.getElementById('fech-slots-list');
-  list.innerHTML = fechSlots.map((s, idx) => {
-    const opts = services.map(svc =>
-      '<option value="' + esc(svc.nome) + '"' + (svc.nome === s.servico ? ' selected' : '') + '>' + esc(svc.nome) + '</option>'
-    ).join('');
-    return (
-      '<div class="slot-row">' +
-        '<div class="slot-num">' + (idx + 1) + '</div>' +
-        '<div class="slot-fields">' +
-          '<select class="form-input" onchange="syncFechSlot(' + s.id + ', \'servico\', this.value)">' +
-            '<option value="">— Selecione o serviço —</option>' +
-            opts +
-          '</select>' +
-          '<div class="form-row">' +
-            '<input class="form-input" type="number" step="0.01" min="0" placeholder="R$ valor" value="' + (s.valorUnit || '') + '" oninput="syncFechSlot(' + s.id + ', \'valorUnit\', this.value)">' +
-            '<input class="form-input" type="date" value="' + (s.data || '') + '" oninput="syncFechSlot(' + s.id + ', \'data\', this.value)">' +
-          '</div>' +
-          '<input class="form-input" type="time" placeholder="Horário" value="' + (s.horario || '') + '" oninput="syncFechSlot(' + s.id + ', \'horario\', this.value)">' +
-        '</div>' +
-        (fechSlots.length > 1
-          ? '<button class="slot-del" onclick="removerFechSlot(' + s.id + ')" title="Remover">✕</button>'
-          : '<div style="width:26px"></div>') +
-      '</div>');
-  }).join('');
+  document.getElementById('fech-slots-list').innerHTML =
+    fechSlots.map((s, idx) => renderSlotRow(s, idx, fechSlots.length, 'syncFechSlot', 'removerFechSlot')).join('');
 }
 
 function autoDetectLocal(servName) {
@@ -1758,25 +1976,12 @@ function autoDetectLocal(servName) {
 }
 
 function syncFechSlot(id, campo, valor) {
-  const s = fechSlots.find(x => x.id === id);
-  if (!s) return;
-  if (campo === 'servico') {
-    s.servico = valor;
-    const svc = services.find(x => x.nome === valor);
-    if (svc && !s._manual) s.valorUnit = svc.valor || 0;
-    autoDetectLocal(valor);
-    renderFechSlots();
-  } else if (campo === 'valorUnit') {
-    s.valorUnit = parseFloat(valor) || 0;
-    s._manual = true;
-  } else {
-    s[campo] = valor;
-  }
-  recalcFechTotalFromSlots();
+  if (campo === 'servico') autoDetectLocal(valor);
+  syncSlotField(fechSlots, id, campo, valor, renderFechSlots, recalcFechTotalFromSlots);
 }
 
 function recalcFechTotalFromSlots() {
-  const total = fechSlots.reduce((sum, s) => sum + (parseFloat(s.valorUnit) || 0), 0);
+  const total = fechSlots.reduce((sum, s) => sum + (parseFloat(s.valorUnit) || 0) * slotQtd(s), 0);
   if (total > 0) {
     document.getElementById('fech-total').value = total.toFixed(2);
     calcFechSinal();
@@ -1846,12 +2051,8 @@ async function confirmarFechamento() {
   try {
 
   // 1) Atualiza orçamento localmente
-  const slotsToStore = slotsValidos.map(s => ({
-    servico: s.servico,
-    valorUnit: parseFloat(s.valorUnit) || 0,
-    data: s.data || '',
-    horario: s.horario || '',
-  }));
+  // Expande qtd → slots atômicas (horários sequenciados por data)
+  const slotsToStore = expandRows(slotsValidos);
   const datasOrdenadas = slotsValidos.map(s => s.data).filter(Boolean).sort();
   const valorEnviado = document.getElementById('fech-valor-enviado').value;
   e.Status         = 'Fechado';
@@ -1953,9 +2154,9 @@ async function confirmarFechamento() {
 
   setLoadingStep(2, 'Preparando confirmação...', 'Quase lá!');
 
-  // 4) Prepara dados para Google Agenda + WhatsApp
-  const eventos = buildEventos(e.Cliente, slotsValidos, endereco, total, sinal, saldo, e.Telefone, e.Equipe || '');
-  const waText  = buildConfirmacaoMessage(e.Cliente, slotsValidos, total, sinal, saldo, endereco, fechLocal);
+  // 4) Prepara dados para Google Agenda + WhatsApp (usa slots expandidas)
+  const eventos = buildEventos(e.Cliente, slotsToStore, endereco, total, sinal, saldo, e.Telefone, e.Equipe || '');
+  const waText  = buildConfirmacaoMessage(e.Cliente, slotsToStore, total, sinal, saldo, endereco, fechLocal);
 
   lastFechamento = {
     entryId: e.ID,

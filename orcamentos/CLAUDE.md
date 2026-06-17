@@ -93,9 +93,23 @@ Variáveis interpoladas em tempo real: `[NOME]`, `[SERVIÇO]`, `[VALOR]`.
 Os formulários "Novo orçamento" e "Fechar" usam slots dinâmicos:
 - `addSlots[]` → gerenciado por `addAddSlot()` / `removeAddSlot()`
 - `fechSlots[]` → gerenciado por `addFechSlot()` / `removeFechSlot()`
-- Cada slot: `{ id, servico, valor, data, horario, duracao }`
-- Valor total = soma dos valores dos slots (calculado em `calcAddTotal()` / `calcFechSinal()`)
+- Cada **linha** de UI: `{ id, servico, valorUnit, data, horario, qtd, duracao }`
+  (`qtd` = quantidade de atendimentos iguais; `duracao` em minutos, editável)
+- Renderização compartilhada: `renderSlotRow()` + `syncSlotField()` (add e fech)
+- Valor total = `Σ(valorUnit × qtd)`
 - Sinal padrão = 30% do total (sobrescrito se `fechSinalManual = true`)
+
+### Quantidade → slots atômicas (expand / collapse)
+O modelo persistido continua **uma slot = uma ocorrência**. A `qtd` é só
+conveniência de UI:
+- `expandRows(rows)` → expande cada linha em `qtd` slots atômicas, **sequenciando
+  os horários por data** (cada ocorrência ocupa `duracao` min; uma linha com
+  horário próprio reposiciona o cursor). Usado em `saveNew()` e
+  `confirmarFechamento()`.
+- `collapseSlots(atomicSlots)` → recolhe slots consecutivas iguais de volta em
+  uma linha com `qtd`. Usado em `abrirFechamento()` ao reabrir.
+- Mantém intactos: contagens (`contarServicosGrupo`), financeiro (1 Sinal + 1
+  Restante usando o total), `entrySlots`, filtros e o matching do Clientes.
 
 ---
 
@@ -107,6 +121,12 @@ Formato do título do evento (usado pelo módulo Clientes para matching):
 ```
 HHhMM - HHhMM | Nome Cliente | Serviço | Local
 ```
+
+`buildEventos()` **agrupa as slots por data**: vários serviços na mesma data
+viram **um único evento** (início = menor horário, fim = maior horário + duração;
+título com resumo `6 Make e Cabelo` e descrição agrupada via
+`buildGrupoDescricao`). Datas diferentes continuam gerando eventos separados. O
+módulo Clientes só lê `parts[0]` (horário) e `parts[1]` (nome) — mesclar é seguro.
 
 ---
 
