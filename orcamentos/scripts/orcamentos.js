@@ -1543,16 +1543,22 @@ function openAction(id) {
 
   const badge = document.getElementById('act-badge');
   badge.textContent = e.Status || '—';
-  badge.className = 'badge ' + (STATUS_CLASS[e.Status] || 'st-novo');
+  badge.className = 'act-pill ' + (STATUS_CLASS[e.Status] || 'st-novo');
 
-  const meta = [];
-  if (e.Servico)    meta.push(e.Servico);
-  if (e.ValorProp)  meta.push(fmtVal(parseFloat(e.ValorProp)));
-  if (e.DataEvento) meta.push('Evento: ' + fmtDate(e.DataEvento));
-  document.getElementById('act-meta').textContent = meta.join(' · ');
+  // Vitais do summary card (data do evento, horário, valor, serviço)
+  const _vslots = entrySlots(e);
+  const _vhoras = _vslots.map(s => s.horario).filter(Boolean).sort();
+  const _vData = document.getElementById('act-vital-data');
+  const _vHora = document.getElementById('act-vital-hora');
+  const _vVal  = document.getElementById('act-vital-valor');
+  const _vSvc  = document.getElementById('act-vital-svc');
+  if (_vData) _vData.textContent = e.DataEvento ? fmtDate(e.DataEvento) : '—';
+  if (_vHora) _vHora.textContent = _vhoras.length ? fmtHorario(_vhoras[0]) : '—';
+  const _vNum = parseFloat(e.Status === 'Fechado' ? (e.ValorFechado || e.ValorProp) : e.ValorProp) || 0;
+  if (_vVal) _vVal.textContent = _vNum ? fmtVal(_vNum) : '—';
+  if (_vSvc) _vSvc.textContent = e.Servico || '—';
 
-  document.querySelectorAll('#status-grid .st-btn').forEach(b =>
-    b.classList.toggle('active', b.dataset.s === e.Status));
+  syncStatusSegUI(e.Status);
 
   document.getElementById('val-fechado-row').style.display = e.Status === 'Fechado' ? 'block' : 'none';
   document.getElementById('act-val-fechado').value = e.ValorFechado || '';
@@ -1571,18 +1577,20 @@ function openAction(id) {
   openPanel('panel-action');
 }
 
-async function setStatus(btn) {
+// Status como segmented control (4 segmentos; "Perdido" abre os submotivos)
+async function applyStatusValue(newStatus) {
   const e = entries.find(x => String(x.ID) === String(activeId));
   if (!e) return;
-  const newStatus = btn.dataset.s;
   e.Status = newStatus;
-  document.querySelectorAll('#status-grid .st-btn').forEach(b => b.classList.toggle('active', b === btn));
   const badge = document.getElementById('act-badge');
-  badge.textContent = newStatus;
-  badge.className = 'badge ' + (STATUS_CLASS[newStatus] || 'st-novo');
+  if (badge) { badge.textContent = newStatus; badge.className = 'act-pill ' + (STATUS_CLASS[newStatus] || 'st-novo'); }
   if (newStatus === 'Orçamento Enviado' && !e.DataEnvio) e.DataEnvio = todayStr();
   if (newStatus === 'Fechado' && !e.DataFechamento)     e.DataFechamento = todayStr();
-  document.getElementById('val-fechado-row').style.display = newStatus === 'Fechado' ? 'block' : 'none';
+  const vfr = document.getElementById('val-fechado-row');
+  if (vfr) vfr.style.display = newStatus === 'Fechado' ? 'block' : 'none';
+  // Seções que dependem do status (slots, Google Agenda, botão Fechar)
+  renderActSlots(e);
+  renderActGcalSection(e);
   cacheEntries();
   render();
 
@@ -1591,6 +1599,43 @@ async function setStatus(btn) {
   if (!result.ok && result.error !== 'no-url') {
     toast('⚠️ Sincronização do status falhou');
   }
+}
+
+// Reflete o status atual no segmented control + submotivos
+function syncStatusSegUI(status) {
+  const isPerdido = PERDIDO_STATUS.includes(status);
+  document.querySelectorAll('#status-seg button').forEach(b => {
+    const on = isPerdido ? (b.dataset.seg === 'perdido') : (b.dataset.s === status);
+    b.classList.toggle('on', on);
+  });
+  const sub = document.getElementById('status-sub');
+  if (sub) {
+    sub.classList.toggle('show', isPerdido);
+    sub.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.s === status));
+  }
+}
+
+function setStatusSeg(btn) {
+  // "Perdido" só revela os submotivos — o status é aplicado ao escolher um
+  if (btn.dataset.seg === 'perdido') {
+    document.querySelectorAll('#status-seg button').forEach(b => b.classList.toggle('on', b === btn));
+    const sub = document.getElementById('status-sub');
+    if (sub) sub.classList.add('show');
+    return;
+  }
+  applyStatusValue(btn.dataset.s);
+  syncStatusSegUI(btn.dataset.s);
+}
+
+function setStatusSub(btn) {
+  applyStatusValue(btn.dataset.s);
+  syncStatusSegUI(btn.dataset.s);
+}
+
+// Accordion (seções recolhíveis) do action sheet
+function toggleActAcc(head) {
+  const acc = head.closest('.act-acc');
+  if (acc) acc.classList.toggle('open');
 }
 
 // Edita a data de cadastro/recebimento do orçamento (DataPedido).

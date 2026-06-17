@@ -20,7 +20,7 @@
   <title>Orçamentos · Meu Studio</title>
   <link rel="stylesheet" href="../shared/css/tokens.css">
   <link rel="stylesheet" href="../shared/css/base.css">
-  <link rel="stylesheet" href="./styles/orcamentos.css?v=20260617c">
+  <link rel="stylesheet" href="./styles/orcamentos.css?v=20260617d">
 </head>
 <body>
 <div id="orca-app">
@@ -250,115 +250,131 @@
 <!-- ── PANEL: ACTION SHEET ────────────────────────────────── -->
 <div class="panel" id="panel-action">
   <div class="panel-handle"></div>
-  <div class="action-client">
-    <div class="action-avatar" id="act-avatar">?</div>
-    <div>
-      <div class="action-name" id="act-name">—</div>
-      <div class="action-phone" id="act-phone">—</div>
-      <div class="action-request-date" id="act-request-date"></div>
+  <!-- ── SUMMARY CARD ── -->
+  <div class="act-summary">
+    <div class="act-summary-top">
+      <div class="action-avatar" id="act-avatar">?</div>
+      <div class="act-summary-id">
+        <div class="action-name" id="act-name">—</div>
+        <div class="action-phone" id="act-phone">—</div>
+        <div class="action-request-date" id="act-request-date"></div>
+      </div>
+      <span class="act-pill st-novo" id="act-badge">—</span>
     </div>
-  </div>
-  <div class="action-status-row">
-    <span class="badge" id="act-badge">—</span>
-    <span class="action-meta" id="act-meta">—</span>
+    <div class="act-vitals">
+      <div class="act-vital"><span class="act-vital-lbl">📅 Evento</span><span class="act-vital-val" id="act-vital-data">—</span></div>
+      <div class="act-vital"><span class="act-vital-lbl">⏰ Horário</span><span class="act-vital-val" id="act-vital-hora">—</span></div>
+      <div class="act-vital"><span class="act-vital-lbl">💰 Valor</span><span class="act-vital-val" id="act-vital-valor">—</span></div>
+    </div>
+    <div class="act-svc" id="act-vital-svc">—</div>
   </div>
 
   <!-- ★ FECHAR E AGENDAR TUDO ★ -->
   <div id="act-fech-btn-area" style="padding: 0 18px 12px;">
-    <button class="btn-fechar" onclick="abrirFechamento()">
-      Fechar e Agendar Tudo
-    </button>
-    <div style="font-size:0.66rem; color:var(--muted); text-align:center; margin-top:5px; line-height:1.45;">
-      Financeiro + Google Agenda + WhatsApp em um só passo
-    </div>
+    <button class="btn-fechar" onclick="abrirFechamento()">Fechar e Agendar Tudo</button>
   </div>
 
   <!-- ★ DATA / HORÁRIO DOS SERVIÇOS (para fechados) ★ -->
   <div id="act-slots-section" style="display:none; padding: 0 18px 10px;">
-    <div style="font-size:0.68rem; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:8px;">Data e horário dos serviços</div>
+    <div class="act-section-label">Data e horário dos serviços</div>
     <div id="act-slots-list"></div>
     <div id="act-slots-hint" style="font-size:0.66rem; color:var(--muted); margin-top:4px; line-height:1.4;">Edite aqui se algum horário ficou faltando. Salva automaticamente.</div>
   </div>
 
   <!-- ★ GOOGLE AGENDA (para fechados) ★ -->
   <div id="act-gcal-section" style="display:none; padding: 0 18px 10px;">
-    <button class="btn-gcal" id="act-gcal-btn" onclick="adicionarAgendaDeAction()" style="margin-top:0;">
-      📅 Adicionar ao Google Agenda
-    </button>
+    <button class="btn-gcal" id="act-gcal-btn" onclick="adicionarAgendaDeAction()" style="margin-top:0;">📅 Adicionar ao Google Agenda</button>
     <div id="act-gcal-result" class="gcal-status"></div>
   </div>
 
-  <div class="action-divider"></div>
-
-  <!-- Status picker -->
-  <div style="padding: 12px 18px 0;">
-    <div style="font-size:0.68rem; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:8px;">Atualizar status</div>
-    <div class="status-grid" id="status-grid">
-      <button class="st-btn st-btn-novo"    data-s="Novo Pedido"                   onclick="setStatus(this)">🆕 Novo Pedido</button>
-      <button class="st-btn st-btn-enviado" data-s="Orçamento Enviado"             onclick="setStatus(this)">📤 Orç. Enviado</button>
-      <button class="st-btn st-btn-fechado" data-s="Fechado"                       onclick="setStatus(this)">✅ Fechado</button>
-      <button class="st-btn st-btn-semresp" data-s="Perdido - Sem Resposta"        onclick="setStatus(this)">😶 Perdido - Sem Resposta</button>
-      <button class="st-btn st-btn-perdido" data-s="Perdido - Sem Disponibilidade" onclick="setStatus(this)">❌ Perdido - Sem Disponib.</button>
-      <button class="st-btn st-btn-outros"  data-s="Perdido - Outros motivos"      onclick="setStatus(this)">🤷 Perdido - Outros</button>
+  <!-- ── STATUS (segmented control) ── -->
+  <div style="padding: 6px 18px 0;">
+    <div class="act-section-label">Status do pedido</div>
+    <div class="seg-status" id="status-seg">
+      <button data-s="Novo Pedido"       onclick="setStatusSeg(this)">Novo</button>
+      <button data-s="Orçamento Enviado" onclick="setStatusSeg(this)">Enviado</button>
+      <button data-s="Fechado"           onclick="setStatusSeg(this)">Fechado</button>
+      <button data-seg="perdido" class="seg-danger" onclick="setStatusSeg(this)">Perdido</button>
+    </div>
+    <div class="seg-sub" id="status-sub">
+      <button data-s="Perdido - Sem Resposta"        onclick="setStatusSub(this)">Sem resposta</button>
+      <button data-s="Perdido - Sem Disponibilidade" onclick="setStatusSub(this)">Sem disponib.</button>
+      <button data-s="Perdido - Outros motivos"      onclick="setStatusSub(this)">Outros</button>
     </div>
   </div>
 
-  <!-- Data do pedido (cadastro) — editável: o orçamento pode ser registrado dias após o recebimento -->
-  <div style="padding:10px 18px 0;">
-    <div class="form-group">
-      <label class="form-label">Data do pedido (cadastro)</label>
-      <input class="form-input" id="act-data-pedido" type="date" onchange="updateDataPedido()">
+  <!-- ── ACCORDION: Valores e cadastro ── -->
+  <div class="act-acc" style="margin-top:14px;">
+    <div class="act-acc-head" onclick="toggleActAcc(this)">
+      <span class="act-acc-title">Valores e cadastro</span>
+      <svg class="act-chev" viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <div class="act-acc-body">
+      <div id="act-val-enviado-wrap">
+        <div class="form-group">
+          <label class="form-label">Valor enviado à cliente (R$)</label>
+          <input class="form-input" id="act-val-enviado" type="number" placeholder="0,00" step="0.01">
+        </div>
+      </div>
+      <div id="val-fechado-row" style="display:none;">
+        <div class="form-group">
+          <label class="form-label">Valor fechado (R$)</label>
+          <input class="form-input" id="act-val-fechado" type="number" placeholder="0,00" step="0.01">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Data do pedido (cadastro)</label>
+        <input class="form-input" id="act-data-pedido" type="date" onchange="updateDataPedido()">
+      </div>
     </div>
   </div>
 
-  <!-- Valor enviado e Valor fechado -->
-  <div id="act-val-enviado-wrap" style="padding:10px 18px 0;">
-    <div class="form-group">
-      <label class="form-label">Valor enviado à cliente (R$)</label>
-      <input class="form-input" id="act-val-enviado" type="number" placeholder="0,00" step="0.01">
+  <!-- ── ACCORDION: Observações & equipe ── -->
+  <div class="act-acc">
+    <div class="act-acc-head" onclick="toggleActAcc(this)">
+      <span class="act-acc-title">Observações &amp; equipe</span>
+      <svg class="act-chev" viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </div>
-  </div>
-  <div id="val-fechado-row" style="display:none; padding:10px 18px 0;">
-    <div class="form-group">
-      <label class="form-label">Valor fechado (R$)</label>
-      <input class="form-input" id="act-val-fechado" type="number" placeholder="0,00" step="0.01">
-    </div>
-  </div>
-
-  <!-- Proposta (apenas para Noivas) -->
-  <div id="act-proposta-section" style="padding: 10px 18px 0; display:none;">
-    <div class="form-group">
-      <label class="form-label">📄 Proposta enviada</label>
-      <div id="act-proposta-list" style="margin-bottom:10px"></div>
-      <button class="btn-add-slot" type="button" onclick="uploadActProposal()" style="margin-bottom:8px">+ Anexar Proposta</button>
+    <div class="act-acc-body">
+      <div class="form-group">
+        <label class="form-label">Observações</label>
+        <textarea class="form-input" id="act-obs" rows="2" placeholder="Anotações sobre este cliente..."></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label" style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600">
+          <input type="checkbox" id="act-eq-chk" style="width:16px;height:16px;accent-color:var(--brown);flex-shrink:0" onchange="toggleActEquipeInput(this.checked)"> Atendimento realizado por equipe
+        </label>
+        <input class="form-input" type="text" id="act-equipe" placeholder="Nome da equipe ou assistente" style="display:none" autocomplete="off">
+      </div>
     </div>
   </div>
 
-  <!-- Obs -->
-  <div style="padding: 10px 18px 0;">
-    <div class="form-group">
-      <label class="form-label">Observações</label>
-      <textarea class="form-input" id="act-obs" rows="2" placeholder="Anotações sobre este cliente..."></textarea>
+  <!-- ── ACCORDION: Comprovante do sinal ── -->
+  <div class="act-acc" id="act-comp-wrap">
+    <div class="act-acc-head" onclick="toggleActAcc(this)">
+      <span class="act-acc-title">🧾 Comprovante do sinal</span>
+      <svg class="act-chev" viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </div>
-    <div class="form-group">
-      <label class="form-label" style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600">
-        <input type="checkbox" id="act-eq-chk" style="width:16px;height:16px;accent-color:#006064;flex-shrink:0" onchange="toggleActEquipeInput(this.checked)"> Atendimento realizado por equipe
-      </label>
-      <input class="form-input" type="text" id="act-equipe" placeholder="Nome da equipe ou assistente" style="display:none" autocomplete="off">
-    </div>
-  </div>
-
-  <!-- ★ COMPROVANTE DO SINAL ★ -->
-  <div id="act-comp-wrap" style="padding: 0 18px 0;">
-    <div class="form-group">
-      <label class="form-label">🧾 Comprovante do sinal</label>
-      <div id="act-comp-hint" style="font-size:0.7rem; color:var(--muted); margin-top:-2px; margin-bottom:6px;">Restante é registrado no módulo Financeiro no dia do atendimento.</div>
+    <div class="act-acc-body">
+      <div id="act-comp-hint" style="font-size:0.7rem; color:var(--muted); margin-bottom:6px;">Restante é registrado no módulo Financeiro no dia do atendimento.</div>
       <div id="act-comp-content"></div>
       <input type="file" id="act-comp-input" style="display:none" accept="image/*,application/pdf">
     </div>
   </div>
 
-  <div style="padding: 8px 18px 32px;">
+  <!-- ── ACCORDION: Proposta (apenas Noivas) ── -->
+  <div class="act-acc" id="act-proposta-section" style="display:none;">
+    <div class="act-acc-head" onclick="toggleActAcc(this)">
+      <span class="act-acc-title">📄 Proposta enviada</span>
+      <svg class="act-chev" viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <div class="act-acc-body">
+      <div id="act-proposta-list" style="margin-bottom:10px"></div>
+      <button class="btn-add-slot" type="button" onclick="uploadActProposal()" style="margin-bottom:8px">+ Anexar Proposta</button>
+    </div>
+  </div>
+
+  <div style="padding: 14px 18px 32px;">
     <button class="btn-primary" onclick="saveAction()">💾 Salvar alterações</button>
     <button class="btn-outline" onclick="closeAll()">Fechar</button>
     <button class="btn-danger" onclick="excluirOrcamento()">🗑 Excluir orçamento</button>
@@ -571,7 +587,7 @@
 <script src="../shared/js/icons.js"></script>
 
 <!-- ── Módulo Orçamentos ── -->
-<script src="./scripts/orcamentos.js?v=20260617c"></script>
+<script src="./scripts/orcamentos.js?v=20260617d"></script>
 
 <!-- ── Sidebar (último, depende do DOM pronto) ── -->
 <script src="../shared/js/global-search.js"></script>
