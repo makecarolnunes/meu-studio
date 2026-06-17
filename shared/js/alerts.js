@@ -234,6 +234,8 @@
     (ctx.data.entries||[]).forEach(function(e){ if(e.tipo==='Sinal' && e.cliente) sinais[norm(e.cliente)]=true; });
     (ctx.data.orcamentos||[]).forEach(function(o){
       if(o.Status!=='Fechado') return;
+      // Atendimento por equipe: não há sinal — pagamento integral no dia do evento
+      if(o.Equipe && String(o.Equipe).trim()) return;
       if(sinais[norm(o.Cliente)]) return;
       out.push({
         key:'orc-sem-sinal:'+o.ID, priority:'importante',

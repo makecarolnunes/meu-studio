@@ -20,7 +20,7 @@
   <title>Orçamentos · Meu Studio</title>
   <link rel="stylesheet" href="../shared/css/tokens.css">
   <link rel="stylesheet" href="../shared/css/base.css">
-  <link rel="stylesheet" href="./styles/orcamentos.css?v=20260617">
+  <link rel="stylesheet" href="./styles/orcamentos.css?v=20260617b">
 </head>
 <body>
 <div id="orca-app">
@@ -52,7 +52,6 @@
   <div class="dsb-section">
     <div class="dsb-lbl">Status</div>
     <button class="d-fil-item active" data-f="todos"       onclick="setF('todos')"><span class="d-fil-dot" style="background:var(--muted)"></span>Todos<span class="d-fil-cnt" id="dsf-total">—</span></button>
-    <button class="d-fil-item"        data-f="followup"     onclick="setF('followup')"><span class="d-fil-dot" style="background:#e65100"></span>Follow-up<span class="d-fil-cnt urgent" id="dsf-fu">0</span></button>
     <button class="d-fil-item"        data-f="novos"        onclick="setF('novos')"><span class="d-fil-dot" style="background:var(--blue)"></span>Novos</button>
     <button class="d-fil-item"        data-f="perdidos"     onclick="setF('perdidos')"><span class="d-fil-dot" style="background:var(--red)"></span>Perdidos</button>
     <button class="d-fil-item"        data-f="fechados"     onclick="setF('fechados')"><span class="d-fil-dot" style="background:var(--ok)"></span>Fechados</button>
@@ -154,16 +153,9 @@
   </div>
 </div>
 
-<!-- ── FOLLOW-UP ALERT ─────────────────────────────────────── -->
-<div class="fu-alert" id="fu-alert" onclick="setF('followup')">
-  <div class="fu-alert-dot"></div>
-  <span id="fu-alert-txt"></span>
-</div>
-
 <!-- ── FILTER TABS ────────────────────────────────────────── -->
 <div class="ftabs">
   <button class="ftab on" data-f="todos"        onclick="setF('todos')">Todos</button>
-  <button class="ftab"    data-f="followup"     onclick="setF('followup')">⚠️ Follow-up</button>
   <button class="ftab"    data-f="novos"        onclick="setF('novos')">🆕 Novos</button>
   <button class="ftab"    data-f="perdidos"     onclick="setF('perdidos')">❌ Perdidos</button>
   <button class="ftab"    data-f="fechados"     onclick="setF('fechados')">✅ Fechados</button>
@@ -241,10 +233,6 @@
     </div>
 
     <div class="form-group">
-      <label class="form-label">Próximo follow-up</label>
-      <input class="form-input" id="add-followup" type="date">
-    </div>
-    <div class="form-group">
       <label class="form-label">Observações</label>
       <textarea class="form-input" id="add-obs" rows="2" placeholder="Ex: cliente quer desconto, casamento dia 20/06..."></textarea>
     </div>
@@ -273,11 +261,6 @@
   <div class="action-status-row">
     <span class="badge" id="act-badge">—</span>
     <span class="action-meta" id="act-meta">—</span>
-    <label class="fu-chip" id="act-fu-chip" title="Editar data de follow-up">
-      <span aria-hidden="true">📅</span>
-      <span class="fu-chip-lbl" id="act-fu-lbl">—</span>
-      <input type="date" id="act-followup" onchange="updateFollowup()">
-    </label>
   </div>
 
   <!-- ★ FECHAR E AGENDAR TUDO ★ -->
@@ -372,22 +355,6 @@
       <div id="act-comp-hint" style="font-size:0.7rem; color:var(--muted); margin-top:-2px; margin-bottom:6px;">Restante é registrado no módulo Financeiro no dia do atendimento.</div>
       <div id="act-comp-content"></div>
       <input type="file" id="act-comp-input" style="display:none" accept="image/*,application/pdf">
-    </div>
-  </div>
-
-  <div class="fu-picker" id="fu-picker">
-    <div class="fu-picker-hdr">
-      <span class="fu-picker-title">📤 Follow-up rápido</span>
-      <button class="fu-picker-cfg" onclick="closeAll(); openSettings(); setTimeout(()=>setSettingsTab('followups'),50)" title="Editar templates">⚙️</button>
-    </div>
-    <div class="fu-chips-scroll" id="fu-chips-scroll"></div>
-    <div class="fu-preview" id="fu-preview">
-      <div class="fu-preview-label">Pré-visualização — editável antes de enviar</div>
-      <div class="fu-preview-msg" id="fu-preview-msg" contenteditable="true" spellcheck="true"></div>
-      <div class="fu-preview-actions">
-        <button class="fu-wa-btn"   onclick="sendFuWA()">💬 WhatsApp</button>
-        <button class="fu-copy-btn" onclick="copyFuMsg()">📋 Copiar</button>
-      </div>
     </div>
   </div>
 
@@ -547,7 +514,6 @@
     <div class="settings-tabs">
       <button class="settings-tab on" data-tab="conex"     onclick="setSettingsTab('conex')">🔗 Conexões</button>
       <button class="settings-tab"    data-tab="servicos"  onclick="setSettingsTab('servicos')">🛠️ Serviços</button>
-      <button class="settings-tab"    data-tab="followups" onclick="setSettingsTab('followups')">📋 Follow-ups</button>
     </div>
 
     <!-- Tab: Conexões -->
@@ -573,17 +539,6 @@
       <div id="svc-list"></div>
       <button class="btn-add-slot" onclick="addService()" style="margin-top:4px;">+ Adicionar serviço</button>
       <button class="btn-primary" onclick="saveServices()">Salvar serviços</button>
-    </div>
-
-    <!-- Tab: Follow-ups -->
-    <div id="settings-tab-followups" style="margin-top:14px; display:none;">
-      <div class="settings-note">
-        Crie e edite seus templates de mensagem prontos. Eles aparecem como botões rápidos dentro de cada orçamento.<br><br>
-        Variáveis disponíveis: <strong style="color:var(--purple)">[NOME]</strong> · <strong style="color:var(--purple)">[SERVIÇO]</strong> · <strong style="color:var(--purple)">[VALOR]</strong> — são substituídas automaticamente.
-      </div>
-      <div id="fu-tpl-list"></div>
-      <button class="btn-add-slot" onclick="addFollowupTemplate()" style="margin-top:4px;">+ Novo template</button>
-      <button class="btn-primary"  onclick="saveFollowupSettings()">💾 Salvar templates</button>
     </div>
 
     <button class="btn-outline" onclick="closeAll()">Fechar</button>
@@ -616,7 +571,7 @@
 <script src="../shared/js/icons.js"></script>
 
 <!-- ── Módulo Orçamentos ── -->
-<script src="./scripts/orcamentos.js?v=20260617"></script>
+<script src="./scripts/orcamentos.js?v=20260617b"></script>
 
 <!-- ── Sidebar (último, depende do DOM pronto) ── -->
 <script src="../shared/js/global-search.js"></script>

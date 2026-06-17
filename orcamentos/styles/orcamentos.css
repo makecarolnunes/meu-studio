@@ -116,20 +116,6 @@
       display: flex; align-items: center; justify-content: center;
     }
 
-    /* ── FOLLOW-UP ALERT ────────────────────────────────── */
-    .fu-alert {
-      margin: 4px 13px 0; background: #fff3e0;
-      border: 1.5px solid #ff8f00; border-radius: 10px;
-      padding: 9px 13px; font-size: 0.75rem; color: #7c3900;
-      display: none; cursor: pointer; font-weight: 600;
-    }
-    .fu-alert.show { display: flex; align-items: center; gap: 8px; }
-    .fu-alert-dot {
-      width: 8px; height: 8px; border-radius: 50%;
-      background: #e65100; flex-shrink: 0;
-      animation: pulse 1.2s infinite;
-    }
-
     /* ── FILTER TABS ─────────────────────────────────────── */
     .ftabs {
       display: flex; flex-wrap: wrap; gap: 6px;
@@ -170,7 +156,6 @@
       position: relative;
     }
     .entry:active { transform: scale(0.985); }
-    .entry.needs-fu     { border-left-color: var(--orange); }
     .entry.is-fechado   { border-left-color: var(--ok); }
     .entry.is-perdido   { opacity: 0.65; border-left-color: var(--red); }
     .entry.is-agenda-pend {
@@ -218,11 +203,6 @@
       margin-top: 2px; display: flex; align-items: center; gap: 5px;
     }
     .e-meta { font-size: 0.63rem; color: var(--muted); margin-top: 3px; }
-    .fu-dot {
-      width: 6px; height: 6px; border-radius: 50%;
-      background: var(--orange); flex-shrink: 0;
-      animation: pulse 1.5s infinite;
-    }
 
     .e-right { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; flex-shrink: 0; }
     .e-val { font-size: 0.82rem; font-weight: 700; color: var(--brown-d); }
@@ -488,9 +468,6 @@
       /* ── Conteúdo ── */
       .content { padding: 16px 28px 64px; }
 
-      /* ── Follow-up alert ── */
-      .fu-alert { margin: 12px 28px 0; }
-
       /* ── Cards 2 colunas no desktop ── */
       .content { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; align-items: start; }
       .content .entry { margin-bottom: 0 !important; }
@@ -624,20 +601,6 @@
       flex: 1; min-width: 0;
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
-    .fu-chip {
-      position: relative; display: inline-flex; align-items: center; gap: 3px;
-      padding: 3px 7px; border-radius: 999px;
-      background: #fff8e1; color: #9e6c00;
-      font-size: 0.63rem; font-weight: 500;
-      border: 1px solid #ffe082; cursor: pointer;
-      flex-shrink: 0; user-select: none;
-    }
-    .fu-chip:hover { border-color: #ffb300; }
-    .fu-chip input[type="date"] {
-      position: absolute; inset: 0; opacity: 0; cursor: pointer;
-      width: 100%; height: 100%; padding: 0; border: 0;
-    }
-    .fu-chip-lbl { pointer-events: none; }
     .action-divider { height: 1px; background: var(--border); margin: 0 18px; }
 
     .status-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
@@ -653,19 +616,6 @@
     .st-btn-perdido { background: var(--red-l);    color: var(--red);    }
     .st-btn-semresp { background: var(--slate-l);  color: var(--slate);  }
     .st-btn-outros  { background: var(--brown-l);  color: var(--brown-d);}
-
-    .fu-row {
-      display: none; align-items: center; gap: 10px;
-      padding: 12px 18px; background: var(--amber-l);
-      border-top: 1px solid var(--border);
-      font-size: 0.82rem; color: #7c4a00;
-    }
-    .fu-row label { font-weight: 600; flex-shrink: 0; }
-    .fu-row input {
-      flex: 1; padding: 8px 10px; border: 1.5px solid #ffc107;
-      border-radius: 8px; font-size: 0.88rem; background: white;
-      font-family: inherit; outline: none;
-    }
 
     /* ── TOGGLE BUTTONS ─────────────────────────────────────── */
     .toggle-row { display: flex; gap: 8px; }
@@ -761,6 +711,17 @@
       min-height: 0.85rem; padding-left: 2px;
     }
     .slot-resumo:empty { display: none; }
+    /* ── Aviso de conflito de agenda no slot ── */
+    .slot-conflict { display: flex; flex-direction: column; gap: 4px; }
+    .slot-conflict:empty { display: none; }
+    .slot-warn {
+      font-size: 0.68rem; font-weight: 600; line-height: 1.35;
+      padding: 6px 9px; border-radius: 8px; border: 1px solid transparent;
+    }
+    .slot-warn strong { font-weight: 800; }
+    .slot-warn-err  { background: var(--red-l);    color: var(--red);    border-color: #f3c0c0; }
+    .slot-warn-fu   { background: var(--amber-l);  color: #8a5800;       border-color: #f0d49a; }
+    .slot-warn-info { background: var(--blue-l);   color: var(--blue);   border-color: #bcd9f3; }
     .slot-del {
       width: 26px; height: 26px; flex-shrink: 0;
       border: none; background: #f5edf3; color: #b07aa0;
@@ -920,121 +881,6 @@
     }
     .loading-step.done   { background: var(--ok); transform: scale(1.1); }
     .loading-step.active { background: var(--purple); animation: pulse 0.8s infinite; }
-
-    /* ── FOLLOW-UP PICKER (action panel) ───────────────── */
-    .fu-picker { padding: 4px 18px 0; }
-    .fu-picker-hdr {
-      display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 10px; padding-top: 12px;
-      border-top: 1px solid var(--border);
-    }
-    .fu-picker-title {
-      font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
-      letter-spacing: 0.06em; color: var(--muted);
-    }
-    .fu-picker-cfg {
-      background: none; border: 1.5px solid var(--border);
-      border-radius: 8px; width: 28px; height: 28px;
-      font-size: 0.8rem; cursor: pointer; color: var(--muted);
-      display: flex; align-items: center; justify-content: center;
-      transition: all 0.15s;
-    }
-    .fu-picker-cfg:hover { border-color: var(--brown); color: var(--brown); }
-    .fu-chips-scroll {
-      display: flex; gap: 6px; overflow-x: auto; padding-bottom: 6px;
-      -webkit-overflow-scrolling: touch; scrollbar-width: none;
-    }
-    .fu-chips-scroll::-webkit-scrollbar { display: none; }
-    /* Desktop: chips quebram em várias linhas (sem scroll horizontal escondido) */
-    @media (min-width: 1024px) {
-      .fu-chips-scroll { flex-wrap: wrap; overflow-x: visible; }
-    }
-    .fu-chip {
-      flex-shrink: 0; padding: 7px 13px;
-      background: var(--brown-l); border: 1.5px solid var(--border);
-      border-radius: 20px; font-size: 0.73rem; font-weight: 700;
-      cursor: pointer; color: var(--brown-d); white-space: nowrap;
-      transition: all 0.15s; font-family: inherit;
-    }
-    .fu-chip:hover  { border-color: var(--purple); color: var(--purple); background: var(--purple-l); }
-    .fu-chip.on     { background: var(--purple); border-color: var(--purple); color: white; }
-    .fu-empty-chips {
-      font-size: 0.74rem; color: var(--muted); padding: 4px 0 8px;
-      font-style: italic;
-    }
-    .fu-preview {
-      margin: 10px 0 4px; display: none;
-      border-radius: 14px; overflow: hidden;
-      border: 1.5px solid var(--border);
-      background: var(--card);
-    }
-    .fu-preview.show { display: block; }
-    .fu-preview-label {
-      font-size: 0.62rem; font-weight: 700; text-transform: uppercase;
-      letter-spacing: 0.06em; color: var(--muted);
-      padding: 8px 12px 4px;
-    }
-    .fu-preview-msg {
-      margin: 0 10px 10px;
-      background: #dcf8c6; border-radius: 10px 10px 2px 10px;
-      padding: 11px 13px; font-size: 0.81rem; line-height: 1.65;
-      color: var(--text); white-space: pre-wrap; word-break: break-word;
-      max-height: 150px; overflow-y: auto; -webkit-overflow-scrolling: touch;
-      font-family: inherit; outline: none; cursor: text;
-    }
-    .fu-preview-actions {
-      display: grid; grid-template-columns: 1fr 1fr;
-      gap: 8px; padding: 0 10px 10px;
-    }
-    .fu-wa-btn {
-      padding: 11px 8px; background: #25D366; color: white;
-      border: none; border-radius: 10px; font-size: 0.82rem; font-weight: 700;
-      cursor: pointer; display: flex; align-items: center; justify-content: center;
-      gap: 5px; font-family: inherit; transition: background 0.15s;
-    }
-    .fu-wa-btn:active { background: #1ebe5a; }
-    .fu-copy-btn {
-      padding: 11px 8px; background: var(--blue-l); color: var(--blue);
-      border: 1.5px solid var(--blue); border-radius: 10px;
-      font-size: 0.82rem; font-weight: 700; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      gap: 5px; font-family: inherit; transition: all 0.15s;
-    }
-    .fu-copy-btn:active { background: #bbdefb; }
-
-    /* ── FOLLOW-UP TEMPLATES (settings) ─────────────── */
-    .fu-tpl-card {
-      background: var(--purple-l); border: 1.5px solid #d8bbcf;
-      border-radius: 13px; padding: 13px 13px 10px; margin-bottom: 10px;
-    }
-    .fu-tpl-name-row {
-      display: flex; gap: 7px; align-items: center; margin-bottom: 8px;
-    }
-    .fu-tpl-name {
-      flex: 1; padding: 9px 10px; border: 1.5px solid var(--border);
-      border-radius: 8px; font-size: 0.84rem; font-weight: 700;
-      background: white; font-family: inherit; outline: none; color: var(--text);
-    }
-    .fu-tpl-name:focus { border-color: var(--purple); }
-    .fu-tpl-del {
-      width: 32px; height: 32px; flex-shrink: 0; border: none;
-      background: var(--red-l); color: var(--red); border-radius: 8px;
-      font-size: 1rem; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      transition: background 0.15s;
-    }
-    .fu-tpl-del:active { background: #ffcdd2; }
-    .fu-tpl-textarea {
-      width: 100%; padding: 10px 11px; border: 1.5px solid var(--border);
-      border-radius: 9px; font-size: 0.81rem; font-family: inherit;
-      background: white; outline: none; resize: vertical;
-      min-height: 100px; color: var(--text); line-height: 1.6;
-    }
-    .fu-tpl-textarea:focus { border-color: var(--purple); }
-    .fu-tpl-vars {
-      font-size: 0.63rem; color: var(--muted); margin-top: 7px; line-height: 1.6;
-    }
-    .fu-tpl-vars strong { color: var(--purple); }
 
     /* ── STATUS CHIPS (linha de status nos cards) ─────────── */
     .status-row { display:flex; gap:5px; margin-top:6px; flex-wrap:wrap; }

@@ -78,10 +78,6 @@ function todayStr() {
   const t = new Date();
   return t.getFullYear() + '-' + pad(t.getMonth()+1) + '-' + pad(t.getDate());
 }
-function defaultFollowup() {
-  const d = new Date(); d.setDate(d.getDate() + 2);
-  return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate());
-}
 function fmtDate(s) {
   if (!s) return '—';
   const [y,m,d] = s.split('-');
@@ -110,14 +106,10 @@ function renderEntryCard(e) {
   const agPend = e.Status === 'Fechado' && !getAgendaCriada(e);
   const cls    = agPend ? 'is-agenda-pend' :
                  agOk   ? 'is-agenda-ok'   :
-                 PERDIDO_STATUS.includes(e.Status) ? 'is-perdido' :
-                 needsFollowup(e) ? 'needs-fu' : '';
-  const nfu    = needsFollowup(e);
+                 PERDIDO_STATUS.includes(e.Status) ? 'is-perdido' : '';
   const val    = e.ValorFechado ? parseFloat(e.ValorFechado) : parseFloat(e.ValorProp) || 0;
   const valStr = val ? fmtVal(val) : '—';
-  const meta   = e.DataEvento    ? 'Evento: '  + fmtDate(e.DataEvento)
-               : e.ProxFollowup  ? 'FU: '      + fmtDate(e.ProxFollowup)
-               : '';
+  const meta   = e.DataEvento ? 'Evento: ' + fmtDate(e.DataEvento) : '';
   const compOk = hasComprovante(e);
   const statusRow = e.Status === 'Fechado'
     ? '<div class="status-row">' +
@@ -133,7 +125,7 @@ function renderEntryCard(e) {
       '<div class="e-date">' + fmtDateCard(e.DataPedido) + '</div>' +
       '<div class="e-info">' +
         '<div class="e-name">' + esc(e.Cliente || '—') + (e.Equipe ? ' <span style="display:inline-block;background:#e0f7fa;color:#006064;border-radius:8px;padding:1px 7px;font-size:.65rem;font-weight:600;vertical-align:middle">↑ Equipe ' + esc(e.Equipe) + '</span>' : '') + '</div>' +
-        '<div class="e-srv">' + (nfu ? '<span class="fu-dot"></span>' : '') + esc(e.Servico || '—') + '</div>' +
+        '<div class="e-srv">' + esc(e.Servico || '—') + '</div>' +
         (meta ? '<div class="e-meta">' + esc(meta) + '</div>' : '') +
         statusRow +
       '</div>' +
@@ -162,15 +154,6 @@ function fmt(v) { return parseFloat(v||0).toFixed(2).replace('.', ','); }
 function fmtVal(v) {
   if (!v && v !== 0) return '—';
   return 'R$ ' + Number(v).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
-}
-function daysSince(dateStr) {
-  if (!dateStr) return 0;
-  const d = new Date(dateStr + 'T12:00:00');
-  return Math.floor((Date.now() - d) / 86400000);
-}
-function needsFollowup(e) {
-  if (e.Status === 'Fechado' || PERDIDO_STATUS.includes(e.Status)) return false;
-  return e.ProxFollowup && e.ProxFollowup <= todayStr();
 }
 function initials(name) {
   return (name || '?').split(' ').slice(0,2).map(w => w[0]||'').join('').toUpperCase();
@@ -287,188 +270,6 @@ function setLoadingStep(step, msg, sub) {
 }
 
 // ══════════════════════════════════════════════════════════
-//  FOLLOW-UP TEMPLATES — storage
-// ══════════════════════════════════════════════════════════
-const DEFAULT_FU_TEMPLATES = [
-  { id:'orç-1',  nome:'ORÇ-1 — Confirmação de recebimento', texto:'Oi, [NOME]! Tudo bem com você?\n\nPassei para confirmar que recebi sua mensagem sobre [SERVIÇO] — já estou preparando tudo com carinho.\n\nEm breve te envio os detalhes. Qualquer dúvida, pode me chamar aqui! 🤍' },
-  { id:'fu-1',   nome:'FU-1 — Confirmação leve (48-72h)',    texto:'Oi, [NOME]! Tudo bem? 🤍\n\nPassei para ver se o orçamento ficou claro ou se surgiu alguma dúvida por aqui. Me conta!' },
-  { id:'fu-2',   nome:'FU-2 — Confirmação de interesse (5-7d)', texto:'Oi, [NOME]! Tudo bem? Sei que a vida agita e às vezes as coisas ficam em espera.\n\nSó vim deixar aberto: se ainda tiver interesse, estou aqui. Se os planos mudaram, também tudo bem — só me avisa para eu conseguir me organizar. Sem pressão nenhuma! 🤍' },
-  { id:'fu-3',   nome:'FU-3 — Encerramento elegante',        texto:'Oi, [NOME]! Como não tivemos retorno, vou liberar o espaço na minha agenda.\n\nSe em outro momento quiser conversar, estarei por aqui. Boa sorte com tudo! 🤍' },
-  { id:'neg-1',  nome:'NEG-1 — "Ficou caro"',                texto:'Oi, [NOME]! Obrigada pela honestidade.\n\nMe conta: qual seria um valor que se encaixaria melhor pra você? Assim consigo ver o que seria possível ajustar sem comprometer a qualidade do resultado. 😊' },
-  { id:'neg-2',  nome:'NEG-2 — "Vou pensar"',                texto:'Claro, [NOME]! Se surgir alguma dúvida enquanto você pensa, pode me perguntar à vontade. Qualquer coisa que eu possa explicar melhor sobre como funciona o atendimento, estou aqui! 🤍' },
-  { id:'neg-3',  nome:'NEG-3 — "Outra cobra menos"',         texto:'Oi, [NOME]! Cada atendimento tem uma proposta diferente mesmo.\n\nO que diferencia o meu trabalho é [meu diferencial — ex: especialização em pele negra, cuidado integral com make e cabelo, atendimento personalizado]. Se quiser, posso te explicar melhor o que está incluso em cada etapa — assim você consegue comparar com mais clareza! 😊' },
-  { id:'neg-4',  nome:'NEG-4 — "Vou ver com meu marido"',    texto:'Claro, [NOME]! É uma decisão importante mesmo.\n\nSe quiser, posso te passar um resumo do que está incluso para facilitar na conversa com ele — às vezes ajuda ter tudo clarinho na hora de explicar. Quer? 🤍' },
-  { id:'fech-1', nome:'FECH-1 — Fechamento',          texto:'Que ótima notícia, [NOME]! 🎉\n\nFicou confirmado o pedido de [SERVIÇO]!\n\nPróximos passos:\n✅ Pagamento do sinal via Pix\n✅ Saldo no dia do atendimento: R$ [VALOR]\n\nVou enviar o recibo assim que confirmar o pagamento. Qualquer dúvida, estou aqui! 🎂' },
-  { id:'pos-1',  nome:'POS-1 — Pós-venda',            texto:'Oi, [NOME]! Espero que tudo tenha corrido maravilhosamente! 🎉\n\nGostaria de saber como foi a experiência com [SERVIÇO].\n\nSua opinião é muito importante pra mim! Se puder, me deixa uma avaliação. ⭐\n\nObrigada pela confiança. Espero te atender em breve! 💚' },
-];
-
-let fuTemplates = null;
-
-function getFollowupTemplates() {
-  if (!fuTemplates) {
-    fuTemplates = safeJSON(localStorage.getItem('orca_fu_templates'), null);
-    if (!fuTemplates) fuTemplates = DEFAULT_FU_TEMPLATES.map(t => ({ ...t }));
-  }
-  return fuTemplates;
-}
-function saveFollowupTemplatesLS() {
-  localStorage.setItem('orca_fu_templates', JSON.stringify(fuTemplates));
-}
-
-function personalizeTemplate(text, entry) {
-  const nome    = (entry.Cliente || '').split(' ')[0] || '[NOME]';
-  const servico = entry.Servico  || '[SERVIÇO]';
-  const valor   = entry.ValorFechado
-    ? fmtVal(parseFloat(entry.ValorFechado))
-    : (entry.ValorProp ? fmtVal(parseFloat(entry.ValorProp)) : '[VALOR]');
-  return text
-    .replace(/\[NOME\]/g, nome)
-    .replace(/\[SERVIÇO\]/g, servico)
-    .replace(/\[VALOR\]/g, valor);
-}
-
-// ── Picker no painel de ação ──
-let activeFuIdx   = null;
-let activeFuEntry = null;
-
-function renderFollowupPicker(id) {
-  const scroll  = document.getElementById('fu-chips-scroll');
-  const preview = document.getElementById('fu-preview');
-  if (!scroll) return;
-  activeFuIdx   = null;
-  activeFuEntry = entries.find(x => String(x.ID) === String(id));
-  if (preview) preview.classList.remove('show');
-
-  const templates = getFollowupTemplates();
-  if (!templates.length) {
-    scroll.innerHTML = '<span class="fu-empty-chips">Nenhum template cadastrado. Crie em ⚙️ Configurações → Follow-ups.</span>';
-    return;
-  }
-  scroll.innerHTML = templates.map((t, i) => {
-    const label = t.nome.includes('—') ? t.nome.split('—')[0].trim() : t.nome;
-    return '<button class="fu-chip" onclick="selectFuTemplate(' + i + ')">' + esc(label) + '</button>';
-  }).join('');
-}
-
-function selectFuTemplate(idx) {
-  activeFuIdx = idx;
-  const templates = getFollowupTemplates();
-  const tpl = templates[idx];
-  if (!tpl || !activeFuEntry) return;
-
-  document.querySelectorAll('.fu-chip').forEach((c, i) => c.classList.toggle('on', i === idx));
-
-  const msgEl   = document.getElementById('fu-preview-msg');
-  const preview = document.getElementById('fu-preview');
-  if (!msgEl || !preview) return;
-  msgEl.textContent = personalizeTemplate(tpl.texto, activeFuEntry);
-  preview.classList.add('show');
-  setTimeout(() => preview.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 60);
-}
-
-function getFuCurrentText() {
-  const msgEl = document.getElementById('fu-preview-msg');
-  return msgEl ? (msgEl.innerText || msgEl.textContent || '') : '';
-}
-
-function sendFuWA() {
-  if (!activeFuEntry) return;
-  const text  = getFuCurrentText();
-  const phone = formatPhone(activeFuEntry.Telefone);
-  if (!phone) { toast('⚠️ Cliente sem telefone cadastrado'); return; }
-  window.open('https://wa.me/' + phone + '?text=' + encodeURIComponent(text), '_blank');
-  _autoLogFuSend('wa');
-}
-
-function copyFuMsg() {
-  const text = getFuCurrentText();
-  if (!text) return;
-  const doToast = () => { toast('📋 Mensagem copiada!'); _autoLogFuSend('copy'); };
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(text).then(doToast).catch(() => _fallbackCopy(text, doToast));
-  } else {
-    _fallbackCopy(text, doToast);
-  }
-}
-function _fallbackCopy(text, cb) {
-  const ta = document.createElement('textarea');
-  ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
-  document.body.appendChild(ta); ta.focus(); ta.select();
-  try { document.execCommand('copy'); } catch(e) {}
-  document.body.removeChild(ta);
-  if (cb) cb();
-}
-function _autoLogFuSend(tipo) {
-  if (!activeFuEntry || activeFuIdx === null) return;
-  const templates = getFollowupTemplates();
-  const tpl = templates[activeFuIdx];
-  _addFuRecord(String(activeFuEntry.ID), {
-    date: todayStr(), tipo,
-    template: tpl ? tpl.nome : null,
-  });
-}
-
-// ── Histórico (log silencioso) ──
-function _getFuHistory(id) {
-  const all = safeJSON(localStorage.getItem('orca_fu_history'), {});
-  return all[String(id)] || [];
-}
-function _addFuRecord(id, record) {
-  const all = safeJSON(localStorage.getItem('orca_fu_history'), {});
-  if (!all[id]) all[id] = [];
-  all[id].push(record);
-  localStorage.setItem('orca_fu_history', JSON.stringify(all));
-}
-
-// ── Settings — CRUD de templates ──
-function renderFollowupSettings() {
-  const list = document.getElementById('fu-tpl-list');
-  if (!list) return;
-  const templates = getFollowupTemplates();
-  if (!templates.length) {
-    list.innerHTML = '<div style="text-align:center;padding:16px;color:var(--muted);font-size:0.8rem;">Nenhum template. Clique em "+ Novo template".</div>';
-    return;
-  }
-  list.innerHTML = templates.map((t, idx) =>
-    '<div class="fu-tpl-card">' +
-      '<div class="fu-tpl-name-row">' +
-        '<input class="fu-tpl-name" type="text" value="' + esc(t.nome) + '" placeholder="Nome do template" ' +
-          'oninput="fuTemplates[' + idx + '].nome = this.value">' +
-        '<button class="fu-tpl-del" onclick="removeFollowupTemplate(' + idx + ')" title="Excluir template">✕</button>' +
-      '</div>' +
-      '<textarea class="fu-tpl-textarea" rows="5" ' +
-        'oninput="fuTemplates[' + idx + '].texto = this.value">' + esc(t.texto) + '</textarea>' +
-      '<div class="fu-tpl-vars">Variáveis: <strong>[NOME]</strong> · <strong>[SERVIÇO]</strong> · <strong>[VALOR]</strong></div>' +
-    '</div>'
-  ).join('');
-}
-
-function addFollowupTemplate() {
-  getFollowupTemplates();
-  fuTemplates.push({ id: 'custom-' + Date.now(), nome: 'Novo template', texto: 'Oi, [NOME]! 😊\n\n' });
-  renderFollowupSettings();
-  // Scroll para o novo card
-  const list = document.getElementById('fu-tpl-list');
-  if (list) setTimeout(() => list.lastElementChild && list.lastElementChild.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 60);
-}
-
-function removeFollowupTemplate(idx) {
-  if (!confirm('Excluir este template?')) return;
-  getFollowupTemplates();
-  fuTemplates.splice(idx, 1);
-  renderFollowupSettings();
-}
-
-function saveFollowupSettings() {
-  getFollowupTemplates();
-  fuTemplates = fuTemplates.filter(t => t.nome && t.nome.trim() && t.texto && t.texto.trim());
-  saveFollowupTemplatesLS();
-  toast('✅ Templates salvos!');
-  // Atualiza chips se picker estiver visível
-  if (activeFuEntry) renderFollowupPicker(activeFuEntry.ID);
-}
-
-// ══════════════════════════════════════════════════════════
 //  API — Apps Script (Orçamentos)
 // ══════════════════════════════════════════════════════════
 async function syncAll() {
@@ -558,48 +359,6 @@ async function finEntryCreate(entry) {
     console.warn('finEntryCreate error:', e.message);
     return { ok: false, error: e.message };
   }
-}
-
-// ══════════════════════════════════════════════════════════
-//  WHATSAPP — follow-ups por status
-// ══════════════════════════════════════════════════════════
-function getWaTemplate(entry) {
-  const nome    = (entry.Cliente || '').split(' ')[0] || 'cliente';
-  const servico = entry.Servico  || 'o serviço solicitado';
-  const diasEnvio  = daysSince(entry.DataEnvio  || entry.DataPedido);
-  const diasPedido = daysSince(entry.DataPedido);
-
-  // ORÇ-1 — Confirmação de recebimento (Novo Pedido)
-  if (entry.Status === 'Novo Pedido') return {
-    code: 'ORÇ-1', hint: 'Confirmação de recebimento do pedido',
-    text: 'Oi, ' + nome + '! Tudo bem com você?\n\nPassei para confirmar que recebi sua mensagem sobre ' + servico + ' — já estou preparando tudo com carinho.\n\nEm breve te envio os detalhes. Qualquer dúvida, pode me chamar aqui! 🤍'
-  };
-
-  // FU-1 — 1º follow-up (Orçamento Enviado, ~2 dias)
-  if (entry.Status === 'Orçamento Enviado') return {
-    code: 'FU-1', hint: 'FU-1 — Confirmação leve (48-72h)',
-    text: 'Oi, ' + nome + '! Tudo bem? 🤍\n\nPassei para ver se o orçamento ficou claro ou se surgiu alguma dúvida por aqui. Me conta!'
-  };
-
-  // FU-2 — 2º follow-up (Perdido - Sem Resposta, ≤6 dias)
-  if (entry.Status === 'Perdido - Sem Resposta' && diasEnvio <= 6) return {
-    code: 'FU-2', hint: 'FU-2 — Confirmação de interesse (dia 5-7)',
-    text: 'Oi, ' + nome + '! Tudo bem? Sei que a vida agita e às vezes as coisas ficam em espera.\n\nSó vim deixar aberto: se ainda tiver interesse, estou aqui. Se os planos mudaram, também tudo bem — só me avisa para eu conseguir me organizar. Sem pressão nenhuma! 🤍'
-  };
-
-  // FU-3 — Encerramento elegante (Perdido - Sem Resposta, >6 dias)
-  if (entry.Status === 'Perdido - Sem Resposta' && diasEnvio > 6) return {
-    code: 'FU-3', hint: 'FU-3 — Encerramento elegante (dia 7+)',
-    text: 'Oi, ' + nome + '! Como não tivemos retorno, vou liberar o espaço na minha agenda.\n\nSe em outro momento quiser conversar, estarei por aqui. Boa sorte com tudo! 🤍'
-  };
-
-  // POS-1 — Pós-venda (Fechado)
-  if (entry.Status === 'Fechado') return {
-    code: 'POS-1', hint: 'POS-1 — Pós-atendimento / encantamento',
-    text: 'Que lindo foi esse dia! Obrigada pela confiança, ' + nome + '. Foi uma alegria cuidar de você. 🤍\n\nManda foto quando puder — adoro ver o resultado no mundo real!'
-  };
-
-  return { code: '—', hint: 'Mensagem de contato geral', text: 'Oi, ' + nome + '! 😊\n\nTudo bem?' };
 }
 
 // ══════════════════════════════════════════════════════════
@@ -1130,16 +889,6 @@ function render() {
     ml.classList.remove('filtered'); mc.classList.remove('show');
   }
 
-  const fuCount = entries.filter(e => needsFollowup(e)).length;
-  const dsFu = document.getElementById('dsf-fu');
-  if (dsFu) dsFu.textContent = fuCount || '0';
-  const fuEl = document.getElementById('fu-alert');
-  if (fuCount > 0 && curFilter !== 'followup') {
-    fuEl.classList.add('show');
-    document.getElementById('fu-alert-txt').textContent =
-      fuCount === 1 ? '1 cliente esperando follow-up' : fuCount + ' clientes esperando follow-up';
-  } else fuEl.classList.remove('show');
-
   let list = entries.slice();
 
   // Filtro por mês usa DataPedido (data de recebimento), não DataEvento
@@ -1154,8 +903,7 @@ function render() {
   syncEventDateUI();
 
   // Filtro por status
-  if (curFilter === 'followup')          list = list.filter(e => needsFollowup(e));
-  else if (curFilter === 'novos')        list = list.filter(e => ['Novo Pedido','Orçamento Enviado'].includes(e.Status));
+  if (curFilter === 'novos')             list = list.filter(e => ['Novo Pedido','Orçamento Enviado'].includes(e.Status));
   else if (curFilter === 'perdidos')     list = list.filter(e => PERDIDO_STATUS.includes(e.Status));
   else if (curFilter === 'fechados')     list = list.filter(e => e.Status === 'Fechado');
   else if (curFilter === 'agenda-pend')  list = list.filter(e => e.Status === 'Fechado' && !getAgendaCriada(e));
@@ -1336,13 +1084,13 @@ function openAddForm() {
   const addNoTel = document.getElementById('add-no-tel');
   if (addNoTel) addNoTel.checked = false;
   toggleNoPhone(false);
-  document.getElementById('add-followup').value = defaultFollowup();
   document.getElementById('add-obs').value      = '';
   document.getElementById('add-origem').value   = 'Produção Social';
   const addEqChk = document.getElementById('add-eq-chk');
   const addEqInp = document.getElementById('add-equipe');
   if (addEqChk) addEqChk.checked = false;
   if (addEqInp) { addEqInp.value = ''; addEqInp.style.display = 'none'; }
+  slotCheckExcludeId = null;   // orçamento novo: confere contra todos os existentes
   addSlots = [];
   addAddSlot();
   openPanel('panel-add');
@@ -1367,7 +1115,7 @@ function toggleActEquipeInput(checked) {
   if (!inp) return;
   if (checked) { inp.style.display = ''; inp.style.marginTop = '8px'; inp.focus(); }
   else { inp.style.display = 'none'; inp.value = ''; }
-  const toToggle = ['act-val-enviado-wrap', 'act-comp-wrap', 'fu-picker'];
+  const toToggle = ['act-val-enviado-wrap', 'act-comp-wrap'];
   toToggle.forEach(id => {
     const el = document.getElementById(id);
     if (el) el.style.display = checked ? 'none' : '';
@@ -1386,6 +1134,78 @@ function slotResumoLinha(s) {
   if (val > 0 || qtd > 1) parts.push(qtd + ' × R$ ' + fmt(val) + ' = R$ ' + fmt(qtd * val));
   if (s.horario) parts.push(fmtHorario(s.horario) + '–' + addMinutesFmt(s.horario, qtd * dur));
   return parts.join(' · ');
+}
+
+// ── Detecção de conflito de agenda (data + horário) ──────────────
+// Compara o slot que está sendo preenchido com os slots de TODOS os
+// outros orçamentos. A base é o próprio app: os orçamentos *Fechados*
+// são justamente os que viram evento no Google Agenda. O navegador não
+// lê o Google Agenda diretamente, então eventos criados à mão na agenda
+// (fora do app) não entram nessa checagem.
+let slotCheckExcludeId = null;   // ID do orçamento em edição (não conflita consigo mesmo)
+
+function hhmmToMin(h) {
+  if (!h) return null;
+  const [a, b] = h.split(':').map(Number);
+  if (isNaN(a)) return null;
+  return a * 60 + (b || 0);
+}
+
+function findSlotConflicts(cand, excludeId) {
+  const out = { conflitos: [], procuras: [], mesmoDia: [] };
+  if (!cand || !cand.data) return out;
+  const candStart = hhmmToMin(cand.horario);
+  const candEnd   = candStart != null ? candStart + slotDuracao(cand) : null;
+  const seen = {};
+
+  entries.forEach(e => {
+    if (excludeId && String(e.ID) === String(excludeId)) return;
+    entrySlots(e).forEach(s => {
+      if (!s.data || s.data !== cand.data) return;
+      const exStart = hhmmToMin(s.horario);
+      const exEnd   = exStart != null ? exStart + slotDuracao(s) : null;
+      const overlap = (candStart != null && exStart != null) &&
+                      (candStart < exEnd && exStart < candEnd);
+      const key = String(e.ID) + '|' + (s.horario || '');
+      if (seen[key]) return;
+      seen[key] = 1;
+      const rec = {
+        cliente: e.Cliente || 'cliente',
+        status:  e.Status  || '',
+        horario: s.horario  || '',
+        servico: s.servico  || '',
+      };
+      if (overlap) {
+        if (e.Status === 'Fechado') out.conflitos.push(rec);
+        else                        out.procuras.push(rec);
+      } else {
+        out.mesmoDia.push(rec);
+      }
+    });
+  });
+  return out;
+}
+
+function slotConflictHTML(cand, excludeId) {
+  const r = findSlotConflicts(cand, excludeId);
+  const lines = [];
+  r.conflitos.forEach(c =>
+    lines.push('<div class="slot-warn slot-warn-err">⛔ <strong>' + esc(c.cliente) +
+      '</strong> já tem atendimento <strong>fechado</strong>' +
+      (c.horario ? ' às ' + fmtHorario(c.horario) : '') +
+      ' — possível choque de agenda</div>'));
+  r.procuras.forEach(c =>
+    lines.push('<div class="slot-warn slot-warn-fu">👀 <strong>' + esc(c.cliente) +
+      '</strong> também procurou esse horário' +
+      (c.status ? ' (' + esc(c.status) + ')' : '') +
+      ' — vale um follow-up</div>'));
+  // "Mesmo dia" (horário diferente) só aparece quando não há sobreposição
+  if (!r.conflitos.length && !r.procuras.length) {
+    r.mesmoDia.slice(0, 3).forEach(c =>
+      lines.push('<div class="slot-warn slot-warn-info">📅 Você já tem <strong>' + esc(c.cliente) +
+        '</strong> nesse dia' + (c.horario ? ' às ' + fmtHorario(c.horario) : '') + '</div>'));
+  }
+  return lines.join('');
 }
 
 // HTML de uma linha de slot (compartilhado entre Novo Orçamento e Fechar)
@@ -1419,6 +1239,7 @@ function renderSlotRow(s, idx, count, syncFn, removeFn) {
           '<input class="form-input" type="time" placeholder="Início" value="' + (s.horario || '') + '" oninput="' + syncFn + '(' + s.id + ', \'horario\', this.value)">' +
         '</div>' +
         '<div class="slot-resumo" id="resumo-' + s.id + '">' + esc(slotResumoLinha(s)) + '</div>' +
+        '<div class="slot-conflict" id="conflict-' + s.id + '">' + slotConflictHTML(s, slotCheckExcludeId) + '</div>' +
       '</div>' +
       (count > 1
         ? '<button class="slot-del" onclick="' + removeFn + '(' + s.id + ')" title="Remover">✕</button>'
@@ -1430,6 +1251,8 @@ function renderSlotRow(s, idx, count, syncFn, removeFn) {
 function updateSlotResumo(s) {
   const el = document.getElementById('resumo-' + s.id);
   if (el) el.textContent = slotResumoLinha(s);
+  const cf = document.getElementById('conflict-' + s.id);
+  if (cf) cf.innerHTML = slotConflictHTML(s, slotCheckExcludeId);
 }
 
 // Trata mudança em um campo de slot. Recebe o array (addSlots/fechSlots),
@@ -1577,7 +1400,6 @@ async function saveNew() {
   const nome   = document.getElementById('add-nome').value.trim();
   const tel    = document.getElementById('add-tel').value.trim();
   const obs    = document.getElementById('add-obs').value.trim();
-  const fu     = document.getElementById('add-followup').value;
   const origem = document.getElementById('add-origem').value;
   const equipe = (document.getElementById('add-equipe') || {}).value?.trim() || '';
 
@@ -1605,7 +1427,6 @@ async function saveNew() {
     Status:       'Novo Pedido',
     DataEnvio:    '',
     DataFechamento: '',
-    ProxFollowup: fu || defaultFollowup(),
     ValorFechado:'',
     Obs:          packSlots(obs, slotsToStore),
     Origem:       origem,
@@ -1664,17 +1485,12 @@ function openAction(id) {
   document.getElementById('val-fechado-row').style.display = e.Status === 'Fechado' ? 'block' : 'none';
   document.getElementById('act-val-fechado').value = e.ValorFechado || '';
   document.getElementById('act-val-enviado').value = e.ValorProp || '';
-  document.getElementById('act-followup').value = e.ProxFollowup || '';
-  updateFollowupChipLabel();
   document.getElementById('act-obs').value      = entryCleanObs(e);
   const actEqChk = document.getElementById('act-eq-chk');
   const actEqInp = document.getElementById('act-equipe');
   if (actEqChk) actEqChk.checked = !!(e.Equipe);
   if (actEqInp) { actEqInp.value = e.Equipe || ''; actEqInp.style.display = e.Equipe ? '' : 'none'; if (e.Equipe) actEqInp.style.marginTop = '8px'; }
   toggleActEquipeInput(!!(e.Equipe));
-
-  // Carrega o picker de follow-up
-  renderFollowupPicker(id);
 
   renderActSlots(e);
   renderActGcalSection(e);
@@ -1705,30 +1521,6 @@ async function setStatus(btn) {
   }
 }
 
-function updateFollowupChipLabel() {
-  const lbl = document.getElementById('act-fu-lbl');
-  const inp = document.getElementById('act-followup');
-  if (!lbl || !inp) return;
-  const v = inp.value;
-  if (!v) { lbl.textContent = 'definir'; return; }
-  const [y, m, d] = v.split('-');
-  lbl.textContent = (d && m) ? (d + '/' + m) : v;
-}
-
-async function updateFollowup() {
-  const e = entries.find(x => String(x.ID) === String(activeId));
-  if (!e) return;
-  e.ProxFollowup = document.getElementById('act-followup').value;
-  updateFollowupChipLabel();
-  cacheEntries();
-  render();
-
-  const result = await postEntry({ action: 'update', id: e.ID, fields: { ProxFollowup: e.ProxFollowup } });
-  if (!result.ok && result.error !== 'no-url') {
-    toast('⚠️ Sincronização do follow-up falhou');
-  }
-}
-
 // Edita a data de cadastro/recebimento do orçamento (DataPedido).
 // Útil quando o orçamento é lançado dias depois de ter sido recebido.
 async function updateDataPedido() {
@@ -1756,7 +1548,6 @@ async function saveAction() {
   const newObs = document.getElementById('act-obs').value;
   const existingSlots = entrySlots(e);
   e.Obs = packSlots(newObs, existingSlots);
-  e.ProxFollowup = document.getElementById('act-followup').value;
   const dpEl = document.getElementById('act-data-pedido');
   if (dpEl && dpEl.value) e.DataPedido = dpEl.value;
   const vf = document.getElementById('act-val-fechado').value;
@@ -1782,7 +1573,6 @@ async function saveAction() {
     DataPedido:    e.DataPedido,
     DataEnvio:     e.DataEnvio,
     DataFechamento:e.DataFechamento,
-    ProxFollowup:  e.ProxFollowup,
     ValorFechado:  e.ValorFechado,
     ValorProp:     e.ValorProp,
     Obs:           e.Obs,
@@ -1819,19 +1609,6 @@ async function excluirOrcamento() {
   }
 }
 
-function openWhatsApp() {
-  const e = entries.find(x => String(x.ID) === String(activeId));
-  if (!e) return;
-  const tmpl = getWaTemplate(e);
-  const phone = formatPhone(e.Telefone);
-  const url = 'https://wa.me/' + phone + '?text=' + encodeURIComponent(tmpl.text);
-  window.open(url, '_blank');
-  if (!e.DataEnvio) {
-    e.DataEnvio = todayStr();
-    cacheEntries();
-  }
-}
-
 // ══════════════════════════════════════════════════════════
 //  FECHAR E AGENDAR TUDO
 // ══════════════════════════════════════════════════════════
@@ -1844,6 +1621,7 @@ function abrirFechamento() {
   fechLocal = 'studio';
   fechSinalRecebido = true;
   fechPropostas = e.Propostas || [];
+  slotCheckExcludeId = e.ID;   // não conflita com os próprios slots deste orçamento
 
   document.getElementById('fech-nome').textContent = e.Cliente || '';
   document.getElementById('fech-addr').value = '';
@@ -2295,8 +2073,6 @@ function setSettingsTab(tab) {
     t.classList.toggle('on', t.dataset.tab === tab));
   document.getElementById('settings-tab-conex').style.display     = tab === 'conex'     ? 'block' : 'none';
   document.getElementById('settings-tab-servicos').style.display  = tab === 'servicos'  ? 'block' : 'none';
-  document.getElementById('settings-tab-followups').style.display = tab === 'followups' ? 'block' : 'none';
-  if (tab === 'followups') renderFollowupSettings();
   if (tab === 'servicos')  renderServices();
 }
 
