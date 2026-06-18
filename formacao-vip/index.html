@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Especialização">
+<title>Especialização Cachos & Crespos · Plano</title>
+<!-- Auth guard: sem sessão volta pro Hub -->
+<script>
+(function(){try{var s=JSON.parse(localStorage.getItem('mk_session')||'null');if(!s||Date.now()>=s.expires){location.href='../';}}catch(e){location.href='../';}})();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,500&family=Jost:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --cream:#F4ECE2; --bg2:#EFE4D6; --card:#FCF8F2; --ink:#2C2019; --ink2:#4A382C;
+    --muted:#8C7967; --line:#E6D8C7; --terra:#A86B3C; --caramel:#C58A52; --deep:#6E4A2C;
+    --gold:#B8895A; --rose:#B06A55; --green:#5E7A52;
+    --r:16px; --shadow:0 4px 22px rgba(96,64,38,.08);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; background:linear-gradient(180deg,var(--cream),var(--bg2));
+    color:var(--ink); font-family:'Jost',-apple-system,BlinkMacSystemFont,sans-serif;
+    font-size:15px; line-height:1.6; -webkit-font-smoothing:antialiased;
+    padding-bottom:60px;
+  }
+  .wrap{max-width:560px; margin:0 auto; padding:0 16px}
+
+  /* HERO */
+  .hero{padding:54px 0 22px; text-align:center}
+  .hero .eyebrow{font-family:'Jost';font-weight:600;font-size:11px;letter-spacing:.32em;text-transform:uppercase;color:var(--terra)}
+  .hero h1{
+    font-family:'Cormorant Garamond';font-weight:600;font-style:italic;
+    font-size:46px;line-height:1.02;margin:6px 0 4px;
+    background:linear-gradient(95deg,var(--deep),var(--caramel) 70%,var(--gold));
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+  }
+  .hero .by{font-family:'Jost';font-weight:500;font-size:11px;letter-spacing:.26em;text-transform:uppercase;color:var(--muted)}
+  .hero .tag{display:inline-block;margin-top:14px;background:rgba(168,107,60,.1);color:var(--deep);
+    font-size:12px;font-weight:500;padding:7px 14px;border-radius:999px;border:1px solid rgba(168,107,60,.2)}
+
+  /* INDEX CHIPS */
+  .idx{display:flex;flex-wrap:wrap;gap:7px;justify-content:center;padding:8px 0 18px}
+  .idx a{font-size:12px;font-weight:500;color:var(--ink2);background:var(--card);border:1px solid var(--line);
+    padding:6px 11px;border-radius:999px;text-decoration:none;transition:.15s}
+  .idx a:active{background:var(--bg2)}
+
+  /* ACCORDION */
+  .acc{background:var(--card);border:1px solid var(--line);border-radius:var(--r);margin-bottom:11px;
+    overflow:hidden;box-shadow:var(--shadow)}
+  .acc-hd{display:flex;align-items:center;gap:12px;padding:17px 16px;cursor:pointer;user-select:none}
+  .acc-num{flex-shrink:0;width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;
+    font-family:'Cormorant Garamond';font-weight:600;font-size:18px;color:#fff;
+    background:linear-gradient(135deg,var(--caramel),var(--deep))}
+  .acc-hd h2{flex:1;margin:0;font-family:'Cormorant Garamond';font-weight:600;font-size:22px;line-height:1.1;color:var(--ink)}
+  .acc-hd .sub{display:block;font-family:'Jost';font-weight:400;font-size:11px;letter-spacing:.04em;color:var(--muted);margin-top:1px}
+  .acc-arr{flex-shrink:0;color:var(--terra);transition:transform .25s}
+  .acc.open .acc-arr{transform:rotate(180deg)}
+  .acc-bd{display:none;padding:2px 16px 20px;border-top:1px solid var(--line)}
+  .acc.open .acc-bd{display:block;animation:fade .3s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+
+  /* CONTENT ELEMENTS */
+  .acc-bd p{margin:12px 0}
+  .acc-bd h3{font-family:'Cormorant Garamond';font-weight:600;font-size:19px;color:var(--deep);margin:20px 0 6px}
+  .lead{background:rgba(176,106,85,.07);border-left:3px solid var(--rose);padding:11px 13px;border-radius:0 10px 10px 0;
+    font-size:14px;color:var(--ink2);margin:14px 0}
+  .lead b{color:var(--rose)}
+  .note{background:rgba(94,122,82,.08);border-left:3px solid var(--green);padding:11px 13px;border-radius:0 10px 10px 0;
+    font-size:14px;margin:14px 0}
+  .warn{background:rgba(176,106,85,.1);border-left:3px solid #C0492F;padding:11px 13px;border-radius:0 10px 10px 0;
+    font-size:14px;margin:14px 0}
+  ul.clean{list-style:none;padding:0;margin:12px 0}
+  ul.clean li{position:relative;padding:5px 0 5px 22px;font-size:14px;border-bottom:1px solid rgba(230,216,199,.6)}
+  ul.clean li:last-child{border-bottom:none}
+  ul.clean li::before{content:"";position:absolute;left:4px;top:13px;width:6px;height:6px;border-radius:50%;
+    background:var(--caramel)}
+  ul.chk{list-style:none;padding:0;margin:12px 0}
+  ul.chk li{position:relative;padding:6px 0 6px 26px;font-size:14px}
+  ul.chk li::before{content:"☐";position:absolute;left:2px;top:5px;color:var(--terra);font-size:15px}
+
+  /* MODULE CARDS */
+  .mod{border:1px solid var(--line);border-radius:13px;padding:14px;margin:12px 0;background:#fff}
+  .mod .mh{font-family:'Cormorant Garamond';font-weight:600;font-size:21px;color:var(--deep)}
+  .mod .mt{font-size:12px;color:var(--muted);margin-bottom:8px}
+  .pill{display:inline-block;font-size:11px;font-weight:500;background:rgba(168,107,60,.12);color:var(--deep);
+    padding:3px 9px;border-radius:999px;margin:2px 3px 2px 0}
+
+  /* TIMELINE / BLOCKS */
+  .blk{display:flex;gap:11px;padding:9px 0;border-bottom:1px solid rgba(230,216,199,.7)}
+  .blk:last-child{border-bottom:none}
+  .blk .t{flex-shrink:0;width:64px;font-family:'Jost';font-weight:600;font-size:12px;color:var(--terra);padding-top:2px}
+  .blk .c{flex:1}
+  .blk .c b{font-size:14px;color:var(--ink)}
+  .blk .c span{display:block;font-size:13px;color:var(--ink2)}
+  .blk .c em{font-style:normal;font-size:11px;color:var(--muted)}
+
+  /* FRAME CARDS (stories) */
+  .frame{border:1px solid var(--line);border-radius:12px;padding:12px;margin:9px 0;background:#fff}
+  .frame .fn{display:inline-block;background:var(--deep);color:#fff;font-weight:600;font-size:12px;
+    width:24px;height:24px;border-radius:7px;text-align:center;line-height:24px;margin-right:8px}
+  .frame .ft{font-weight:600;font-size:13px;color:var(--ink)}
+  .frame .show{font-size:13px;color:var(--ink2);margin:6px 0 4px}
+  .frame .copy{font-family:'Cormorant Garamond';font-style:italic;font-size:16px;color:var(--deep);
+    background:rgba(168,107,60,.06);padding:8px 11px;border-radius:8px;margin:6px 0}
+  .frame .why{font-size:11.5px;color:var(--muted)}
+  .leva{font-family:'Jost';font-weight:600;font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--terra);margin:18px 0 4px;display:block}
+
+  /* PRICE TABLE */
+  .ptab{width:100%;border-collapse:collapse;margin:12px 0;font-size:13px}
+  .ptab th,.ptab td{padding:9px 8px;text-align:left;border-bottom:1px solid var(--line)}
+  .ptab th{font-family:'Jost';font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+  .ptab td:first-child{font-weight:500}
+  .ptab .rec{background:rgba(168,107,60,.07)}
+  .ptab .rec td:first-child{color:var(--deep);font-weight:600}
+  .big-price{font-family:'Cormorant Garamond';font-weight:600;font-size:15px;color:var(--deep)}
+
+  /* steps / belief grid */
+  .twocol{display:grid;grid-template-columns:1fr;gap:9px;margin:12px 0}
+  .qa{border:1px solid var(--line);border-radius:11px;padding:11px 12px;background:#fff}
+  .qa .q{font-weight:600;font-size:13.5px;color:var(--rose)}
+  .qa .a{font-size:13px;color:var(--ink2);margin-top:3px}
+
+  /* ladder */
+  .ladder{counter-reset:l;margin:12px 0}
+  .ladder .step{display:flex;gap:11px;align-items:flex-start;padding:9px 0;border-bottom:1px solid rgba(230,216,199,.7)}
+  .ladder .step:last-child{border-bottom:none}
+  .ladder .step .d{flex-shrink:0;width:26px;height:26px;border-radius:8px;background:var(--bg2);color:var(--deep);
+    font-weight:600;font-size:13px;display:flex;align-items:center;justify-content:center}
+  .ladder .step.now .d{background:linear-gradient(135deg,var(--caramel),var(--deep));color:#fff}
+  .ladder .step b{font-size:14px}
+  .ladder .step span{display:block;font-size:12px;color:var(--muted)}
+
+  .footer{text-align:center;padding:30px 0 10px;color:var(--muted);font-size:11px;letter-spacing:.04em}
+  .backtop{display:block;text-align:center;margin:6px 0 0;color:var(--terra);font-size:12px;text-decoration:none}
+  mark{background:rgba(197,138,82,.28);color:var(--deep);padding:0 3px;border-radius:3px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="hero">
+    <div class="eyebrow">Especialização</div>
+    <h1>Cachos &amp; Crespos</h1>
+    <div class="by">por Carol Nunes</div>
+    <div class="tag">Plano de curso + lançamento enxuto · 1ª aluna 22/jun</div>
+  </div>
+
+  <div class="idx">
+    <a href="#s0">Resumo</a>
+    <a href="#s1">Módulos</a>
+    <a href="#s2">O dia</a>
+    <a href="#s3">Bônus</a>
+    <a href="#s4">Apostila</a>
+    <a href="#s5">Preço</a>
+    <a href="#s6">Conteúdo</a>
+    <a href="#s7">1ª aluna</a>
+    <a href="#s8">Stories</a>
+    <a href="#s9">Lançamento</a>
+    <a href="#s10">Crenças</a>
+    <a href="#s11">Escada</a>
+    <a href="#s12">Esta semana</a>
+  </div>
+
+  <!-- ───────────── 0 RESUMO ───────────── -->
+  <section class="acc open" id="s0">
+    <div class="acc-hd" onclick="tog(this)">
+      <span class="acc-num">0</span>
+      <h2>Resumo<span class="sub">A virada que resolve o medo de parecer sem preparo</span></h2>
+      <span class="acc-arr">▾</span>
+    </div>
+    <div class="acc-bd">
+      <p>O produto em lançamento agora é <b>só penteado</b> para cabelo texturizado — <b>sem maquiagem</b>.
+      A make de pele negra é uma <b>fase futura</b> (escada §11), construída por conteúdo desde já.</p>
+      <div class="lead">A jogada não é aquecer e prometer. <b>Você já tem aluna segunda.</b> Então você
+      <b>documenta o que já está acontecendo</b>: prova primeiro, oferta depois. Isso parece estabelecido,
+      não improvisado — e é exatamente como um lançamento sério se comporta.</div>
+      <h3>Regra-mãe</h3>
+      <p>O perfil <b>não vira perfil de curso</b>. Para cada post de curso, <b>2 de trabalho real</b>
+      (noiva, madrinha, produção social). Suas clientes continuam sendo o carro-chefe.</p>
+      <div class="note"><b>Vocabulário:</b> formação, especialização, técnica, revelar, presença, método.<br>
+      <b>Evitar:</b> transformação, mentoria, incrível, arrasou, perfeito, últimas vagas, para todos os tipos.</div>
+    </div>
+  </section>
+
+  <!-- ───────────── 1 MÓDULOS ───────────── -->
+  <section class="acc" id="s1">
+    <div class="acc-hd" onclick="tog(this)">
+      <span class="acc-num">1</span>
+      <h2>Os dois módulos<span class="sub">Arquitetura do curso</span></h2>
+      <span class="acc-arr">▾</span>
+    </div>
+    <div class="acc-bd">
+      <p>Dois produtos independentes de <b>1 dia cada</b>, vendidos como <b>trilha</b> (M1 → M2) com entrada
+      possível em qualquer ponto. O M2 não repete o M1 — gasta o dia no que é específico de crespo.</p>
+
+      <div class="mod">
+        <div class="mh">Módulo 1 — Cacheados</div>
+        <div class="mt">Porta de entrada · 1 dia · sem pré-requisito</div>
+        <span class="pill">Leitura do fio</span><span class="pill">Diagnóstico</span><span class="pill">Fitagem</span>
+        <span class="pill">Secagem + babyliss</span><span class="pill">3 penteados</span><span class="pill">Precificação</span>
+        <p style="font-size:13px;color:var(--ink2);margin-top:9px">Ordem ideal: <b>Abertura &amp; sentido</b> →
+        <b>Leitura do fio</b> (curvatura, tipos de cacho, porosidade) → <b>Diagnóstico</b> (anamnese, química,
+        volume×definição, fator encolhimento) → <b>Arsenal</b> (gelatinas, cremes, finalizadores; secador,
+        difusor, babyliss) → <b>Preparação &amp; durabilidade</b> → <b>Prática</b> (fitagem, secagem, babyliss)
+        → <b>3 penteados</b> (semi-preso, rabo, coque) → <b>Negócio &amp; saída</b>.</p>
+      </div>
+
+      <div class="mod">
+        <div class="mh">Módulo 2 — Crespos</div>
+        <div class="mt">Continuação / aprofundamento · 1 dia</div>
+        <span class="pill">Cacheado × crespo</span><span class="pill">⭐ Atendimento sensível</span>
+        <span class="pill">Blowout</span><span class="pill">Penteados em crespo</span><span class="pill">⭐ Apliques com costura</span>
+        <p style="font-size:13px;color:var(--ink2);margin-top:9px">Acrescenta ao M1: diferenças e necessidades
+        do crespo · <b>atendimento sensível</b> (inseguranças, condução com respeito) · <b>blowout</b> (o que é,
+        quando sim/não, execução) · penteados em crespo natural · <b>extensão temporária</b> (indicar, comprar,
+        escolher, preparar, aplicar com costura, finalizar).</p>
+      </div>
+
+      <div class="lead"><b>Correção importante:</b> mercado/preço <b>não abrem o dia</b> — falar de "quanto
+      cobrar" antes de ela fazer o trabalho é abstrato. Abre com 10 min de "por que textura muda seu negócio";
+      o bloco de negócio completo vai para o <b>fim</b>.</div>
+
+      <h3>Essencial × complementar</h3>
+      <p style="font-size:13px"><b>Nunca cortar:</b> diagnóstico · fitagem · secagem · 1 penteado dominado ·
+      durabilidade · precificação. <b>Corta primeiro se atrasar:</b> 2º/3º penteado · tranças raiz · torcidos
+      · detalhes estruturais (viram demo no mini-curso).</p>
+    </div>
+  </section>
+
+  <!-- ───────────── 2 O DIA ───────────── -->
+  <section class="acc" id="s2">
+    <div class="acc-hd" onclick="tog(this)">
+      <span class="acc-num">2</span>
+      <h2>Estrutura do dia<span class="sub">Agenda hora a hora · Módulo 1</span></h2>
+      <span class="acc-arr">▾</span>
+    </div>
+    <div class="acc-bd">
+      <p style="font-size:13px;color:var(--muted)">9h00–17h30. Alterna teoria curta e prática, 1ª vitória cedo,
+      almoço como respiro, fotos no fim quando o orgulho está alto.</p>
+      <div class="blk"><div class="t">09h00</div><div class="c"><b>Recepção</b><span>Café, tour da bancada, alinhar expectativas</span><em>Acolhimento</em></div></div>
+      <div class="blk"><div class="t">09h30</div><div class="c"><b>Abertura &amp; sentido</b><span>"Por que textura muda seu negócio" (10 min)</span><em>Só propósito</em></div></div>
+      <div class="blk"><div class="t">09h45</div><div class="c"><b>Leitura do fio</b><span>Curvatura, tipos de cacho, porosidade (teste)</span></div></div>
+      <div class="blk"><div class="t">10h30</div><div class="c"><b>Diagnóstico</b><span>Anamnese + volume×definição + fator encolhimento → aluna diagnostica o modelo</span><em>✅ Checkpoint 1</em></div></div>
+      <div class="blk"><div class="t">11h00</div><div class="c"><b>Arsenal</b><span>Produtos e ferramentas na bancada (just-in-time)</span></div></div>
+      <div class="blk"><div class="t">11h20</div><div class="c"><b>Preparação &amp; durabilidade</b><span>Protocolo + como orientar a cliente</span></div></div>
+      <div class="blk"><div class="t">11h45</div><div class="c"><b>Fitagem — eu faço</b><span>Carol demonstra + erro proposital (aluna corrige)</span></div></div>
+      <div class="blk"><div class="t">12h15</div><div class="c"><b>Almoço</b><span>Revisão informal: "o que te surpreendeu?"</span><em>Respiro</em></div></div>
+      <div class="blk"><div class="t">13h00</div><div class="c"><b>Fitagem — você faz</b><span>Aluna fita a cabeça inteira</span><em>🌟 1ª vitória · ✅ Checkpoint 2</em></div></div>
+      <div class="blk"><div class="t">14h00</div><div class="c"><b>Secagem com difusor</b><span>Pontas primeiro, raiz por último</span></div></div>
+      <div class="blk"><div class="t">14h30</div><div class="c"><b>Modelagem com babyliss</b></div></div>
+      <div class="blk"><div class="t">15h00</div><div class="c"><b>Penteado 1 — semi-preso</b><span>Demo → prática</span></div></div>
+      <div class="blk"><div class="t">15h40</div><div class="c"><b>Penteado 2 — rabo de cavalo</b></div></div>
+      <div class="blk"><div class="t">16h15</div><div class="c"><b>Penteado 3 — coque</b><span>Alto ou baixo</span><em>✅ Checkpoint 3</em></div></div>
+      <div class="blk"><div class="t">16h50</div><div class="c"><b>Produção final + fotos</b><span>Look pronto + ensaio fotográfico do trabalho dela</span><em>Portfólio</em></div></div>
+      <div class="blk"><div class="t">17h15</div><div class="c"><b>Negócio &amp; certificado</b><span>Precificação + plano de ação + autoavaliação final</span></div></div>
+      <div class="blk"><div class="t">17h30</div><div class="c"><b>Encerramento</b><span>Suporte 30 dias + mini-curso</span></div></div>
+      <div class="note">Total: prática ~4h30 · teoria ~1h30 (fatiada) · produção/foto/negócio ~1h.
+      Se atrasar, o <b>3º penteado</b> é o primeiro a virar demo gravada — nunca sacrifique a fitagem.</div>
+      <p style="font-size:13px"><b>M2 (Crespos):</b> mesma moldura; a manhã vira recap + atendimento sensível,
+      a tarde abre espaço para <b>blowout</b> (~45 min) e <b>apliques com costura</b> (~1h30).</p>
+    </div>
+  </section>
+
+  <!-- ───────────── 3 BÔNUS ───────────── -->
+  <section class="acc" id="s3">
+    <div class="acc-hd" onclick="tog(this)">
+      <span class="acc-num">3</span>
+      <h2>Bônus &amp; diferenciais<span class="sub">O que aumenta valor sem aumentar trabalho</span></h2>
+      <span class="acc-arr">▾</span>
+    </div>
+    <div class="acc-bd">
+      <h3>Mini-curso gravado × Close Friends</h3>
+      <div class="lead"><b>Você está certa: o mini-curso vence.</b> Ele faz 3 trabalhos numa gravação única —
+      <b>pré-curso</b> (nivela antes), <b>revisão pós</b> (espaçada) e <b>argumento de venda</b>. Close Friends
+      é peso recorrente (precisa alimentar sempre) e esvazia se você não posta → deixa para quando houver
+      massa de ex-alunas.</div>
+      <h3>Seus diferenciais atuais (mantém, ajusta)</h3>
+      <ul class="clean">
+        <li><b>Fotos profissionais do dia</b> — ouro. Entregue editadas e nomeadas ("use estas 5") → ela te marca</li>
+        <li><b>Aula de fotografia</b> — vira 1 página da apostila + 1 vídeo do mini-curso (não gasta o dia)</li>
+        <li><b>Precificação</b> — transforme "conversa" em <b>planilha preenchida junto</b></li>
+        <li><b>Beleza negra</b> — no M2 vira o bloco "Atendimento Sensível", onde mais brilha</li>
+      </ul>
+      <h3>Novos diferenciais (monta uma vez, entrega sempre)</h3>
+      <ul class="clean">
+        <li><b>Kit de boas-vindas físico</b> — apostila + fichas + amostras + bilhete à mão (unboxing = conteúdo)</li>
+        <li><b>Protocolo pré-evento white-label</b> — PDF que a aluna entrega às clientes dela</li>
+        <li><b>Atualização vitalícia</b> do mini-curso</li>
+        <li><b>Garantia de revisão</b> — 1 videochamada de 30 min nos 30 dias (dúvida da 1ª cliente real)</li>
+        <li><b>Condição de fundadora</b> — preço e prioridade nas próximas datas e no M2</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ───────────── 4 APOSTILA ───────────── -->
+  <section class="acc" id="s4">
+    <div class="acc-hd" onclick="tog(this)">
+      <span class="acc-num">4</span>
+      <h2>Apostila<span class="sub">Manual de consulta, não livro</span></h2>
+      <span class="acc-arr">▾</span>
+    </div>
+    <div class="acc-bd">
+      <p>Funciona como <b>manual de bancada</b>: abre, acha em segundos, fecha. Pouco texto, muita foto e
+      diagrama. <b>Cormorant + Jost</b>, paleta café/terra/nude, foto em ≥50% das páginas.
+      Formato sugerido: <b>A5, encadernação wire-o</b> (abre em pé na bancada) + PDF.</p>
+      <h3>Tipos de página (a "linguagem")</h3>
+      <ul class="clean">
+        <li><b>Abre-seção</b> — foto editorial + título serif grande</li>
+        <li><b>Página-diagrama</b> — 1 conceito, ilustração + 3-4 labels, zero parágrafo</li>
+        <li><b>Quadro-resumo</b> — cards / tabela enxuta</li>
+        <li><b>Fluxograma de decisão</b> — "se… então…" (ex: diagnóstico → técnica)</li>
+        <li><b>Checklist destacável</b> — página perfurada p/ usar na bancada / com a cliente</li>
+        <li><b>Ficha preenchível</b> — anamnese, autoavaliação, plano de ação</li>
+        <li><b>Passo a passo fotografado</b> — sequência numerada, 1 linha cada</li>
+        <li><b>Erro × Acerto</b> — duas fotos lado a lado ❌ / ✅</li>
+        <li><b>Tabela de referência</b> — curvaturas, modeladores, produtos</li>
+      </ul>
+      <h3>Partes</h3>
+      <ul class="clean">
+        <li>I — Diagnóstico (leitura do fio, porosidade, anamnese, fator encolhimento)</li>
+        <li>II — Preparação &amp; durabilidade (protocolo, produtos, ferramentas, protocolo da cliente)</li>
+        <li>III — Técnica-base (fitagem, secagem, babyliss, erros comuns)</li>
+        <li>IV — Penteados (lógica das divisões, semi-preso, rabo, coque)</li>
+        <li>V — Crespos <span style="color:var(--muted)">(módulo 2)</span> (blowout, apliques)</li>
+        <li>VI — Negócio (precificação, divulgação, como eu fotografo, plano 30 dias)</li>
+        <li>Anexos destacáveis — fichas, checklists, fornecedores, notas</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ───────────── 5 PREÇO ───────────── -->
+  <section class="acc" id="s5">
+    <div class="acc-hd" onclick="tog(this)">
+      <span class="acc-num">5</span>
+      <h2>Preço<span class="sub">Calculado com seus custos reais</span></h2>
+      <span class="acc-arr">▾</span>
+    </div>
+    <div class="acc-bd">
+      <h3>O piso (com seus números)</h3>
+      <ul class="clean">
+        <li>Custo direto/aluna: modelo R$200 + produtos R$50 = <b>R$250</b></li>
+        <li>Seu tempo/aluna: 8h preparo + 8h dia = <b>16h</b></li>
+        <li>A R$75/h (modesto p/ especialista): 16h = R$1.200 → <b>piso ≈ R$1.450</b></li>
+      </ul>
+      <div class="warn">O R$680 do plano antigo = <b>R$27/h</b> do seu tempo. Está abaixo do que você merece.
+      "Individual" é o que <b>permite cobrar mais</b> — não menos.</div>
+      <table class="ptab">
+        <tr><th>Produto</th><th>Fundador</th><th>Cheio</th></tr>
+        <tr class="rec"><td>M1 Cacheados</td><td class="big-price">990</td><td class="big-price">1.490</td></tr>
+        <tr><td>M2 Crespos</td><td class="big-price">1.190</td><td class="big-price">1.790</td></tr>
+        <tr><td>Combo M1+M2</td><td class="big-price">1.890</td><td class="big-price">2.790</td></tr>
+      </table>
+      <p style="font-size:12px;color:var(--muted)">Valores em R$. M2 custa mais (blowout + apliques = serviço novo
+      de renda). Combo com ~20% de desconto. A R$1.490, paga em ~4 clientes de textura suas (R$350 cada).
+      E o preço fica <b>mais lucrativo</b> com o tempo: quando o preparo cai de 8h p/ ~3h, sobe p/ ~R$112/h.</p>
+      <h3>A 1ª aluna (segunda)</h3>
+      <div class="lead">Se ainda não fechou: cobre <b>R$690</b> (preço de fundadora) <b>em troca</b> de depoimento
+      + direito de imagem + ser o caso de estudo. Enquadre como <b>honra, não desconto</b>: "você é a primeira,
+      leva um valor que eu não repito". Se já combinou, mantenha — o material vale mais que a diferença.</div>
+      <h3>Mecânica</h3>
+      <ul class="clean">
+        <li><b>Escassez, nunca desconto público</b> — "3 datas fundadoras, depois sobe"</li>
+        <li><b>Parcelamento</b> (3x) no direct derruba o preço sem baixar o valor</li>
+        <li>Preço cheio só aparece publicamente quando abrir a oferta (semana 3)</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ───────────── 6 CONTEÚDO ───────────── -->
+  <section class="acc" id="s6">
+    <div class="acc-hd" onclick="tog(this)">
+      <span class="acc-num">6</span>
+      <h2>Conteúdo para redes<span class="sub">Equilíbrio que ainda enche a agenda</span></h2>
+      <span class="acc-arr">▾</span>
+    </div>
+    <div class="acc-bd">
+      <h3>4 pilares editoriais</h3>
+      <ul class="clean">
+        <li><b>40% · Trabalho real</b> — noivas, madrinhas, produção social (enche a agenda)</li>
+        <li><b>25% · Autoridade técnica</b> — diagnóstico, ciência do fio, durabilidade, penteado</li>
+        <li><b>20% · Bastidores &amp; presença</b> — home studio, processo, humanização</li>
+        <li><b>15% · Formação</b> — a aluna, o método, prova social (sem virar perfil de curso)</li>
+      </ul>
+      <div class="note">Pilares 1+3 = <b>60% voltado à cliente</b> → noivas/madrinhas/produção continuam chegando.
+      O pilar 2 serve aos dois (a autoridade que faz a noiva confiar faz a profissional admirar).</div>
+      <h3>Série técnica (a espinha da autoridade)</h3>
+      <ul class="clean">
+        <li>"O vilão do cacho não é o frizz" (prancha × pontes)</li>
+        <li>"2A a 4C: a leitura que muda o penteado"</li>
+        <li>"Cacheado e crespo NÃO são a mesma técnica"</li>
+        <li>"Seu cabelo não encolheu — tem nome" (fator encolhimento)</li>
+        <li>"A etapa que decide se dura 2h ou o dia" (durabilidade)</li>
+        <li>"Fitagem: defino o cacho sem amassar"</li>
+        <li>"Dicionário da cacheada e crespa: 8 termos"</li>
+        <li>"Coque alto em crespo. Nenhum fio alisado."</li>
+        <li>"Blowout: o que é e quando eu NÃO faço"</li>
+        <li>"Aplique com costura em crespo: como fica natural"</li>
+      </ul>
+      <h3>Para clientes (enche a agenda)</h3>
+      <ul class="clean">
+        <li>"Cachos no altar. Sem alisar um fio." (noiva)</li>
+        <li>"Madrinha de cacho: penteado que dura a festa"</li>
+        <li>"A noiva que chegou querendo alisar" (caso real)</li>
+        <li>"Penteado de madrinha em crespo natural"</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ───────────── 7 1ª ALUNA ───────────── -->
+  <section class="acc" id="s7">
+    <div class="acc-hd" onclick="tog(this)">
+      <span class="acc-num">7</span>
+      <h2>Captação da 1ª aluna<span class="sub">1 dia = semanas de conteúdo</span></h2>
+      <span class="acc-arr">▾</span>
+    </div>
+    <div class="acc-bd">
+      <p>Segunda é uma <b>gravação de campanha disfarçada de aula</b>. É o ativo mais valioso do lançamento.</p>
+      <div class="warn"><b>Duas regras inegociáveis:</b><br>
+      1. <b>Você não pode filmar enquanto ensina.</b> Combine alguém p/ filmar OU tripé + celular em 2 posições
+      fixas (frontal + lateral 45°) gravando o dia todo. <b>Decida os ângulos hoje.</b><br>
+      2. <b>Autorização de imagem assinada</b> pela aluna E pela modelo — impressa, na bancada. Sem isso o
+      material fica travado.</div>
+      <h3>Antes (esta semana)</h3>
+      <ul class="clean">
+        <li>Bancada/materiais em flat lay — "preparando algo que venho desenhando"</li>
+        <li>Você, pessoal: "segunda recebo a 1ª pessoa que vem aprender penteado comigo"</li>
+        <li>1 post de trabalho real (mantém o carro-chefe)</li>
+      </ul>
+      <h3>Durante — cenas obrigatórias</h3>
+      <ul class="chk">
+        <li>Chegada e acolhimento</li>
+        <li>Bancada e materiais (b-roll premium)</li>
+        <li>Aluna fazendo o diagnóstico (mãos dela no cabelo)</li>
+        <li>Você ensinando, apontando (autoridade)</li>
+        <li>Fitagem em processo (close)</li>
+        <li><b>A reação da 1ª vitória</b> — a cena mais valiosa</li>
+        <li>Penteado tomando forma (timelapse)</li>
+        <li>Resultado final (360°, close da textura)</li>
+        <li>Aluna + modelo juntas</li>
+        <li>Depoimento em vídeo + entrega do certificado</li>
+      </ul>
+      <h3>Depoimento — perguntas</h3>
+      <ul class="clean">
+        <li>Como se sentia atendendo textura <b>antes</b> de hoje?</li>
+        <li>O que <b>descobriu</b> que não sabia?</li>
+        <li>O momento em que pensou <b>"agora eu consigo"</b>?</li>
+        <li>De 0 a 10, sua <b>confiança antes e depois</b>? (casa com a autoavaliação)</li>
+        <li>Para <b>quem</b> recomendaria?</li>
+      </ul>
+      <h3>1 dia → semanas</h3>
+      <ul class="clean">
+        <li><b>Semana da aula:</b> stories em tempo real + Reel "bastidor da primeira"</li>
+        <li><b>+1 sem:</b> Reel processo (timelapse) + carrossel "o que se aprende"</li>
+        <li><b>+2 sem:</b> Reel depoimento + número antes/depois + fotos editoriais</li>
+        <li><b>+3 sem:</b> Reel "1ª vitória" + Reel de objeção ("YouTube não corrige")</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ───────────── 8 STORIES ───────────── -->
+  <section class="acc" id="s8">
+    <div class="acc-hd" onclick="tog(this)">
+      <span class="acc-num">8</span>
+      <h2>Roteiro de Stories<span class="sub">Frame a frame · dia da aula</span></h2>
+      <span class="acc-arr">▾</span>
+    </div>
+    <div class="acc-bd">
+      <p style="font-size:13px;color:var(--muted)">Uma minissérie de um dia. 14-16 frames em <b>levas</b>
+      (manhã / pós-almoço / fim), não 40 seguidos. Foto real, luz quente, texto serif no terço inferior.</p>
+
+      <span class="leva">Véspera (domingo)</span>
+      <div class="frame"><span class="fn">0</span><span class="ft">Bancada montada</span>
+        <div class="copy">"Amanhã recebo a primeira pessoa que vem aprender penteado de textura comigo."</div>
+        <div class="why">Teaser + enquete "curtir acompanhar?"</div></div>
+
+      <span class="leva">Manhã — chegada + autoridade</span>
+      <div class="frame"><span class="fn">1</span><span class="ft">Espaço pronto, café</span>
+        <div class="copy">"O dia começa antes da aluna chegar. Cada detalhe pensado para uma pessoa."</div>
+        <div class="why">Premium + cuidado</div></div>
+      <div class="frame"><span class="fn">2</span><span class="ft">Aluna chegando (anônima ok)</span>
+        <div class="copy">"Ela chegou. Insegura para atender textura — como muita profissional boa."</div>
+        <div class="why">Identificação (a dor)</div></div>
+      <div class="frame"><span class="fn">3</span><span class="ft">Mãos dela no cabelo, você apontando</span>
+        <div class="copy">"Antes de qualquer penteado: ler o fio. Curvatura, porosidade, histórico."</div>
+        <div class="why">Autoridade — mostra método</div></div>
+      <div class="frame"><span class="fn">4</span><span class="ft">Close do fio / teste</span>
+        <div class="copy">"Quem pula o diagnóstico, copia. Quem diagnostica, cria."</div>
+        <div class="why">Frase de marca · salvamento</div></div>
+      <div class="frame"><span class="fn">5</span><span class="ft">Você à câmera, rápida</span>
+        <div class="copy">"Não é talento. É entender a estrutura. E isso se aprende."</div>
+        <div class="why">Quebra "não tenho talento"</div></div>
+
+      <span class="leva">Pós-almoço — processo + a virada</span>
+      <div class="frame"><span class="fn">6</span><span class="ft">Fitagem em processo</span>
+        <div class="copy">"Fitagem: definir o cacho sem amassar nem danificar. A base de tudo."</div>
+        <div class="why">Bastidor técnico</div></div>
+      <div class="frame"><span class="fn">7</span><span class="ft">Timelapse da fitagem</span>
+        <div class="copy">"Olha o cacho aparecendo."</div>
+        <div class="why">Movimento · prende</div></div>
+      <div class="frame"><span class="fn">8</span><span class="ft">⭐ Reação da 1ª vitória (vídeo, áudio real)</span>
+        <div class="copy">"O momento 'eu consegui'. É por isso que eu faço isso."</div>
+        <div class="why">O frame mais valioso do dia</div></div>
+      <div class="frame"><span class="fn">9</span><span class="ft">Pausa, clima leve, vocês duas</span>
+        <div class="copy">"Respiro. Café. E a melhor parte: ver alguém destravar."</div>
+        <div class="why">Humanização</div></div>
+
+      <span class="leva">Fim de tarde — resultado + prova</span>
+      <div class="frame"><span class="fn">10</span><span class="ft">Penteado pronto, 360°, luz dourada</span>
+        <div class="copy">"Resultado. Cacho valorizado — nenhum fio domado."</div>
+        <div class="why">Prova de produto · editorial</div></div>
+      <div class="frame"><span class="fn">11</span><span class="ft">Close da textura definida</span>
+        <div class="copy">"É isso que textura bem trabalhada entrega."</div>
+        <div class="why">Salvamento</div></div>
+      <div class="frame"><span class="fn">12</span><span class="ft">⭐ Depoimento da aluna (corte curto)</span>
+        <div class="copy">Fala dela + "antes: confiança 3 · depois: 8"</div>
+        <div class="why">Prova social medível</div></div>
+      <div class="frame"><span class="fn">13</span><span class="ft">Entrega do certificado</span>
+        <div class="copy">"Saiu daqui sabendo fazer — e sabendo cobrar por isso."</div>
+        <div class="why">Orgulho · valor</div></div>
+      <div class="frame"><span class="fn">14</span><span class="ft">Você, reflexiva, fim do dia</span>
+        <div class="copy">"Foi o primeiro de muitos. Já estou formando profissional em penteado de textura."</div>
+        <div class="why">Posicionamento de já estabelecido</div></div>
+      <div class="frame"><span class="fn">15</span><span class="ft">Frame calmo, espaço vazio</span>
+        <div class="copy">"Profissional que quer isso também: me chama 'PENTEADOS' que eu aviso das próximas datas."</div>
+        <div class="why">CTA suave → lista (sem vender)</div></div>
+
+      <div class="note"><b>Frames 8 e 12 são intocáveis</b> — se algo falhar, garanta esses dois.
+      Salve as levas num destaque "Especialização". Anônima por padrão (mãos, nuca, perfil) se não liberaram rosto.</div>
+    </div>
+  </section>
+
+  <!-- ───────────── 9 LANÇAMENTO ───────────── -->
+  <section class="acc" id="s9">
+    <div class="acc-hd" onclick="tog(this)">
+      <span class="acc-num">9</span>
+      <h2>Lançamento enxuto<span class="sub">3 semanas, guiado por prova</span></h2>
+      <span class="acc-arr">▾</span>
+    </div>
+    <div class="acc-bd">
+      <p style="font-size:13px;color:var(--muted)">A oferta formal só abre <b>depois</b> que você tem prova na
+      mão. Nada de escassez fabricada — credibilidade vem do "já fiz".</p>
+      <div class="blk"><div class="t">Esta sem.</div><div class="c"><b>Pré — semear</b><span>1 trabalho real + 1 autoridade + bastidor do preparo. "Segunda recebo a 1ª aluna."</span><em>Sem preço/vaga</em></div></div>
+      <div class="blk"><div class="t">Sem. 1</div><div class="c"><b>A aula — provar</b><span>Stories do dia + Reel "bastidor da primeira". "Já estou formando profissional."</span></div></div>
+      <div class="blk"><div class="t">Sem. 2</div><div class="c"><b>Desejo + lista</b><span>Reel depoimento + número antes/depois. "Vou abrir poucas datas — me chama 'PENTEADOS'."</span><em>Lista, sem vender</em></div></div>
+      <div class="blk"><div class="t">Sem. 3</div><div class="c"><b>Oferta</b><span>Post de abertura + "o que inclui" + quebra de objeções. "Abri 3 datas. Quem está na lista escolhe primeiro."</span><em>Prova na mão</em></div></div>
+      <div class="lead"><b>Por que é "preparado" e não improvisado:</b> a sequência prova → desejo → oferta é como
+      um lançamento sério se comporta. Você só comprimiu o aquecimento porque <b>já tem o caso real</b>.</div>
+    </div>
+  </section>
+
+  <!-- ───────────── 10 CRENÇAS ───────────── -->
+  <section class="acc" id="s10">
+    <div class="acc-hd" onclick="tog(this)">
+      <span class="acc-num">10</span>
+      <h2>Crenças &amp; objeções<span class="sub">O que instalar e o que quebrar</span></h2>
+      <span class="acc-arr">▾</span>
+    </div>
+    <div class="acc-bd">
+      <h3>Crenças nas profissionais</h3>
+      <ul class="clean">
+        <li>Cacho/crespo tem <b>estrutura própria</b> — técnica específica, não adaptação do liso</li>
+        <li><b>Não é nicho pequeno</b> — é a maioria do Brasil, mal atendida = oportunidade de renda</li>
+        <li>Durar 2h ou 12h está nas <b>etapas invisíveis</b> (diagnóstico, preparo, fitagem)</li>
+        <li><b>Nem todo profissional</b> sabe crespo — e crespo rende penteado sofisticado</li>
+        <li>Quem domina <b>cobra mais e diz sim sem medo</b></li>
+        <li>Aprender exige <b>correção individual em tempo real</b> — vídeo não corrige seu erro</li>
+      </ul>
+      <h3>Crenças nas clientes</h3>
+      <ul class="clean">
+        <li>Meu cacho/crespo pode ir ao altar/evento <b>sem alisar</b> — e ficar editorial</li>
+        <li>Existe quem saiba <b>valorizar</b> minha textura (revelar, não domar)</li>
+        <li>Penteado que <b>dura o evento</b> tem método</li>
+      </ul>
+      <h3>Objeções a quebrar (profissionais)</h3>
+      <div class="twocol">
+        <div class="qa"><div class="q">"Aprendo no YouTube"</div><div class="a">Vídeo não te avisa que você está errando agora, no fio na sua mão. Correção em tempo real é o produto.</div></div>
+        <div class="qa"><div class="q">"É caro"</div><div class="a">Um dia inteiro só seu + modelo + suporte + mini-curso. Cobrando por textura, paga em ~4 clientes.</div></div>
+        <div class="qa"><div class="q">"Não tenho talento"</div><div class="a">Não foi talento. Foi entender a estrutura do fio. Ambiente seguro, sem audiência.</div></div>
+        <div class="qa"><div class="q">"Cacho é imprevisível"</div><div class="a">Previsível quando você lê o fio. Previsibilidade = método.</div></div>
+        <div class="qa"><div class="q">"Quero esperar turma"</div><div class="a">Individual ≠ turma menor. Quanto você progride quando alguém olha só pra você?</div></div>
+      </div>
+      <h3>Objeções (clientes)</h3>
+      <div class="twocol">
+        <div class="qa"><div class="q">"Cacho não dá penteado de noiva"</div><div class="a">Portfólio real de cacho/crespo em evento.</div></div>
+        <div class="qa"><div class="q">"Vou ter que alisar"</div><div class="a">Revelar, não domar — crespo no alto é poder.</div></div>
+        <div class="qa"><div class="q">"Vai desmanchar no evento"</div><div class="a">As etapas invisíveis de durabilidade.</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ───────────── 11 ESCADA ───────────── -->
+  <section class="acc" id="s11">
+    <div class="acc-hd" onclick="tog(this)">
+      <span class="acc-num">11</span>
+      <h2>Próximos passos<span class="sub">Escada de valor</span></h2>
+      <span class="acc-arr">▾</span>
+    </div>
+    <div class="acc-bd">
+      <div class="ladder">
+        <div class="step now"><div class="d">1</div><div><b>Especialização Penteados Cacheados (M1)</b><span>Lançando agora · porta de entrada</span></div></div>
+        <div class="step"><div class="d">2</div><div><b>Especialização Penteados Crespos (M2)</b><span>Continuação · upsell do M1</span></div></div>
+        <div class="step"><div class="d">3</div><div><b>Combo / Formação completa (M1+M2)</b><span>Maior ticket</span></div></div>
+        <div class="step"><div class="d">4</div><div><b>Formação em Beleza Negra</b><span>Pele + cabelo · fase futura</span></div></div>
+        <div class="step"><div class="d">5</div><div><b>Maquiagem para Pele Negra</b><span>Fase futura</span></div></div>
+        <div class="step"><div class="d">6</div><div><b>Escala e recorrência</b><span>Curso online gravado · turma · comunidade · protocolo white-label</span></div></div>
+      </div>
+      <div class="note"><b>A make de pele negra não se vende agora — constrói-se audiência agora.</b> Mantenha
+      ~20% do conteúdo tocando pele negra/representatividade (sem oferta), para o público já existir quando lançar.
+      E o <b>mini-curso gravado</b> que você grava como bônus é a semente do curso online futuro (degrau 6).</div>
+    </div>
+  </section>
+
+  <!-- ───────────── 12 ESTA SEMANA ───────────── -->
+  <section class="acc" id="s12">
+    <div class="acc-hd" onclick="tog(this)">
+      <span class="acc-num">12</span>
+      <h2>Esta semana<span class="sub">Antes de segunda — prioridade máxima</span></h2>
+      <span class="acc-arr">▾</span>
+    </div>
+    <div class="acc-bd">
+      <ul class="chk">
+        <li><b>Termo de uso de imagem</b> impresso (aluna + modelo)</li>
+        <li><b>Plano de câmera</b> decidido — tripé + celular em 2 posições, ou alguém filmando</li>
+        <li>Reler as <b>cenas obrigatórias</b> (§7) e o <b>roteiro de Stories</b> (§8)</li>
+        <li>Postar: 1 trabalho real + 1 autoridade técnica + bastidor do preparo</li>
+        <li><b>Falar</b>, sem vender: "segunda recebo a 1ª pessoa que vem aprender comigo"</li>
+        <li>Definir o <b>preço</b> da 1ª aluna (R$690 fundadora + troca por depoimento)</li>
+        <li>Em paralelo (próximas semanas): gravar o <b>mini-curso</b> e fechar a <b>apostila do M1</b></li>
+      </ul>
+      <div class="lead"><b>Não faça agora:</b> anunciar preço/vaga publicamente, prometer "curso". Esta semana é
+      semente. A oferta é semana 3, com a prova na mão.</div>
+    </div>
+  </section>
+
+  <a href="#" class="backtop" onclick="window.scrollTo({top:0,behavior:'smooth'});return false;">↑ voltar ao topo</a>
+  <div class="footer">@makecarolnunes · Especialização Cachos &amp; Crespos · plano de lançamento</div>
+
+</div>
+
+<script>
+  function tog(el){ el.parentElement.classList.toggle('open'); }
+  // Abre a seção alvo ao clicar num chip do índice
+  document.querySelectorAll('.idx a').forEach(function(a){
+    a.addEventListener('click',function(){
+      var id=this.getAttribute('href');
+      var sec=document.querySelector(id);
+      if(sec && !sec.classList.contains('open')) sec.classList.add('open');
+    });
+  });
+</script>
+
+<!-- Sidebar global de navegação -->
+<script src="../shared/js/sidebar.js"></script>
+</body>
+</html>

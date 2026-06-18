@@ -19,6 +19,7 @@
   else if (_p.indexOf('/conteudo/centro-de-marca')  !== -1) { ACTIVE = 'centromarca'; BASE = '../'; }
   else if (_p.indexOf('/conteudo/concorrentes')     !== -1) { ACTIVE = 'radar';       BASE = '../'; }
   else if (_p.indexOf('/estrategia')                !== -1) { ACTIVE = 'cdc';         BASE = '../'; }
+  else if (_p.indexOf('/formacao-vip')              !== -1) { ACTIVE = 'formacao';    BASE = '../'; }
   else if (_p.indexOf('/instagram')                 !== -1) {
     BASE = '../';
     ACTIVE = _qs.indexOf('tab=validador') !== -1 ? 'validador' : 'instagram';
@@ -63,6 +64,7 @@
     cdc:   '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
     pin:   '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a5 5 0 015 5c0 2.38-1.32 4.45-3.25 5.54L12 22l-1.75-9.46A5.99 5.99 0 017 7a5 5 0 015-5z"/><circle cx="12" cy="7" r="2"/></svg>',
     chev:  '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>',
+    cap:   '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10L12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 1 2.5 3 6 3s6-2 6-3v-5"/></svg>',
   };
 
   // ── Estrutura de grupos ───────────────────────────────────
@@ -84,6 +86,13 @@
         { id: 'direcao',    label: 'Direção Criativa',   path: 'conteudo/direcao-criativa.html',   icon: IC.cdc   },
         { id: 'instagram',  label: 'Instagram',           path: 'instagram/',                       icon: IC.ig    },
         { id: 'validador',  label: 'Validador',           path: 'instagram/?tab=validador',         icon: IC.check },
+      ]
+    },
+    {
+      id: 'formacao',
+      label: 'Formação',
+      items: [
+        { id: 'formacao', label: 'Cachos & Crespos', path: 'formacao-vip/', icon: IC.cap },
       ]
     },
     {
