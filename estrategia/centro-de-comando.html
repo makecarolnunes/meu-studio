@@ -404,8 +404,12 @@ ul.cl li::before{content:'—';position:absolute;left:0;color:var(--terra);}
   <div class="logo">@makecarolnunes</div>
   <button class="tab-btn active" onclick="switchTab('brand')">Brand Brain</button>
   <button class="tab-btn" onclick="switchTab('insta')">Instagram</button>
-  <button class="tab-btn" onclick="switchTab('curso')">Curso VIP ★</button>
-  <button class="tab-btn" onclick="switchTab('lancamento')">Lançamento ★</button>
+  <!-- Abas "Curso VIP" e "Lançamento" arquivadas (framing antigo: make integrada + aquecimento de 8 sem).
+       Substituídas pela página Especialização Cachos & Crespos em /formacao-vip/.
+       Botões ocultos para focar o sistema; painéis (#tab-curso, #tab-lancamento) preservados no arquivo/histórico.
+       switchTab usa índices fixos {curso:2, lancamento:3}, então ocultar não quebra a navegação. -->
+  <button class="tab-btn" onclick="switchTab('curso')" style="display:none">Curso VIP ★</button>
+  <button class="tab-btn" onclick="switchTab('lancamento')" style="display:none">Lançamento ★</button>
 </div>
 
 <!-- ══════════════════ SIDEBAR ══════════════════ -->

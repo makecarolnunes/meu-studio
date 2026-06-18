@@ -276,7 +276,7 @@
     renderCards('marca-section', [
       { key: 'formacao',    nome: 'Especialização Cachos & Crespos', desc: 'Plano completo do curso e do lançamento — leia no celular', url: 'formacao-vip/',                     cls: 'card-cdc' },
       { key: 'cdc',         nome: 'Manual de Marca',  desc: 'Base da empresa — DNA, posicionamento e pilares estratégicos',     url: 'estrategia/centro-de-comando.html', cls: 'card-cdc' },
-      { key: 'centromarca', nome: 'Raio-X da Marca',  desc: 'Diagnóstico por perspectiva — Brand Brain e Instagram',            url: 'conteudo/centro-de-marca.html',     cls: 'card-cdc' },
+      { key: 'centromarca', nome: 'Raio-X da Marca',  desc: 'Diagnóstico por perspectiva — Brand Brain, Instagram e Curso VIP', url: 'conteudo/centro-de-marca.html',     cls: 'card-cdc' },
     ]);
   }
 
