@@ -287,6 +287,19 @@
     <div id="act-gcal-result" class="gcal-status"></div>
   </div>
 
+  <!-- ★ MENSAGEM WHATSAPP (para fechados) — abrir/fechar ★ -->
+  <div class="act-acc" id="act-wa-section" style="display:none;">
+    <div class="act-acc-head" onclick="toggleActAcc(this)">
+      <span class="act-acc-title">💬 Mensagem de confirmação</span>
+      <svg class="act-chev" viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <div class="act-acc-body">
+      <div class="wa-bubble" id="act-wa-text" style="margin-top:12px;"></div>
+      <button class="btn-wa" onclick="sendWAAction()"><span>💬</span> Enviar pelo WhatsApp</button>
+      <button class="btn-copy" onclick="copiarMensagemAction()">📋 Copiar mensagem</button>
+    </div>
+  </div>
+
   <!-- ── STATUS (segmented control) ── -->
   <div style="padding: 6px 18px 0;">
     <div class="act-section-label">Status do pedido</div>
@@ -587,7 +600,7 @@
 <script src="../shared/js/icons.js"></script>
 
 <!-- ── Módulo Orçamentos ── -->
-<script src="./scripts/orcamentos.js?v=20260617d"></script>
+<script src="./scripts/orcamentos.js?v=20260618a"></script>
 
 <!-- ── Sidebar (último, depende do DOM pronto) ── -->
 <script src="../shared/js/global-search.js"></script>

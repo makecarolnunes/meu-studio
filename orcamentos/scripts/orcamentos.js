@@ -1572,6 +1572,7 @@ function openAction(id) {
 
   renderActSlots(e);
   renderActGcalSection(e);
+  renderActWaSection(e);
   renderActCompSection(String(id));
   renderActPropostaSection(e);
   openPanel('panel-action');
@@ -1588,9 +1589,10 @@ async function applyStatusValue(newStatus) {
   if (newStatus === 'Fechado' && !e.DataFechamento)     e.DataFechamento = todayStr();
   const vfr = document.getElementById('val-fechado-row');
   if (vfr) vfr.style.display = newStatus === 'Fechado' ? 'block' : 'none';
-  // Seções que dependem do status (slots, Google Agenda, botão Fechar)
+  // Seções que dependem do status (slots, Google Agenda, mensagem WhatsApp, botão Fechar)
   renderActSlots(e);
   renderActGcalSection(e);
+  renderActWaSection(e);
   cacheEntries();
   render();
 
@@ -2374,6 +2376,46 @@ function renderActGcalSection(e) {
     if (btn) { btn.textContent = '📅 Adicionar ao Google Agenda'; btn.classList.remove('ok'); btn.disabled = false; }
     if (res) { res.className = 'gcal-status'; res.textContent = ''; }
   }
+}
+
+// Reconstrói a mensagem de confirmação do WhatsApp de um orçamento já fechado,
+// usando os dados gravados no fechamento (mesma lógica de confirmarFechamento).
+function buildActWaText(e) {
+  const slots     = entrySlots(e);
+  const localTipo = e.LocalTipo || 'studio';
+  const endereco  = e.EnderecoEvento || (localTipo === 'studio' ? END_STUDIO : '');
+  const total = parseFloat(e.ValorFechado) || parseFloat(e.ValorProp) || 0;
+  const sinal = (e.SinalFech !== undefined && e.SinalFech !== '')
+    ? parseFloat(e.SinalFech) : Math.round(total * 0.30 * 100) / 100;
+  const saldo = (e.SaldoFech !== undefined && e.SaldoFech !== '')
+    ? parseFloat(e.SaldoFech) : Math.max(0, total - sinal);
+  return buildConfirmacaoMessage(e.Cliente, slots, total, sinal, saldo, endereco, localTipo);
+}
+
+// Mostra a mensagem do WhatsApp no action sheet (só para fechados).
+// Fica num accordion recolhido — reabre a mensagem mesmo depois de fechado.
+function renderActWaSection(e) {
+  const section = document.getElementById('act-wa-section');
+  if (!section) return;
+  if (e.Status !== 'Fechado') { section.style.display = 'none'; return; }
+  section.style.display = 'block';
+  section.classList.remove('open'); // começa recolhido — só abre ao clicar
+  const bubble = document.getElementById('act-wa-text');
+  if (bubble) bubble.textContent = buildActWaText(e);
+}
+
+function copiarMensagemAction() {
+  const e = entries.find(x => String(x.ID) === String(activeId));
+  if (!e) return;
+  navigator.clipboard.writeText(buildActWaText(e)).then(() => toast('📋 Mensagem copiada'));
+}
+
+function sendWAAction() {
+  const e = entries.find(x => String(x.ID) === String(activeId));
+  if (!e) return;
+  const phone = formatPhone(e.Telefone);
+  const url = 'https://wa.me/' + phone + '?text=' + encodeURIComponent(buildActWaText(e));
+  window.open(url, '_blank');
 }
 
 function isNoivaEntry(e) {
