@@ -1160,6 +1160,7 @@ function findSlotConflicts(cand, excludeId) {
 
   entries.forEach(e => {
     if (excludeId && String(e.ID) === String(excludeId)) return;
+    if (PERDIDO_STATUS.includes(e.Status)) return;   // lead perdido não gera aviso de agenda
     entrySlots(e).forEach(s => {
       if (!s.data || s.data !== cand.data) return;
       const exStart = hhmmToMin(s.horario);
@@ -1199,11 +1200,21 @@ function slotConflictHTML(cand, excludeId) {
       '</strong> também procurou esse horário' +
       (c.status ? ' (' + esc(c.status) + ')' : '') +
       ' — vale um follow-up</div>'));
-  // "Mesmo dia" (horário diferente) só aparece quando não há sobreposição
+  // "Mesmo dia" (horário diferente) só aparece quando não há sobreposição.
+  // Diferencia agendamento real (Fechado) de quem apenas pediu orçamento.
   if (!r.conflitos.length && !r.procuras.length) {
-    r.mesmoDia.slice(0, 3).forEach(c =>
-      lines.push('<div class="slot-warn slot-warn-info">📅 Você já tem <strong>' + esc(c.cliente) +
-        '</strong> nesse dia' + (c.horario ? ' às ' + fmtHorario(c.horario) : '') + '</div>'));
+    const md = r.mesmoDia.slice()
+      .sort((a, b) => (b.status === 'Fechado') - (a.status === 'Fechado')); // Fechados primeiro
+    md.slice(0, 3).forEach(c => {
+      const quando = c.horario ? ' às ' + fmtHorario(c.horario) : '';
+      if (c.status === 'Fechado') {
+        lines.push('<div class="slot-warn slot-warn-fu">⚠️ Você já tem <strong>' + esc(c.cliente) +
+          '</strong> nesse dia' + quando + '</div>');
+      } else {
+        lines.push('<div class="slot-warn slot-warn-info">📋 Pedido de orçamento — <strong>' +
+          esc(c.cliente) + '</strong>' + quando + '</div>');
+      }
+    });
   }
   return lines.join('');
 }
