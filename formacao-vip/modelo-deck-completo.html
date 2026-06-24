@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Especialização Cachos &amp; Crespos — Deck v2 (visual da marca)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Montserrat:wght@300;400;500&family=Parisienne&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --cru:#F4EFE9; --espresso:#3A2E27; --cafe:#3A2A20; --brown:#4f4034;
+    --terra:#B07C5B; --terra-d:#9A6646; --gold:#B8975A; --muted:#8A7766; --line:rgba(58,46,39,.16);
+  }
+  *{box-sizing:border-box}
+  body{margin:0; background:#d9d2c8; padding:26px 12px; font-family:'Montserrat',system-ui,sans-serif; color:var(--espresso); -webkit-font-smoothing:antialiased}
+
+  .page{position:relative; width:210mm; min-height:297mm; margin:0 auto 24px; background:var(--cru); padding:20mm 20mm 14mm; box-shadow:0 12px 40px rgba(58,46,39,.22); display:flex; flex-direction:column; overflow:hidden}
+
+  /* títulos: reto + itálico */
+  .ttl .r{font-family:'Playfair Display',Georgia,serif; font-weight:600; line-height:1.04}
+  .ttl .i{font-family:'Playfair Display',Georgia,serif; font-style:italic; font-weight:500; color:var(--terra-d); line-height:1.06}
+  .rule{width:48px; height:2px; background:var(--terra); border:none; margin:16px 0 0}
+  .ol{font-size:.6rem; letter-spacing:.26em; text-transform:uppercase; color:var(--muted)}
+  .ol.pill{display:inline-block; background:rgba(176,124,91,.15); color:var(--terra-d); padding:6px 14px; border-radius:30px; align-self:flex-start}
+  .em{font-family:'Cormorant Garamond',serif; font-style:italic; color:var(--terra-d)}
+
+  p{margin:0}
+  .body p{font-size:.95rem; line-height:1.66; color:var(--brown)}
+  .body p + p{margin-top:13px}
+
+  /* placeholder de foto: retângulo limpo */
+  .ph{background:linear-gradient(150deg,#E7D9C8,#DAC6B0); border:1px solid rgba(154,102,70,.22); display:flex; align-items:center; justify-content:center; text-align:center; padding:14px; border-radius:4px}
+  .ph span{font-size:.56rem; letter-spacing:.2em; text-transform:uppercase; color:#9b8569}
+
+  /* faixa café (destaque) full-width */
+  .band{margin-left:-20mm; margin-right:-20mm; background:var(--cafe); color:var(--cru); padding:24px 20mm}
+  .band .bol{font-size:.6rem; letter-spacing:.26em; text-transform:uppercase; color:var(--gold)}
+  .band .bt{font-family:'Playfair Display',serif; font-style:italic; font-weight:500; font-size:1.5rem; margin:8px 0 6px; line-height:1.2}
+  .band .bx{font-size:.9rem; line-height:1.55; color:rgba(244,239,233,.82)}
+  .band .em{color:#E6C99B}
+
+  .foot{display:flex; justify-content:space-between; align-items:center; margin-top:auto; padding-top:12px; font-size:.54rem; letter-spacing:.22em; text-transform:uppercase; color:var(--muted)}
+  .foot .bd{border-top:1px solid var(--line); position:absolute; left:20mm; right:20mm; margin-top:-12px}
+
+  .mono{width:62px; height:auto}
+
+  /* utilitários de layout */
+  .split{display:grid; gap:26px; align-items:stretch}
+  .split.c5050{grid-template-columns:1fr 1fr}
+  .split.c6040{grid-template-columns:1.1fr .9fr}
+  .split.c4060{grid-template-columns:.9fr 1.1fr}
+  .full{flex:1}
+
+  /* lista de tópicos (módulos) */
+  .topics .it{padding:11px 0; border-bottom:1px solid var(--line)}
+  .topics .it:last-child{border-bottom:none}
+  .topics h4{font-family:'Playfair Display',serif; font-weight:600; font-size:1.04rem; margin:0 0 3px}
+  .topics p{font-size:.84rem; color:var(--brown); line-height:1.4}
+
+  /* método */
+  .steps .st{display:grid; grid-template-columns:auto 1fr; gap:18px; align-items:baseline; padding:13px 0; border-bottom:1px solid var(--line)}
+  .steps .st:last-child{border-bottom:none}
+  .steps .n{font-family:'Playfair Display',serif; font-style:italic; font-size:1.4rem; color:var(--terra)}
+  .steps h4{font-family:'Playfair Display',serif; font-style:italic; font-weight:500; font-size:1.16rem; margin:0 0 3px}
+  .steps p{font-size:.85rem; color:var(--brown); line-height:1.4}
+
+  /* listas com filete (aprende / reasons) */
+  .barlist .b{position:relative; padding-left:18px; margin-bottom:16px}
+  .barlist .b::before{content:""; position:absolute; left:0; top:3px; bottom:3px; width:3px; border-radius:3px; background:var(--terra)}
+  .barlist .b p{font-size:.92rem; line-height:1.5; color:var(--brown)}
+  .barlist .b .em{font-size:1.05em}
+
+  .dotlist .d{position:relative; padding-left:16px; margin-bottom:10px; font-size:.9rem; color:var(--brown); line-height:1.4}
+  .dotlist .d::before{content:""; position:absolute; left:0; top:8px; width:5px; height:5px; border-radius:50%; background:var(--terra)}
+
+  /* cover */
+  #cover{padding:0}
+  #cover .cphoto{position:absolute; inset:0}
+  #cover .cphoto .ph{width:100%; height:100%; border:none; border-radius:0}
+  #cover .veil{position:absolute; inset:0; background:linear-gradient(180deg, rgba(58,42,32,.12) 0%, rgba(58,42,32,0) 35%, rgba(58,42,32,.05) 60%, rgba(58,42,32,.55) 100%)}
+  #cover .ctop{position:absolute; top:20mm; left:0; right:0; display:flex; justify-content:center; z-index:2}
+  #cover .cbot{position:absolute; left:0; right:0; bottom:24mm; text-align:center; z-index:2; color:var(--cru); padding:0 16mm}
+  #cover .c-ol{font-size:.62rem; letter-spacing:.34em; text-transform:uppercase; color:rgba(244,239,233,.9)}
+  #cover .c-script{font-family:'Parisienne',cursive; font-size:4.4rem; line-height:1; color:var(--cru); margin:6px 0 10px; text-shadow:0 2px 18px rgba(40,28,20,.35)}
+  #cover .c-sub{font-size:.6rem; letter-spacing:.28em; text-transform:uppercase; color:rgba(244,239,233,.9)}
+  #cover .c-by{margin-top:22px; font-size:.56rem; letter-spacing:.26em; text-transform:uppercase; color:rgba(244,239,233,.8)}
+  #cover .c-by::before{content:""; display:block; width:54px; height:1px; background:rgba(244,239,233,.5); margin:0 auto 14px}
+
+  /* duas colunas com filete vertical (para quem é / info) */
+  .vcols{display:grid; grid-template-columns:1fr 1fr; gap:0}
+  .vcols .vc{padding:0 26px}
+  .vcols .vc:first-child{padding-left:0; border-right:1px solid var(--line)}
+  .vcols .vc:last-child{padding-right:0}
+  .vc .sub{font-family:'Playfair Display',serif; font-style:italic; font-weight:500; font-size:1.3rem; margin:8px 0 8px}
+  .vc .body p{font-size:.9rem}
+
+  /* preços */
+  .plan{padding:6px 0}
+  .plan .pn{font-family:'Playfair Display',serif; font-weight:600; font-size:1.22rem}
+  .plan .ps{font-size:.58rem; letter-spacing:.16em; text-transform:uppercase; color:var(--muted); margin-top:5px}
+  .plan .pv{font-family:'Playfair Display',serif; font-size:1.7rem; color:var(--terra-d); margin-top:10px}
+  .planbest{background:var(--cafe); color:var(--cru); border-radius:12px; padding:22px 24px}
+  .planbest .cap{font-size:.55rem; letter-spacing:.22em; text-transform:uppercase; color:var(--gold)}
+  .planbest .pn{color:var(--cru); margin-top:8px}
+  .planbest .ps{color:rgba(244,239,233,.7)}
+  .planbest .pv{color:#E6C99B; font-size:2rem}
+
+  .incl{display:grid; grid-template-columns:repeat(4,1fr); gap:18px; margin-top:24px}
+  .incl .ic{text-align:center}
+  .incl h5{font-family:'Playfair Display',serif; font-weight:600; font-size:.98rem; margin:0 0 4px}
+  .incl .st{color:var(--terra)}
+  .incl p{font-size:.66rem; letter-spacing:.04em; color:var(--muted); line-height:1.4}
+
+  .divlabel{display:flex; align-items:center; gap:16px; color:var(--line)}
+  .divlabel::before,.divlabel::after{content:""; height:1px; background:var(--line); flex:1}
+  .divlabel span{font-size:.6rem; letter-spacing:.26em; text-transform:uppercase; color:var(--terra-d); white-space:nowrap}
+
+  @media print{ @page{size:A4; margin:0} body{background:#fff; padding:0} .page{box-shadow:none; margin:0} *{-webkit-print-color-adjust:exact !important; print-color-adjust:exact !important} }
+  @media(max-width:780px){ .page{width:100%; min-height:0; padding:28px 20px} .split,.vcols,.incl{grid-template-columns:1fr !important} .vcols .vc{padding:18px 0; border:none !important; border-top:1px solid var(--line) !important} .band{margin-left:-20px;margin-right:-20px;padding-left:20px;padding-right:20px} }
+</style>
+</head>
+<body>
+
+<!-- ===== 01 · CAPA ===== -->
+<div class="page" id="cover" data-document-role="page" data-label="Capa">
+  <div class="cphoto"><div class="ph"><span>Retrato Carol · cacheada (foto vertical, full-bleed)</span></div></div>
+  <div class="veil"></div>
+  <div class="ctop">
+    <svg class="mono" viewBox="0 0 280 200" xmlns="http://www.w3.org/2000/svg">
+      <g fill="none" stroke="#F4EFE9" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M 108 38 C 56 38, 26 64, 26 100 C 26 138, 56 166, 110 166" stroke-width="9"></path>
+        <path d="M 134 165 L 154 35" stroke-width="3"></path>
+        <path d="M 154 35 L 214 165" stroke-width="9"></path>
+        <path d="M 214 165 L 234 35" stroke-width="3"></path>
+        <path d="M 149 35 L 159 35" stroke-width="1.4"></path><path d="M 229 35 L 239 35" stroke-width="1.4"></path>
+        <path d="M 129 165 L 139 165" stroke-width="1.4"></path><path d="M 209 165 L 219 165" stroke-width="1.4"></path>
+      </g>
+      <line x1="26" y1="180" x2="234" y2="180" stroke="#B8975A" stroke-width="0.7"></line>
+    </svg>
+  </div>
+  <div class="cbot">
+    <div class="c-ol">Especialização em</div>
+    <div class="c-script">Cachos &amp; Crespos</div>
+    <div class="c-sub">Penteados para cabelos com curvatura</div>
+    <div class="c-sub" style="margin-top:7px; color:#E6C99B">Formação individual · VIP</div>
+    <div class="c-by">Por Carol Nunes · @makecarolnunes · 2026</div>
+  </div>
+</div>
+
+<!-- ===== 02 · A FORMAÇÃO ===== -->
+<div class="page" data-document-role="page" data-label="A formação">
+  <span class="ol pill">A formação</span>
+  <div class="ttl" style="margin-top:14px"><span class="r" style="font-size:2.7rem">Beleza real começa na </span><span class="i" style="font-size:2.7rem">técnica.</span></div>
+  <div class="split c6040" style="margin-top:26px">
+    <div>
+      <div class="ol" style="margin-bottom:16px">Por que esta formação existe</div>
+      <div class="barlist">
+        <div class="b"><p>A maioria do Brasil tem cabelos com curvatura. Quase ninguém foi ensinada a atendê-los com <span class="em">cuidado e excelência</span>.</p></div>
+        <div class="b"><p>Penteados em cabelos cacheados e crespos não são adaptações da técnica do liso: têm <span class="em">estrutura própria</span> e exigem método diferente.</p></div>
+        <div class="b"><p>A diferença entre um cacho que infla em poucas horas e um que dura está nas <span class="em">etapas de preparação</span>.</p></div>
+      </div>
+    </div>
+    <div class="ph"><span>Modelo · cacheado finalizado</span></div>
+  </div>
+  <div class="band" style="margin-top:30px">
+    <div class="bol">★ A virada</div>
+    <div class="bx" style="margin-top:10px; font-size:1.02rem; color:var(--cru)">Você não sai com um passo a passo decorado. Sai com olho treinado para diagnosticar o cabelo, segurança para executar e <span class="em">imagem profissional</span> do seu trabalho.</div>
+  </div>
+  <div class="foot"><span>Cachos &amp; Crespos — 2026</span><span>02</span></div>
+</div>
+
+<!-- ===== 03 · PARA QUEM É ===== -->
+<div class="page" data-document-role="page" data-label="Para quem é">
+  <span class="ol pill">Para quem é</span>
+  <div class="ttl" style="margin-top:14px"><span class="r" style="font-size:2.6rem">Para quem é este </span><span class="i" style="font-size:2.6rem">curso.</span></div>
+  <hr class="rule">
+  <div class="vcols" style="margin-top:34px">
+    <div class="vc">
+      <div class="ol">Está começando</div>
+      <div class="sub">Primeiros contatos</div>
+      <div class="body"><p>Você nunca fez penteado em cabelo com curvatura e quer aprender do jeito certo, com método desde o início.</p></div>
+    </div>
+    <div class="vc">
+      <div class="ol">Já atua</div>
+      <div class="sub">Aperfeiçoar a técnica</div>
+      <div class="body"><p>Você já atende e quer refinar a sua técnica, diagnosticar melhor, finalizar com mais durabilidade e valorizar o portfólio.</p></div>
+    </div>
+  </div>
+  <p style="text-align:center; margin-top:34px; font-family:'Cormorant Garamond',serif; font-style:italic; font-size:1.35rem; color:var(--espresso)">Cada uma parte de onde está. As duas saem com técnica de verdade.</p>
+  <div class="ph full" style="margin-top:30px; min-height:150px"><span>Foto horizontal · aluna concentrada / mãos na modelo</span></div>
+  <div class="foot"><span>Cachos &amp; Crespos — 2026</span><span>03</span></div>
+</div>
+
+<!-- ===== 04 · SOBRE MIM ===== -->
+<div class="page" data-document-role="page" data-label="Sobre mim">
+  <span class="ol">Quem vai te ensinar</span>
+  <div class="split c4060 full" style="margin-top:14px">
+    <div class="ph"><span>Retrato · Carol (corpo inteiro)</span></div>
+    <div style="display:flex; flex-direction:column">
+      <div class="ttl"><span class="r" style="font-size:2.7rem">Sobre </span><span class="i" style="font-size:2.7rem">mim.</span></div>
+      <hr class="rule">
+      <div class="body" style="margin-top:20px">
+        <p>Sou a Carol Nunes, carioca, maquiadora e profissional de beleza há 7 anos — com formação em publicidade e uma década em comunicação. Construí meu trabalho realçando a beleza única de cada pessoa, <span class="em">sem fórmulas mágicas</span>, com método e escuta.</p>
+        <p>Para me aprofundar em textura, me especializei em cachos e crespos com a <span class="em">Patrícia Tavares</span>, uma das maiores referências do mercado. Hoje ensino o que pratico todo dia: penteado para cabelos com curvatura, do diagnóstico do fio à finalização que dura.</p>
+      </div>
+      <div class="band" style="margin-top:auto">
+        <div class="bol">Especialização</div>
+        <div class="bt">Cachos &amp; Crespos com Patrícia Tavares</div>
+        <div class="bx">7 anos de atuação · trabalho autoral em cabelos com curvatura.</div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Cachos &amp; Crespos — 2026</span><span>04</span></div>
+</div>
+
+<!-- ===== 05 · O MÉTODO ===== -->
+<div class="page" data-document-role="page" data-label="O método">
+  <span class="ol">Minha forma de ensinar</span>
+  <div class="ttl" style="margin-top:8px"><span class="r" style="font-size:2.9rem">O </span><span class="i" style="font-size:2.9rem">método.</span></div>
+  <div class="steps" style="margin-top:24px">
+    <div class="st"><div class="n">01</div><div><h4>Leitura antes de iniciar</h4><p>Diagnóstico do fio: tipos de curvatura (2A, 2B, 3A…), porosidade e fator encolhimento.</p></div></div>
+    <div class="st"><div class="n">02</div><div><h4>Os produtos</h4><p>Quais escolher e como usar para dar durabilidade ao cacho.</p></div></div>
+    <div class="st"><div class="n">03</div><div><h4>A técnica de cada textura</h4><p>Fitagem no cacheado; no crespo, blowout e apliques.</p></div></div>
+    <div class="st"><div class="n">04</div><div><h4>Da técnica ao portfólio</h4><p>Fotografar, apresentar e valorizar o seu trabalho.</p></div></div>
+    <div class="st"><div class="n">05</div><div><h4>Prática em modelo real</h4><p>Do diagnóstico à finalização, com acompanhamento de perto.</p></div></div>
+  </div>
+  <div class="band" style="margin-top:30px">
+    <div class="bol">★ Além do básico</div>
+    <div class="bx" style="margin-top:10px; font-size:1.02rem; color:var(--cru)">Você também domina os detalhes que elevam o penteado: <span class="em">tranças de raiz, torcidos e twists</span>.</div>
+  </div>
+  <div class="foot"><span>Cachos &amp; Crespos — 2026</span><span>05</span></div>
+</div>
+
+<!-- ===== 06 · MÓDULO 01 CACHEADOS ===== -->
+<div class="page" data-document-role="page" data-label="Módulo 01 · Cacheados">
+  <div class="split c4060 full">
+    <div class="ph"><span>Modelo · cacheado (penteado)</span></div>
+    <div>
+      <span class="ol pill">Módulo 01 · 1 dia · VIP individual</span>
+      <div class="ttl" style="margin-top:12px"><span class="i" style="font-size:2.6rem">Cacheados</span></div>
+      <hr class="rule">
+      <div class="topics" style="margin-top:16px">
+        <div class="it"><h4>Leitura do fio</h4><p>Tipos de cachos e curvatura (2A a 4C), porosidade, encolhimento e anamnese.</p></div>
+        <div class="it"><h4>Técnicas de preparação</h4><p>Os produtos certos e o passo a passo que dá durabilidade ao cacho.</p></div>
+        <div class="it"><h4>Fitagem</h4><p>A minha técnica de fitagem para um resultado definido e natural.</p></div>
+        <div class="it"><h4>Uso do babyliss</h4><p>Tipos de babyliss e como usar cada um na textura, com secagem no difusor.</p></div>
+        <div class="it"><h4>3 penteados</h4><p>Três penteados escolhidos a partir do meu portfólio.</p></div>
+        <div class="it"><h4>Registro &amp; portfólio</h4><p>Fotografar e apresentar o seu trabalho com qualidade profissional.</p></div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Cachos &amp; Crespos — 2026</span><span>06</span></div>
+</div>
+
+<!-- ===== 07 · MÓDULO 02 CRESPOS ===== -->
+<div class="page" data-document-role="page" data-label="Módulo 02 · Crespos">
+  <div class="split c6040 full">
+    <div>
+      <span class="ol pill">Módulo 02 · 1 dia · VIP individual</span>
+      <div class="ttl" style="margin-top:12px"><span class="i" style="font-size:2.6rem">Crespos</span></div>
+      <hr class="rule">
+      <div class="topics" style="margin-top:18px">
+        <div class="it"><h4>Diferenças técnicas</h4><p>Cacheado × crespo, ponto a ponto.</p></div>
+        <div class="it"><h4>Blowout</h4><p>Conceito, como e quando fazer (e quando não).</p></div>
+        <div class="it"><h4>Penteados em crespo natural</h4><p>Valorizando a textura como ela é.</p></div>
+        <div class="it"><h4>Penteados com apliques temporários</h4><p>Escolha, aplicação com costura, finalização.</p></div>
+        <div class="it"><h4>Registro e portfólio</h4><p>Fotografar e apresentar o seu trabalho com qualidade profissional.</p></div>
+      </div>
+    </div>
+    <div class="ph"><span>Modelo · crespo (penteado)</span></div>
+  </div>
+  <div class="foot"><span>Cachos &amp; Crespos — 2026</span><span>07</span></div>
+</div>
+
+<!-- ===== 08 · FOTOGRAFIA & PORTFÓLIO ===== -->
+<div class="page" data-document-role="page" data-label="Fotografia & portfólio">
+  <span class="ol pill">Diferencial exclusivo</span>
+  <div class="ttl" style="margin-top:14px"><span class="r" style="font-size:2.6rem">Fotografia </span><span class="i" style="font-size:2.6rem">&amp; portfólio.</span></div>
+  <p class="body" style="margin-top:12px"><span style="font-family:'Cormorant Garamond',serif; font-size:1.25rem; color:var(--brown)">Você não sai só com técnica. Sai com <span class="em">imagem profissional</span> do seu trabalho.</span></p>
+  <div class="split c5050" style="margin-top:28px">
+    <div>
+      <div class="sub" style="font-family:'Playfair Display',serif; font-style:italic; font-size:1.3rem; color:var(--terra-d); margin-bottom:14px">O que você aprende</div>
+      <div class="dotlist">
+        <div class="d">Como fotografar os seus próprios trabalhos</div>
+        <div class="d">Como posicionar o cabelo para valorizar o resultado</div>
+        <div class="d">Registros pensados para as redes sociais</div>
+        <div class="d">Os aplicativos e ferramentas que eu uso</div>
+        <div class="d">Noções para apresentar melhor o seu trabalho</div>
+      </div>
+    </div>
+    <div class="band" style="margin:0; border-radius:14px; padding:24px 26px">
+      <div class="bol">★ O que você leva · incluso</div>
+      <div class="bt" style="font-size:1.45rem">Fotos profissionais dos seus penteados</div>
+      <div class="bx">Registradas no dia do curso com <span class="em">câmera e qualidade profissional</span>, editadas e prontas para começar ou fortalecer o seu portfólio.</div>
+    </div>
+  </div>
+  <div class="ph full" style="margin-top:26px; min-height:120px"><span>Bastidor da sessão / resultado com câmera profissional</span></div>
+  <div class="foot"><span>Cachos &amp; Crespos — 2026</span><span>08</span></div>
+</div>
+
+<!-- ===== 09 · O RESULTADO (ANTES & DEPOIS) ===== -->
+<div class="page" data-document-role="page" data-label="O resultado">
+  <span class="ol">O resultado</span>
+  <div class="ttl" style="margin-top:8px"><span class="r" style="font-size:2.7rem">Antes </span><span class="i" style="font-size:2.7rem">&amp; depois.</span></div>
+  <div class="split c5050 full" style="margin-top:26px">
+    <div class="ph"><span>Antes &amp; depois · 01 (mesma modelo)</span></div>
+    <div class="ph"><span>Antes &amp; depois · 02 (mesma modelo)</span></div>
+  </div>
+  <p style="text-align:center; margin-top:24px; font-family:'Cormorant Garamond',serif; font-style:italic; font-size:1.3rem; color:var(--muted)">Cacho real, técnica real.</p>
+  <div class="foot"><span>Cachos &amp; Crespos — 2026</span><span>09</span></div>
+</div>
+
+<!-- ===== 10 · INVESTIMENTO ===== -->
+<div class="page" data-document-role="page" data-label="Investimento">
+  <div style="text-align:center">
+    <span class="ol pill">Investimento</span>
+    <div class="ttl" style="margin-top:12px"><span class="r" style="font-size:2.5rem">Escolha o seu </span><span class="i" style="font-size:2.5rem">caminho.</span></div>
+    <p style="margin-top:10px; font-family:'Cormorant Garamond',serif; font-style:italic; font-size:1.12rem; color:var(--muted)">Formação individual (VIP) · presencial no Rio de Janeiro.</p>
+  </div>
+  <div class="split c5050" style="margin-top:38px; align-items:center">
+    <div class="plan" style="text-align:center">
+      <div class="pn">1 Módulo</div>
+      <div class="ps">Cacheados ou Crespos · 1 dia · 8h</div>
+      <div class="pv">R$ 600</div>
+    </div>
+    <div class="planbest" style="text-align:center">
+      <div class="cap">Os 2 módulos</div>
+      <div class="pn">Curso completo</div>
+      <div class="ps">2 dias · 16h</div>
+      <div class="pv">R$ 1.050</div>
+    </div>
+  </div>
+  <p style="text-align:center; margin-top:22px; font-family:'Cormorant Garamond',serif; font-style:italic; font-size:1.1rem; color:var(--muted)">Pix ou cartão — em até 3x com acréscimo de taxa.</p>
+
+  <div class="divlabel" style="margin-top:36px"><span>Incluso em todos os planos</span></div>
+  <div class="incl">
+    <div class="ic"><h5>Fotos profissionais <span class="st">★</span></h5><p>prontas pro portfólio</p></div>
+    <div class="ic"><h5>Apostila em PDF</h5><p>para revisar o conteúdo</p></div>
+    <div class="ic"><h5>Modelo inclusa</h5><p>prática em modelo real</p></div>
+    <div class="ic"><h5>Certificado</h5><p>de especialização</p></div>
+  </div>
+  <div class="foot"><span>Cachos &amp; Crespos — 2026</span><span>10</span></div>
+</div>
+
+<!-- ===== 11 · INFORMAÇÕES ===== -->
+<div class="page" data-document-role="page" data-label="Informações">
+  <span class="ol">Para se planejar</span>
+  <div class="ttl" style="margin-top:8px"><span class="r" style="font-size:2.7rem">Informações </span><span class="i" style="font-size:2.7rem">essenciais.</span></div>
+  <hr class="rule">
+  <div class="vcols" style="margin-top:28px; align-items:start">
+    <div class="vc">
+      <div style="margin-bottom:18px"><div class="ol" style="color:var(--terra-d)">Formato</div><p class="body" style="margin-top:6px"><span style="font-size:.9rem">Individual e exclusivo (VIP): turma de uma aluna, com atenção total do início ao fim.</span></p></div>
+      <div style="margin-bottom:18px"><div class="ol" style="color:var(--terra-d)">Pagamento</div><p class="body" style="margin-top:6px"><span style="font-size:.9rem">Pix ou cartão (em até 3x com acréscimo de taxa).</span></p></div>
+      <div style="margin-bottom:18px"><div class="ol" style="color:var(--terra-d)">Reserva</div><p class="body" style="margin-top:6px"><span style="font-size:.9rem">Vaga garantida com sinal de 30%; restante no dia do curso. Em caso de desistência, o sinal não é devolvido. Reagendamentos com no mínimo 7 dias de antecedência.</span></p></div>
+      <div><div class="ol" style="color:var(--terra-d)">Modelo</div><p class="body" style="margin-top:6px"><span style="font-size:.9rem">Profissional inclusa, escolhida e organizada por mim.</span></p></div>
+    </div>
+    <div class="vc">
+      <div style="margin-bottom:18px"><div class="ol" style="color:var(--terra-d)">Horários</div><p class="body" style="margin-top:6px"><span style="font-size:.9rem">9h às 17h, com pausa de 30 min. Almoço não incluso.</span></p></div>
+      <div style="margin-bottom:18px"><div class="ol" style="color:var(--terra-d)">Local</div><p class="body" style="margin-top:6px"><span style="font-size:.9rem">Presencial · Home Studio, Tijuca — Rio de Janeiro.</span></p></div>
+      <div style="margin-bottom:18px"><div class="ol" style="color:var(--terra-d)">Material</div><p class="body" style="margin-top:6px"><span style="font-size:.9rem">A lista de materiais é enviada após a confirmação do curso.</span></p></div>
+      <div><div class="ol" style="color:var(--terra-d)">Validade desta proposta</div><p class="body" style="margin-top:6px"><span style="font-size:.9rem">15 dias.</span></p></div>
+    </div>
+  </div>
+  <div class="foot"><span>Cachos &amp; Crespos — 2026</span><span>11</span></div>
+</div>
+
+<!-- ===== 12 · CTA ===== -->
+<div class="page" data-document-role="page" data-label="Quero fazer parte">
+  <div class="full" style="display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center">
+    <span class="ol">Próximo passo</span>
+    <div class="ttl" style="margin-top:10px"><span class="r" style="font-size:3rem">Quero fazer </span><span class="i" style="font-size:3rem">parte.</span></div>
+    <p style="font-family:'Playfair Display',serif; font-size:1.5rem; color:var(--terra-d); margin:18px 0 0">@makecarolnunes</p>
+    <p class="body" style="max-width:46ch; margin:18px auto 0"><span style="font-size:.95rem">As turmas são pequenas e as datas, poucas — por escolha, para garantir atenção a cada aluna. Me chame no direct com a palavra <b style="color:var(--espresso)">PENTEADOS</b> e eu te conto as próximas datas.</span></p>
+    <svg class="mono" style="width:70px; margin-top:34px" viewBox="0 0 280 200" xmlns="http://www.w3.org/2000/svg">
+      <g fill="none" stroke="#9A6646" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M 108 38 C 56 38, 26 64, 26 100 C 26 138, 56 166, 110 166" stroke-width="9"></path>
+        <path d="M 134 165 L 154 35" stroke-width="3"></path>
+        <path d="M 154 35 L 214 165" stroke-width="9"></path>
+        <path d="M 214 165 L 234 35" stroke-width="3"></path>
+        <path d="M 149 35 L 159 35" stroke-width="1.4"></path><path d="M 229 35 L 239 35" stroke-width="1.4"></path>
+        <path d="M 129 165 L 139 165" stroke-width="1.4"></path><path d="M 209 165 L 219 165" stroke-width="1.4"></path>
+      </g>
+      <line x1="26" y1="180" x2="234" y2="180" stroke="#B8975A" stroke-width="0.7"></line>
+    </svg>
+  </div>
+  <div class="foot"><span>Cachos &amp; Crespos — 2026</span><span>12</span></div>
+</div>
+
+</body>
+</html>
