@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Introdução &amp; Para quem é — Cachos &amp; Crespos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Montserrat:wght@300;400;500;600&family=Parisienne&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --cru:#F4EFE9; --espresso:#3A2E27; --terra:#B07C5B; --terra-d:#9A6646; --areia:#D8C7B5;
+    --muted:#7A6A5D; --line:rgba(58,46,39,.12); --sand:#EFE2D2;
+  }
+  *{box-sizing:border-box}
+  body{margin:0; background:#fff; font-family:'Montserrat',system-ui,sans-serif; color:var(--espresso); -webkit-font-smoothing:antialiased}
+
+  .page{width:210mm; min-height:297mm; margin:0 auto 24px; background:var(--cru); display:flex; flex-direction:column}
+  .overline{display:inline-block; align-self:flex-start; font-size:.58rem; letter-spacing:.32em; text-transform:uppercase; color:var(--terra-d); background:rgba(176,124,91,.16); padding:6px 14px; border-radius:30px}
+  h1{font-family:'Playfair Display',Georgia,serif; font-weight:600; line-height:1.07; margin:16px 0 0}
+  h1 .accent{font-style:italic; color:var(--terra)}
+  .frame{border-radius:13px; border:1px solid rgba(154,102,70,.35); background:repeating-linear-gradient(135deg,#fff 0 10px,#F2E7D9 10px 20px); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:9px; color:var(--terra-d); text-align:center; padding:16px}
+  .frame .cam{width:28px; height:28px; opacity:.85}
+  .frame small{font-size:.56rem; letter-spacing:.16em; text-transform:uppercase; opacity:.85; line-height:1.5}
+  .foot{display:flex; justify-content:space-between; align-items:center; margin-top:auto; padding-top:12px; border-top:1px solid var(--line); font-size:.56rem; letter-spacing:.24em; text-transform:uppercase; color:var(--muted)}
+
+  /* ===== PÁGINA 1 · INTRODUÇÃO ===== */
+  #intro{padding:22mm 20mm 15mm}
+  #intro .top{display:grid; grid-template-columns:1.32fr 1fr; gap:26px; align-items:stretch}
+  #intro h1{font-size:2.6rem}
+  #intro .manifesto{font-family:'Cormorant Garamond',serif; font-style:italic; font-size:1.34rem; line-height:1.48; color:#5b4a3e; margin:16px 0 0}
+  #intro .why-label{font-size:.6rem; letter-spacing:.26em; text-transform:uppercase; color:var(--terra-d); margin:26px 0 0; font-weight:600}
+  #intro .reasons{margin-top:16px; display:flex; flex-direction:column; gap:15px}
+  #intro .reason{position:relative; padding-left:18px; font-family:'Cormorant Garamond',serif; font-size:1.18rem; line-height:1.38; color:var(--espresso)}
+  #intro .reason::before{content:""; position:absolute; left:0; top:5px; bottom:5px; width:3px; border-radius:3px; background:var(--terra)}
+  #intro .reason b{font-weight:500; color:var(--terra-d)}
+  #intro .photo{display:flex}
+  #intro .frame{flex:1; min-height:360px}
+  #intro .turn{margin-top:26px; background:linear-gradient(160deg,#F4E7D8 0%, var(--sand) 100%); border:1px solid rgba(176,124,91,.40); border-radius:16px; padding:24px 28px; box-shadow:0 8px 22px rgba(154,102,70,.12)}
+  #intro .turn .tlabel{display:flex; align-items:center; gap:8px; font-size:.62rem; letter-spacing:.26em; text-transform:uppercase; color:var(--terra-d); font-weight:600}
+  #intro .turn p{margin:11px 0 0; font-size:1.02rem; line-height:1.58; color:#4a3a2e}
+  #intro .turn p .dom{font-family:'Parisienne',cursive; font-size:1.7rem; color:var(--terra); line-height:1}
+
+  /* ===== PÁGINA 2 · PARA QUEM É ===== */
+  #who{padding:26mm 22mm 16mm}
+  #who h1{font-size:2.7rem}
+  #who .lead{font-family:'Cormorant Garamond',serif; font-style:italic; font-size:1.5rem; color:#5b4a3e; margin:14px 0 0}
+  #who .profiles{display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-top:34px}
+  #who .profile{background:#FBF6EF; border:1px solid var(--line); border-radius:15px; padding:26px 24px}
+  #who .profile .ic{width:46px; height:46px; border-radius:12px; display:flex; align-items:center; justify-content:center; background:rgba(176,124,91,.16); color:var(--terra-d); margin-bottom:16px}
+  #who .profile .ic svg{width:26px; height:26px}
+  #who .profile h3{font-family:'Playfair Display',serif; font-weight:600; font-size:1.4rem; margin:0 0 4px}
+  #who .profile .tag{font-size:.58rem; letter-spacing:.2em; text-transform:uppercase; color:var(--terra-d); display:block; margin-bottom:12px}
+  #who .profile p{font-size:.92rem; color:#5b4a3e; line-height:1.5; margin:0}
+  #who .photo{margin-top:22px}
+  #who .frame{min-height:150px}
+  #who .closing{margin-top:auto; padding-top:26px; text-align:center}
+  #who .closing .tie{font-family:'Cormorant Garamond',serif; font-style:italic; font-size:1.5rem; color:var(--espresso)}
+  #who .closing .diff{margin-top:12px; font-size:.85rem; color:var(--terra-d); letter-spacing:.02em}
+</style>
+</head>
+<body>
+
+<!-- ===================== PÁGINA 1 · INTRODUÇÃO ===================== -->
+<div class="page" id="intro" data-document-role="page" data-label="Introdução">
+  <div class="top">
+    <div class="lead-col">
+      <span class="overline">A formação</span>
+      <h1>Beleza real começa na <span class="accent">técnica</span>.</h1>
+      <p class="manifesto">Cacho e crespo não pedem para ser domados — pedem para ser entendidos. Esta formação nasce daí: da técnica que revela o fio, em vez de disfarçá-lo.</p>
+      <div class="why-label">Por que esta formação existe</div>
+      <div class="reasons">
+        <p class="reason">A maioria do Brasil tem textura. Quase ninguém foi ensinada a atendê-la com <b>método</b>.</p>
+        <p class="reason">Cacho e crespo não são uma adaptação da técnica do liso — são <b>estrutura própria</b>, e exigem leitura própria.</p>
+        <p class="reason">A diferença entre um penteado que cai em duas horas e um que dura a festa inteira está nas <b>etapas que ninguém vê</b>.</p>
+      </div>
+    </div>
+    <div class="photo">
+      <div class="frame">
+        <svg class="cam" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M3 8.5A1.5 1.5 0 0 1 4.5 7H7l1.2-1.8A1 1 0 0 1 9 4.7h6a1 1 0 0 1 .8.5L17 7h2.5A1.5 1.5 0 0 1 21 8.5v9A1.5 1.5 0 0 1 19.5 19h-15A1.5 1.5 0 0 1 3 17.5z"/><circle cx="12" cy="13" r="3.4"/></svg>
+        <small>Foto vertical<br>retrato seu ou cacho em close</small>
+      </div>
+    </div>
+  </div>
+
+  <div class="turn">
+    <div class="tlabel">★ A virada</div>
+    <p>Você não sai com um penteado decorado. Sai com um método que se repete em qualquer cabeça — olho clínico para diagnosticar o fio, mãos seguras para executar e imagem profissional do seu trabalho. A insegurança de “será que vai ficar bom?” dá lugar ao <span class="dom">domínio</span>.</p>
+  </div>
+
+  <div class="foot"><span>02</span><span>Cachos &amp; Crespos — 2026</span></div>
+</div>
+
+<!-- ===================== PÁGINA 2 · PARA QUEM É ===================== -->
+<div class="page" id="who" data-document-role="page" data-label="Para quem é">
+  <span class="overline">Para quem é</span>
+  <h1>Para quem é esta <span class="accent">formação</span></h1>
+  <p class="lead">Para os dois pontos de partida — e isso é proposital.</p>
+
+  <div class="profiles">
+    <div class="profile">
+      <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 21v-7"/><path d="M12 14c.2-3.2 2.4-5 5.5-5 .1 3.2-2.2 5-5.5 5z"/><path d="M12 13c-.2-2.8-2.1-4.4-4.8-4.4C7.1 11.3 9.1 13 12 13z"/></svg></div>
+      <span class="tag">Está começando</span>
+      <h3>Do primeiro fio</h3>
+      <p>Você nunca fez penteado em cabelo com curvatura e quer aprender do jeito certo, com método desde o início.</p>
+    </div>
+    <div class="profile">
+      <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 20V6"/><path d="M5.5 12.5 12 6l6.5 6.5"/></svg></div>
+      <span class="tag">Já atua</span>
+      <h3>Aperfeiçoar a técnica</h3>
+      <p>Você já atende e quer refinar a sua técnica em textura — diagnosticar melhor, finalizar com mais durabilidade e valorizar o portfólio.</p>
+    </div>
+  </div>
+
+  <div class="photo">
+    <div class="frame">
+      <svg class="cam" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M3 8.5A1.5 1.5 0 0 1 4.5 7H7l1.2-1.8A1 1 0 0 1 9 4.7h6a1 1 0 0 1 .8.5L17 7h2.5A1.5 1.5 0 0 1 21 8.5v9A1.5 1.5 0 0 1 19.5 19h-15A1.5 1.5 0 0 1 3 17.5z"/><circle cx="12" cy="13" r="3.4"/></svg>
+      <small>Foto horizontal · aluna concentrada / mãos na modelo</small>
+    </div>
+  </div>
+
+  <div class="closing">
+    <p class="tie">Cada uma parte de onde está. As duas saem com <em>domínio</em>.</p>
+    <p class="diff">Aqui, começar do zero não é um problema — é bem-vindo.</p>
+  </div>
+
+  <div class="foot"><span>03</span><span>Cachos &amp; Crespos — 2026</span></div>
+</div>
+
+</body>
+</html>
