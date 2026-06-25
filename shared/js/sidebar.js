@@ -18,6 +18,8 @@
   else if (_p.indexOf('/conteudo/direcao-criativa') !== -1) { ACTIVE = 'direcao';     BASE = '../'; }
   else if (_p.indexOf('/conteudo/centro-de-marca')  !== -1) { ACTIVE = 'centromarca'; BASE = '../'; }
   else if (_p.indexOf('/conteudo/concorrentes')     !== -1) { ACTIVE = 'radar';       BASE = '../'; }
+  else if (_p.indexOf('/conteudo/tiktok')           !== -1) { ACTIVE = 'tiktok';      BASE = '../'; }
+  else if (_p.indexOf('/conteudo') !== -1 && _qs.indexOf('view=acervo') !== -1) { ACTIVE = 'acervo'; BASE = '../'; }
   else if (_p.indexOf('/estrategia')                !== -1) { ACTIVE = 'cdc';         BASE = '../'; }
   else if (_p.indexOf('/formacao-vip')              !== -1) { ACTIVE = 'formacao';    BASE = '../'; }
   else if (_p.indexOf('/instagram')                 !== -1) {
@@ -65,6 +67,8 @@
     pin:   '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a5 5 0 015 5c0 2.38-1.32 4.45-3.25 5.54L12 22l-1.75-9.46A5.99 5.99 0 017 7a5 5 0 015-5z"/><circle cx="12" cy="7" r="2"/></svg>',
     chev:  '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>',
     cap:   '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10L12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 1 2.5 3 6 3s6-2 6-3v-5"/></svg>',
+    acervo:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M7 4v16M17 4v16M2 9h5M2 15h5M17 9h5M17 15h5"/></svg>',
+    tiktok:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>',
   };
 
   // ── Estrutura de grupos ───────────────────────────────────
@@ -82,34 +86,42 @@
       id: 'conteudo',
       label: 'Conteúdo',
       items: [
-        { id: 'conteudo',   label: 'Lista de Conteúdos', path: 'conteudo/',                        icon: IC.cam   },
-        { id: 'direcao',    label: 'Direção Criativa',   path: 'conteudo/direcao-criativa.html',   icon: IC.cdc   },
-        { id: 'instagram',  label: 'Instagram',           path: 'instagram/',                       icon: IC.ig    },
-        { id: 'validador',  label: 'Validador',           path: 'instagram/?tab=validador',         icon: IC.check },
+        { id: 'conteudo',   label: 'Lista de Conteúdos',  path: 'conteudo/',                       icon: IC.cam   },
+        { id: 'acervo',     label: 'Acervo',              path: 'conteudo/index.html?view=acervo', icon: IC.acervo},
+        { id: 'direcao',    label: 'Laboratório Criativo',path: 'conteudo/direcao-criativa.html',  icon: IC.cdc   },
+        { id: 'validador',  label: 'Validador',           path: 'instagram/?tab=validador',        icon: IC.check },
       ]
     },
     {
-      id: 'formacao',
-      label: 'Formação',
+      id: 'performance',
+      label: 'Performance',
       items: [
-        { id: 'formacao', label: 'Cachos & Crespos', path: 'formacao-vip/', icon: IC.cap },
+        { id: 'instagram',  label: 'Instagram',           path: 'instagram/',                       icon: IC.ig    },
       ]
     },
     {
-      id: 'planejamento',
-      label: 'Planejamento',
+      id: 'marca',
+      label: 'Marca',
+      items: [
+        { id: 'formacao',    label: 'Cachos & Crespos',   path: 'formacao-vip/',                     icon: IC.cap   },
+        { id: 'cdc',         label: 'Manual de Marca',    path: 'estrategia/centro-de-comando.html', icon: IC.cdc   },
+        { id: 'centromarca', label: 'Raio-X da Marca',    path: 'conteudo/centro-de-marca.html',     icon: IC.pin   },
+      ]
+    },
+    {
+      id: 'pesquisa',
+      label: 'Pesquisa',
+      items: [
+        { id: 'radar',       label: 'Insights de Mercado', path: 'conteudo/brand-brain.html',  icon: IC.radar  },
+        { id: 'tiktok',      label: 'TikTok',              path: 'conteudo/tiktok-radar.html', icon: IC.tiktok },
+      ]
+    },
+    {
+      id: 'organizacao',
+      label: 'Organização',
       items: [
         { id: 'tarefas',   label: 'Tarefas',   path: 'tarefas/',   icon: IC.task },
         { id: 'anotacoes', label: 'Anotações', path: 'anotacoes/', icon: IC.note },
-      ]
-    },
-    {
-      id: 'estrategia',
-      label: 'Estratégia',
-      items: [
-        { id: 'radar',       label: 'Insights de Mercado', path: 'conteudo/brand-brain.html',         icon: IC.radar },
-        { id: 'centromarca', label: 'Análise de Marca',    path: 'conteudo/centro-de-marca.html',     icon: IC.pin   },
-        { id: 'cdc',         label: 'Manual de Marca',     path: 'estrategia/centro-de-comando.html', icon: IC.cdc   },
       ]
     },
     {
@@ -184,6 +196,26 @@
 #mk-sb-fab:hover{background:rgba(18,5,1,.97)}\
 #mk-sb-fab:active{transform:scale(.9)}\
 #mk-sb-fab.mk-gone{opacity:0;pointer-events:none;transform:scale(.78)}\
+\
+/* ── Botão voltar (volta sempre ao Hub) ──────────────── */\
+#mk-sb-back{\
+  position:fixed;top:13px;left:57px;z-index:901;\
+  width:36px;height:36px;border-radius:50%;\
+  border:.5px solid rgba(255,255,255,.18);\
+  background:rgba(18,5,1,.82);\
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);\
+  color:rgba(255,255,255,.85);\
+  display:flex;align-items:center;justify-content:center;\
+  cursor:pointer;box-shadow:0 2px 12px rgba(0,0,0,.32);\
+  transition:opacity .22s,transform .18s,background .15s;\
+  padding:0;text-decoration:none;\
+}\
+#mk-sb-back:hover{background:rgba(18,5,1,.97);color:#fff}\
+#mk-sb-back:active{transform:scale(.9)}\
+#mk-sb-back.mk-gone{opacity:0;pointer-events:none;transform:scale(.78)}\
+\
+/* Esconde botões de voltar antigos de cada módulo — unificados no FAB acima */\
+.hdr-back,.ig-back,.btn-back-float,#ms-back-btn{display:none!important}\
 \
 /* ── Backdrop ────────────────────────────────────────── */\
 #mk-sb-bd{\
@@ -427,8 +459,12 @@
 
     var logoSvg = '<svg width="19" height="19" viewBox="0 0 40 40" fill="none" stroke="rgba(255,255,255,.88)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:block"><path d="M20 5l2.8 9.4L32 17l-9.2 2.6L20 29l-2.8-9.4L8 17l9.2-2.6z"/><path d="M30 28l1 3 3 1-3 1-1 3-1-3-3-1 3-1z"/></svg>';
 
+    var backBtn = (ACTIVE === 'hub') ? ''
+      : '<a id="mk-sb-back" href="' + BASE + '" aria-label="Voltar ao início" title="Voltar ao início">' + IC.back + '</a>';
+
     return ''
       + '<button id="mk-sb-fab" onclick="mkSidebarToggle()" aria-label="Menu">' + IC.menu + '</button>'
+      + backBtn
       + '<div id="mk-sb-bd" onclick="mkSidebarClose()"></div>'
       + '<aside id="mk-sidebar" role="navigation" aria-label="Navegação">'
       +   '<div class="mk-sb-hd">'
@@ -476,20 +512,24 @@
     var sb  = document.getElementById('mk-sidebar');
     var bd  = document.getElementById('mk-sb-bd');
     var fab = document.getElementById('mk-sb-fab');
+    var bk  = document.getElementById('mk-sb-back');
     if (!sb) return;
     sb.classList.add('mk-on');
     if (bd)  bd.classList.add('mk-on');
     if (fab) fab.classList.add('mk-gone');
+    if (bk)  bk.classList.add('mk-gone');
   }
 
   function _close() {
     var sb  = document.getElementById('mk-sidebar');
     var bd  = document.getElementById('mk-sb-bd');
     var fab = document.getElementById('mk-sb-fab');
+    var bk  = document.getElementById('mk-sb-back');
     if (!sb) return;
     sb.classList.remove('mk-on');
     if (bd)  bd.classList.remove('mk-on');
     if (fab) fab.classList.remove('mk-gone');
+    if (bk)  bk.classList.remove('mk-gone');
   }
 
   window.mkSidebarLogout = function () {
