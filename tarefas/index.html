@@ -13,167 +13,194 @@
 </head>
 <body>
 
-<div id="tar-app">
+<div class="tar-app">
 
-<!-- ── SIDEBAR DESKTOP ── -->
-<aside class="tar-d-sidebar">
-
-  <div class="tar-d-brand">
-    <div class="tar-d-brand-icon">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+  <!-- ════ SIDEBAR DESKTOP ════ -->
+  <aside class="d-side">
+    <div class="d-brand">
+      <div class="d-brand-ico">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      </div>
+      <h2>Studio Flow</h2>
     </div>
-    <h2>Tarefas</h2>
-  </div>
 
-  <!-- Progress ring -->
-  <div class="tar-d-prog">
-    <svg width="40" height="40" viewBox="0 0 40 40">
-      <circle class="tar-d-ring-bg" cx="20" cy="20" r="16"/>
-      <circle class="tar-d-ring-fg" id="d-ring" cx="20" cy="20" r="16"/>
-      <text x="20" y="20" class="tar-d-ring-txt" id="d-ring-pct">0%</text>
-    </svg>
-    <div>
-      <div class="tar-d-prog-lbl" id="d-prog-lbl">Carregando...</div>
-      <div class="tar-d-prog-val" id="d-prog-val"></div>
-    </div>
-  </div>
-
-  <!-- Stats 2x2 -->
-  <div class="tar-d-stats">
-    <div class="tar-d-stat">
-      <div class="tar-d-stat-lbl">Pendentes</div>
-      <span class="tar-d-stat-val" id="d-s-pend">—</span>
-    </div>
-    <div class="tar-d-stat">
-      <div class="tar-d-stat-lbl">Hoje</div>
-      <span class="tar-d-stat-val c-hoje" id="d-s-hoje">—</span>
-    </div>
-    <div class="tar-d-stat">
-      <div class="tar-d-stat-lbl">Atrasadas</div>
-      <span class="tar-d-stat-val c-atrs" id="d-s-atrs">—</span>
-    </div>
-    <div class="tar-d-stat">
-      <div class="tar-d-stat-lbl">Feitas</div>
-      <span class="tar-d-stat-val c-ok" id="d-s-feitas">—</span>
-    </div>
-  </div>
-
-  <!-- Quick-add -->
-  <div class="tar-d-quick">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.55)" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-    <input id="d-quick-inp" type="text" placeholder="Tarefa rápida..."
-           onkeydown="if(event.key==='Enter') quickAddD()" autocomplete="off">
-    <button class="tar-d-quick-btn" onclick="quickAddD()">↑</button>
-  </div>
-
-  <!-- Filtros -->
-  <div class="tar-d-fil-lbl">Filtrar por</div>
-
-  <button class="tar-d-fil active" data-f="pendentes" onclick="setF('pendentes')">
-    <div class="tar-d-dot" style="background:#E57373"></div>
-    <span class="tar-d-fil-name">Pendentes</span>
-    <span class="tar-d-cnt" id="d-fc-pend">0</span>
-  </button>
-  <button class="tar-d-fil" data-f="hoje" onclick="setF('hoje')">
-    <div class="tar-d-dot" style="background:#F9C784"></div>
-    <span class="tar-d-fil-name">Hoje</span>
-    <span class="tar-d-cnt" id="d-fc-hoje">0</span>
-  </button>
-  <button class="tar-d-fil" data-f="semana" onclick="setF('semana')">
-    <div class="tar-d-dot" style="background:#90CAF9"></div>
-    <span class="tar-d-fil-name">Esta semana</span>
-    <span class="tar-d-cnt" id="d-fc-sem">0</span>
-  </button>
-  <button class="tar-d-fil" data-f="feitas" onclick="setF('feitas')">
-    <div class="tar-d-dot" style="background:#A5D6A7"></div>
-    <span class="tar-d-fil-name">✓ Feitas</span>
-    <span class="tar-d-cnt" id="d-fc-feitas">0</span>
-  </button>
-
-</aside>
-
-<!-- ── HEADER ── -->
-<div class="hdr">
-  <button class="hdr-back" onclick="window.location.href='../'" aria-label="Voltar">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-  </button>
-  <div class="hdr-center">
-    <h1>Tarefas</h1>
-    <div class="hdr-sub" id="hsub"></div>
-  </div>
-  <div class="hdr-right">
-    <button class="hdr-back" onclick="load()" aria-label="Atualizar" title="Atualizar">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+    <div class="d-nav-lbl">Vistas</div>
+    <button class="d-nav on" data-v="hoje" onclick="go('hoje')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      Hoje<span class="d-badge" id="d-b-hoje">0</span>
     </button>
-  </div>
-</div>
+    <button class="d-nav" data-v="projetos" onclick="go('projetos')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Projetos
+    </button>
+    <button class="d-nav" data-v="kanban" onclick="go('kanban')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="5" height="18"/><rect x="10" y="3" width="5" height="12"/><rect x="17" y="3" width="5" height="15"/></svg>
+      Kanban
+    </button>
+    <button class="d-nav" data-v="ideias" onclick="go('ideias')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z"/></svg>
+      Ideias<span class="d-badge" id="d-b-ideias">0</span>
+    </button>
+    <button class="d-nav" data-v="feitas" onclick="go('feitas')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      Feitas<span class="d-badge" id="d-b-feitas">0</span>
+    </button>
 
-<!-- Barra de progresso (mobile) -->
-<div class="progress-section">
-  <div class="progress-info">
-    <span class="progress-lbl" id="prog-lbl">Carregando...</span>
-    <span class="progress-pct" id="prog-pct"></span>
-  </div>
-  <div class="progress-track">
-    <div class="progress-fill" id="prog-fill" style="width:0%"></div>
-  </div>
-</div>
+    <button class="d-newbtn" onclick="openTaskAdd()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Nova tarefa
+    </button>
+  </aside>
 
-<!-- Chips (mobile) -->
-<div class="chips">
-  <div class="chip"><div class="chip-lbl">Pendentes</div><div class="chip-val" id="c-pend">—</div></div>
-  <div class="chip"><div class="chip-lbl" style="color:#C62828">Hoje</div><div class="chip-val" id="c-hoje" style="color:#C62828">—</div></div>
-  <div class="chip"><div class="chip-lbl" style="color:var(--amber)">Semana</div><div class="chip-val" id="c-semana" style="color:var(--amber)">—</div></div>
-  <div class="chip"><div class="chip-lbl" style="color:var(--ok)">Feitas</div><div class="chip-val" id="c-feitas" style="color:var(--ok)">—</div></div>
-</div>
+  <!-- ════ MAIN ════ -->
+  <div class="tar-main">
 
-<!-- Filtros (mobile) -->
-<div class="ftabs">
-  <button class="ftab on" data-f="pendentes" onclick="setF('pendentes')">Pendentes</button>
-  <button class="ftab"    data-f="hoje"      onclick="setF('hoje')">Hoje</button>
-  <button class="ftab"    data-f="semana"    onclick="setF('semana')">Esta semana</button>
-  <button class="ftab"    data-f="feitas"    onclick="setF('feitas')"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Feitas</button>
-</div>
+    <!-- TOPBAR mobile -->
+    <header class="tar-top">
+      <div>
+        <h1>Studio Flow</h1>
+        <div class="tar-sub" id="hsub"></div>
+      </div>
+      <button class="tar-ic" onclick="load()" aria-label="Atualizar" title="Atualizar">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+      </button>
+    </header>
 
-<!-- Quick add (mobile) -->
-<div class="quick-add">
-  <span class="quick-add-icon">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-  </span>
-  <input id="quick-input" type="text" placeholder="Adicionar tarefa rápida..." autocomplete="off"
-         onkeydown="if(event.key==='Enter') quickAdd()">
-  <button class="quick-add-btn" onclick="quickAdd()">↑</button>
-</div>
+    <div class="tar-scroll" id="scroll">
 
-<!-- Desktop toolbar -->
-<div class="tar-d-toolbar">
-  <div>
-    <div class="tar-d-toolbar-title" id="d-toolbar-title">Pendentes</div>
-    <div class="tar-d-toolbar-sub" id="d-toolbar-sub"></div>
-  </div>
-  <button class="tar-d-nova-btn" onclick="openAdd()">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-    Nova tarefa
-  </button>
-</div>
+      <!-- ════════ HOJE ════════ -->
+      <div class="view on" id="v-hoje">
+        <div class="qadd">
+          <span style="color:var(--text-subtle);">＋</span>
+          <input id="q-hoje" placeholder="Capturar algo... (ex: gravar reel #conteudo !urgente)" autocomplete="off" onkeydown="if(event.key==='Enter')capture(this)">
+          <button class="qadd-btn" onclick="capture(document.getElementById('q-hoje'))">↑</button>
+        </div>
 
-<div class="content" id="content">
-  <div class="loader"><div class="spinner"></div><br>Carregando tarefas...</div>
-</div>
+        <div class="hoje-cols">
+          <section class="col-foco">
+            <div class="sec"><span class="sec-ttl">🎯 Foco de hoje</span><span class="sec-cnt" id="foco-cnt">0</span><span class="sec-line"></span></div>
+            <div id="foco-list"></div>
+          </section>
 
-<button class="fab" onclick="openAdd()" title="Nova tarefa com detalhes">＋</button>
+          <section class="col-todo">
+            <div class="sec"><span class="sec-ttl">A fazer · tudo</span><span class="sec-cnt" id="todo-cnt">0</span><span class="sec-line"></span></div>
+            <div id="todo-list"></div>
+            <div class="foot-links">
+              <button onclick="go('projetos')">📋 Ver projetos</button>
+              <button onclick="go('ideias')">💡 Backlog de ideias</button>
+            </div>
+          </section>
 
-<div class="overlay" id="overlay" onclick="closePanel()"></div>
+          <aside class="col-rail">
+            <div class="rail-proj">
+              <div class="sec"><span class="sec-ttl">📋 Projetos</span><span class="sec-line"></span></div>
+              <div id="rail-proj-list"></div>
+            </div>
+            <div class="rail-feitos">
+              <div class="sec"><span class="sec-ttl">✓ Feitos</span><span class="sec-cnt" id="wins-cnt">0</span><span class="sec-line"></span></div>
+              <div id="wins-list"></div>
+            </div>
+          </aside>
+        </div>
+      </div>
 
-<div class="panel" id="panel">
-  <div class="panel-handle"></div>
-  <div class="panel-title" id="p-title">Nova Tarefa</div>
-  <div class="panel-body">
+      <!-- ════════ PROJETOS ════════ -->
+      <div class="view" id="v-projetos">
+        <div class="view-ttl">Projetos em andamento</div>
+        <div class="view-sub">Cada frente com seu próprio progresso.</div>
+        <button class="proj-newbtn" onclick="openProjAdd()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Novo projeto
+        </button>
+        <div id="proj-list" style="margin-top:18px;"></div>
+      </div>
+
+      <!-- ════════ KANBAN ════════ -->
+      <div class="view" id="v-kanban">
+        <div class="view-ttl">Fluxo do projeto</div>
+        <div class="kb-bar">
+          <label for="kb-select">Projeto:</label>
+          <select class="kb-select" id="kb-select" onchange="renderKanban()"></select>
+        </div>
+        <div id="kb-board"></div>
+      </div>
+
+      <!-- ════════ IDEIAS ════════ -->
+      <div class="view" id="v-ideias">
+        <div class="view-ttl">Backlog de ideias 💡</div>
+        <div class="view-sub">Solte aqui sem culpa. Vira tarefa quando você quiser.</div>
+        <div class="qadd" style="margin-top:16px;">
+          <span style="color:var(--text-subtle);">💡</span>
+          <input id="q-ideia" placeholder="Nova ideia..." autocomplete="off" onkeydown="if(event.key==='Enter')addIdea(this)">
+          <button class="qadd-btn" onclick="addIdea(document.getElementById('q-ideia'))">↑</button>
+        </div>
+        <div id="idea-list" style="margin-top:14px;"></div>
+      </div>
+
+      <!-- ════════ FEITAS ════════ -->
+      <div class="view" id="v-feitas">
+        <div class="view-ttl">Conquistas</div>
+        <div class="sec"><span class="sec-ttl">Concluídas hoje</span><span class="sec-cnt" id="done-cnt">0</span><span class="sec-line"></span></div>
+        <div id="done-list"></div>
+      </div>
+
+      <div class="loader" id="boot-loader"><div class="spinner"></div>Carregando...</div>
+
+    </div><!-- /scroll -->
+  </div><!-- /main -->
+
+  <!-- BOTTOM NAV mobile -->
+  <nav class="tar-nav">
+    <button class="on" data-v="hoje" onclick="go('hoje')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      Hoje
+    </button>
+    <button data-v="projetos" onclick="go('projetos')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Projetos
+    </button>
+    <button data-v="kanban" onclick="go('kanban')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="5" height="18"/><rect x="10" y="3" width="5" height="12"/><rect x="17" y="3" width="5" height="15"/></svg>
+      Kanban
+    </button>
+    <button data-v="ideias" onclick="go('ideias')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z"/></svg>
+      Ideias
+    </button>
+    <button data-v="feitas" onclick="go('feitas')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      Feitas
+    </button>
+  </nav>
+
+  <button class="fab" onclick="openTaskAdd()" title="Nova tarefa">＋</button>
+
+  <!-- ════ OVERLAY + PAINÉIS ════ -->
+  <div class="overlay" id="overlay" onclick="closePanels()"></div>
+
+  <!-- Painel tarefa -->
+  <div class="panel" id="task-panel">
+    <div class="panel-handle"></div>
+    <div class="panel-title" id="tp-title">Nova tarefa</div>
     <div class="form-group">
       <label class="form-label">Tarefa *</label>
-      <input class="form-input" id="f-titulo" type="text"
-             placeholder="Ex: Responder orçamentos, Comprar material..."
-             autocomplete="off" onkeydown="if(event.key==='Enter') saveTask()">
+      <input class="form-input" id="f-titulo" type="text" placeholder="Ex: Editar reel, responder noiva..." autocomplete="off">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Área</label>
+        <select class="form-input" id="f-area">
+          <option value="conteudo">Conteúdo</option>
+          <option value="cursos">Cursos</option>
+          <option value="clientes">Clientes</option>
+          <option value="producao">Studio</option>
+          <option value="admin">Admin</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Projeto</label>
+        <select class="form-input" id="f-proj"></select>
+      </div>
     </div>
     <div class="form-row">
       <div class="form-group">
@@ -183,21 +210,47 @@
       <div class="form-group">
         <label class="form-label">Prioridade</label>
         <div class="toggle-row">
-          <button class="prio-btn" id="f-prio-alta"   data-prio="alta"   onclick="setPrio(this)">Alta</button>
-          <button class="prio-btn on" id="f-prio-normal" data-prio="normal" onclick="setPrio(this)">Normal</button>
+          <button class="prio-btn" id="f-prio-urgente"    data-prio="urgente"    onclick="setPrio(this)">🔴</button>
+          <button class="prio-btn" id="f-prio-importante" data-prio="importante" onclick="setPrio(this)">⭐</button>
+          <button class="prio-btn on" id="f-prio-normal"  data-prio="normal"     onclick="setPrio(this)">—</button>
         </div>
       </div>
     </div>
-    <button class="btn-primary" id="btn-save" onclick="saveTask()">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-      Salvar tarefa
-    </button>
-    <button class="btn-outline" onclick="closePanel()">Cancelar</button>
-    <button class="btn-danger"  id="btn-del"  onclick="deleteTask()">Excluir tarefa</button>
+    <button class="btn-primary" id="tp-save" onclick="saveTask()">Salvar tarefa</button>
+    <button class="btn-outline" onclick="closePanels()">Cancelar</button>
+    <button class="btn-danger" id="tp-del" style="display:none" onclick="deleteTask()">Excluir tarefa</button>
   </div>
-</div>
 
-<div class="toast" id="toast"></div>
+  <!-- Painel projeto -->
+  <div class="panel" id="proj-panel">
+    <div class="panel-handle"></div>
+    <div class="panel-title" id="pp-title">Novo projeto</div>
+    <div class="form-group">
+      <label class="form-label">Nome *</label>
+      <input class="form-input" id="p-nome" type="text" placeholder="Ex: Curso Cachos e Crespos" autocomplete="off">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Área</label>
+        <select class="form-input" id="p-area">
+          <option value="cursos">Cursos</option>
+          <option value="conteudo">Conteúdo</option>
+          <option value="clientes">Clientes</option>
+          <option value="producao">Studio</option>
+          <option value="admin">Admin</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Meta (data)</label>
+        <input class="form-input" id="p-meta" type="date">
+      </div>
+    </div>
+    <button class="btn-primary" id="pp-save" onclick="saveProj()">Salvar projeto</button>
+    <button class="btn-outline" onclick="closePanels()">Cancelar</button>
+    <button class="btn-danger" id="pp-del" style="display:none" onclick="deleteProj()">Excluir projeto</button>
+  </div>
+
+  <div class="toast" id="toast"></div>
 
 </div><!-- /tar-app -->
 

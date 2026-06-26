@@ -991,18 +991,28 @@ window.DB = {
   tarefas: {
     async list() {
       _guard();
-      const { data, error } = await _sb.from('tarefas').select('*').order('prazo', { ascending: true, nullsFirst: false });
+      const { data, error } = await _sb.from('tarefas').select('*').order('created_at', { ascending: false });
       if (error) throw error;
       return data.map(r => ({
         id: String(r.id), titulo: r.titulo || '', prazo: r.prazo || '',
-        prioridade: r.prioridade || 'normal', feita: !!r.feita, createdAt: r.created_at || '',
+        prioridade: r.prioridade || 'normal', feita: !!r.feita,
+        area: r.area || 'admin', projetoId: r.projeto_id || '',
+        status: r.status || (r.feita ? 'feita' : 'a_fazer'), foco: !!r.foco,
+        createdAt: r.created_at || '',
       }));
     },
     async upsert(t) {
       _guard();
+      // status é a fonte da verdade; feita fica sincronizado p/ compat do widget do Hub.
+      let status = t.status || 'a_fazer';
+      if (t.feita === true) status = 'feita';
+      if (t.feita === false && status === 'feita') status = 'a_fazer';
       const row = {
         id: String(t.id || Date.now()), titulo: t.titulo || '',
-        prazo: t.prazo || null, prioridade: t.prioridade || 'normal', feita: !!t.feita,
+        prazo: t.prazo || null, prioridade: t.prioridade || 'normal',
+        feita: status === 'feita',
+        area: t.area || 'admin', projeto_id: t.projetoId || null,
+        status: status, foco: !!t.foco,
       };
       const { error } = await _sb.from('tarefas').upsert(row, { onConflict: 'id' });
       if (error) throw error;
@@ -1011,6 +1021,34 @@ window.DB = {
     async delete(id) {
       _guard();
       const { error } = await _sb.from('tarefas').delete().eq('id', String(id));
+      if (error) throw error;
+    },
+  },
+
+  projetos: {
+    async list() {
+      _guard();
+      const { data, error } = await _sb.from('projetos').select('*').order('created_at', { ascending: true });
+      if (error) throw error;
+      return data.map(r => ({
+        id: String(r.id), nome: r.nome || '', area: r.area || 'admin',
+        cor: r.cor || '', metaData: r.meta_data || '', arquivado: !!r.arquivado,
+        createdAt: r.created_at || '',
+      }));
+    },
+    async upsert(p) {
+      _guard();
+      const row = {
+        id: String(p.id || Date.now()), nome: p.nome || '', area: p.area || 'admin',
+        cor: p.cor || null, meta_data: p.metaData || null, arquivado: !!p.arquivado,
+      };
+      const { error } = await _sb.from('projetos').upsert(row, { onConflict: 'id' });
+      if (error) throw error;
+      return row.id;
+    },
+    async delete(id) {
+      _guard();
+      const { error } = await _sb.from('projetos').delete().eq('id', String(id));
       if (error) throw error;
     },
   },

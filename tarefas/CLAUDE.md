@@ -1,6 +1,8 @@
-# CLAUDE.md — Tarefas
+# CLAUDE.md — Tarefas (Studio Flow)
 
-Módulo de to-do list com agrupamento visual por urgência e widget no Hub. Criado em 2026-05.
+Sistema de produtividade para pessoa criativa/autônoma: projetos com progresso,
+fluxo Kanban, foco do dia e backlog de ideias. Redesign "Studio Flow" em 2026-06
+(substituiu a to-do list plana original).
 
 ---
 
@@ -8,39 +10,60 @@ Módulo de to-do list com agrupamento visual por urgência e widget no Hub. Cria
 
 | Arquivo | Papel |
 |---|---|
-| `index.html` | HTML + barra de progresso + quick-add + painel |
-| `styles/tarefas.css` | CSS completo do módulo |
+| `index.html` | Estrutura: sidebar desktop + 5 vistas + painéis (tarefa/projeto) |
+| `styles/tarefas.css` | CSS completo (usa tokens de `shared/css/tokens.css`) |
 | `scripts/tarefas.js` | Toda a lógica |
+| `prototipo-studio-flow.html` | Protótipo navegável do redesign (dados fake, não toca no DB) |
 
-SQL: `sql/estoque-tarefas.sql` (criar tabela `tarefas`).
+SQL: `sql/tarefas-studio-flow.sql` (migration aditiva — já aplicada em produção).
 
 ---
 
 ## Supabase
 
-**Tabela:** `tarefas`
+### Tabela `tarefas` (estendida)
 
 | Campo | Tipo | Observação |
 |---|---|---|
 | `id` | TEXT PK | String do `Date.now()` |
-| `titulo` | TEXT NOT NULL | Texto da tarefa |
-| `prazo` | DATE | Opcional — null = sem prazo |
-| `prioridade` | TEXT | `'alta' \| 'normal'` |
-| `feita` | BOOLEAN | Default: false |
+| `titulo` | TEXT | Texto da tarefa |
+| `prazo` | DATE | Opcional |
+| `prioridade` | TEXT | `urgente \| importante \| normal` (CHECK aceita legados `alta/baixa`) |
+| `feita` | BOOLEAN | **Sincronizado** com `status='feita'` — mantido p/ compat do widget do Hub |
+| `area` | TEXT | `conteudo \| cursos \| clientes \| producao \| admin` |
+| `projeto_id` | TEXT | FK lógica → `projetos.id` (null = sem projeto) |
+| `status` | TEXT | `ideia \| a_fazer \| fazendo \| feita` (fonte da verdade do estado) |
+| `foco` | BOOLEAN | `true` = escolhida para o "Foco de hoje" |
 | `created_at` | TIMESTAMPTZ | Auto |
 
-RLS: `anon` tem acesso total.
+### Tabela `projetos`
 
-Ordenação padrão em `DB.tarefas.list()`: `prazo ASC NULLS LAST` — tarefas sem prazo ficam no final.
+| Campo | Tipo | Observação |
+|---|---|---|
+| `id` | TEXT PK | `'proj-'+Date.now()` |
+| `nome` | TEXT | — |
+| `area` | TEXT | mesma enum de `tarefas.area` |
+| `cor` | TEXT | reservado (cor deriva da área hoje) |
+| `meta_data` | DATE | meta/prazo do projeto |
+| `arquivado` | BOOLEAN | — |
+
+RLS: `anon` tem acesso total em ambas.
+
+> **status × feita:** `status` é a fonte da verdade. `DB.tarefas.upsert` deriva
+> `feita = (status==='feita')` e, se o chamador setar `feita` explicitamente
+> (ex: `hubToggle` no Hub), ajusta o `status`. Nunca gravar os dois divergentes.
 
 ---
 
-## DB.tarefas (shared/js/db.js)
+## DB (shared/js/db.js)
 
 ```js
-DB.tarefas.list()         // → Tarefa[]  (prazo ASC, nulls last)
-DB.tarefas.upsert(t)      // → id        (INSERT OR UPDATE)
-DB.tarefas.delete(id)     // → void
+DB.tarefas.list()    // → Tarefa[] (created_at DESC) — inclui area, projetoId, status, foco
+DB.tarefas.upsert(t) // status fonte da verdade; sincroniza feita
+DB.tarefas.delete(id)
+DB.projetos.list()   // → Projeto[] (created_at ASC)
+DB.projetos.upsert(p)
+DB.projetos.delete(id)
 ```
 
 ---
@@ -48,93 +71,63 @@ DB.tarefas.delete(id)     // → void
 ## Estado (`tarefas.js`)
 
 ```js
-var tasks     = [];           // array em memória
-var curFilter = 'pendentes';  // 'pendentes' | 'hoje' | 'semana' | 'feitas'
-var editId    = null;         // id em edição (null = nova)
+var tasks    = [];      // tarefas em memória
+var projetos = [];      // projetos em memória
+var curView  = 'hoje';  // 'hoje'|'projetos'|'kanban'|'ideias'|'feitas'
+var editId   = null;    // tarefa em edição
+var editProj = null;    // projeto em edição
 ```
 
----
-
-## Agrupamento visual (`buildGroups`)
-
-Grupos em ordem de exibição (apenas os com tarefas aparecem):
-
-| Grupo | Critério | Estilo |
-|---|---|---|
-| Atrasadas | `prazo < hoje` | Badge vermelho, fundo `#fff9f9` |
-| Hoje | `prazo === hoje` | Badge âmbar, fundo `#fffbf5` |
-| Amanhã | `prazo === hoje+1` | Badge azul |
-| Esta semana | `prazo <= weekEnd()` | Badge brand |
-| Depois | `prazo > weekEnd() \|\| !prazo` | Badge cinza |
-
-`weekEnd()` retorna o próximo domingo (não o sábado — semana começa na segunda-feira portuguesa).
+`FLOW = ['ideia','a_fazer','fazendo','feita']` · `AREAS{}` define label/cor/bg/ico por área.
 
 ---
 
-## Quick-add
+## Vistas
 
-`quickAdd()` cria uma tarefa com apenas o título (sem painel), de forma otimista:
-1. Insere `tmp` no array `tasks` localmente
-2. Chama `render()` imediatamente (UI atualizada antes do Supabase)
-3. Chama `DB.tarefas.upsert()` async
-4. Se falhar: remove o `tmp` e chama `render()` de volta (rollback)
-5. Se suceder: chama `load()` para sincronizar o ID real
+| Vista | Conteúdo |
+|---|---|
+| **Hoje** | Foco de hoje (`foco=true`) + A fazer (resto pendente) + Feitos. Captura rápida com parser `#area`/`#projeto` + `!urgente`/`!importante`. |
+| **Projetos** | Cards com barra de progresso (`projStats`) e "próxima ação". |
+| **Kanban** | Colunas Ideia→A fazer→Fazendo→Concluído de **um projeto** (select `#kb-select`). WIP no "Fazendo". |
+| **Ideias** | Tarefas com `status='ideia'`. `promote()` → `a_fazer` + `foco`. |
+| **Feitas** | Todas concluídas + card de destaque com total. |
 
-O `FAB (+)` abre o painel completo (com prazo e prioridade). O quick-add é só para o campo fixo no topo.
+`renderCurrent()` despacha por `curView`. `go(v)` troca de vista (sincroniza nav mobile **e** sidebar desktop).
 
 ---
 
-## Toggle otimista (`toggleDone`)
+## Layout responsivo
 
-Mesma estratégia do quick-add:
-1. Muta `t.feita` no array
-2. `render()`
-3. `DB.tarefas.upsert(t)` async
-4. Se falhar: reverte `t.feita` + `render()` + toast
+- **Mobile**: topbar + conteúdo empilhado + **bottom nav** (5 abas) + FAB.
+  `padding-left:100px` no topbar evita o FAB global de `sidebar.js`.
+- **Desktop (≥980px)**: `.tar-app` vira grid `252px 1fr`. Sidebar própria de vistas
+  (`.d-side`, com `padding-top:58px` p/ não cobrir o FAB global). O **Hoje** vira
+  dashboard de 3 colunas (Foco | A fazer | trilho Projetos+Feitos). Painéis viram modais centrais.
+
+---
+
+## Otimismo / sync
+
+- `complete`, `toggleFoco`, `kbMove`, `capture`, `addIdea`, `promote`: mutam o array,
+  re-renderizam na hora e fazem `DB.tarefas.upsert` async com **rollback** em erro.
+- `saveTask`, `deleteTask`, `saveProj`, `deleteProj`: `await DB` + `load()` (refetch).
+- `complete` anima (`.leaving` + check `.done`) antes de re-renderizar (340ms).
 
 ---
 
 ## Widget no Hub (`hub-assets/scripts/hub.js`)
 
-Funções relevantes em `hub.js`:
-- `loadTodoWidget()` — busca `DB.tarefas.list()` e renderiza `#todo-widget`
-- `hubToggle(id, btn)` — marca como feita direto do Hub sem navegar para o módulo
-
-O widget aparece somente se houver tarefas pendentes (`pend.length > 0`). Exibe no máximo 5 itens. Se houver mais: link "+ N mais — ver todas →".
-
-O widget renderiza dentro de `#todo-hub-card` (div com classe `todo-hub-card`), posicionado logo após os cards de operação no Hub.
-
-**Alerta de atrasadas:** se `atrs.length > 0`, exibe strip vermelho com contagem.
+- `loadTodoWidget()` filtra `!feita && status!=='ideia'` (ideias não contam como pendência).
+- Indicador de prioridade aparece p/ `urgente`/`importante`.
+- `hubToggle()` seta `feita=true` → `upsert` marca `status='feita'`.
 
 ---
 
-## `prazoLabel(prazo, hoje)` — normalização de datas
+## Issues conhecidos / próximos passos
 
-```js
-prazoLabel('2026-05-18', '2026-05-18') // → { txt: 'Hoje',   cls: 'hoje'    }
-prazoLabel('2026-05-19', '2026-05-18') // → { txt: 'Amanhã', cls: 'amanha'  }
-prazoLabel('2026-05-10', '2026-05-18') // → { txt: 'seg 10/05', cls: 'atrasada' }
-```
-
-Os badges coloridos nos cards usam `prazoLabel` — não comparar datas de forma diferente em outros pontos.
-
----
-
-## Issues conhecidos
-
-- `quickAdd()` usa `tmp.id = 'tmp-' + Date.now()` — se o usuário fechar o módulo antes do Supabase responder, o item fictício desaparece. Na reabertura, o item real estará lá (o DB.upsert provavelmente já terminou).
-- Sem suporte a tarefas recorrentes (diária, semanal).
-- Sem categorias — todas as tarefas ficam em um único pool. Com muitas tarefas, fica confuso.
-- O filtro "Semana" mostra tarefas atrasadas também (para não sumir do radar). Isso pode ser não-intuitivo.
-
----
-
-## Roadmap
-
-- [ ] Tarefas recorrentes (diária, semanal, mensal) — campo `recorrencia` + lógica de geração
-- [ ] Categorias/projetos (ex: Studio, Pessoal, Finanças) com filtro
-- [ ] Subnotes por tarefa (campo `notas` textarea no painel)
-- [ ] Arrastar para reordenar (drag-and-drop na lista Pendentes)
-- [ ] Notificação push quando prazo chega (service worker / PWA)
-- [ ] Integração com Orçamentos: criar tarefa de follow-up automático ao salvar um orçamento com `prox_followup`
-- [ ] Marcar como feita com animação de confetti (pequeno detalhe de UX)
+- Sem `feita_em` (timestamp de conclusão): "Feitos hoje" mostra todas as concluídas
+  (não filtra por dia). Streak na vista Feitas mostra total, não sequência real de dias.
+- Kanban tem drag-and-drop (HTML5) no desktop; botão "mover →" mantido como alternativa no toque/mobile. `kbSetStatus(id,status)` é o ponto único (drop e botão chamam ele).
+- Sem tarefas recorrentes.
+- Excluir projeto desvincula as tarefas uma a uma (loop de upserts) — ok p/ volumes pequenos.
+- Vista Calendário ainda não existe (estava no conceito; backlog).

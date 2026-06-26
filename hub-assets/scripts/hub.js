@@ -336,7 +336,7 @@
       var we  = fmt(sun);
 
       var all   = await DB.tarefas.list();
-      var pend  = all.filter(function(t) { return !t.feita; });
+      var pend  = all.filter(function(t) { return !t.feita && t.status !== 'ideia'; });
       var atrs  = pend.filter(function(t) { return t.prazo && t.prazo < hoje; });
       var hj    = pend.filter(function(t) { return t.prazo === hoje; });
       // itens para exibir: atrasadas + hoje + próximas da semana, máx 5
@@ -382,7 +382,7 @@
           '<button class="todo-hub-check' + (isAtrs ? ' check-atrs' : '') + '" onclick="hubToggle(\'' + esc(t.id) + '\',this)" aria-label="Concluir">' +
             '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' +
           '</button>' +
-          (t.prioridade === 'alta' ? '<div class="todo-hub-prio"></div>' : '') +
+          (t.prioridade === 'urgente' || t.prioridade === 'importante' ? '<div class="todo-hub-prio"></div>' : '') +
           '<div class="todo-hub-titulo">' + esc(t.titulo) + '</div>' +
           '<div class="todo-hub-dia' + (isAtrs ? ' dia-atrs' : isHoje ? ' dia-hoje' : '') + '">' + diaLbl + '</div>' +
         '</div>';

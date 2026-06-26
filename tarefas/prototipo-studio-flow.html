@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Protótipo — Studio Flow (redesign Tarefas)</title>
+<style>
+  /* ── Tokens reais da marca (extraídos de shared/css/tokens.css) ── */
+  :root{
+    --brand:#a36844; --brand-dark:#38190b; --brand-soft:rgba(163,104,68,.10); --brand-ring:rgba(163,104,68,.25);
+    --bg:#FAF8F6; --surface:#fff; --surface-2:#F5EFEA; --border:#EDE4DF; --border-strong:#D9CDC4;
+    --text:#2C2420; --text-muted:#6F6660; --text-subtle:#A8A199; --text-on-dark:#FEFEFE;
+    --rose:#D4537E; --rose-soft:#FBEAF0; --rose-dark:#993556;
+    --amber:#BA7517; --amber-soft:#FAEEDA;
+    --green:#3B6D11; --green-soft:#EAF3DE;
+    --brown:#8B6B61; --brown-soft:#FAF3EE;
+    --mauve-soft:#F5EDF3;
+    --success:#3B6D11; --success-soft:#EAF3DE;
+    --danger:#C62828; --danger-soft:#FCE7E7;
+    --info:#1565C0; --info-soft:#E3F2FD;
+    --r-sm:8px; --r-md:12px; --r-lg:16px; --r-xl:22px; --r-full:9999px;
+    --sh-sm:0 1px 2px rgba(56,25,11,.05); --sh-md:0 2px 8px rgba(56,25,11,.08); --sh-lg:0 4px 16px rgba(56,25,11,.12);
+    --font:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  body{font-family:var(--font);background:#e9e2dc;color:var(--text);min-height:100vh;}
+
+  /* ════ FRAME ════ */
+  .frame{max-width:480px;margin:0 auto;background:var(--bg);min-height:100vh;position:relative;
+         box-shadow:0 0 40px rgba(56,25,11,.18);display:flex;flex-direction:column;overflow:hidden;}
+  .main{flex:1;display:flex;flex-direction:column;min-height:0;}
+
+  /* ── SIDEBAR DESKTOP (escondida no mobile) ── */
+  .d-side{display:none;}
+
+  /* ── TOPBAR mobile ── */
+  .topbar{background:linear-gradient(135deg,var(--brand-dark),var(--brand));color:#fff;
+          padding:12px 15px;display:grid;grid-template-columns:36px 1fr 36px;align-items:center;
+          position:sticky;top:0;z-index:30;}
+  .topbar h1{font-size:.98rem;font-weight:700;text-align:center;letter-spacing:.02em;}
+  .ic{width:34px;height:34px;border:none;border-radius:50%;background:rgba(255,255,255,.14);
+      color:#fff;font-size:1rem;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+  .ic:active{background:rgba(255,255,255,.28);transform:scale(.92);}
+
+  /* ── área rolável ── */
+  .scroll{flex:1;overflow-y:auto;padding:16px 14px 96px;}
+  .view{display:none;animation:fade .28s ease;}
+  .view.on{display:block;}
+  @keyframes fade{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
+  .view-ttl{font-size:1.3rem;font-weight:800;color:var(--brand-dark);line-height:1.15;}
+  .view-sub{font-size:.85rem;color:var(--text-muted);margin-top:4px;}
+
+  /* ── quick add ── */
+  .qadd{display:flex;align-items:center;gap:9px;background:var(--surface);border:1px solid var(--border);
+        border-radius:var(--r-full);padding:7px 7px 7px 16px;margin:0 0 6px;box-shadow:var(--sh-sm);}
+  .qadd input{flex:1;border:none;outline:none;font-family:inherit;font-size:.88rem;background:none;color:var(--text);}
+  .qadd input::placeholder{color:var(--text-subtle);}
+  .qadd-btn{width:34px;height:34px;border:none;border-radius:50%;background:var(--brand);color:#fff;
+            font-size:1rem;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+  .qadd-btn:active{transform:scale(.9);}
+
+  /* ── section header ── */
+  .sec{display:flex;align-items:center;gap:8px;margin:22px 2px 11px;}
+  .sec-ttl{font-size:.72rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text-muted);}
+  .sec-cnt{font-size:.68rem;font-weight:700;color:var(--text-subtle);background:var(--surface-2);
+           border-radius:var(--r-full);padding:1px 8px;}
+  .sec .sec-line{flex:1;height:1px;background:var(--border);}
+
+  /* ── task card ── */
+  .task{display:flex;gap:11px;align-items:flex-start;background:var(--surface);border:1px solid var(--border);
+        border-left:3px solid var(--border);border-radius:var(--r-md);padding:13px 12px 13px 14px;margin-bottom:9px;
+        box-shadow:var(--sh-sm);transition:transform .2s ease,box-shadow .2s ease,opacity .35s ease;}
+  .task.area-cursos{border-left-color:var(--brand);}
+  .task.area-conteudo{border-left-color:var(--rose);}
+  .task.area-clientes{border-left-color:var(--amber);}
+  .task.area-producao{border-left-color:var(--green);}
+  .task.area-admin{border-left-color:var(--brown);}
+  .task.leaving{opacity:0;transform:translateX(40px);}
+
+  .check{width:22px;height:22px;flex-shrink:0;border-radius:50%;border:2px solid var(--border-strong);
+         background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;margin-top:1px;
+         transition:background .2s ease,border-color .2s ease,transform .2s ease;color:#fff;}
+  .check svg{width:12px;height:12px;opacity:0;transition:opacity .15s ease;}
+  .check.doing{border-color:var(--amber);background:radial-gradient(circle,var(--amber) 0 42%,transparent 46%);}
+  .check.done{background:var(--green);border-color:var(--green);animation:pop .35s ease;}
+  .check.done svg{opacity:1;}
+  @keyframes pop{0%{transform:scale(1);}45%{transform:scale(1.28);}100%{transform:scale(1);}}
+
+  .task-body{flex:1;min-width:0;cursor:pointer;}
+  .task-ttl{font-size:.92rem;font-weight:600;line-height:1.3;color:var(--text);}
+  .task.done-row .task-ttl{text-decoration:line-through;color:var(--text-subtle);}
+  .task-meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;align-items:center;}
+  .chip{font-size:.66rem;font-weight:600;padding:2px 9px;border-radius:var(--r-full);letter-spacing:.02em;}
+  .chip-proj{background:var(--surface-2);color:var(--text-muted);}
+  .chip-urg{background:var(--danger-soft);color:var(--danger);}
+  .chip-imp{background:var(--amber-soft);color:var(--amber);}
+  .chip-doing{background:var(--brand-soft);color:var(--brand);}
+
+  .foco-star{flex-shrink:0;background:none;border:none;cursor:pointer;font-size:1.15rem;line-height:1;
+             color:var(--text-subtle);padding:0 2px;margin-top:0;transition:transform .15s,color .15s;}
+  .foco-star.on{color:var(--amber);}
+  .foco-star:active{transform:scale(1.3);}
+
+  .wins-empty{font-size:.8rem;color:var(--text-subtle);font-style:italic;padding:4px 2px;line-height:1.5;}
+
+  /* ── footer encorajamento (mobile) ── */
+  .foot-links{margin-top:24px;padding-top:16px;border-top:1px dashed var(--border-strong);
+              display:flex;gap:10px;}
+  .foot-links button{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);
+                     padding:11px;font-family:inherit;font-size:.78rem;font-weight:600;color:var(--brand);cursor:pointer;}
+  .foot-links button:active{background:var(--brand-soft);}
+
+  /* ── trilho lateral (Projetos mini) — desktop ── */
+  .rail-proj{display:none;}
+  .rail-pj{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:12px 13px;
+           margin-bottom:9px;box-shadow:var(--sh-sm);cursor:pointer;}
+  .rail-pj-top{display:flex;align-items:center;gap:8px;}
+  .rail-pj-ico{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0;}
+  .rail-pj-name{flex:1;font-size:.82rem;font-weight:700;line-height:1.15;}
+  .rail-pj-pct{font-size:.72rem;font-weight:700;color:var(--text-muted);}
+  .bar{height:7px;border-radius:var(--r-full);background:var(--surface-2);overflow:hidden;margin-top:9px;}
+  .bar-fill{height:100%;border-radius:var(--r-full);transition:width .6s cubic-bezier(.22,1,.36,1);}
+
+  /* ── PROJETOS (view) ── */
+  .proj{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);
+        padding:15px;margin-bottom:13px;box-shadow:var(--sh-sm);cursor:pointer;transition:box-shadow .2s,transform .2s;}
+  .proj:active{transform:scale(.99);}
+  .proj-top{display:flex;align-items:center;gap:10px;}
+  .proj-ico{width:38px;height:38px;border-radius:var(--r-md);flex-shrink:0;display:flex;align-items:center;
+            justify-content:center;font-size:1.1rem;}
+  .proj-ttl{flex:1;font-size:.98rem;font-weight:700;color:var(--text);line-height:1.2;}
+  .proj-goal{font-size:.68rem;font-weight:600;color:var(--text-muted);background:var(--surface-2);
+             padding:3px 9px;border-radius:var(--r-full);white-space:nowrap;}
+  .proj .bar{height:8px;margin:13px 0 8px;}
+  .proj-foot{display:flex;justify-content:space-between;font-size:.74rem;color:var(--text-muted);}
+  .proj-next{font-weight:600;color:var(--text);}
+
+  /* ── KANBAN ── */
+  .kb-hint{font-size:.76rem;color:var(--text-muted);margin:8px 0 16px;}
+  .kb-col{margin-bottom:18px;}
+  .kb-col-hdr{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+  .kb-dot{width:9px;height:9px;border-radius:50%;}
+  .kb-name{font-size:.78rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--text);}
+  .kb-wip{font-size:.66rem;color:var(--text-subtle);margin-left:auto;}
+  .kb-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);
+           padding:11px 13px;margin-bottom:8px;box-shadow:var(--sh-sm);display:flex;gap:9px;align-items:center;}
+  .kb-card .kb-body{flex:1;}
+  .kb-card .kb-t{font-size:.86rem;font-weight:600;line-height:1.25;}
+  .kb-move{background:var(--surface-2);border:none;border-radius:var(--r-sm);padding:5px 9px;font-size:.72rem;
+           font-weight:700;color:var(--brand);cursor:pointer;white-space:nowrap;}
+  .kb-move:active{background:var(--brand-soft);}
+
+  /* ── IDEIAS ── */
+  .idea{background:var(--mauve-soft);border:1px dashed #E0CFE0;border-radius:var(--r-md);
+        padding:12px 14px;margin-bottom:9px;display:flex;gap:10px;align-items:center;}
+  .idea .bulb{font-size:1.1rem;}
+  .idea-t{flex:1;font-size:.88rem;font-weight:500;color:var(--text);}
+  .idea-promote{background:none;border:1px solid var(--rose);color:var(--rose-dark);border-radius:var(--r-full);
+                padding:4px 11px;font-size:.7rem;font-weight:700;cursor:pointer;white-space:nowrap;}
+  .idea-promote:active{background:var(--rose-soft);}
+
+  /* ── STREAK / FEITAS ── */
+  .streak{background:linear-gradient(135deg,var(--brand-dark),var(--brand));color:#fff;border-radius:var(--r-lg);
+          padding:18px;text-align:center;box-shadow:var(--sh-md);margin:14px 0 4px;}
+  .streak-num{font-size:2.2rem;font-weight:800;line-height:1;}
+  .streak-lbl{font-size:.82rem;opacity:.9;margin-top:5px;}
+  .streak-sub{font-size:.72rem;opacity:.72;margin-top:9px;}
+
+  /* ── empty ── */
+  .empty{text-align:center;padding:50px 20px;color:var(--text-subtle);}
+  .empty-ico{font-size:2rem;margin-bottom:10px;}
+  .empty p{font-size:.85rem;line-height:1.5;}
+
+  /* ── BOTTOM NAV (mobile) ── */
+  .nav{position:absolute;bottom:0;left:0;right:0;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);
+       border-top:1px solid var(--border);display:flex;padding:8px 4px calc(8px + env(safe-area-inset-bottom));z-index:40;}
+  .nav button{flex:1;background:none;border:none;cursor:pointer;display:flex;flex-direction:column;
+              align-items:center;gap:3px;padding:5px 2px;color:var(--text-subtle);font-family:inherit;
+              font-size:.62rem;font-weight:600;transition:color .15s;}
+  .nav button svg{width:21px;height:21px;}
+  .nav button.on{color:var(--brand);}
+
+  /* ── toast ── */
+  .toast{position:absolute;bottom:84px;left:50%;transform:translateX(-50%) translateY(20px);
+         background:var(--brand-dark);color:#fff;padding:10px 18px;border-radius:var(--r-full);
+         font-size:.8rem;font-weight:600;box-shadow:var(--sh-lg);opacity:0;pointer-events:none;
+         transition:opacity .25s,transform .25s;z-index:50;white-space:nowrap;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  .proto-tag{position:fixed;top:8px;left:8px;background:var(--brand-dark);color:#fff;font-size:.62rem;
+             font-weight:700;padding:4px 10px;border-radius:var(--r-full);z-index:99;letter-spacing:.04em;opacity:.85;}
+
+  /* ══════════════════════════════════════════════════════════════
+     DESKTOP — layout próprio (não é mobile esticado)
+     ══════════════════════════════════════════════════════════════ */
+  @media (min-width:980px){
+    body{padding:0;}
+    .frame{max-width:1180px;height:100vh;display:grid;grid-template-columns:252px 1fr;overflow:hidden;}
+    .topbar{display:none;}
+    .nav{display:none;}
+    .main{min-height:0;}
+    .scroll{padding:30px 34px 40px;}
+    .toast{bottom:28px;}
+
+    /* sidebar */
+    .d-side{display:flex;flex-direction:column;gap:4px;overflow-y:auto;
+            background:linear-gradient(180deg,var(--brand-dark),#2a1308);color:#fff;padding:22px 16px;}
+    .d-brand{display:flex;align-items:center;gap:11px;margin-bottom:4px;padding:0 6px;}
+    .d-brand-ico{width:34px;height:34px;border-radius:10px;background:rgba(255,255,255,.15);
+                 display:flex;align-items:center;justify-content:center;}
+    .d-brand h2{font-size:1.05rem;font-weight:800;letter-spacing:.01em;}
+    .d-streak{background:rgba(255,255,255,.10);border-radius:14px;padding:14px;margin:16px 6px 18px;}
+    .d-streak .n{font-size:1.5rem;font-weight:800;line-height:1;}
+    .d-streak .l{font-size:.72rem;opacity:.85;margin-top:4px;}
+    .d-streak .bar{background:rgba(255,255,255,.18);margin-top:11px;}
+    .d-nav-lbl{font-size:.62rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+               opacity:.5;margin:8px 8px 8px;}
+    .d-nav{display:flex;align-items:center;gap:12px;width:100%;background:none;border:none;
+           color:rgba(255,255,255,.78);font-family:inherit;font-size:.86rem;font-weight:600;
+           padding:10px 12px;border-radius:10px;cursor:pointer;text-align:left;transition:background .15s,color .15s;}
+    .d-nav svg{width:18px;height:18px;flex-shrink:0;}
+    .d-nav:hover{background:rgba(255,255,255,.08);color:#fff;}
+    .d-nav.on{background:rgba(255,255,255,.16);color:#fff;}
+    .d-badge{margin-left:auto;font-size:.66rem;font-weight:700;background:rgba(255,255,255,.2);
+             border-radius:999px;padding:1px 8px;}
+
+    /* dashboard de 3 colunas no Hoje */
+    .hoje-cols{display:grid;grid-template-columns:1fr 1.15fr .92fr;gap:22px;align-items:start;margin-top:8px;}
+    .qadd{max-width:560px;margin-bottom:4px;}
+    .col-foco,.col-todo,.col-rail{min-width:0;}
+    .foot-links{display:none;}
+    .rail-proj{display:block;}
+    .col-rail .sec{margin-top:0;}
+    .col-todo .sec:first-child,.col-foco .sec:first-child{margin-top:14px;}
+
+    /* outras views aproveitam a largura */
+    #proj-list{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+    #kb-board{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;align-items:start;}
+    #kb-board .kb-col{margin-bottom:0;}
+    #idea-list{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+    #idea-list .idea{margin-bottom:0;}
+    #v-feitas{max-width:620px;}
+  }
+</style>
+</head>
+<body>
+
+<div class="proto-tag">PROTÓTIPO · Studio Flow</div>
+
+<div class="frame">
+
+  <!-- ════ SIDEBAR DESKTOP ════ -->
+  <aside class="d-side">
+    <div class="d-brand">
+      <div class="d-brand-ico">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      </div>
+      <h2>Studio Flow</h2>
+    </div>
+
+    <div class="d-nav-lbl" style="margin-top:14px;">Vistas</div>
+    <button class="d-nav on" data-v="hoje" onclick="go('hoje')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      Hoje<span class="d-badge" id="d-b-hoje">0</span>
+    </button>
+    <button class="d-nav" data-v="projetos" onclick="go('projetos')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Projetos
+    </button>
+    <button class="d-nav" data-v="kanban" onclick="go('kanban')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="5" height="18"/><rect x="10" y="3" width="5" height="12"/><rect x="17" y="3" width="5" height="15"/></svg>
+      Kanban
+    </button>
+    <button class="d-nav" data-v="ideias" onclick="go('ideias')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z"/></svg>
+      Ideias<span class="d-badge" id="d-b-ideias">0</span>
+    </button>
+    <button class="d-nav" data-v="feitas" onclick="go('feitas')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      Feitas<span class="d-badge" id="d-b-feitas">0</span>
+    </button>
+  </aside>
+
+  <!-- ════ MAIN ════ -->
+  <div class="main">
+
+    <!-- TOPBAR (mobile) -->
+    <div class="topbar">
+      <button class="ic" title="Voltar">‹</button>
+      <h1 id="topttl">Studio Flow</h1>
+      <button class="ic" title="Notificações">🔔</button>
+    </div>
+
+    <div class="scroll" id="scroll">
+
+      <!-- ════════ HOJE ════════ -->
+      <div class="view on" id="v-hoje">
+        <div class="qadd">
+          <span style="color:var(--text-subtle);">＋</span>
+          <input id="q-hoje" placeholder="Capturar algo... (ex: gravar reel #cachos !urgente)" onkeydown="if(event.key==='Enter')capture(this)">
+          <button class="qadd-btn" onclick="capture(document.getElementById('q-hoje'))">↑</button>
+        </div>
+
+        <div class="hoje-cols">
+          <section class="col-foco">
+            <div class="sec"><span class="sec-ttl">🎯 Foco de hoje</span><span class="sec-cnt" id="foco-cnt">0</span><span class="sec-line"></span></div>
+            <div id="foco-list"></div>
+          </section>
+
+          <section class="col-todo">
+            <div class="sec"><span class="sec-ttl">A fazer · tudo</span><span class="sec-cnt" id="todo-cnt">0</span><span class="sec-line"></span></div>
+            <div id="todo-list"></div>
+            <div class="foot-links">
+              <button onclick="go('projetos')">📋 Ver projetos</button>
+              <button onclick="go('ideias')">💡 Backlog de ideias</button>
+            </div>
+          </section>
+
+          <aside class="col-rail">
+            <div class="rail-proj">
+              <div class="sec"><span class="sec-ttl">📋 Projetos</span><span class="sec-line"></span></div>
+              <div id="rail-proj-list"></div>
+            </div>
+            <div class="rail-feitos">
+              <div class="sec"><span class="sec-ttl">✓ Feitos</span><span class="sec-cnt" id="wins-cnt">0</span><span class="sec-line"></span></div>
+              <div id="wins-list"><div class="wins-empty">Conclua uma tarefa e ela aparece aqui ✨</div></div>
+            </div>
+          </aside>
+        </div>
+      </div>
+
+      <!-- ════════ PROJETOS ════════ -->
+      <div class="view" id="v-projetos">
+        <div class="view-ttl">Projetos em andamento</div>
+        <div class="view-sub">Cada frente com seu próprio progresso.</div>
+        <div id="proj-list" style="margin-top:18px;"></div>
+      </div>
+
+      <!-- ════════ KANBAN ════════ -->
+      <div class="view" id="v-kanban">
+        <div class="view-ttl">Fluxo · Curso Cachos</div>
+        <div class="kb-hint">Toque em <b>mover →</b> para avançar uma tarefa no fluxo.</div>
+        <div id="kb-board"></div>
+      </div>
+
+      <!-- ════════ IDEIAS ════════ -->
+      <div class="view" id="v-ideias">
+        <div class="view-ttl">Backlog de ideias 💡</div>
+        <div class="view-sub">Solte aqui sem culpa. Vira tarefa quando você quiser.</div>
+        <div class="qadd" style="margin-top:16px;">
+          <span style="color:var(--text-subtle);">💡</span>
+          <input id="q-ideia" placeholder="Nova ideia..." onkeydown="if(event.key==='Enter')addIdea(this)">
+          <button class="qadd-btn" onclick="addIdea(document.getElementById('q-ideia'))">↑</button>
+        </div>
+        <div id="idea-list" style="margin-top:14px;"></div>
+      </div>
+
+      <!-- ════════ FEITAS ════════ -->
+      <div class="view" id="v-feitas">
+        <div class="view-ttl">Conquistas</div>
+        <div class="streak">
+          <div class="streak-num">12</div>
+          <div class="streak-lbl">dias movendo o Studio 🔥</div>
+          <div class="streak-sub">28 tarefas concluídas em junho</div>
+        </div>
+        <div class="sec"><span class="sec-ttl">Concluídas hoje</span><span class="sec-cnt" id="done-cnt">0</span><span class="sec-line"></span></div>
+        <div id="done-list"></div>
+      </div>
+
+    </div><!-- /scroll -->
+  </div><!-- /main -->
+
+  <!-- BOTTOM NAV (mobile) -->
+  <div class="nav">
+    <button class="on" data-v="hoje" onclick="go('hoje')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      Hoje
+    </button>
+    <button data-v="projetos" onclick="go('projetos')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Projetos
+    </button>
+    <button data-v="kanban" onclick="go('kanban')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="5" height="18"/><rect x="10" y="3" width="5" height="12"/><rect x="17" y="3" width="5" height="15"/></svg>
+      Kanban
+    </button>
+    <button data-v="ideias" onclick="go('ideias')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z"/></svg>
+      Ideias
+    </button>
+    <button data-v="feitas" onclick="go('feitas')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      Feitas
+    </button>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+</div>
+
+<script>
+/* ════════ DADOS FAKE (baseados nas tarefas reais da Carol) ════════ */
+var AREAS = {
+  cursos:   {nome:'Cursos',   cor:'var(--brand)',  bg:'var(--brand-soft)'},
+  conteudo: {nome:'Conteúdo', cor:'var(--rose)',   bg:'var(--rose-soft)'},
+  clientes: {nome:'Clientes', cor:'var(--amber)',  bg:'var(--amber-soft)'},
+  producao: {nome:'Studio',   cor:'var(--green)',  bg:'var(--green-soft)'},
+  admin:    {nome:'Admin',    cor:'var(--brown)',  bg:'var(--brown-soft)'},
+};
+
+var tasks = [
+  {id:1, t:'Finalizar orçamento Curso Cachos', area:'cursos',   proj:'Curso Cachos e Crespos', prio:'imp', status:'a_fazer', foco:true},
+  {id:2, t:'Editar vídeo da Isabel',           area:'clientes', proj:'Noivas — temporada',     prio:'',    status:'fazendo', foco:true},
+  {id:3, t:'Gravar Reels de finalização',      area:'cursos',   proj:'Curso Cachos e Crespos', prio:'urg', status:'a_fazer', foco:true, prazo:'vence sexta'},
+  {id:4, t:'Editar Reels do curso',            area:'conteudo', proj:'Conteúdo de junho',      prio:'',    status:'a_fazer', foco:false},
+  {id:5, t:'Finalizar post Curso Milena',      area:'conteudo', proj:'Conteúdo de junho',      prio:'imp', status:'a_fazer', foco:false},
+  {id:6, t:'Fazer PDF de orientações p/ noivas',area:'clientes',proj:'Noivas — temporada',     prio:'',    status:'a_fazer', foco:false},
+  {id:7, t:'Ver tinta p/ pintar studio de branco',area:'producao',proj:'Studio',              prio:'',    status:'a_fazer', foco:false},
+  {id:8, t:'Definir bônus do curso',           area:'cursos',   proj:'Curso Cachos e Crespos', prio:'',    status:'ideia',   foco:false},
+];
+
+var wins = [];
+
+var projetos = [
+  {nome:'Curso Cachos e Crespos', area:'cursos',   ico:'📦', feitas:6, total:10, goal:'15/jul', next:'Gravar Reels'},
+  {nome:'Conteúdo de junho',      area:'conteudo', ico:'📹', feitas:3, total:10, goal:'mensal', next:'Editar Reels'},
+  {nome:'Noivas — temporada',     area:'clientes', ico:'👰', feitas:8, total:10, goal:'set',    next:'PDF orientações'},
+  {nome:'Studio',                 area:'producao', ico:'🪴', feitas:1, total:4,  goal:'—',      next:'Ver tinta branca'},
+];
+
+var ideias = [
+  'Série de Reels sobre finalização de cachos',
+  'Combo aula avulsa + kit de produtos',
+  'Parceria com salão pra captação',
+];
+
+var kbCols = [
+  {key:'ideia',   nome:'Ideias',  cor:'var(--brown)'},
+  {key:'a_fazer', nome:'A fazer',  cor:'var(--amber)'},
+  {key:'fazendo', nome:'Fazendo',  cor:'var(--brand)', wip:1},
+  {key:'feita',   nome:'Concluído',cor:'var(--green)'},
+];
+var kbFlow = ['ideia','a_fazer','fazendo','feita'];
+
+/* ════════ NAV ════════ */
+var TITLES = {hoje:'Studio Flow', projetos:'Projetos', kanban:'Kanban', ideias:'Ideias', feitas:'Conquistas'};
+function go(v){
+  document.querySelectorAll('.view').forEach(function(el){el.classList.remove('on');});
+  document.getElementById('v-'+v).classList.add('on');
+  document.querySelectorAll('.nav button, .d-nav').forEach(function(b){b.classList.toggle('on', b.dataset.v===v);});
+  document.getElementById('topttl').textContent = TITLES[v];
+  document.getElementById('scroll').scrollTop = 0;
+  if(v==='hoje')     renderHoje();
+  if(v==='projetos') renderProjetos();
+  if(v==='kanban')   renderKanban();
+  if(v==='ideias')   renderIdeias();
+  if(v==='feitas')   renderFeitas();
+}
+
+/* ════════ TOAST ════════ */
+var toastTmr;
+function toast(msg){
+  var t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  clearTimeout(toastTmr); toastTmr=setTimeout(function(){t.classList.remove('show');},2200);
+}
+
+/* ════════ BADGES (sidebar desktop) ════════ */
+function refreshBadges(){
+  var pend = tasks.filter(function(t){return t.status!=='feita' && t.status!=='ideia';}).length;
+  var setB=function(id,n){var e=document.getElementById(id);if(e)e.textContent=n;};
+  setB('d-b-hoje', pend); setB('d-b-ideias', ideias.length); setB('d-b-feitas', wins.length);
+}
+
+/* ════════ TASK CARD ════════ */
+function prioChip(p){
+  if(p==='urg') return '<span class="chip chip-urg">🔴 urgente</span>';
+  if(p==='imp') return '<span class="chip chip-imp">⭐ importante</span>';
+  return '';
+}
+function taskHTML(t){
+  var checkCls = t.status==='fazendo' ? 'doing' : (t.status==='feita'?'done':'');
+  var meta = '<span class="chip chip-proj">'+t.proj+'</span>';
+  if(t.status==='fazendo') meta += '<span class="chip chip-doing">fazendo</span>';
+  if(t.prazo) meta += '<span class="chip chip-urg">'+t.prazo+'</span>';
+  else meta += prioChip(t.prio);
+  return '<div class="task area-'+t.area+'" id="task-'+t.id+'">'+
+    '<button class="check '+checkCls+'" onclick="complete('+t.id+',event)" title="Concluir">'+
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'+
+    '</button>'+
+    '<div class="task-body"><div class="task-ttl">'+t.t+'</div>'+
+    '<div class="task-meta">'+meta+'</div></div>'+
+    '<button class="foco-star '+(t.foco?'on':'')+'" onclick="toggleFoco('+t.id+',event)" title="'+(t.foco?'Tirar do foco':'Focar hoje')+'">'+(t.foco?'★':'☆')+'</button>'+
+  '</div>';
+}
+
+function rank(t){
+  if(t.prio==='urg')        return 0;
+  if(t.status==='fazendo')  return 1;
+  if(t.prio==='imp')        return 2;
+  return 3;
+}
+
+/* ════════ HOJE ════════ */
+function renderHoje(){
+  var pend = tasks.filter(function(t){return t.status!=='feita' && t.status!=='ideia';});
+  var foco = pend.filter(function(t){return t.foco;}).sort(function(a,b){return rank(a)-rank(b);});
+  var rest = pend.filter(function(t){return !t.foco;}).sort(function(a,b){return rank(a)-rank(b);});
+
+  document.getElementById('foco-cnt').textContent = foco.length;
+  document.getElementById('foco-list').innerHTML = foco.length
+    ? foco.map(taskHTML).join('')
+    : '<div class="wins-empty">Toque na ☆ de uma tarefa ao lado para escolher seu foco do dia.</div>';
+
+  document.getElementById('todo-cnt').textContent = rest.length;
+  document.getElementById('todo-list').innerHTML = rest.length
+    ? rest.map(taskHTML).join('')
+    : '<div class="wins-empty">Tudo já está no foco 🎯</div>';
+
+  document.getElementById('wins-cnt').textContent = wins.length;
+  document.getElementById('wins-list').innerHTML = wins.length
+    ? wins.map(function(t){return '<div class="task area-'+t.area+' done-row"><button class="check done"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></button><div class="task-body"><div class="task-ttl">'+t.t+'</div></div></div>';}).join('')
+    : '<div class="wins-empty">Conclua uma tarefa e ela aparece aqui ✨</div>';
+
+  // trilho projetos (desktop)
+  document.getElementById('rail-proj-list').innerHTML = projetos.map(function(p){
+    var pct=Math.round(p.feitas/p.total*100), cor=AREAS[p.area].cor, bg=AREAS[p.area].bg;
+    return '<div class="rail-pj" onclick="go(\'kanban\')">'+
+      '<div class="rail-pj-top"><div class="rail-pj-ico" style="background:'+bg+'">'+p.ico+'</div>'+
+      '<div class="rail-pj-name">'+p.nome+'</div><div class="rail-pj-pct">'+pct+'%</div></div>'+
+      '<div class="bar"><div class="bar-fill" style="width:'+pct+'%;background:'+cor+'"></div></div></div>';
+  }).join('');
+
+  refreshBadges();
+}
+
+function toggleFoco(id, ev){
+  if(ev) ev.stopPropagation();
+  var t = tasks.find(function(x){return x.id===id;});
+  if(!t) return;
+  t.foco = !t.foco;
+  renderHoje();
+  toast(t.foco ? 'No foco de hoje 🎯' : 'Tirada do foco');
+}
+
+var PHRASES = ['Mais uma 🤎','Isso! 🎉','Studio andando ✨','Boa, Carol! 👏','Progresso real 🔥'];
+function complete(id, ev){
+  if(ev) ev.stopPropagation();
+  var t = tasks.find(function(x){return x.id===id;});
+  if(!t || t.status==='feita') return;
+  t.status='feita'; t.foco=false;
+  wins.unshift(t);
+  var el=document.getElementById('task-'+id);
+  if(el){
+    el.querySelector('.check').classList.add('done');
+    el.classList.add('leaving');
+    setTimeout(renderHoje, 360);
+  } else { renderHoje(); }
+  var pj = projetos.find(function(p){return p.nome===t.proj;});
+  if(pj && pj.feitas<pj.total) pj.feitas++;
+  toast(PHRASES[Math.floor(Math.random()*PHRASES.length)]);
+}
+
+/* ════════ CAPTURA RÁPIDA (parse #area !prio) ════════ */
+function capture(inp){
+  var raw=(inp.value||'').trim(); if(!raw) return;
+  var area='admin', prio='', proj='Avulsas';
+  var m=raw.match(/#(\w+)/); if(m){ var a=m[1].toLowerCase();
+    if(a.indexOf('cach')>=0||a.indexOf('curso')>=0){area='cursos';proj='Curso Cachos e Crespos';}
+    else if(a.indexOf('cont')>=0||a.indexOf('reel')>=0){area='conteudo';proj='Conteúdo de junho';}
+    else if(a.indexOf('noiv')>=0||a.indexOf('clien')>=0){area='clientes';proj='Noivas — temporada';}
+    else if(a.indexOf('studio')>=0){area='producao';proj='Studio';}
+  }
+  if(/!urg/i.test(raw)) prio='urg'; else if(/!imp/i.test(raw)) prio='imp';
+  var titulo=raw.replace(/#\w+/g,'').replace(/![a-z]+/gi,'').trim();
+  tasks.unshift({id:Date.now(), t:titulo, area:area, proj:proj, prio:prio, status:'a_fazer', foco:false});
+  inp.value='';
+  renderHoje();
+  toast('Adicionada em A fazer');
+}
+
+/* ════════ PROJETOS ════════ */
+function renderProjetos(){
+  document.getElementById('proj-list').innerHTML = projetos.map(function(p){
+    var pct=Math.round(p.feitas/p.total*100);
+    var cor=AREAS[p.area].cor, bg=AREAS[p.area].bg;
+    return '<div class="proj" onclick="go(\'kanban\')">'+
+      '<div class="proj-top">'+
+        '<div class="proj-ico" style="background:'+bg+'">'+p.ico+'</div>'+
+        '<div class="proj-ttl">'+p.nome+'</div>'+
+        '<div class="proj-goal">🎯 '+p.goal+'</div>'+
+      '</div>'+
+      '<div class="bar"><div class="bar-fill" style="width:'+pct+'%;background:'+cor+'"></div></div>'+
+      '<div class="proj-foot"><span>'+p.feitas+'/'+p.total+' · '+pct+'%</span>'+
+      '<span>próxima: <span class="proj-next">'+p.next+'</span></span></div>'+
+    '</div>';
+  }).join('');
+}
+
+/* ════════ KANBAN (Curso Cachos) ════════ */
+function renderKanban(){
+  var board=document.getElementById('kb-board');
+  var projTasks=tasks.filter(function(t){return t.proj==='Curso Cachos e Crespos';});
+  board.innerHTML = kbCols.map(function(col){
+    var items=projTasks.filter(function(t){return t.status===col.key;});
+    var wip = col.wip ? '<span class="kb-wip">limite '+items.length+'/'+col.wip+'</span>' : '<span class="kb-wip">'+items.length+'</span>';
+    var cards=items.map(function(t){
+      var idx=kbFlow.indexOf(t.status);
+      var moveBtn = idx<kbFlow.length-1
+        ? '<button class="kb-move" onclick="kbMove('+t.id+')">mover →</button>'
+        : '<span style="color:var(--green);font-weight:800;">✓</span>';
+      return '<div class="kb-card"><div class="kb-body"><div class="kb-t">'+t.t+'</div></div>'+moveBtn+'</div>';
+    }).join('') || '<div class="wins-empty" style="padding:6px 2px;">vazio</div>';
+    return '<div class="kb-col"><div class="kb-col-hdr"><span class="kb-dot" style="background:'+col.cor+'"></span>'+
+      '<span class="kb-name">'+col.nome+'</span>'+wip+'</div>'+cards+'</div>';
+  }).join('');
+}
+function kbMove(id){
+  var t=tasks.find(function(x){return x.id===id;});
+  var idx=kbFlow.indexOf(t.status);
+  if(idx<kbFlow.length-1){
+    t.status=kbFlow[idx+1];
+    if(t.status==='feita'){
+      var pj=projetos.find(function(p){return p.nome===t.proj;});
+      if(pj && pj.feitas<pj.total) pj.feitas++;
+      toast('Concluída! 🎉');
+    } else if(t.status==='fazendo'){ toast('Em andamento'); }
+    else { toast('Movida'); }
+    renderKanban();
+  }
+}
+
+/* ════════ IDEIAS ════════ */
+function renderIdeias(){
+  document.getElementById('idea-list').innerHTML = ideias.length
+    ? ideias.map(function(txt,i){
+        return '<div class="idea"><span class="bulb">💡</span><div class="idea-t">'+txt+'</div>'+
+          '<button class="idea-promote" onclick="promote('+i+')">→ tarefa</button></div>';
+      }).join('')
+    : '<div class="empty"><div class="empty-ico">💭</div><p>Sem ideias por enquanto.<br>Solte a próxima aqui!</p></div>';
+  refreshBadges();
+}
+function addIdea(inp){
+  var v=(inp.value||'').trim(); if(!v) return;
+  ideias.unshift(v); inp.value=''; renderIdeias(); toast('Ideia guardada 💡');
+}
+function promote(i){
+  var txt=ideias.splice(i,1)[0];
+  tasks.unshift({id:Date.now(), t:txt, area:'conteudo', proj:'Conteúdo de junho', prio:'imp', status:'a_fazer', foco:true});
+  renderIdeias(); toast('Virou tarefa no foco ✨');
+  setTimeout(function(){go('hoje');},450);
+}
+
+/* ════════ FEITAS ════════ */
+function renderFeitas(){
+  document.getElementById('done-cnt').textContent = wins.length;
+  document.getElementById('done-list').innerHTML = wins.length
+    ? wins.map(function(t){return '<div class="task area-'+t.area+' done-row"><button class="check done"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></button><div class="task-body"><div class="task-ttl">'+t.t+'</div><div class="task-meta"><span class="chip chip-proj">'+t.proj+'</span></div></div></div>';}).join('')
+    : '<div class="empty"><div class="empty-ico">🌱</div><p>Nada concluído hoje ainda.<br>Comece pelo seu foco!</p></div>';
+  refreshBadges();
+}
+
+/* ════════ INIT ════════ */
+renderHoje();
+</script>
+</body>
+</html>
