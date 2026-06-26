@@ -26,8 +26,10 @@ var DOW = ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
    ============================================================ */
 var QN_KEY='mk_quick_notes';
 var STORIES_KEY='mk_content_stories';
+var PLANOS_KEY='mk_content_planos';
 var ideas=[], customCats=[], customPlats=[];
 var stories=[];               // checklist diário de stories
+var planos=[];                // notas livres por dia (Próximos dias) — só localStorage
 var bankCat='todos';          // filtro de tema da gaveta do banco
 var promoIdeaId=null;         // ideia alvo do menu "promover" (⤴)
 var curView='hoje', curSF='todos', curCF=[], curPlats=[];
@@ -191,6 +193,7 @@ function pushToSheets(){
 function readLS(){
   try{ideas      =JSON.parse(localStorage.getItem('mk_content_ideas')||'[]');}catch(e){ideas=[];}
   try{stories    =JSON.parse(localStorage.getItem(STORIES_KEY)||'[]');}catch(e){stories=[];}
+  try{planos     =JSON.parse(localStorage.getItem(PLANOS_KEY)||'[]');}catch(e){planos=[];}
   try{customCats =JSON.parse(localStorage.getItem('mk_content_cats') ||'[]');}catch(e){customCats=[];}
   try{customPlats=JSON.parse(localStorage.getItem('mk_content_platforms')||'[]');}catch(e){customPlats=[];}
   // Filtro de plataforma agora é multiseleção (array). Migra o valor único antigo.
@@ -209,6 +212,7 @@ function writeLS(){
 }
 function saveIdeas(){try{localStorage.setItem('mk_content_ideas',JSON.stringify(ideas));}catch(e){} scheduleSync();}
 function saveStoriesLS(){try{localStorage.setItem(STORIES_KEY,JSON.stringify(stories));}catch(e){}}
+function savePlanosLS(){try{localStorage.setItem(PLANOS_KEY,JSON.stringify(planos));}catch(e){}}
 function persistIdea(idea){
   saveIdeas();
   if(idea && typeof DB!=='undefined' && !window._SB_ERROR) DB.conteudo.upsert(idea).catch(function(){});
@@ -216,6 +220,10 @@ function persistIdea(idea){
 function persistStory(s){
   saveStoriesLS();
   if(s && typeof DB!=='undefined' && DB.stories && !window._SB_ERROR) DB.stories.upsert(s).catch(function(){});
+}
+function persistPlano(p){
+  savePlanosLS();
+  if(p && typeof DB!=='undefined' && DB.planos && !window._SB_ERROR) DB.planos.upsert(p).catch(function(){});
 }
 // Persiste categorias/plataformas personalizadas no Supabase (tabela configuracoes) p/ sync entre devices
 function syncCfg(chave,val){ if(typeof DB!=='undefined' && DB.config && DB.config.set && !window._SB_ERROR){ DB.config.set(chave, JSON.stringify(val)).catch(function(){}); } }
@@ -438,6 +446,7 @@ function loadData(){
       updateSyncDot('ok'); render();
       loadCustomFromCloud();   // categorias/plataformas personalizadas (cross-device)
       loadStoriesFromCloud();  // checklist de stories (cross-device)
+      loadPlanosFromCloud();   // notas livres por dia (cross-device)
     })
     .catch(function(){ updateSyncDot('offline'); });
 }
@@ -456,6 +465,24 @@ function loadStoriesFromCloud(){
       }
       saveStoriesLS();
       if(curView==='hoje'||curView==='stories') render();
+    })
+    .catch(function(){ /* tabela ainda não criada — segue só local */ });
+}
+
+// Notas livres por dia: Supabase é fonte de verdade; itens locais ainda não enviados sobem.
+function loadPlanosFromCloud(){
+  if(typeof DB==='undefined' || !DB.planos || window._SB_ERROR) return;
+  DB.planos.list()
+    .then(function(data){
+      var sbIds={};
+      for(var i=0;i<data.length;i++) sbIds[data[i].id]=true;
+      var localOnly=planos.filter(function(p){ return !sbIds[p.id]; });
+      planos=data.concat(localOnly);
+      for(var j=0;j<localOnly.length;j++){
+        (function(p){ DB.planos.upsert(p).catch(function(){}); })(localOnly[j]);
+      }
+      savePlanosLS();
+      if(curView==='hoje') render();
     })
     .catch(function(){ /* tabela ainda não criada — segue só local */ });
 }
@@ -1157,6 +1184,37 @@ function storyInpKey(ev,date){
   var inp=document.getElementById('st-inp-'+date);
   if(inp) inp.focus();
 }
+
+/* ── Notas livres por dia (Próximos dias) — só localStorage ── */
+function planosFor(date){
+  return planos.filter(function(p){ return p.date===date; })
+    .sort(function(a,b){ return (a.ordem-b.ordem) || (a.createdAt<b.createdAt?-1:1); });
+}
+function addPlano(date,texto){
+  if(!texto) return;
+  var p={id:uid(),date:date,texto:texto,done:false,ordem:planosFor(date).length,createdAt:new Date().toISOString()};
+  planos.push(p);
+  persistPlano(p);
+}
+function planoInpKey(ev,date){
+  if(ev.key!=='Enter') return;
+  var v=ev.target.value.trim(); if(!v) return;
+  addPlano(date,v);
+  render();
+  var inp=document.getElementById('pl-inp-'+date);
+  if(inp) inp.focus();
+}
+function togglePlanoDone(id){
+  for(var i=0;i<planos.length;i++) if(planos[i].id===id){ planos[i].done=!planos[i].done; persistPlano(planos[i]); break; }
+  render();
+}
+function removePlano(id,ev){
+  if(ev) ev.stopPropagation();
+  planos=planos.filter(function(p){ return p.id!==id; });
+  savePlanosLS();
+  if(typeof DB!=='undefined' && DB.planos && !window._SB_ERROR) DB.planos.delete(id).catch(function(){});
+  render();
+}
 function toggleStoryDone(id){
   for(var i=0;i<stories.length;i++) if(stories[i].id===id){ stories[i].done=!stories[i].done; persistStory(stories[i]); break; }
   render();
@@ -1293,34 +1351,33 @@ function renderHoje(){
 
   html+=heroHTML(d);
 
-  html+='<div class="hj-zones">';
-
-  /* ZONA 1 — O que eu faço hoje */
-  html+='<section class="hj-zone hj-zone-hoje"><div class="hj-zone-title">O que eu faço hoje</div>';
-  if(d.atrasados.length){
-    html+='<div class="sec">';
-    for(var a=0;a<d.atrasados.length;a++) html+=acardHTML(d.atrasados[a],'late');
-    html+='</div>';
-  }
-  html+='<div class="sec sec-drop" ondragover="dragOverZ(event)" ondragleave="dragLeaveZ(event)" ondrop="dropOn(event,\'gravar\')">'+
-    '<div class="sec-hdr"><span class="ico">🎬</span><h2>Gravar hoje</h2><span class="cnt">'+d.gravar.length+'</span></div>';
-  if(!d.gravar.length) html+='<div class="sec-empty">Nada para gravar hoje — arraste uma ideia do banco ou use ⤴ para promover.</div>';
-  for(var g=0;g<d.gravar.length;g++) html+=acardHTML(d.gravar[g],'gravar');
-  html+='</div>';
-  html+='<div class="sec"><div class="sec-hdr"><span class="ico">📤</span><h2>Publicar hoje</h2><span class="cnt">'+d.publicar.length+'</span></div>';
-  if(!d.publicar.length) html+='<div class="sec-empty">Nenhuma publicação agendada para hoje.</div>';
-  for(var p=0;p<d.publicar.length;p++) html+=acardHTML(d.publicar[p],'publicar');
-  html+='</div>';
-  if(d.editando.length){
-    html+='<div class="sec"><div class="sec-hdr"><span class="ico">✂️</span><h2>Em edição</h2><span class="cnt">'+d.editando.length+'</span></div>';
-    for(var e=0;e<d.editando.length;e++) html+=erowHTML(d.editando[e]);
-    html+='</div>';
-  }
-  html+='</section>';
-
-  /* ZONA 2 — Stories */
   var tm=addDaysISO(t,1);
-  html+='<section class="hj-zone hj-zone-stories"><div class="hj-zone-title">📱 Stories</div>'+
+
+  /* ZONA A — O que eu faço hoje */
+  var zHoje='<section class="hj-zone hj-zone-hoje"><div class="hj-zone-title">O que eu faço hoje</div>';
+  if(d.atrasados.length){
+    zHoje+='<div class="sec">';
+    for(var a=0;a<d.atrasados.length;a++) zHoje+=acardHTML(d.atrasados[a],'late');
+    zHoje+='</div>';
+  }
+  zHoje+='<div class="sec sec-drop" ondragover="dragOverZ(event)" ondragleave="dragLeaveZ(event)" ondrop="dropOn(event,\'gravar\')">'+
+    '<div class="sec-hdr"><span class="ico">🎬</span><h2>Gravar hoje</h2><span class="cnt">'+d.gravar.length+'</span></div>';
+  if(!d.gravar.length) zHoje+='<div class="sec-empty">Nada para gravar hoje — arraste uma ideia do banco ou use ⤴ para promover.</div>';
+  for(var g=0;g<d.gravar.length;g++) zHoje+=acardHTML(d.gravar[g],'gravar');
+  zHoje+='</div>';
+  zHoje+='<div class="sec"><div class="sec-hdr"><span class="ico">📤</span><h2>Publicar hoje</h2><span class="cnt">'+d.publicar.length+'</span></div>';
+  if(!d.publicar.length) zHoje+='<div class="sec-empty">Nenhuma publicação agendada para hoje.</div>';
+  for(var p=0;p<d.publicar.length;p++) zHoje+=acardHTML(d.publicar[p],'publicar');
+  zHoje+='</div>';
+  if(d.editando.length){
+    zHoje+='<div class="sec"><div class="sec-hdr"><span class="ico">✂️</span><h2>Em edição</h2><span class="cnt">'+d.editando.length+'</span></div>';
+    for(var e=0;e<d.editando.length;e++) zHoje+=erowHTML(d.editando[e]);
+    zHoje+='</div>';
+  }
+  zHoje+='</section>';
+
+  /* ZONA B — Stories */
+  var zStories='<section class="hj-zone hj-zone-stories"><div class="hj-zone-title">📱 Stories</div>'+
     '<div class="stories-box sec-drop" ondragover="dragOverZ(event)" ondragleave="dragLeaveZ(event)" ondrop="dropOn(event,\'story\')">'+
       storiesBlockHTML(t,'Hoje')+
       '<button class="stories-bank-btn" onclick="bankFromStories()">⤵ trazer do banco de ideias</button>'+
@@ -1328,33 +1385,35 @@ function renderHoje(){
     '</div>'+
   '</section>';
 
-  /* ZONA 3 — Próximos dias */
-  html+='<section class="hj-zone hj-zone-next">';
-  var tmIt=nextDayItems(tm);
-  var tmParts=[];
-  for(var x=0;x<tmIt.pubs.length;x++)  tmParts.push(safe(tmIt.pubs[x].title));
-  for(var y=0;y<tmIt.gravs.length;y++) tmParts.push('gravar '+safe(tmIt.gravs[y].title));
-  if(tmIt.st) tmParts.push(tmIt.st+' storie'+(tmIt.st>1?'s':''));
-  html+='<div class="nd-mobile-line" onclick="setView(\'cal\')">📅 <b>Amanhã:</b>&nbsp;<span class="nd-ml-txt">'+(tmParts.length?tmParts.join(' · '):'nada planejado')+'</span><span class="arrow">›</span></div>';
-  html+='<div class="nd-full"><div class="hj-zone-title">Próximos dias</div>';
+  /* ZONA C — Próximos dias (com notas livres digitáveis) */
+  var zNext='<section class="hj-zone hj-zone-next">';
+  zNext+='<div class="nd-full"><div class="hj-zone-title">Próximos dias</div>';
   for(var k=1;k<=4;k++){
-    var dt=addDaysISO(t,k), it=nextDayItems(dt);
-    html+='<div class="nd-day sec-drop" ondragover="dragOverZ(event)" ondragleave="dragLeaveZ(event)" ondrop="dropOn(event,\'day\',\''+dt+'\')">'+
+    var dt=addDaysISO(t,k), it=nextDayItems(dt), pls=planosFor(dt);
+    zNext+='<div class="nd-day sec-drop" ondragover="dragOverZ(event)" ondragleave="dragLeaveZ(event)" ondrop="dropOn(event,\'day\',\''+dt+'\')">'+
       '<div class="nd-lbl" onclick="openDayModal(\''+dt+'\')"><b>'+safe(dayLabel(dt))+'</b></div>';
-    var has=false;
-    for(var p2=0;p2<it.pubs.length;p2++){ has=true; html+='<div class="nd-card" onclick="openModal(\''+safe(it.pubs[p2].id)+'\')"><span class="nd-ico">📤</span><span class="nd-title">'+safe(it.pubs[p2].title)+'</span></div>'; }
-    for(var g2=0;g2<it.gravs.length;g2++){ has=true; html+='<div class="nd-card" onclick="openModal(\''+safe(it.gravs[g2].id)+'\')"><span class="nd-ico">🎬</span><span class="nd-title">Gravar: '+safe(it.gravs[g2].title)+'</span></div>'; }
-    if(it.st){ has=true; html+='<div class="nd-card nd-card-st" onclick="setView(\'stories\')"><span class="nd-ico">📱</span><span class="nd-title">'+it.st+' storie'+(it.st>1?'s':'')+' planejado'+(it.st>1?'s':'')+'</span></div>'; }
-    if(!has) html+='<div class="nd-empty">nada planejado · <button onclick="openDayModal(\''+dt+'\')">+ planejar</button></div>';
-    html+='</div>';
+    for(var p2=0;p2<it.pubs.length;p2++) zNext+='<div class="nd-card" onclick="openModal(\''+safe(it.pubs[p2].id)+'\')"><span class="nd-ico">📤</span><span class="nd-title">'+safe(it.pubs[p2].title)+'</span></div>';
+    for(var g2=0;g2<it.gravs.length;g2++) zNext+='<div class="nd-card" onclick="openModal(\''+safe(it.gravs[g2].id)+'\')"><span class="nd-ico">🎬</span><span class="nd-title">Gravar: '+safe(it.gravs[g2].title)+'</span></div>';
+    if(it.st) zNext+='<div class="nd-card nd-card-st" onclick="setView(\'stories\')"><span class="nd-ico">📱</span><span class="nd-title">'+it.st+' storie'+(it.st>1?'s':'')+' planejado'+(it.st>1?'s':'')+'</span></div>';
+    for(var n=0;n<pls.length;n++){
+      var pl=pls[n];
+      zNext+='<div class="nd-plano'+(pl.done?' done':'')+'" onclick="togglePlanoDone(\''+safe(pl.id)+'\')">'+
+        '<span class="nd-plano-chk">✓</span>'+
+        '<span class="nd-plano-txt">'+safe(pl.texto)+'</span>'+
+        '<button class="nd-plano-del" title="Remover" onclick="removePlano(\''+safe(pl.id)+'\',event)">×</button>'+
+      '</div>';
+    }
+    zNext+='<input class="nd-add-inp" id="pl-inp-'+dt+'" placeholder="＋ anotar… (Enter)" onkeydown="planoInpKey(event,\''+dt+'\')">';
+    zNext+='</div>';
   }
   if(d.prontos.length){
-    html+='<div class="nd-alert">⚠️ <b>'+d.prontos.length+' conteúdo'+(d.prontos.length>1?'s':'')+' pronto'+(d.prontos.length>1?'s':'')+' sem data.</b> '+
+    zNext+='<div class="nd-alert">⚠️ <b>'+d.prontos.length+' conteúdo'+(d.prontos.length>1?'s':'')+' pronto'+(d.prontos.length>1?'s':'')+' sem data.</b> '+
       '<button onclick="pipeGo(\'Pronto\')">agendar agora</button></div>';
   }
-  html+='</div></section>';
+  zNext+='</div></section>';
 
-  html+='</div>'; /* /hj-zones */
+  /* Ordem invertida: Próximos dias antes de "O que eu faço hoje" */
+  html+='<div class="hj-zones">'+zNext+zStories+zHoje+'</div>';
   el.innerHTML=html;
 }
 

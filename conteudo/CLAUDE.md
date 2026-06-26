@@ -102,6 +102,7 @@ var ST = {
 ```
 mk_content_ideas         → JSON das ideas
 mk_content_stories       → JSON dos stories (checklist diário)
+mk_content_planos        → JSON das notas livres por dia (Próximos dias)
 mk_content_materiais     → JSON dos materiais do Acervo
 mk_content_cats          → categorias personalizadas
 mk_content_platforms     → plataformas personalizadas
@@ -111,6 +112,7 @@ mk_content_cur_platform  → plataforma ativa no filtro
 ### Supabase (fonte de verdade)
 - `DB.conteudo.list()` / `.upsert()` / `.delete()` — tabela `conteudo_ideas` (com `gravar_date`, `objetivo`, `material_id`)
 - `DB.stories.list()` / `.upsert()` / `.delete()` — tabela `conteudo_stories`
+- `DB.planos.list()` / `.upsert()` / `.delete()` — tabela `conteudo_planos` (notas livres por dia; migration `sql/conteudo-planos.sql`, já aplicada no projeto)
 - `DB.materiais.list()` / `.upsert()` / `.delete()` — tabela `conteudo_materiais` (Acervo)
 - `DB.storage.uploadMaterial/signMaterials/deleteMaterial` — bucket **privado** `materiais` (URLs assinadas)
 

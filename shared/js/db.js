@@ -661,6 +661,46 @@ window.DB = {
   },
 
   // ──────────────────────────────────────────────────────────────
+  //  Planos — notas livres por dia (tabela conteudo_planos)
+  //  Requer migration sql/conteudo-planos.sql
+  planos: {
+    async list() {
+      _guard();
+      const { data, error } = await _sb
+        .from('conteudo_planos').select('*')
+        .order('date', { ascending: true })
+        .order('ordem', { ascending: true });
+      if (error) throw error;
+      return data.map(r => ({
+        id:        r.id,
+        date:      r.date       || '',
+        texto:     r.texto      || '',
+        done:      !!r.done,
+        ordem:     r.ordem      || 0,
+        createdAt: r.created_at || '',
+      }));
+    },
+    async upsert(plano) {
+      _guard();
+      const row = {
+        id:         String(plano.id),
+        date:       plano.date || null,
+        texto:      plano.texto || '',
+        done:       !!plano.done,
+        ordem:      plano.ordem || 0,
+        created_at: plano.createdAt || new Date().toISOString(),
+      };
+      const { error } = await _sb.from('conteudo_planos').upsert(row, { onConflict: 'id' });
+      if (error) throw error;
+    },
+    async delete(id) {
+      _guard();
+      const { error } = await _sb.from('conteudo_planos').delete().eq('id', String(id));
+      if (error) throw error;
+    },
+  },
+
+  // ──────────────────────────────────────────────────────────────
   //  Instagram Dashboard — Validações + estado singleton
   //  Sincroniza dados estratégicos do módulo Instagram entre devices.
   // ──────────────────────────────────────────────────────────────
