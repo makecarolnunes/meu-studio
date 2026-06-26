@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Protótipo — Hub / Painel de Gestão (v3)</title>
+<style>
+  :root{
+    --brand:#a36844; --brand-dark:#38190b; --brand-soft:rgba(163,104,68,.10); --brand-ring:rgba(163,104,68,.25);
+    --bg:#FAF8F6; --surface:#fff; --surface-2:#F5EFEA; --border:#EDE4DF; --border-strong:#D9CDC4;
+    --text:#2C2420; --text-muted:#6F6660; --text-subtle:#A8A199; --text-on-dark:#FEFEFE;
+    --rose:#D4537E; --rose-soft:#FBEAF0; --rose-dark:#993556;
+    --amber:#BA7517; --amber-soft:#FAEEDA;
+    --green:#3B6D11; --green-soft:#EAF3DE;
+    --brown:#8B6B61; --brown-soft:#FAF3EE;
+    --info:#1565C0; --info-soft:#E3F2FD;
+    --mauve-soft:#F5EDF3; --danger:#C62828; --danger-soft:#FCE7E7;
+    --r-sm:8px; --r-md:12px; --r-lg:16px; --r-xl:22px; --r-full:9999px;
+    --sh-sm:0 1px 2px rgba(56,25,11,.06); --sh-md:0 3px 12px rgba(56,25,11,.10); --sh-lg:0 8px 26px rgba(56,25,11,.16);
+    --font:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  body{font-family:var(--font);color:var(--text);min-height:100vh;background:var(--bg);}
+
+  .app{display:grid;grid-template-columns:244px 1fr;min-height:100vh;}
+
+  /* ════ RAIL ════ */
+  .rail{background:linear-gradient(180deg,var(--brand-dark),#2a1308);color:#fff;display:flex;flex-direction:column;
+        padding:18px 14px;gap:1px;position:sticky;top:0;height:100vh;overflow-y:auto;z-index:50;}
+  .rail::-webkit-scrollbar{width:0;}
+  .rail-brand{display:flex;align-items:center;gap:10px;padding:4px 8px 16px;}
+  .rail-brand-ico{width:32px;height:32px;border-radius:9px;background:rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .rail-brand-tx{font-size:.92rem;font-weight:800;letter-spacing:-.01em;line-height:1.1;}
+  .rail-brand-sub{font-size:.6rem;color:rgba(255,255,255,.42);letter-spacing:.08em;text-transform:uppercase;margin-top:2px;}
+  .rail-grp-lbl{font-size:.57rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.4);
+                padding:14px 10px 6px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;}
+  .rail-grp-lbl .arr{transition:transform .2s;font-size:.62rem;opacity:.6;}
+  .rail-grp.closed .arr{transform:rotate(-90deg);}
+  .rail-grp.closed .rail-grp-items{display:none;}
+  .rail-a{display:flex;align-items:center;gap:11px;padding:8px 10px;border-radius:9px;color:rgba(255,255,255,.76);
+          font-size:.82rem;font-weight:500;cursor:pointer;transition:background .14s,color .14s;text-decoration:none;}
+  .rail-a svg{width:17px;height:17px;flex-shrink:0;opacity:.82;}
+  .rail-a:hover{background:rgba(255,255,255,.09);color:#fff;}
+  .rail-a.on{background:rgba(212,83,126,.24);color:#F9D0DF;font-weight:650;}
+  .rail-a.on svg{opacity:1;}
+  .rail-spacer{flex:1;}
+  .rail-ft{border-top:.5px solid rgba(255,255,255,.08);padding-top:10px;margin-top:8px;}
+  .rail-user{display:flex;align-items:center;gap:9px;padding:6px 10px;}
+  .rail-av{width:26px;height:26px;border-radius:50%;background:rgba(212,83,126,.25);border:1px solid rgba(212,83,126,.4);
+           display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;color:#F4C0D1;}
+  .rail-un{font-size:.74rem;color:rgba(255,255,255,.5);}
+
+  /* ════ MAIN ════ */
+  .main{display:flex;flex-direction:column;min-width:0;background:var(--surface-2);}
+  .topbar{display:flex;align-items:center;gap:16px;padding:22px 32px 8px;}
+  .burger{display:none;}
+  .greet h1{font-size:1.34rem;font-weight:800;color:var(--brand-dark);line-height:1.1;}
+  .greet p{font-size:.82rem;color:var(--text-muted);margin-top:3px;}
+  .search{margin-left:auto;display:flex;align-items:center;gap:9px;background:var(--surface);border:1px solid var(--border);
+          border-radius:var(--r-full);padding:10px 16px;width:290px;box-shadow:var(--sh-sm);}
+  .search input{border:none;outline:none;background:none;font-family:inherit;font-size:.84rem;flex:1;color:var(--text);}
+  .search svg{width:16px;height:16px;color:var(--text-subtle);}
+
+  .content{padding:16px 32px 44px;overflow-y:auto;}
+  .zone-lbl{font-size:.66rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--text-muted);margin:0 2px 13px;}
+  .zone-lbl.mt{margin-top:30px;}
+
+  /* ── WIDGETS (pilares — destaque) ── */
+  .pillars{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;}
+  .w{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);box-shadow:var(--sh-md);
+     overflow:hidden;display:flex;flex-direction:column;cursor:pointer;transition:box-shadow .2s,transform .2s;}
+  .w:hover{box-shadow:var(--sh-lg);transform:translateY(-3px);}
+  .w-top{height:4px;}
+  .w.tarefas .w-top{background:var(--brand);}
+  .w.conteudo .w-top{background:var(--rose);}
+  .w.orcamentos .w-top{background:var(--amber);}
+  .w.financeiro .w-top{background:var(--green);}
+  .w-hd{display:flex;align-items:center;gap:10px;padding:15px 16px 9px;}
+  .w-ico{width:36px;height:36px;border-radius:var(--r-md);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .w-ico svg{width:18px;height:18px;}
+  .w.tarefas .w-ico{background:var(--brand-soft);color:var(--brand);}
+  .w.conteudo .w-ico{background:var(--rose-soft);color:var(--rose-dark);}
+  .w.orcamentos .w-ico{background:var(--amber-soft);color:var(--amber);}
+  .w.financeiro .w-ico{background:var(--green-soft);color:var(--green);}
+  .w-name{font-size:.96rem;font-weight:700;flex:1;}
+  .w-go{color:var(--text-subtle);}
+  .w-bd{padding:2px 16px 16px;flex:1;}
+  .w-metric{font-size:1.02rem;font-weight:800;color:var(--brand-dark);margin-bottom:10px;line-height:1.25;}
+  .w-metric small{font-size:.72rem;font-weight:600;color:var(--text-muted);}
+  .w-item{display:flex;align-items:center;gap:9px;padding:7px 0;border-top:1px solid var(--border);font-size:.83rem;}
+  .w-item:first-of-type{border-top:none;}
+  .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+  .w-item .tt{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .w-item .tag{font-size:.6rem;font-weight:700;padding:1px 7px;border-radius:var(--r-full);}
+  .tag-urg{background:var(--danger-soft);color:var(--danger);}
+  .tag-rdy{background:var(--green-soft);color:var(--green);}
+  .pipe{display:flex;gap:8px;}
+  .pipe-cell{flex:1;background:var(--surface-2);border-radius:var(--r-md);padding:10px 6px;text-align:center;}
+  .pipe-cell.warn{background:var(--amber-soft);}
+  .pipe-n{font-size:1.25rem;font-weight:800;line-height:1;}
+  .pipe-cell.warn .pipe-n{color:var(--amber);}
+  .pipe-l{font-size:.6rem;color:var(--text-muted);margin-top:4px;font-weight:600;}
+  .w-cta{display:flex;align-items:center;gap:6px;margin-top:6px;font-size:.82rem;font-weight:600;color:var(--green);}
+  .w-note{font-size:.78rem;color:var(--text-muted);line-height:1.5;}
+
+  /* ── LAUNCHER por seção (divisões mantidas) ── */
+  .board{column-count:3;column-gap:16px;}
+  .section{break-inside:avoid;-webkit-column-break-inside:avoid;display:inline-block;width:100%;background:var(--surface);
+           border:1px solid var(--border);border-radius:var(--r-lg);box-shadow:var(--sh-sm);padding:12px 10px;margin:0 0 16px;vertical-align:top;}
+  .section-lbl{font-size:.62rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--text-muted);
+               padding:4px 10px 9px;display:flex;align-items:center;gap:8px;}
+  .section-lbl .sdot{width:7px;height:7px;border-radius:50%;}
+  .item{display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:10px;cursor:pointer;text-decoration:none;color:var(--text);transition:background .14s;}
+  .item:hover{background:var(--surface-2);}
+  .item-ico{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .item-ico svg{width:16px;height:16px;}
+  .item-nm{font-size:.86rem;font-weight:600;flex:1;line-height:1.2;}
+  .item-tag{font-size:.56rem;font-weight:700;letter-spacing:.04em;padding:2px 7px;border-radius:var(--r-full);text-transform:uppercase;}
+  .tag-soon{background:var(--surface-2);color:var(--text-subtle);}
+  .item.soon{cursor:default;opacity:.55;}
+  .item.soon:hover{background:none;}
+  .ic-brand{background:var(--brand-soft);color:var(--brand);} .ic-amber{background:var(--amber-soft);color:var(--amber);}
+  .ic-rose{background:var(--rose-soft);color:var(--rose-dark);} .ic-info{background:var(--info-soft);color:var(--info);}
+  .ic-mauve{background:var(--mauve-soft);color:var(--rose-dark);} .ic-green{background:var(--green-soft);color:var(--green);}
+  .ic-brown{background:var(--brown-soft);color:var(--brown);}
+
+  .toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--brand-dark);
+         color:#fff;padding:10px 18px;border-radius:var(--r-full);font-size:.8rem;font-weight:600;box-shadow:var(--sh-lg);
+         opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;z-index:200;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  .proto-tag{position:fixed;top:8px;right:8px;background:var(--brand-dark);color:#fff;font-size:.6rem;font-weight:700;
+             padding:4px 10px;border-radius:var(--r-full);z-index:300;letter-spacing:.04em;opacity:.85;}
+  .bd{display:none;}
+
+  /* ══════════ RESPONSIVO ══════════ */
+  @media (max-width:1180px){ .pillars{grid-template-columns:1fr 1fr;} .board{column-count:2;} }
+  @media (max-width:860px){
+    .app{grid-template-columns:1fr;}
+    .rail{position:fixed;top:0;left:0;width:248px;transform:translateX(-100%);transition:transform .28s cubic-bezier(.4,0,.2,1);}
+    .rail.open{transform:translateX(0);}
+    .bd{display:block;position:fixed;inset:0;background:rgba(0,0,0,.45);opacity:0;pointer-events:none;transition:opacity .28s;z-index:49;}
+    .bd.open{opacity:1;pointer-events:auto;}
+    .burger{display:flex;width:38px;height:38px;border:none;border-radius:50%;background:var(--surface);box-shadow:var(--sh-sm);
+            align-items:center;justify-content:center;cursor:pointer;color:var(--brand-dark);flex-shrink:0;}
+    .burger svg{width:18px;height:18px;}
+    .topbar{padding:16px 16px 4px;} .content{padding:14px 16px 40px;}
+    .greet h1{font-size:1.14rem;} .search{display:none;}
+  }
+  @media (max-width:560px){ .pillars{grid-template-columns:1fr;} .board{column-count:1;} }
+</style>
+</head>
+<body>
+
+<div class="proto-tag">PROTÓTIPO · Hub v3</div>
+
+<div class="app">
+
+  <!-- ════ RAIL ════ -->
+  <aside class="rail" id="rail">
+    <div class="rail-brand">
+      <div class="rail-brand-ico"><svg width="17" height="17" viewBox="0 0 40 40" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 5l2.8 9.4L32 17l-9.2 2.6L20 29l-2.8-9.4L8 17l9.2-2.6z"/><path d="M30 28l1 3 3 1-3 1-1 3-1-3-3-1 3-1z"/></svg></div>
+      <div><div class="rail-brand-tx">Meu Studio</div><div class="rail-brand-sub">@makecarolnunes</div></div>
+    </div>
+
+    <a class="rail-a on" onclick="nav(this,'Início')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Início</a>
+
+    <div class="rail-grp" id="g-op">
+      <div class="rail-grp-lbl" onclick="grp('g-op')">Operação<span class="arr">▾</span></div>
+      <div class="rail-grp-items">
+        <a class="rail-a" onclick="nav(this,'Orçamentos')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Orçamentos</a>
+        <a class="rail-a" onclick="nav(this,'Financeiro')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Financeiro</a>
+        <a class="rail-a" onclick="nav(this,'Clientes')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Clientes</a>
+      </div>
+    </div>
+
+    <div class="rail-grp" id="g-org">
+      <div class="rail-grp-lbl" onclick="grp('g-org')">Organização<span class="arr">▾</span></div>
+      <div class="rail-grp-items">
+        <a class="rail-a" onclick="nav(this,'Tarefas')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Tarefas</a>
+        <a class="rail-a" onclick="nav(this,'Anotações')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Anotações</a>
+      </div>
+    </div>
+
+    <div class="rail-grp closed" id="g-cont">
+      <div class="rail-grp-lbl" onclick="grp('g-cont')">Conteúdo<span class="arr">▾</span></div>
+      <div class="rail-grp-items">
+        <a class="rail-a" onclick="nav(this,'Lista de Conteúdos')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>Lista de Conteúdos</a>
+        <a class="rail-a" onclick="nav(this,'Acervo')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M7 4v16M17 4v16"/></svg>Acervo</a>
+        <a class="rail-a" onclick="nav(this,'Laboratório Criativo')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 1.8 3h10.4a2 2 0 0 0 1.8-3l-5-9V3"/></svg>Laboratório Criativo</a>
+        <a class="rail-a" onclick="nav(this,'Validador')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14 9 11"/></svg>Validador</a>
+      </div>
+    </div>
+
+    <div class="rail-grp closed" id="g-perf">
+      <div class="rail-grp-lbl" onclick="grp('g-perf')">Performance<span class="arr">▾</span></div>
+      <div class="rail-grp-items">
+        <a class="rail-a" onclick="nav(this,'Instagram')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.4A4 4 0 1 1 12.6 8 4 4 0 0 1 16 11.4z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>Instagram</a>
+      </div>
+    </div>
+
+    <div class="rail-grp closed" id="g-marca">
+      <div class="rail-grp-lbl" onclick="grp('g-marca')">Marca & Pesquisa<span class="arr">▾</span></div>
+      <div class="rail-grp-items">
+        <a class="rail-a" onclick="nav(this,'Cachos & Crespos')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10L12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 1 2.5 3 6 3s6-2 6-3v-5"/></svg>Cachos & Crespos</a>
+        <a class="rail-a" onclick="nav(this,'Manual de Marca')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15 8.3 22 9.3 17 14 18 21 12 17.8 6 21 7 14 2 9.3 9 8.3 12 2"/></svg>Manual de Marca</a>
+        <a class="rail-a" onclick="nav(this,'Raio-X da Marca')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a5 5 0 0 1 5 5c0 2.4-1.3 4.5-3.3 5.5L12 22l-1.7-9.5A6 6 0 0 1 7 7a5 5 0 0 1 5-5z"/><circle cx="12" cy="7" r="2"/></svg>Raio-X da Marca</a>
+        <a class="rail-a" onclick="nav(this,'Insights de Mercado')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/></svg>Insights de Mercado</a>
+        <a class="rail-a" onclick="nav(this,'TikTok Radar')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>TikTok Radar</a>
+      </div>
+    </div>
+
+    <div class="rail-grp closed" id="g-gest">
+      <div class="rail-grp-lbl" onclick="grp('g-gest')">Gestão<span class="arr">▾</span></div>
+      <div class="rail-grp-items">
+        <a class="rail-a" onclick="nav(this,'Estoque')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.3 7 12 12 20.7 7"/><line x1="12" y1="22" x2="12" y2="12"/></svg>Estoque</a>
+      </div>
+    </div>
+
+    <div class="rail-spacer"></div>
+    <div class="rail-ft">
+      <div class="rail-user"><div class="rail-av">C</div><span class="rail-un">@carol</span></div>
+      <a class="rail-a" onclick="t('Sair')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Sair</a>
+    </div>
+  </aside>
+  <div class="bd" id="bd" onclick="closeRail()"></div>
+
+  <!-- ════ MAIN ════ -->
+  <div class="main">
+    <div class="topbar">
+      <button class="burger" onclick="openRail()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+      <div class="greet"><h1>Bom dia, Carol</h1><p>Sexta, 26 de junho de 2026</p></div>
+      <div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input placeholder="Buscar em tudo..."></div>
+    </div>
+
+    <div class="content">
+
+      <!-- PILARES -->
+      <div class="zone-lbl">Prioridades de hoje</div>
+      <div class="pillars">
+
+        <div class="w orcamentos" onclick="t('Orçamentos')">
+          <div class="w-top"></div>
+          <div class="w-hd"><div class="w-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div class="w-name">Orçamentos</div><span class="w-go">→</span></div>
+          <div class="w-bd">
+            <div class="w-metric" style="margin-bottom:12px;">Pipeline <small>· junho</small></div>
+            <div class="pipe">
+              <div class="pipe-cell"><div class="pipe-n">4</div><div class="pipe-l">Novos</div></div>
+              <div class="pipe-cell"><div class="pipe-n">3</div><div class="pipe-l">Enviados</div></div>
+              <div class="pipe-cell warn"><div class="pipe-n">2</div><div class="pipe-l">A fechar</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="w tarefas" onclick="t('Tarefas')">
+          <div class="w-top"></div>
+          <div class="w-hd"><div class="w-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div><div class="w-name">Tarefas</div><span class="w-go">→</span></div>
+          <div class="w-bd">
+            <div class="w-metric">3 <small>no foco de hoje</small></div>
+            <div class="w-item"><span class="dot" style="background:var(--brand)"></span><span class="tt">Finalizar orçamento Curso Cachos</span></div>
+            <div class="w-item"><span class="dot" style="background:var(--amber)"></span><span class="tt">Editar vídeo da Isabel</span></div>
+            <div class="w-item"><span class="dot" style="background:var(--brand)"></span><span class="tt">Gravar Reels</span><span class="tag tag-urg">urgente</span></div>
+          </div>
+        </div>
+
+        <div class="w conteudo" onclick="t('Conteúdo')">
+          <div class="w-top"></div>
+          <div class="w-hd"><div class="w-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg></div><div class="w-name">Conteúdo</div><span class="w-go">→</span></div>
+          <div class="w-bd">
+            <div class="w-metric">2 <small>prontos · 5 na fila</small></div>
+            <div class="w-item"><span class="dot" style="background:var(--rose)"></span><span class="tt">Reel — finalização de cachos</span><span class="tag tag-rdy">pronto</span></div>
+            <div class="w-item"><span class="dot" style="background:var(--rose)"></span><span class="tt">Carrossel — 3 erros comuns</span><span class="tag tag-rdy">pronto</span></div>
+            <div class="w-item"><span class="dot" style="background:var(--text-subtle)"></span><span class="tt">Bastidores atendimento Bruna</span></div>
+          </div>
+        </div>
+
+        <div class="w financeiro" onclick="t('Financeiro')">
+          <div class="w-top"></div>
+          <div class="w-hd"><div class="w-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div><div class="w-name">Financeiro</div><span class="w-go">→</span></div>
+          <div class="w-bd">
+            <div class="w-metric">Resumo do mês</div>
+            <div class="w-note">Entradas, saídas e fechamento de junho.</div>
+            <div class="w-cta">Abrir financeiro <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- LANÇADOR por seção -->
+      <div class="zone-lbl mt">Todos os módulos</div>
+      <div class="board">
+
+        <div class="section">
+          <div class="section-lbl"><span class="sdot" style="background:var(--brand)"></span>Operação diária</div>
+          <a class="item" onclick="t('Orçamentos')"><span class="item-ico ic-brand"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span><span class="item-nm">Orçamentos</span></a>
+          <a class="item" onclick="t('Financeiro')"><span class="item-ico ic-brand"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span><span class="item-nm">Financeiro</span></a>
+          <a class="item" onclick="t('Clientes')"><span class="item-ico ic-brand"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></span><span class="item-nm">Clientes</span></a>
+        </div>
+
+        <div class="section">
+          <div class="section-lbl"><span class="sdot" style="background:var(--amber)"></span>Organização</div>
+          <a class="item" onclick="t('Tarefas')"><span class="item-ico ic-amber"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span><span class="item-nm">Tarefas</span></a>
+          <a class="item" onclick="t('Anotações')"><span class="item-ico ic-amber"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span><span class="item-nm">Anotações</span></a>
+        </div>
+
+        <div class="section">
+          <div class="section-lbl"><span class="sdot" style="background:var(--rose)"></span>Conteúdo</div>
+          <a class="item" onclick="t('Lista de Conteúdos')"><span class="item-ico ic-rose"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg></span><span class="item-nm">Lista de Conteúdos</span></a>
+          <a class="item" onclick="t('Acervo')"><span class="item-ico ic-rose"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M7 4v16M17 4v16M2 9h5M2 15h5M17 9h5M17 15h5"/></svg></span><span class="item-nm">Acervo</span></a>
+          <a class="item" onclick="t('Laboratório Criativo')"><span class="item-ico ic-rose"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 1.8 3h10.4a2 2 0 0 0 1.8-3l-5-9V3"/></svg></span><span class="item-nm">Laboratório Criativo</span></a>
+          <a class="item" onclick="t('Validador')"><span class="item-ico ic-rose"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14 9 11"/></svg></span><span class="item-nm">Validador de Conteúdo</span></a>
+        </div>
+
+        <div class="section">
+          <div class="section-lbl"><span class="sdot" style="background:var(--info)"></span>Performance</div>
+          <a class="item" onclick="t('Instagram')"><span class="item-ico ic-info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.4A4 4 0 1 1 12.6 8 4 4 0 0 1 16 11.4z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg></span><span class="item-nm">Instagram</span></a>
+          <div class="item soon"><span class="item-ico ic-info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></span><span class="item-nm">TikTok</span><span class="item-tag tag-soon">Em breve</span></div>
+        </div>
+
+        <div class="section">
+          <div class="section-lbl"><span class="sdot" style="background:var(--rose-dark)"></span>Marca</div>
+          <a class="item" onclick="t('Cachos & Crespos')"><span class="item-ico ic-mauve"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10L12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 1 2.5 3 6 3s6-2 6-3v-5"/></svg></span><span class="item-nm">Cachos &amp; Crespos</span></a>
+          <a class="item" onclick="t('Manual de Marca')"><span class="item-ico ic-mauve"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></span><span class="item-nm">Manual de Marca</span></a>
+          <a class="item" onclick="t('Raio-X da Marca')"><span class="item-ico ic-mauve"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a5 5 0 0 1 5 5c0 2.38-1.32 4.45-3.25 5.54L12 22l-1.75-9.46A5.99 5.99 0 0 1 7 7a5 5 0 0 1 5-5z"/><circle cx="12" cy="7" r="2"/></svg></span><span class="item-nm">Raio-X da Marca</span></a>
+        </div>
+
+        <div class="section">
+          <div class="section-lbl"><span class="sdot" style="background:var(--green)"></span>Pesquisa</div>
+          <a class="item" onclick="t('Insights de Mercado')"><span class="item-ico ic-green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/></svg></span><span class="item-nm">Insights de Mercado</span></a>
+          <a class="item" onclick="t('TikTok Radar')"><span class="item-ico ic-green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></span><span class="item-nm">TikTok Radar</span></a>
+        </div>
+
+        <div class="section">
+          <div class="section-lbl"><span class="sdot" style="background:var(--brown)"></span>Gestão</div>
+          <a class="item" onclick="t('Estoque')"><span class="item-ico ic-brown"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.3 7 12 12 20.7 7"/><line x1="12" y1="22" x2="12" y2="12"/></svg></span><span class="item-nm">Estoque</span></a>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  var tmr;
+  function t(label){ var el=document.getElementById('toast'); el.textContent='Abriria: '+label; el.classList.add('show'); clearTimeout(tmr); tmr=setTimeout(function(){el.classList.remove('show');},1700); }
+  function nav(el,label){ document.querySelectorAll('.rail-a').forEach(function(a){a.classList.remove('on');}); el.classList.add('on'); if(label!=='Início') t(label); closeRail(); }
+  function grp(id){ document.getElementById(id).classList.toggle('closed'); }
+  function openRail(){ document.getElementById('rail').classList.add('open'); document.getElementById('bd').classList.add('open'); }
+  function closeRail(){ document.getElementById('rail').classList.remove('open'); document.getElementById('bd').classList.remove('open'); }
+</script>
+</body>
+</html>
