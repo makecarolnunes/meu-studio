@@ -20,6 +20,9 @@ var AREAS = {
 };
 function area(a){ return AREAS[a] || AREAS.admin; }
 
+// arrastar só em ponteiro fino (desktop); no toque usa-se o botão "mover →"
+var IS_TOUCH = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+
 // ── AUTH ──────────────────────────────────────────────────────
 function checkAuth() {
   var s = localStorage.getItem('mk_session');
@@ -289,7 +292,8 @@ function renderKanban(){
       var btn = i < FLOW.length-1
         ? '<button class="kb-move" onclick="kbMove(\''+esc(t.id)+'\')">mover →</button>'
         : '<span style="color:var(--green);font-weight:800;">✓</span>';
-      return '<div class="kb-card" draggable="true" ondragstart="kbDragStart(event,\''+esc(t.id)+'\')" ondragend="kbDragEnd(event)">'+
+      var drag = IS_TOUCH ? '' : ' draggable="true" ondragstart="kbDragStart(event,\''+esc(t.id)+'\')" ondragend="kbDragEnd(event)"';
+      return '<div class="kb-card"'+drag+'>'+
         '<div class="kb-body" onclick="openTaskEdit(\''+esc(t.id)+'\')"><div class="kb-t">'+esc(t.titulo)+'</div></div>'+btn+'</div>';
     }).join('') || '<div class="muted-empty" style="padding:6px 2px;">arraste um cartão aqui</div>';
     return '<div class="kb-col" data-col="'+col.key+'" ondragover="kbDragOver(event)" ondragleave="kbDragLeave(event)" ondrop="kbDrop(event,\''+col.key+'\')">'+
