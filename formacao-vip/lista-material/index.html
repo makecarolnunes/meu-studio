@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lista de Material — Cachos &amp; Crespos · Carol Nunes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Playfair+Display:ital,wght@0,500;0,700;1,500&family=Pinyon+Script&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    /* paleta oficial Cachos & Crespos (mesma do prototipo-logo) */
+    --ebano:#2C1A0E; --cafe:#4A2E1A; --gold:#B8975A; --gold-hi:#C9A878;
+    --cream:#F5EDE3; --cream2:#EFE5D7; --line:rgba(74,46,26,.15);
+    --ink:#3a2a1c; --muted:rgba(74,46,26,.55);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0}
+  body{
+    background:#cdbfae;
+    color:var(--cafe);
+    font-family:'Jost',sans-serif;
+    -webkit-font-smoothing:antialiased;
+    padding:28px 14px 60px;
+  }
+
+  /* ---------- barra de ações (não imprime) ---------- */
+  .bar{
+    max-width:210mm;margin:0 auto 22px;display:flex;gap:10px;align-items:center;
+    justify-content:space-between;flex-wrap:wrap;
+  }
+  .bar h1{font-family:'Marcellus';font-weight:400;font-size:16px;color:#3a2a1c;margin:0;letter-spacing:.02em}
+  .bar h1 b{color:var(--cafe)}
+  .bar .tip{font-size:11.5px;color:#604a35;max-width:430px;line-height:1.5}
+  .btn{
+    border:0;border-radius:999px;padding:11px 20px;cursor:pointer;
+    font-family:'Jost';font-weight:500;font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;
+    background:var(--ebano);color:var(--cream);
+  }
+  .btn:active{transform:translateY(1px)}
+
+  /* ---------- folha A4 ---------- */
+  .sheet{
+    width:210mm;min-height:297mm;margin:0 auto 26px;background:var(--cream);
+    position:relative;overflow:hidden;
+    box-shadow:0 18px 50px rgba(44,26,14,.28);
+    padding:22mm 20mm 18mm;
+    display:flex;flex-direction:column;
+  }
+
+  /* eyebrow (rótulo caixa-alta espaçado) */
+  .eyebrow{font-family:'Jost';font-weight:500;font-size:10px;letter-spacing:.34em;text-transform:uppercase;color:var(--gold);}
+  .eyebrow.chip{display:inline-block;background:var(--cream2);color:#9a7b46;padding:7px 16px;border-radius:999px;letter-spacing:.3em;}
+
+  /* título de seção: serif + palavra em script */
+  .h-sec{font-family:'Playfair Display';font-weight:700;font-size:42px;line-height:1.04;color:var(--cafe);margin:14px 0 0}
+  .h-sec .scr{font-family:'Pinyon Script';font-weight:400;color:var(--gold);font-size:.95em;padding:0 .06em;}
+  .rule{width:54px;height:2px;background:var(--gold);border-radius:2px;margin:16px 0 0}
+
+  /* rodapé */
+  .foot{margin-top:auto;padding-top:16px;display:flex;justify-content:space-between;align-items:center;
+    font-family:'Jost';font-size:9.5px;letter-spacing:.26em;text-transform:uppercase;color:rgba(74,46,26,.4)}
+
+  /* ============ CAPA ============ */
+  .cover{background:var(--ebano);color:var(--cream);justify-content:center;align-items:center;text-align:center;padding:0;}
+  .cover .pad{padding:30mm 22mm;display:flex;flex-direction:column;align-items:center;gap:0;width:100%}
+  .cover .mono{font-family:'Marcellus';font-size:46px;letter-spacing:.08em;color:rgba(201,168,120,.55);margin-bottom:34px}
+  .cover .eyebrow{color:rgba(201,168,120,.85);margin-bottom:10px}
+  .cover .fio{margin:0 0 22px}
+  .cover .ttl-scr{font-family:'Pinyon Script';font-size:92px;line-height:.9;color:var(--gold-hi);margin:2px 0 10px}
+  .cover .ttl-sub{font-family:'Jost';font-weight:300;font-size:13px;letter-spacing:.3em;text-transform:uppercase;color:rgba(245,237,227,.72)}
+  .cover .by{margin-top:46px;font-family:'Jost';font-weight:400;font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:rgba(245,237,227,.6)}
+  .cover .divlong{width:64px;height:1px;background:rgba(201,168,120,.5);margin:30px auto}
+
+  /* ============ GRID DE ITENS ============ */
+  .lead{font-family:'Jost';font-weight:300;font-size:13.5px;line-height:1.6;color:#6a523c;max-width:155mm;margin:18px 0 0}
+  .grid{
+    margin-top:26px;display:grid;grid-template-columns:repeat(3,1fr);
+    gap:9mm 8mm;
+  }
+  .grid.cols2{grid-template-columns:repeat(2,1fr)}
+  .card{display:flex;flex-direction:column;align-items:center;text-align:center;gap:9px}
+  .ph{
+    width:100%;aspect-ratio:1/1;border-radius:12px;background:var(--cream2);
+    border:1.4px dashed rgba(74,46,26,.28);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;color:rgba(74,46,26,.34);
+  }
+  .ph svg{width:30px;height:30px}
+  .ph span{font-size:9px;letter-spacing:.24em;text-transform:uppercase}
+  .card .nm{font-family:'Playfair Display';font-weight:500;font-size:14.5px;line-height:1.2;color:var(--cafe)}
+  .card .ds{font-family:'Jost';font-weight:300;font-size:10.5px;line-height:1.35;color:var(--muted);letter-spacing:.01em}
+
+  /* nota / observação (caixa escura) */
+  .note{
+    margin-top:24px;background:var(--ebano);color:var(--cream);border-radius:14px;padding:18px 22px;
+    display:flex;gap:14px;align-items:flex-start;
+  }
+  .note .star{font-size:15px;color:var(--gold-hi);line-height:1.2}
+  .note .nt{font-family:'Jost';font-weight:300;font-size:12px;line-height:1.55;color:rgba(245,237,227,.92)}
+  .note .nt b{font-weight:500;color:var(--cream)}
+
+  /* ============ MODELOS ============ */
+  .models{margin-top:30px;display:grid;grid-template-columns:1fr 1fr;gap:0}
+  .models .col{padding:0 26px;position:relative}
+  .models .col:first-child{padding-left:0}
+  .models .col:last-child{padding-right:0;border-left:1px solid var(--line)}
+  .models .mt{font-family:'Pinyon Script';font-size:46px;color:var(--gold);line-height:1;margin-bottom:14px}
+  .models .pht{aspect-ratio:3/4;border-radius:14px}
+  .models .mcap{margin-top:14px;font-family:'Jost';font-weight:300;font-size:11.5px;letter-spacing:.04em;color:#6a523c;text-align:center}
+
+  /* dica editável */
+  [contenteditable]{outline:none}
+  [contenteditable]:focus{background:rgba(184,151,90,.14);border-radius:4px;box-shadow:0 0 0 3px rgba(184,151,90,.14)}
+
+  /* ---------- print ---------- */
+  @page{size:A4;margin:0}
+  @media print{
+    body{background:#fff;padding:0}
+    .bar{display:none}
+    .sheet{margin:0;box-shadow:none;page-break-after:always;min-height:297mm}
+    .sheet:last-child{page-break-after:auto}
+    .ph{border-color:rgba(74,46,26,.25)}
+  }
+  @media (max-width:760px){
+    .sheet{width:100%;min-height:0;padding:30px 22px}
+    .cover .ttl-scr{font-size:62px}
+    .cover .pad{padding:46px 22px}
+    .h-sec{font-size:30px}
+    .grid{grid-template-columns:repeat(2,1fr)}
+  }
+</style>
+</head>
+<body>
+
+  <!-- ====== barra ====== -->
+  <div class="bar">
+    <div>
+      <h1><b>Lista de Material</b> · Cachos &amp; Crespos</h1>
+      <div class="tip">Base de layout pronta. Clique nos nomes para editar e use como referência no Canva. Os quadros tracejados são os espaços das fotos dos produtos.</div>
+    </div>
+    <button class="btn" onclick="window.print()">Imprimir / Salvar PDF</button>
+  </div>
+
+  <!-- ============================ PÁGINA 1 · FERRAMENTAS ============================ -->
+  <section class="sheet" data-document-role="page" data-label="Ferramentas essenciais">
+    <div class="eyebrow chip">Para se preparar</div>
+    <h2 class="h-sec">Ferramentas <span class="scr">essenciais</span></h2>
+    <div class="rule"></div>
+    <p class="lead" contenteditable="true">Os equipamentos de modelagem, secagem e finalização que vamos usar durante todo o atendimento.</p>
+
+    <div class="grid">
+      <!-- repita o bloco .card para cada item -->
+      <div class="card"><div class="ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg><span>Foto</span></div><div class="nm" contenteditable="true">Secador com bico</div><div class="ds" contenteditable="true">110/220v</div></div>
+      <div class="card"><div class="ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg><span>Foto</span></div><div class="nm" contenteditable="true">Difusor</div><div class="ds" contenteditable="true">compatível com o secador</div></div>
+      <div class="card"><div class="ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg><span>Foto</span></div><div class="nm" contenteditable="true">Modelador de cachos</div><div class="ds" contenteditable="true">13&nbsp;mm</div></div>
+      <div class="card"><div class="ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg><span>Foto</span></div><div class="nm" contenteditable="true">Borrifador</div><div class="ds" contenteditable="true">com água</div></div>
+      <div class="card"><div class="ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg><span>Foto</span></div><div class="nm" contenteditable="true">Pente de ponta fina</div><div class="ds" contenteditable="true">para divisões</div></div>
+      <div class="card"><div class="ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg><span>Foto</span></div><div class="nm" contenteditable="true">Pente garfo</div><div class="ds" contenteditable="true">—</div></div>
+      <div class="card"><div class="ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg><span>Foto</span></div><div class="nm" contenteditable="true">Escova styling brush</div><div class="ds" contenteditable="true">Vertix</div></div>
+      <div class="card"><div class="ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg><span>Foto</span></div><div class="nm" contenteditable="true">Grampos</div><div class="ds" contenteditable="true">tamanhos 5 e 7</div></div>
+      <div class="card"><div class="ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg><span>Foto</span></div><div class="nm" contenteditable="true">Clipes de metal</div><div class="ds" contenteditable="true">—</div></div>
+      <div class="card"><div class="ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg><span>Foto</span></div><div class="nm" contenteditable="true">Presilha jacaré / piranha</div><div class="ds" contenteditable="true">—</div></div>
+      <div class="card"><div class="ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg><span>Foto</span></div><div class="nm" contenteditable="true">Toalha</div><div class="ds" contenteditable="true">—</div></div>
+      <div class="card"><div class="ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg><span>Foto</span></div><div class="nm" contenteditable="true">+ Item livre</div><div class="ds" contenteditable="true">edite ou apague</div></div>
+    </div>
+
+    <div class="foot"><span>01</span><span>Cachos &amp; Crespos — 2026</span></div>
+  </section>
+
+  <!-- ============================ PÁGINA 2 · PRODUTOS ============================ -->
+  <section class="sheet" data-document-role="page" data-label="Produtos e finalização">
+    <div class="eyebrow chip">Para se preparar</div>
+    <h2 class="h-sec">Produtos &amp; <span class="scr">finalização</span></h2>
+    <div class="rule"></div>
+    <p class="lead" contenteditable="true">Finalizadores, fibras e itens de acabamento. Leve apenas pomada liberada pela ANVISA.</p>
+
+    <div class="grid">
+      <div class="card"><div class="ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg><span>Foto</span></div><div class="nm" contenteditable="true">Gelatina</div><div class="ds" contenteditable="true">Salon Line</div></div>
+      <div class="card"><div class="ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg><span>Foto</span></div><div class="nm" contenteditable="true">Protetor térmico</div><div class="ds" contenteditable="true">—</div></div>
+      <div class="card"><div class="ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg><span>Foto</span></div><div class="nm" contenteditable="true">Spray de brilho</div><div class="ds" contenteditable="true">—</div></div>
+      <div class="card"><div class="ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg><span>Foto</span></div><div class="nm" contenteditable="true">Retoque instantâneo</div><div class="ds" contenteditable="true">Koleston · castanho escuro e claro</div></div>
+      <div class="card"><div class="ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg><span>Foto</span></div><div class="nm" contenteditable="true">Fibra</div><div class="ds" contenteditable="true">Ginga Hair · 400&nbsp;g</div></div>
+      <div class="card"><div class="ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg><span>Foto</span></div><div class="nm" contenteditable="true">Cabelo orgânico</div><div class="ds" contenteditable="true">Goivo (bundless)</div></div>
+      <div class="card"><div class="ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg><span>Foto</span></div><div class="nm" contenteditable="true">Elástiquinho</div><div class="ds" contenteditable="true">—</div></div>
+      <div class="card"><div class="ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg><span>Foto</span></div><div class="nm" contenteditable="true">Xuxinha</div><div class="ds" contenteditable="true">—</div></div>
+      <div class="card"><div class="ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg><span>Foto</span></div><div class="nm" contenteditable="true">Escova de limpeza</div><div class="ds" contenteditable="true">—</div></div>
+      <div class="card"><div class="ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg><span>Foto</span></div><div class="nm" contenteditable="true">Tesoura</div><div class="ds" contenteditable="true">—</div></div>
+      <div class="card"><div class="ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg><span>Foto</span></div><div class="nm" contenteditable="true">Pomada</div><div class="ds" contenteditable="true">liberada pela ANVISA</div></div>
+      <div class="card"><div class="ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg><span>Foto</span></div><div class="nm" contenteditable="true">+ Item livre</div><div class="ds" contenteditable="true">edite ou apague</div></div>
+    </div>
+
+    <div class="note">
+      <span class="star">★</span>
+      <div class="nt" contenteditable="true"><b>Importante:</b> leve apenas pomada modeladora liberada pela ANVISA. Em caso de dúvida sobre alguma marca, me chame antes do curso.</div>
+    </div>
+
+    <div class="foot"><span>02</span><span>Cachos &amp; Crespos — 2026</span></div>
+  </section>
+
+</body>
+</html>
