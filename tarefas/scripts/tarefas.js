@@ -5,10 +5,20 @@
 
 var tasks    = [];
 var projetos = [];
+var contentIdeas = [];  // ideias do módulo Conteúdo (só leitura — derivamos ações do dia)
 var curView  = 'hoje';
 var editId   = null;   // tarefa em edição
 var editProj = null;   // projeto em edição
 var authed   = false;
+
+// Ações de conteúdo derivadas do funil (Gravar → Editar → Publicar).
+// `next` = status gravado no Conteúdo ao concluir o passo aqui.
+var CKIND = {
+  atrasado: { ico:'🔴', verbo:'Publicar (atrasado)', meta:'atrasado',    next:'Publicado', msg:'🎉 Publicado!' },
+  publicar: { ico:'📤', verbo:'Publicar',            meta:'publica hoje', next:'Publicado', msg:'🎉 Publicado!' },
+  editar:   { ico:'✂️', verbo:'Editar',              meta:'em edição',    next:'Pronto',    msg:'✅ Pronto para publicar!' },
+  gravar:   { ico:'🎬', verbo:'Gravar',              meta:'gravar hoje',  next:'Editando',  msg:'🎬 Gravado! Foi para a edição' },
+};
 
 var FLOW = ['ideia','a_fazer','fazendo','feita'];
 var AREAS = {
@@ -65,9 +75,14 @@ async function load(){
   if(!authed) return;
   document.getElementById('hsub').textContent = 'Sincronizando...';
   try{
-    var res = await Promise.all([ DB.projetos.list(), DB.tarefas.list() ]);
-    projetos = res[0];
-    tasks    = res[1];
+    var res = await Promise.all([
+      DB.projetos.list(),
+      DB.tarefas.list(),
+      DB.conteudo.list().catch(function(){ return []; }),  // degrada sozinho se o Conteúdo falhar
+    ]);
+    projetos     = res[0];
+    tasks        = res[1];
+    contentIdeas = res[2];
     var bl = document.getElementById('boot-loader'); if(bl) bl.style.display = 'none';
     populateProjSelects();
     renderCurrent();
@@ -97,7 +112,7 @@ function renderCurrent(){
   refreshBadges();
 }
 function refreshBadges(){
-  var pend = tasks.filter(function(t){ return t.status!=='feita' && t.status!=='ideia'; }).length;
+  var pend = tasks.filter(function(t){ return t.status!=='feita' && t.status!=='ideia'; }).length + deriveContentActions().length;
   var ide  = tasks.filter(function(t){ return t.status==='ideia'; }).length;
   var done = tasks.filter(function(t){ return t.status==='feita'; }).length;
   setTxt('d-b-hoje', pend); setTxt('d-b-ideias', ide); setTxt('d-b-feitas', done);
@@ -139,6 +154,58 @@ function doneHTML(t){
     '<div class="task-meta"><span class="chip chip-proj">'+esc(projName(t.projetoId)||area(t.area).label)+'</span></div></div></div>';
 }
 
+// ── CONTEÚDO DERIVADO (ações do dia vindas do módulo Conteúdo) ──
+function addDaysStr(s, n){
+  var p = String(s).split('-');
+  var d = new Date(parseInt(p[0]), parseInt(p[1])-1, parseInt(p[2]));
+  d.setDate(d.getDate()+n);
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+// Mesma regra do painel Hoje do Conteúdo (hojeData): só o ACIONÁVEL de hoje.
+// Devolve [{ idea, kind }] — 'Pronto' sem data fica de fora de propósito (não é ação de hoje).
+function deriveContentActions(){
+  var t = todayStr(), lim = addDaysStr(t, 3), out = [];
+  for(var k=0;k<contentIdeas.length;k++){
+    var i = contentIdeas[k];
+    if(i.status==='Publicado') continue;
+    if(i.scheduledDate && i.scheduledDate < t){ out.push({ idea:i, kind:'atrasado' }); continue; }
+    if(i.scheduledDate === t){ out.push({ idea:i, kind:'publicar' }); continue; }
+    if(i.status==='Editando'){ out.push({ idea:i, kind:'editar' }); continue; }
+    if(i.status==='Pronto') continue;
+    if(i.gravarDate && i.gravarDate <= t){ out.push({ idea:i, kind:'gravar' }); continue; }
+    if(i.status==='Fila de Gravacao' && !i.gravarDate && i.scheduledDate && i.scheduledDate <= lim){ out.push({ idea:i, kind:'gravar' }); }
+  }
+  return out;
+}
+function contentActionHTML(item){
+  var i = item.idea, c = CKIND[item.kind];
+  return '<div class="task area-conteudo from-content" id="ca-'+esc(i.id)+'">'+
+    '<button class="check" onclick="completeContent(\''+esc(i.id)+'\',\''+item.kind+'\',event)" aria-label="Concluir passo">'+
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'+
+    '</button>'+
+    '<div class="task-body" onclick="openContent(\''+esc(i.id)+'\')"><div class="task-ttl">'+c.ico+' '+esc(c.verbo)+': '+esc(i.title)+'</div>'+
+    '<div class="task-meta"><span class="chip chip-src">📹 Conteúdo · '+c.meta+'</span></div></div>'+
+  '</div>';
+}
+function openContent(id){ window.location.href = '../conteudo/#' + id; }
+
+// Concluir um passo avança o status LÁ no Conteúdo (fonte da verdade — nada é copiado).
+function completeContent(id, kind, ev){
+  if(ev) ev.stopPropagation();
+  var i = contentIdeas.find(function(x){ return x.id===id; }); if(!i) return;
+  var c = CKIND[kind]; if(!c) return;
+  var prev = i.status;
+  i.status = c.next;                 // gravar→Editando reaparece como "Editar"; editar/publicar saem do dia
+  showToast(c.msg);
+  var el = document.getElementById('ca-'+id);
+  if(el){
+    var chk = el.querySelector('.check'); if(chk) chk.classList.add('done');
+    el.classList.add('leaving');
+    setTimeout(renderCurrent, 340);
+  } else { renderCurrent(); }
+  DB.conteudo.upsert(i).catch(function(){ i.status = prev; renderCurrent(); showToast('Erro ao salvar', true); });
+}
+
 // ── HOJE ──────────────────────────────────────────────────────
 function renderHoje(){
   var pend = tasks.filter(function(t){ return t.status!=='feita' && t.status!=='ideia'; });
@@ -151,10 +218,17 @@ function renderHoje(){
     ? foco.map(taskHTML).join('')
     : '<div class="muted-empty">Toque na ☆ de uma tarefa para escolher seu foco do dia.</div>';
 
-  setTxt('todo-cnt', rest.length);
-  document.getElementById('todo-list').innerHTML = rest.length
-    ? rest.map(taskHTML).join('')
-    : '<div class="muted-empty">Nada pendente fora do foco 🎯</div>';
+  var ca      = deriveContentActions();
+  var caAtras = ca.filter(function(k){ return k.kind==='atrasado'; });  // urgência → topo
+  var caRest  = ca.filter(function(k){ return k.kind!=='atrasado'; });  // bloco agrupado
+
+  setTxt('todo-cnt', rest.length + ca.length);
+  var todoHTML = caAtras.map(contentActionHTML).join('') + rest.map(taskHTML).join('');
+  if(caRest.length){
+    todoHTML += '<div class="ca-group">📹 Do Planejamento de Conteúdo</div>' + caRest.map(contentActionHTML).join('');
+  }
+  document.getElementById('todo-list').innerHTML = todoHTML
+    || '<div class="muted-empty">Nada pendente fora do foco 🎯</div>';
 
   setTxt('wins-cnt', done.length);
   document.getElementById('wins-list').innerHTML = done.length
