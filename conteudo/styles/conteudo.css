@@ -1417,23 +1417,33 @@
   .bank-chip.on { background: var(--brand-dark); border-color: var(--brand-dark); color: #fff; }
   .bank-chip:hover:not(.on) { border-color: var(--brand); color: var(--brand); }
   .bank-grid {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(195px, 1fr));
-    gap: 9px; max-height: 200px; overflow-y: auto;
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(158px, 1fr));
+    gap: 7px; max-height: 244px; overflow-y: auto;
   }
   .bank-empty { font-size: .76rem; color: var(--text-subtle); padding: 8px 2px; }
   .bcard {
-    background: var(--bg); border: .5px solid var(--border); border-radius: 11px;
-    padding: 10px 11px; cursor: grab;
+    background: var(--bg); border: .5px solid var(--border); border-radius: 10px;
+    padding: 7px 9px; cursor: grab; touch-action: none;
   }
   .bcard:hover { border-color: var(--brand); box-shadow: 0 1px 4px rgba(56,25,11,.08); }
   .bcard:active { cursor: grabbing; }
-  .bcard-title { font-size: .76rem; font-weight: 600; line-height: 1.3; margin-bottom: 7px; }
+  .bcard-title { font-size: .72rem; font-weight: 500; line-height: 1.25; margin-bottom: 4px; }
   .bcard-foot { display: flex; align-items: center; gap: 6px; }
   .bcard-promote {
     margin-left: auto; background: none; border: none; font-size: .82rem;
     color: var(--text-subtle); cursor: pointer; padding: 1px 4px; font-family: inherit;
   }
   .bcard-promote:hover { color: var(--brand); }
+
+  /* Arraste (pointer-based) — fantasma que segue o cursor + fonte esmaecida */
+  .bcard-dragging { opacity: .35; }
+  .bcard-ghost {
+    position: fixed; left: 0; top: 0; z-index: 9999;
+    transform: translate(-50%, -50%); pointer-events: none;
+    opacity: .92; box-shadow: 0 10px 26px rgba(56,25,11,.28);
+    border-color: var(--brand);
+  }
+  body.bank-dragging { cursor: grabbing; user-select: none; }
 
   /* Promo menu vira popup central no desktop */
   .promo-bg { align-items: center; }

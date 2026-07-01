@@ -1360,12 +1360,13 @@ function renderHoje(){
     for(var a=0;a<d.atrasados.length;a++) zHoje+=acardHTML(d.atrasados[a],'late');
     zHoje+='</div>';
   }
-  zHoje+='<div class="sec sec-drop" ondragover="dragOverZ(event)" ondragleave="dragLeaveZ(event)" ondrop="dropOn(event,\'gravar\')">'+
+  zHoje+='<div class="sec sec-drop" data-drop="gravar" ondragover="dragOverZ(event)" ondragleave="dragLeaveZ(event)" ondrop="dropOn(event,\'gravar\')">'+
     '<div class="sec-hdr"><span class="ico">🎬</span><h2>Gravar hoje</h2><span class="cnt">'+d.gravar.length+'</span></div>';
   if(!d.gravar.length) zHoje+='<div class="sec-empty">Nada para gravar hoje — arraste uma ideia do banco ou use ⤴ para promover.</div>';
   for(var g=0;g<d.gravar.length;g++) zHoje+=acardHTML(d.gravar[g],'gravar');
   zHoje+='</div>';
-  zHoje+='<div class="sec"><div class="sec-hdr"><span class="ico">📤</span><h2>Publicar hoje</h2><span class="cnt">'+d.publicar.length+'</span></div>';
+  zHoje+='<div class="sec sec-drop" data-drop="publicar" ondragover="dragOverZ(event)" ondragleave="dragLeaveZ(event)" ondrop="dropOn(event,\'publicar\')">'+
+    '<div class="sec-hdr"><span class="ico">📤</span><h2>Publicar hoje</h2><span class="cnt">'+d.publicar.length+'</span></div>';
   if(!d.publicar.length) zHoje+='<div class="sec-empty">Nenhuma publicação agendada para hoje.</div>';
   for(var p=0;p<d.publicar.length;p++) zHoje+=acardHTML(d.publicar[p],'publicar');
   zHoje+='</div>';
@@ -1378,7 +1379,7 @@ function renderHoje(){
 
   /* ZONA B — Stories */
   var zStories='<section class="hj-zone hj-zone-stories"><div class="hj-zone-title">📱 Stories</div>'+
-    '<div class="stories-box sec-drop" ondragover="dragOverZ(event)" ondragleave="dragLeaveZ(event)" ondrop="dropOn(event,\'story\')">'+
+    '<div class="stories-box sec-drop" data-drop="story" ondragover="dragOverZ(event)" ondragleave="dragLeaveZ(event)" ondrop="dropOn(event,\'story\')">'+
       storiesBlockHTML(t,'Hoje')+
       '<button class="stories-bank-btn" onclick="bankFromStories()">⤵ trazer do banco de ideias</button>'+
       '<div class="stories-tmr">'+storiesBlockHTML(tm,'Amanhã')+'</div>'+
@@ -1390,7 +1391,7 @@ function renderHoje(){
   zNext+='<div class="nd-full"><div class="hj-zone-title">Próximos dias</div>';
   for(var k=1;k<=4;k++){
     var dt=addDaysISO(t,k), it=nextDayItems(dt), pls=planosFor(dt);
-    zNext+='<div class="nd-day sec-drop" ondragover="dragOverZ(event)" ondragleave="dragLeaveZ(event)" ondrop="dropOn(event,\'day\',\''+dt+'\')">'+
+    zNext+='<div class="nd-day sec-drop" data-drop="day" data-day="'+dt+'" ondragover="dragOverZ(event)" ondragleave="dragLeaveZ(event)" ondrop="dropOn(event,\'day\',\''+dt+'\')">'+
       '<div class="nd-lbl" onclick="openDayModal(\''+dt+'\')"><b>'+safe(dayLabel(dt))+'</b></div>';
     for(var p2=0;p2<it.pubs.length;p2++) zNext+='<div class="nd-card" onclick="openModal(\''+safe(it.pubs[p2].id)+'\')"><span class="nd-ico">📤</span><span class="nd-title">'+safe(it.pubs[p2].title)+'</span></div>';
     for(var g2=0;g2<it.gravs.length;g2++) zNext+='<div class="nd-card" onclick="openModal(\''+safe(it.gravs[g2].id)+'\')"><span class="nd-ico">🎬</span><span class="nd-title">Gravar: '+safe(it.gravs[g2].title)+'</span></div>';
@@ -1487,7 +1488,7 @@ function buildBank(){
   if(!list.length) h='<div class="bank-empty">Nenhuma ideia aqui ainda — crie em ＋ Nova Ideia.</div>';
   for(var k=0;k<list.length;k++){
     var i=list[k], cat=catsOf(i)[0]||'';
-    h+='<div class="bcard" draggable="true" ondragstart="bankDrag(event,\''+safe(i.id)+'\')" onclick="openModal(\''+safe(i.id)+'\')">'+
+    h+='<div class="bcard" data-id="'+safe(i.id)+'" onpointerdown="bankPointerDown(event,\''+safe(i.id)+'\')" onclick="bankCardClick(\''+safe(i.id)+'\')">'+
       '<div class="bcard-title">'+safe(i.title)+'</div>'+
       '<div class="bcard-foot">'+(cat?'<span class="pilar">'+safe(cat)+'</span>':'')+
       '<button class="bcard-promote" title="Promover" onclick="openPromo(\''+safe(i.id)+'\',event)">⤴</button></div>'+
@@ -1496,23 +1497,17 @@ function buildBank(){
   grid.innerHTML=h;
 }
 
-/* ── Drag-and-drop banco → painel ── */
-function bankDrag(ev,id){
-  ev.dataTransfer.setData('text/plain',id);
-  ev.dataTransfer.effectAllowed='move';
-}
-function dragOverZ(ev){ ev.preventDefault(); ev.currentTarget.classList.add('drop-on'); }
-function dragLeaveZ(ev){ ev.currentTarget.classList.remove('drop-on'); }
-function dropOn(ev,kind,arg){
-  ev.preventDefault();
-  ev.currentTarget.classList.remove('drop-on');
-  var id=ev.dataTransfer.getData('text/plain'); if(!id) return;
+/* ── Drop banco → painel (ação única, compartilhada) ── */
+function applyDrop(id,kind,arg){
   var i=byIdIdea(id); if(!i) return;
   var t=todayISO();
   if(kind==='gravar'){
     i.gravarDate=t;
     if(i.status==='Nao Iniciado') i.status='Fila de Gravacao';
     persistIdea(i); showToast('🎬 Na pauta de gravação de hoje!');
+  } else if(kind==='publicar'){
+    i.scheduledDate=t;
+    persistIdea(i); showToast('📤 Publicação marcada para hoje!');
   } else if(kind==='story'){
     addStory(t,i.title,i.id); showToast('📱 Story de hoje adicionado!');
   } else if(kind==='day'){
@@ -1520,6 +1515,73 @@ function dropOn(ev,kind,arg){
     persistIdea(i); showToast('📅 Publicação agendada para '+fmtDate(arg));
   }
   render();
+}
+
+/* Feedback visual das zonas (usado pelo drag nativo do calendário) */
+function dragOverZ(ev){ ev.preventDefault(); ev.currentTarget.classList.add('drop-on'); }
+function dragLeaveZ(ev){ ev.currentTarget.classList.remove('drop-on'); }
+function dropOn(ev,kind,arg){
+  ev.preventDefault();
+  ev.currentTarget.classList.remove('drop-on');
+  var id=ev.dataTransfer.getData('text/plain'); if(!id) return;
+  applyDrop(id,kind,arg);
+}
+
+/* ── Arraste dos cards do banco (pointer: mouse + toque) ──
+   Native draggable era instável e ainda bloqueava um fallback; aqui um
+   ghost segue o cursor e solta na .sec-drop sob o ponteiro. */
+var _bDrag=null, _bSuppressClick=false;
+function bankPointerDown(ev,id){
+  if(ev.pointerType==='mouse' && ev.button!==0) return; // só botão esquerdo
+  _bDrag={ id:id, x0:ev.clientX, y0:ev.clientY, active:false, ghost:null, src:ev.currentTarget, zone:null };
+  window.addEventListener('pointermove', bankPointerMove, {passive:false});
+  window.addEventListener('pointerup', bankPointerUp);
+  window.addEventListener('pointercancel', bankPointerUp);
+}
+function bankPointerMove(ev){
+  if(!_bDrag) return;
+  var dx=ev.clientX-_bDrag.x0, dy=ev.clientY-_bDrag.y0;
+  if(!_bDrag.active){
+    if(Math.abs(dx)+Math.abs(dy) < 6) return; // limiar: distingue clique de arraste
+    _bDrag.active=true;
+    var g=_bDrag.src.cloneNode(true);
+    g.classList.add('bcard-ghost');
+    g.style.width=_bDrag.src.offsetWidth+'px';
+    document.body.appendChild(g);
+    _bDrag.ghost=g;
+    _bDrag.src.classList.add('bcard-dragging');
+    document.body.classList.add('bank-dragging');
+  }
+  ev.preventDefault();
+  _bDrag.ghost.style.left=ev.clientX+'px';
+  _bDrag.ghost.style.top =ev.clientY+'px';
+  var under=document.elementFromPoint(ev.clientX, ev.clientY);
+  var zone=under?under.closest('.sec-drop'):null;
+  if(zone!==_bDrag.zone){
+    if(_bDrag.zone) _bDrag.zone.classList.remove('drop-on');
+    _bDrag.zone=zone;
+    if(zone) zone.classList.add('drop-on');
+  }
+}
+function bankPointerUp(){
+  window.removeEventListener('pointermove', bankPointerMove);
+  window.removeEventListener('pointerup', bankPointerUp);
+  window.removeEventListener('pointercancel', bankPointerUp);
+  var d=_bDrag; _bDrag=null;
+  if(!d) return;
+  if(d.src) d.src.classList.remove('bcard-dragging');
+  document.body.classList.remove('bank-dragging');
+  if(d.ghost && d.ghost.parentNode) d.ghost.parentNode.removeChild(d.ghost);
+  if(!d.active) return; // foi só um clique
+  _bSuppressClick=true; setTimeout(function(){ _bSuppressClick=false; }, 60);
+  if(d.zone){
+    d.zone.classList.remove('drop-on');
+    applyDrop(d.id, d.zone.getAttribute('data-drop'), d.zone.getAttribute('data-day')||'');
+  }
+}
+function bankCardClick(id){
+  if(_bSuppressClick) return; // acabou de arrastar — não abrir o modal
+  openModal(id);
 }
 
 /* ============================================================
