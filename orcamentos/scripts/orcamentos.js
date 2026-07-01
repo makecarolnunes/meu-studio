@@ -911,7 +911,13 @@ function render() {
 
   // Filtro por origem (Produção Social / Noiva / Curso de Automaquiagem)
   if (curOrigem !== 'todos') {
-    list = list.filter(e => e.Origem === curOrigem);
+    // "Noiva" reconhece por origem OU por serviço (isNoivaEntry) — orçamentos
+    // marcados como noiva só pelo serviço (Origem default) também aparecem.
+    if (curOrigem === 'Noiva') {
+      list = list.filter(e => isNoivaEntry(e));
+    } else {
+      list = list.filter(e => e.Origem === curOrigem);
+    }
   }
 
   // Filtro por equipe
