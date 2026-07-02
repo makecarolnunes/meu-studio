@@ -39,6 +39,12 @@
     display:flex;align-items:center;justify-content:center;padding:0 4px}
   .pin{position:absolute;top:4px;right:4px;background:var(--pin);color:#fff;
     font-size:10px;font-weight:700;padding:2px 5px;border-radius:6px}
+  .test{position:absolute;top:4px;right:4px;background:#2f8f5b;color:#fff;
+    font-size:9.5px;font-weight:800;padding:2px 5px;border-radius:6px;letter-spacing:.03em}
+  .cell.is-test{outline:2px solid #2f8f5b;outline-offset:-2px}
+  .rm{position:absolute;bottom:3px;left:3px;width:22px;height:22px;border:none;border-radius:6px;
+    background:rgba(214,63,63,.92);color:#fff;font-size:13px;font-weight:800;line-height:1;
+    cursor:pointer;padding:0;z-index:2}
   .tag{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(transparent,rgba(0,0,0,.66));
     color:#fff;font-size:9.5px;line-height:1.2;padding:14px 4px 3px}
   .mv{position:absolute;bottom:3px;display:flex;gap:3px;right:3px}
@@ -68,16 +74,19 @@
 </head>
 <body>
 <header>
+  <a href="./index.html" style="display:inline-block;font-size:13px;color:var(--terra-d);text-decoration:none;margin-bottom:6px">← Voltar ao Instagram</a>
   <h1>🖼️ Prévia do Grid</h1>
   <p class="sub">Veja como seu perfil vai ficar <b>antes</b> de mexer no Instagram.
-  Use ← → pra ajustar a ordem até ficar bonito visualmente. Depois é só replicar essa ordem no app.</p>
+  Use <b>📸 Adicionar foto de teste</b> pra ver como uma foto nova encaixa, e ← → pra ajustar a ordem. Depois é só replicar no app.</p>
 </header>
 
 <div class="wrap">
   <div class="bar">
+    <button class="btn primary" onclick="document.getElementById('test-file').click()">📸 Adicionar foto de teste</button>
     <button class="btn" onclick="resetOrder()">↺ Voltar à sugestão</button>
-    <button class="btn primary" onclick="showExport()">📋 Ver ordem final</button>
+    <button class="btn" onclick="showExport()">📋 Ver ordem final</button>
     <button class="btn" onclick="reload()">🔄 Recarregar miniaturas</button>
+    <input type="file" id="test-file" accept="image/*" multiple style="display:none">
   </div>
   <p class="hint">Dica: se as miniaturas aparecerem quebradas, abra o dashboard do Instagram
   uma vez (pra atualizar o snapshot) e recarregue esta página.</p>
@@ -159,12 +168,14 @@
     items.forEach(function(it, i){
       var pos = i+1;
       var cell = document.createElement('div');
-      cell.className='cell';
+      cell.className='cell'+(it.isTest?' is-test':'');
 
       // overlays (sem a mídia ainda)
       cell.innerHTML =
         '<div class="pos">'+pos+'</div>' +
-        (pos<=3 ? '<div class="pin">📌 FIXAR</div>' : '') +
+        (it.isTest ? '<div class="test">📸 TESTE</div>'
+                   : (pos<=3 ? '<div class="pin">📌 FIXAR</div>' : '')) +
+        (it.isTest ? '<button class="rm" title="Remover foto de teste" onclick="removeTest('+i+')">✕</button>' : '') +
         '<div class="tag">'+it.date+' · '+it.caption+'</div>' +
         '<div class="mv">' +
           '<button '+(i===0?'disabled':'')+' onclick="move('+i+',-1)">←</button>' +
@@ -204,9 +215,41 @@
     render();
     document.getElementById('export').style.display='none';
   };
-  window.resetOrder = function(){ items = orderBy(SUGESTAO); render();
-    document.getElementById('export').style.display='none'; };
+  window.resetOrder = function(){
+    var tests = items.filter(function(it){ return it.isTest; });
+    items = tests.concat(orderBy(SUGESTAO)); render();
+    document.getElementById('export').style.display='none';
+  };
   window.reload = function(){ location.reload(); };
+
+  // Fotos de teste: entram no topo do feed e se movem como as demais
+  var testCount = 0;
+  window.removeTest = function(i){
+    var it = items[i];
+    if(it && it.thumb && it.thumb.indexOf('blob:')===0){ try{ URL.revokeObjectURL(it.thumb); }catch(e){} }
+    items.splice(i,1); render();
+    document.getElementById('export').style.display='none';
+  };
+  document.getElementById('test-file').addEventListener('change', function(e){
+    var files = Array.prototype.slice.call(e.target.files||[]);
+    var added = files.filter(function(f){ return /^image\//.test(f.type); }).map(function(f){
+      testCount++;
+      return {
+        id:'test_'+testCount, code:'test_'+testCount, link:'',
+        thumb:URL.createObjectURL(f), date:'TESTE',
+        caption:f.name.replace(/\.[^.]+$/,'').slice(0,40) || 'foto de teste',
+        isTest:true, reach:0, saves:0, shares:0
+      };
+    });
+    if(added.length){
+      items = added.concat(items);   // topo do feed
+      document.getElementById('grid').style.display='';
+      document.getElementById('state').style.display='none';
+      render();
+      document.getElementById('export').style.display='none';
+    }
+    e.target.value=''; // permite re-selecionar o mesmo arquivo
+  });
 
   window.showExport = function(){
     var ol=document.getElementById('export-list'); ol.innerHTML='';
@@ -215,9 +258,14 @@
       var pin = i<3 ? ' 📌FIXAR' : '';
       var li=document.createElement('li');
       if(i<3) li.className='pinrow';
-      li.innerHTML='<a href="'+it.link+'" target="_blank">'+it.date+' · '+it.caption+'</a>'+pin;
+      if(it.isTest){
+        li.innerHTML='📸 '+it.caption+' <b>(foto de teste — não publicada)</b>'+pin;
+        txt += (i+1)+'. 📸 '+it.caption+' (foto de teste)'+pin+'\n';
+      } else {
+        li.innerHTML='<a href="'+it.link+'" target="_blank">'+it.date+' · '+it.caption+'</a>'+pin;
+        txt += (i+1)+'. '+it.date+' · '+it.caption+pin+'\n   '+it.link+'\n';
+      }
       ol.appendChild(li);
-      txt += (i+1)+'. '+it.date+' · '+it.caption+pin+'\n   '+it.link+'\n';
     });
     document.getElementById('export-text').value=txt;
     document.getElementById('export').style.display='block';
@@ -243,7 +291,13 @@
     try{
       var snap = await DB.instagram.getState('feed_snapshot');
       if(!snap || !snap.posts || !snap.posts.length){
-        return fail('Ainda não há snapshot de posts.<br>Abra o <b>dashboard do Instagram</b> uma vez (ele salva os dados) e volte aqui.');
+        // Sem snapshot: grid começa vazio, mas dá pra adicionar fotos de teste
+        items = [];
+        var s=document.getElementById('state'); s.style.display='block';
+        s.innerHTML='Ainda não há snapshot dos seus posts. Você ainda pode usar o botão '+
+          '<b>📸 Adicionar foto de teste</b> pra ver a proporção no grid.<br>'+
+          'Pra ver junto do feed real, abra o <b>dashboard do Instagram</b> uma vez e recarregue.';
+        return;
       }
       items = build(snap);
       items = orderBy(SUGESTAO);
