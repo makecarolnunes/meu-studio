@@ -316,6 +316,19 @@
     </div>
   </div>
 
+  <!-- ── ACCORDION: Datas, horário e serviço (editável — não fechados) ── -->
+  <div class="act-acc open" id="act-edit-slots-acc" style="display:none; margin-top:14px;">
+    <div class="act-acc-head" onclick="toggleActAcc(this)">
+      <span class="act-acc-title">📅 Datas, horário e serviço</span>
+      <svg class="act-chev" viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <div class="act-acc-body">
+      <div id="act-edit-slots-list"></div>
+      <button class="btn-add-slot" type="button" onclick="addActEditSlot()">+ Adicionar serviço / data</button>
+      <div style="font-size:0.66rem; color:var(--muted); margin-top:6px; line-height:1.4;">Corrija a data, o horário, o serviço ou o valor. Toque em <b>Salvar alterações</b> no fim para gravar.</div>
+    </div>
+  </div>
+
   <!-- ── ACCORDION: Valores e cadastro ── -->
   <div class="act-acc" style="margin-top:14px;">
     <div class="act-acc-head" onclick="toggleActAcc(this)">
@@ -600,7 +613,7 @@
 <script src="../shared/js/icons.js"></script>
 
 <!-- ── Módulo Orçamentos ── -->
-<script src="./scripts/orcamentos.js?v=20260701a"></script>
+<script src="./scripts/orcamentos.js?v=20260703a"></script>
 
 <!-- ── Sidebar (último, depende do DOM pronto) ── -->
 <script src="../shared/js/global-search.js"></script>

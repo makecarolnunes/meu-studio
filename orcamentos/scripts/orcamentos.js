@@ -1587,6 +1587,7 @@ function openAction(id) {
   if (actEqInp) { actEqInp.value = e.Equipe || ''; actEqInp.style.display = e.Equipe ? '' : 'none'; if (e.Equipe) actEqInp.style.marginTop = '8px'; }
   toggleActEquipeInput(!!(e.Equipe));
 
+  renderActEditSlots(e);
   renderActSlots(e);
   renderActGcalSection(e);
   renderActWaSection(e);
@@ -1607,6 +1608,7 @@ async function applyStatusValue(newStatus) {
   const vfr = document.getElementById('val-fechado-row');
   if (vfr) vfr.style.display = newStatus === 'Fechado' ? 'block' : 'none';
   // Seções que dependem do status (slots, Google Agenda, mensagem WhatsApp, botão Fechar)
+  renderActEditSlots(e);
   renderActSlots(e);
   renderActGcalSection(e);
   renderActWaSection(e);
@@ -1682,8 +1684,26 @@ async function saveAction() {
   const e = entries.find(x => String(x.ID) === String(activeId));
   if (!e) return;
   const newObs = document.getElementById('act-obs').value;
-  const existingSlots = entrySlots(e);
-  e.Obs = packSlots(newObs, existingSlots);
+
+  // Data / horário / serviço editados no cadastro (status ≠ Fechado).
+  // Para fechados mantemos os slots atuais (o editor enxuto de data/horário já
+  // repacka ao vivo, e alterar serviço/valor de um fechado não é feito por aqui).
+  let slotsForPack = entrySlots(e);
+  if (e.Status !== 'Fechado') {
+    const validos = actEditSlots.filter(s => s.servico);
+    if (validos.length) {
+      const dataInvalida = validos.find(s => s.data && !slotDateYearValid(s.data));
+      if (dataInvalida) { toast('⚠️ Confira a data do serviço — ano fora do intervalo: ' + fmtDate(dataInvalida.data)); return; }
+      slotsForPack   = expandRows(validos);
+      e.Servico      = descreveSlots(validos);
+      const datas    = validos.map(s => s.data).filter(Boolean).sort();
+      e.DataEvento   = datas[0] || '';
+      const total    = validos.reduce((sum, s) => sum + (parseFloat(s.valorUnit) || 0) * slotQtd(s), 0);
+      if (total) e.ValorProp = total;   // valor enviado acompanha o total dos serviços
+    }
+  }
+  e.Obs = packSlots(newObs, slotsForPack);
+
   const dpEl = document.getElementById('act-data-pedido');
   if (dpEl && dpEl.value) e.DataPedido = dpEl.value;
   const vf = document.getElementById('act-val-fechado').value;
@@ -1711,6 +1731,8 @@ async function saveAction() {
     DataFechamento:e.DataFechamento,
     ValorFechado:  e.ValorFechado,
     ValorProp:     e.ValorProp,
+    Servico:       e.Servico,
+    DataEvento:    e.DataEvento || '',
     Obs:           e.Obs,
     Propostas:     Array.isArray(e.Propostas) ? e.Propostas : [],
     Equipe:        e.Equipe || '',
@@ -2357,6 +2379,89 @@ function syncActSlot(idx, campo, valor) {
     postEntry({ action: 'update', id: e.ID, fields: { Obs: e.Obs, DataEvento: e.DataEvento || '' } });
     render();
   }, 600);
+}
+
+// ══════════════════════════════════════════════════════════
+//  EDIÇÃO DE DATA / HORÁRIO / SERVIÇO NO CADASTRO (status ≠ Fechado)
+//  Reaproveita a UI de slots do "Novo"/"Fechar" (renderSlotRow/syncSlotField).
+//  Fechados continuam usando o editor enxuto de data/horário (act-slots-section),
+//  porque mexer em serviço/valor de um fechado afetaria financeiro/agenda já criados.
+// ══════════════════════════════════════════════════════════
+let actEditSlots = [];
+
+function renderActEditSlots(e) {
+  const acc = document.getElementById('act-edit-slots-acc');
+  if (!acc) return;
+  if (e.Status === 'Fechado') { acc.style.display = 'none'; return; }
+  acc.style.display = 'block';
+
+  slotCheckExcludeId = e.ID;   // não conflita com os próprios slots deste orçamento
+  const existentes = collapseSlots(entrySlots(e));
+  const first = services[0] || { nome: '', valor: 0 };
+  actEditSlots = existentes.length ? existentes : [{
+    id: Date.now() + Math.random(),
+    servico:   e.Servico || first.nome || '',
+    valorUnit: parseFloat(e.ValorProp) || first.valor || 0,
+    data:      e.DataEvento || '',
+    horario:   '',
+    qtd:       1,
+    duracao:   getServiceDuration(e.Servico || first.nome || ''),
+  }];
+  renderActEditSlotsList();
+}
+
+function renderActEditSlotsList() {
+  const list = document.getElementById('act-edit-slots-list');
+  if (!list) return;
+  list.innerHTML = actEditSlots
+    .map((s, idx) => renderSlotRow(s, idx, actEditSlots.length, 'syncActEditSlot', 'removerActEditSlot'))
+    .join('');
+}
+
+function syncActEditSlot(id, campo, valor) {
+  syncSlotField(actEditSlots, id, campo, valor, renderActEditSlotsList, recalcActEdit);
+}
+
+function addActEditSlot() {
+  const first = services[0] || { nome: '', valor: 0 };
+  actEditSlots.push({
+    id: Date.now() + Math.random(),
+    servico:   first.nome || '',
+    valorUnit: first.valor || 0,
+    data:      '',
+    horario:   '',
+    qtd:       1,
+    duracao:   getServiceDuration(first.nome || ''),
+  });
+  renderActEditSlotsList();
+  recalcActEdit();
+}
+
+function removerActEditSlot(id) {
+  if (actEditSlots.length <= 1) { toast('⚠️ Pelo menos um serviço é necessário'); return; }
+  actEditSlots = actEditSlots.filter(s => s.id !== id);
+  renderActEditSlotsList();
+  recalcActEdit();
+}
+
+// Prévia ao vivo: atualiza o cartão de vitais + o valor enviado (sem salvar).
+function recalcActEdit() {
+  const validos = actEditSlots.filter(s => s.servico);
+  const total = validos.reduce((sum, s) => sum + (parseFloat(s.valorUnit) || 0) * slotQtd(s), 0);
+  const datas = validos.map(s => s.data).filter(Boolean).sort();
+  const horas = validos.map(s => s.horario).filter(Boolean).sort();
+
+  const vData = document.getElementById('act-vital-data');
+  const vHora = document.getElementById('act-vital-hora');
+  const vVal  = document.getElementById('act-vital-valor');
+  const vSvc  = document.getElementById('act-vital-svc');
+  if (vData) vData.textContent = datas.length ? fmtDate(datas[0]) : '—';
+  if (vHora) vHora.textContent = horas.length ? fmtHorario(horas[0]) : '—';
+  if (vVal)  vVal.textContent  = total ? fmtVal(total) : '—';
+  if (vSvc)  vSvc.textContent  = validos.length ? descreveSlots(validos) : '—';
+
+  const enviado = document.getElementById('act-val-enviado');
+  if (enviado) enviado.value = total || '';
 }
 
 function renderActGcalSection(e) {
