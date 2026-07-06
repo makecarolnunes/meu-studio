@@ -2901,10 +2901,23 @@ function resizeImageBase64(base64, tipo) {
   });
 }
 
+// Deep-link: ?openId=<ID> abre direto o card do orçamento (usado pelos alertas
+// do sino — ver shared/js/alerts.js). Roda após o syncAll para garantir que
+// `entries` já esteja carregado.
+function openFromUrl() {
+  try {
+    const id = new URLSearchParams(location.search).get('openId');
+    if (!id) return;
+    // limpa o param pra um refresh manual não reabrir o card
+    history.replaceState(null, '', location.pathname);
+    if (entries.find(x => String(x.ID) === String(id))) openAction(id);
+  } catch (_) {}
+}
+
 (function init() {
   curFilter = localStorage.getItem('orca_cur_filter') || 'todos';
   curOrigem = localStorage.getItem('orca_cur_origem') || 'todos';
   curEquipe = localStorage.getItem('orca_cur_equipe') || 'todos';
   render();
-  syncAll();
+  syncAll().then(openFromUrl);
 })();

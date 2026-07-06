@@ -156,17 +156,29 @@
   }});
 
   // 3) Financeiro: entrada prevista vencida (não recebida)
+  //  "Abrir" leva ao CARD do orçamento da cliente (contexto: serviço, data,
+  //  telefone) — casando por nome. Sem orçamento correspondente (ex.: entrada
+  //  avulsa), cai no Financeiro.
   registerRule({ id:'fin-entrada-vencida', domain:'Financeiro', evaluate:function(ctx){
     var out=[];
+    var orcaByCli={};
+    (ctx.data.orcamentos||[]).forEach(function(o){
+      if(!o.Cliente) return;
+      var k=norm(o.Cliente);
+      if(!orcaByCli[k] || o.Status==='Fechado') orcaByCli[k]=o; // prioriza o Fechado
+    });
     (ctx.data.entries||[]).forEach(function(e){
       if(e.status!=='Previsto') return;
       var d=parseDate(e.dataPag); if(!d || d >= ctx.today) return;
       var dias=daysBetween(d, ctx.today);
+      var orca = e.cliente ? orcaByCli[norm(e.cliente)] : null;
       out.push({
         key:'fin-entrada-vencida:'+e.id, priority:'importante',
         title:'Entrada prevista não recebida',
         desc:(e.cliente||'(sem nome)')+' · '+brl(e.valor)+' · venceu '+fmtBR(e.dataPag)+' (há '+dias+'d)',
-        href:'financeiro/?focus='+encodeURIComponent(e.id)+'&type=entry',
+        href: orca
+          ? 'orcamentos/orcamentos_novo.html?openId='+encodeURIComponent(orca.ID)
+          : 'financeiro/?focus='+encodeURIComponent(e.id)+'&type=entry',
       });
     });
     return out;
