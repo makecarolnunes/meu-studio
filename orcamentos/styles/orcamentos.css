@@ -814,6 +814,15 @@
       font-size: 0.66rem; color: var(--muted);
       line-height: 1.4; margin: 0 0 6px 24px;
     }
+    /* Cacheada fica logo abaixo do box de serviços — o realce evita que se
+       perca no meio do formulário, já que muda a duração do atendimento. */
+    .chk-cacheada {
+      background: #fff8ef; border: 1.5px solid #f3dfc4;
+      border-radius: 10px; padding: 10px 11px 6px;
+      margin-top: 4px;
+    }
+    .chk-cacheada .chk-lbl { color: #b45309; }
+    .chk-cacheada .chk-lbl input[type="checkbox"] { accent-color: #d97706; }
 
     /* ── RESPONSÁVEL PELO ATENDIMENTO ────────────────────── */
     .resp-hint { font-size: 0.66rem; color: var(--muted); line-height: 1.4; margin-top: 5px; }

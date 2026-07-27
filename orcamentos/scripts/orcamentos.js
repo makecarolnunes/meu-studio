@@ -406,7 +406,7 @@ async function finEntryCreate(entry) {
 // ══════════════════════════════════════════════════════════
 //  WHATSAPP — mensagem de confirmação (igual ao confirmacao.html)
 // ══════════════════════════════════════════════════════════
-function buildConfirmacaoMessage(nome, slots, total, sinal, saldo, endereco, localTipo, responsavel) {
+function buildConfirmacaoMessage(nome, slots, total, sinal, saldo, endereco, localTipo) {
   const linhas = [];
   linhas.push('Obrigada, ' + (nome || '[nome]') + '!');
 
@@ -510,14 +510,8 @@ function buildConfirmacaoMessage(nome, slots, total, sinal, saldo, endereco, loc
     });
   }
 
-  // Atendimento da minha equipe: só avisa quem vai atender — o restante da
-  // confirmação é idêntico ao fluxo normal.
-  const resp = (responsavel || '').trim();
-  if (resp) {
-    linhas.push('');
-    linhas.push('Quem fará seu atendimento será nossa profissional ' + resp + '. 💕');
-  }
-
+  // A mensagem da cliente é a mesma independente de quem atende — quem executa
+  // é informação interna (aparece na agenda e no orçamento, não para a cliente).
   return linhas.join('\n');
 }
 
@@ -746,6 +740,19 @@ function resumoServicosGrupo(grupo) {
   return partes.join(', ') || abrevServico(grupo[0].servico);
 }
 
+// Alertas que precisam saltar aos olhos ao abrir o evento no Google Agenda.
+// Vão no TOPO da descrição — é o que aparece na prévia do app, sem precisar
+// rolar. Cliente cacheada muda o preparo e o tempo do atendimento.
+function linhasAlerta(ctx) {
+  if (!ctx || !ctx.cacheada) return [];
+  return [
+    '★★★ CLIENTE CACHEADA ★★★',
+    'Atendimento mais longo — confira o tempo reservado.',
+    '——————————————',
+    '',
+  ];
+}
+
 // Bloco financeiro do repasse — só aparece nos atendimentos da minha equipe.
 // Mostra quanto entra, quanto sai e o que sobra, direto no evento da agenda.
 function linhasRepasse(ctx, total) {
@@ -777,7 +784,7 @@ function linhasRodape(ctx, sinal, saldo) {
 function buildGrupoDescricao(grupo, ctx, total, sinal, saldo, inicioFmt, fimFmt) {
   const endereco = ctx.endereco, equipe = ctx.equipe;
   const c = contarServicosGrupo(grupo);
-  const desc = [];
+  const desc = linhasAlerta(ctx);
   desc.push('Serviços: ' + (c.partes.join(' e ') || (grupo.length + ' serviços')));
   if (equipe) desc.push('Trabalho para equipe de terceiros: ' + equipe);
   desc.push('Data: ' + (fmtDateWeek(grupo[0].data) || ''));
@@ -885,7 +892,7 @@ function buildEventos(ctx) {
       // Um único serviço na data — comportamento padrão
       const s = grupo[0];
       titulo = tituloEvento(inicioFmt, fimFmt, abrevServico(s.servico));
-      const desc = [];
+      const desc = linhasAlerta(ctx);
       desc.push('Cliente: ' + (nome || ''));
       desc.push('Serviço: ' + (s.servico || ''));
       if (equipe) desc.push('Trabalho para equipe de terceiros: ' + equipe);
@@ -2465,9 +2472,9 @@ async function confirmarFechamento() {
   const eventos = buildEventos({
     nome: e.Cliente, slots: slotsToStore, endereco, total, sinal, saldo,
     telefone: e.Telefone, equipe: e.Equipe || '',
-    responsavel, repasse, forma, obs, localTipo: fechLocal,
+    responsavel, repasse, forma, obs, localTipo: fechLocal, cacheada,
   });
-  const waText  = buildConfirmacaoMessage(e.Cliente, slotsToStore, total, sinal, saldo, endereco, fechLocal, responsavel);
+  const waText  = buildConfirmacaoMessage(e.Cliente, slotsToStore, total, sinal, saldo, endereco, fechLocal);
 
   lastFechamento = {
     entryId: e.ID,
@@ -2960,7 +2967,7 @@ function buildActWaText(e) {
     ? parseFloat(e.SinalFech) : Math.round(total * 0.30 * 100) / 100;
   const saldo = (e.SaldoFech !== undefined && e.SaldoFech !== '')
     ? parseFloat(e.SaldoFech) : Math.max(0, total - sinal);
-  return buildConfirmacaoMessage(e.Cliente, slots, total, sinal, saldo, endereco, localTipo, respDe(e));
+  return buildConfirmacaoMessage(e.Cliente, slots, total, sinal, saldo, endereco, localTipo);
 }
 
 // Mostra a mensagem do WhatsApp no action sheet (só para fechados).
@@ -3074,6 +3081,7 @@ async function adicionarAgendaDeAction() {
     telefone: e.Telefone, equipe: e.Equipe || '',
     responsavel: respDe(e), repasse: repasseDe(e),
     forma: '', obs: entryCleanObs(e), localTipo: localTipoSalvo,
+    cacheada: !!e.Cacheada,
   });
   const validos = eventos.filter(ev => ev.startISO && ev.endISO);
 

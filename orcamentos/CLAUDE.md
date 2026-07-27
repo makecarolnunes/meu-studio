@@ -199,10 +199,18 @@ EQUIPE | Juliana | HHhMM | Cliente: Nome | Serviço | Local   ← minha equipe
 
 `buildEventos(ctx)` recebe um objeto:
 `{ nome, slots, endereco, total, sinal, saldo, telefone, equipe, responsavel,
-   repasse, forma, obs, localTipo }`. A descrição sempre traz cliente, serviço,
-data, horário, endereço, valores, forma de pagamento, sinal/restante, contato e
-observações; nos atendimentos da equipe acrescenta **valor cobrado, repasse e
-lucro** (`linhasRepasse`).
+   repasse, forma, obs, localTipo, cacheada }`. A descrição sempre traz cliente,
+serviço, data, horário, endereço, valores, forma de pagamento, sinal/restante,
+contato e observações; nos atendimentos da equipe acrescenta **valor cobrado,
+repasse e lucro** (`linhasRepasse`).
+
+**Alertas no topo da descrição** (`linhasAlerta`): cliente cacheada vira um
+bloco `★★★ CLIENTE CACHEADA ★★★` na **primeira linha** — é o que aparece na
+prévia do Google Agenda sem precisar rolar, e muda o preparo do atendimento.
+Alertas novos entram nessa função, sempre no topo.
+
+> A mensagem de confirmação da cliente **nunca** diz quem vai atender. Quem
+> executa é informação interna (card, orçamento e agenda). Não recolocar.
 
 `buildEventos()` **agrupa as slots por data**: vários serviços na mesma data
 viram **um único evento** (início = menor horário, fim = maior horário + duração;
