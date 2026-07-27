@@ -29,10 +29,12 @@ const CHAT_TOOLS = [
     input_schema:{ type:'object', properties:{
         dataPag: { type:'string', description:'Data YYYY-MM-DD (no cartão: vencimento da fatura)' },
         dataCaixa:{ type:'string', description:'Competência YYYY-MM-DD — mês de impacto no caixa. Opcional, calculado automaticamente.' },
-        tipo:    { type:'string', enum:['Reposição de Material','Curso','DAS','Assistente','Seguro de Celular','Investimento Produto','Investimento Material','Outro'] },
+        // Categorias e status vêm da fonte da verdade (state.js) — enum fixo
+        // aqui já divergiu do banco no passado e gerava despesa mal categorizada
+        tipo:    { type:'string', enum: SAIDA_TIPOS_PROF },
         valor:   { type:'number', description:'Valor da despesa' },
         forma:   { type:'string', enum:['PIX','Crédito','Dinheiro'] },
-        status:  { type:'string', enum:['Pago','Pendente'] },
+        status:  { type:'string', enum:['Pago','Previsto'] },
         obs:     { type:'string', description:'Observações' }
     }, required:['tipo','valor','forma','status'] }
   },
@@ -71,7 +73,7 @@ const CHAT_TOOLS = [
         id:      { type:'string', description:'ID da saída' },
         dataPag: { type:'string' }, dataCaixa:{ type:'string', description:'Competência YYYY-MM-DD (mês de impacto no caixa)' }, tipo: { type:'string' },
         valor:   { type:'number' }, forma:{ type:'string', enum:['PIX','Crédito','Dinheiro'] },
-        status:  { type:'string', enum:['Pago','Pendente'] },
+        status:  { type:'string', enum:['Pago','Previsto'] },
         obs:     { type:'string' }
     }, required:['id'] }
   },
@@ -103,7 +105,7 @@ function buildContext() {
 
     const ms = saidas.filter(s=>{ const my=getMonthYear(saidaBucketDate(s)); return my&&my.m===selMonth&&my.y===selYear; });
     const despReal = ms.filter(s=>s.status==='Pago').reduce((t,s)=>t+Number(s.valor||0),0);
-    const despPrev = ms.filter(s=>s.status==='Pendente').reduce((t,s)=>t+Number(s.valor||0),0);
+    const despPrev = ms.filter(s=>s.status==='Previsto').reduce((t,s)=>t+Number(s.valor||0),0);
 
     const entradasMes = me.map(e=>({
         id:e.id, data:e.dataPag, cliente:e.cliente, tipo:e.tipo,

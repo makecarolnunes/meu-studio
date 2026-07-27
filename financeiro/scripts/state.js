@@ -20,9 +20,6 @@ const SAIDA_TIPOS_PROF = [
   'Assinaturas',
   'Marketing',
   'Equipe',
-  // Repasse a profissional da minha equipe que executou um atendimento.
-  // Lançado automaticamente pelo módulo Orçamentos ao fechar o orçamento.
-  'Repasse para equipe',
   'Outro',
 ];
 

@@ -455,7 +455,7 @@ function openEditSaida(id) {
     <div class="fg"><label class="fl">Status</label>
         <div class="stog">
             <button class="stbtn ${s.status==='Pago'?'on-g':''}" onclick="edPickStatus('Pago',this)">Pago</button>
-            <button class="stbtn ${s.status==='Pendente'?'on-r':''}" onclick="edPickStatus('Pendente',this)">Pendente</button>
+            <button class="stbtn ${s.status==='Previsto'?'on-r':''}" onclick="edPickStatus('Previsto',this)">Previsto</button>
         </div>
         <input type="hidden" id="ed-status" value="${s.status||'Pago'}">
     </div>

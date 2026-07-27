@@ -399,19 +399,9 @@ async function finEntryCreate(entry) {
   }
 }
 
-// Categoria de despesa usada pelos repasses — precisa bater com
-// SAIDA_TIPOS_PROF em financeiro/scripts/state.js.
-const SAIDA_REPASSE = 'Repasse para equipe';
-
-async function finSaidaCreate(saida) {
-  try {
-    await DB.saidas.upsert(saida);
-    return { ok: true };
-  } catch(e) {
-    console.warn('finSaidaCreate error:', e.message);
-    return { ok: false, error: e.message };
-  }
-}
+// Não existe lançamento de saída para o repasse: nos atendimentos da equipe a
+// cliente paga direto para a profissional, então o dinheiro do repasse nunca
+// entra (nem sai) da conta da Carol. Só o lucro vira entrada.
 
 // ══════════════════════════════════════════════════════════
 //  WHATSAPP — mensagem de confirmação (igual ao confirmacao.html)
@@ -657,9 +647,9 @@ function updateRespResumo(prefix) {
   const repasse = parseFloat((document.getElementById(prefix + '-repasse') || {}).value) || 0;
   const lucro   = total - repasse;
   box.innerHTML =
-    '<span>Cobrado <strong>R$ ' + fmt(total) + '</strong></span>' +
-    '<span>Repasse <strong>−R$ ' + fmt(repasse) + '</strong></span>' +
-    '<span class="' + (lucro < 0 ? 'resp-neg' : 'resp-ok') + '">Lucro <strong>R$ ' + fmt(lucro) + '</strong></span>';
+    '<span>Cliente paga <strong>R$ ' + fmt(total) + '</strong></span>' +
+    '<span>Fica com a profissional <strong>R$ ' + fmt(repasse) + '</strong></span>' +
+    '<span class="' + (lucro < 0 ? 'resp-neg' : 'resp-ok') + '">Entra na sua conta <strong>R$ ' + fmt(lucro) + '</strong></span>';
 }
 
 function getRespValues(prefix) {
@@ -766,8 +756,8 @@ function linhasRepasse(ctx, total) {
     '',
     'Atendimento realizado por: ' + resp + ' (minha equipe)',
     'Valor cobrado da cliente: R$ ' + fmt(total),
-    'Valor do repasse: R$ ' + fmt(rep),
-    'Lucro: R$ ' + fmt(total - rep),
+    'Valor do repasse (pago direto pela cliente): R$ ' + fmt(rep),
+    'Lucro (entra na minha conta): R$ ' + fmt(total - rep),
   ];
 }
 
@@ -2384,6 +2374,41 @@ async function confirmarFechamento() {
   // Só o status muda; o restante é que vai para o dia do evento.
   const dataPagSinal = todayStr();
 
+  // Atendimento da minha equipe: a cliente paga direto para a profissional, então
+  // NADA do bruto passa pela conta da Carol — só o lucro. Vira uma única entrada,
+  // sem sinal/restante e sem saída de repasse (não há dinheiro saindo daqui).
+  // O sinal/saldo continuam existindo no orçamento: são o plano de pagamento da
+  // cliente, usado na mensagem de confirmação e no evento da agenda.
+  const lucro = Math.max(0, total - repasse);
+  let lucroCriado = false;
+  if (responsavel) {
+    if (lucro > 0) {
+      const eLucro = {
+        id: String(Date.now()),
+        dataPag: dataEvento,
+        dataServ: dataEvento,
+        cliente: e.Cliente,
+        tipo: 'Pagamento',
+        valor: lucro.toFixed(2),
+        valorTotal: total.toFixed(2),
+        servico: e.Servico,
+        local: local,
+        forma: forma,
+        status: 'Previsto',
+        origem: origem,
+        obs: 'Lucro do atendimento de ' + responsavel +
+             ' (cobrado R$ ' + fmt(total) + ' · repasse R$ ' + fmt(repasse) + ') — Orçamento ' + e.ID,
+        equipe: e.Equipe || '',
+        responsavel: responsavel,
+        auto: false,
+        createdAt: new Date().toISOString(),
+        noivaId: ''
+      };
+      const rL = await finEntryCreate(eLucro);
+      lucroCriado = rL.ok;
+      if (!rL.ok) finResult = { ok: false, error: rL.error || 'lucro' };
+    }
+  } else {
   if (sinal > 0) {
     const eSinal = {
       id: String(Date.now()),
@@ -2432,26 +2457,6 @@ async function confirmarFechamento() {
     const r2 = await finEntryCreate(eSaldo);
     if (!r2.ok && finResult.ok) finResult = { ok: false, error: r2.error || 'saldo' };
   }
-
-  // Atendimento feito pela minha equipe: o repasse é uma DESPESA — sem ele o
-  // financeiro mostraria o bruto como se fosse lucro.
-  let repasseCriado = false;
-  if (responsavel && repasse > 0) {
-    const rRep = await finSaidaCreate({
-      id: String(Date.now() + 2),
-      dataPag:   dataEvento,
-      dataCaixa: dataEvento,
-      tipo:      SAIDA_REPASSE,
-      valor:     repasse.toFixed(2),
-      forma:     forma,
-      status:    'Pendente',
-      obs:       'Repasse ' + responsavel + ' — ' + (e.Cliente || 'cliente') + ' — Orçamento ' + e.ID,
-      natureza:  'PROFISSIONAL',
-      recorrencia: 'unica',
-      createdAt: new Date().toISOString(),
-    });
-    repasseCriado = rRep.ok;
-    if (!rRep.ok && finResult.ok) finResult = { ok: false, error: rRep.error || 'repasse' };
   }
 
   setLoadingStep(2, 'Preparando confirmação...', 'Quase lá!');
@@ -2472,10 +2477,12 @@ async function confirmarFechamento() {
     waText: waText,
     finResult: finResult,
     sheetResult: updResult,
-    saldoCriado: saldo > 0,
-    sinalCriado: sinal > 0,
-    repasseCriado: repasseCriado,
+    saldoCriado: !responsavel && saldo > 0,
+    sinalCriado: !responsavel && sinal > 0,
+    lucroCriado: lucroCriado,
+    lucroValor: lucro,
     repasseValor: repasse,
+    totalCobrado: total,
     responsavel: responsavel,
   };
 
@@ -2509,16 +2516,21 @@ function abrirSucesso() {
   if (false) { // removido: integração financeiro agora via Supabase direto
     items.push({ tipo: 'warn', txt: '' });
   } else if (f.finResult.ok) {
-    const parts = [];
-    if (f.sinalCriado) parts.push('Sinal');
-    if (f.saldoCriado) parts.push('Restante (previsto)');
-    items.push({ tipo: 'ok', txt: '✅ Financeiro: ' + parts.join(' + ') + ' lançados' });
+    if (f.responsavel) {
+      // Equipe: só o lucro entra na conta — a cliente acerta o resto direto
+      // com a profissional, então não há sinal, restante nem despesa de repasse.
+      items.push({ tipo: 'ok', txt: '✅ Financeiro: entrada de R$ ' + fmt(f.lucroValor) +
+                                    ' (lucro — cobrado R$ ' + fmt(f.totalCobrado) +
+                                    ' · repasse R$ ' + fmt(f.repasseValor) + ' para ' + f.responsavel + ')' });
+      items.push({ tipo: 'warn', txt: 'ℹ️ A cliente paga direto para ' + f.responsavel + ' — nada de sinal/restante aqui' });
+    } else {
+      const parts = [];
+      if (f.sinalCriado) parts.push('Sinal');
+      if (f.saldoCriado) parts.push('Restante (previsto)');
+      items.push({ tipo: 'ok', txt: '✅ Financeiro: ' + parts.join(' + ') + ' lançados' });
+    }
   } else {
     items.push({ tipo: 'err', txt: '❌ Erro ao lançar no Financeiro' });
-  }
-  if (f.repasseCriado) {
-    items.push({ tipo: 'ok', txt: '✅ Repasse de R$ ' + fmt(f.repasseValor) + ' para ' + f.responsavel +
-                                  ' lançado como despesa (' + SAIDA_REPASSE + ')' });
   }
   items.push({ tipo: 'warn', txt: '📅 Clique em "Adicionar ao Google Agenda" abaixo' });
 

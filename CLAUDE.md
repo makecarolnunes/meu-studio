@@ -126,9 +126,9 @@ Níveis disponíveis: `'admin'` (acesso total) · `'view'` (reservado para uso f
 
 ### Orçamentos × Financeiro
 - Ao fechar orçamento: `finEntryCreate(entry)` cria entradas direto no Supabase `entries`
-- Se o atendimento for de um profissional da minha equipe, `finSaidaCreate()`
-  lança o repasse como despesa `'Repasse para equipe'` em `saidas` — entrada
-  (cliente) − saída (repasse) = lucro real
+- Carol atendendo → Sinal + Restante, como sempre
+- **Equipe atendendo** → a cliente paga direto para a profissional, então entra
+  **uma única entrada com o lucro** (cobrado − repasse) e **nenhuma saída**
 
 ### Equipe: dois conceitos distintos
 | Campo | Significado |

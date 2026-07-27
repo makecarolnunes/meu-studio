@@ -40,8 +40,8 @@ let fechSinalManual = false   // flag: usuário editou o sinal manualmente
 | Campo | Significado | Efeito |
 |---|---|---|
 | `Equipe` | **Trabalho para equipe de terceiros** — eu atendo para a equipe de outra pessoa | Só rotula orçamento, card e evento |
-| `Responsavel` | **Profissional da minha equipe** que executa o atendimento (`''` = Carol) | Muda o título do evento, gera repasse no financeiro |
-| `Repasse` | Valor pago ao profissional da minha equipe | Vira **saída** `'Repasse para equipe'` |
+| `Responsavel` | **Profissional da minha equipe** que executa o atendimento (`''` = Carol) | Muda o título do evento e o lançamento financeiro |
+| `Repasse` | Quanto do valor cobrado fica com a profissional (paga direto pela cliente) | Abatido da entrada — só o lucro é lançado |
 | `Cacheada` | Cliente cacheada | Sugere 3h de duração (editável) |
 
 Helpers: `respDe(e)`, `isEquipeEntry(e)`, `repasseDe(e)`, `valorCobradoDe(e)`, `lucroDe(e)`.
@@ -79,28 +79,41 @@ panel-action → [btn Fechar e Agendar Tudo]
   → confirmarFechamento()
     1. Valida campos obrigatórios
     2. setStatus(orçamento, 'Fechado') → Supabase
-    3. finEntryCreate(sinal) → DB.entries.create() [sinal]
-    4. finEntryCreate(restante) → DB.entries.create() [restante previsto]
-    5. finSaidaCreate(repasse) → DB.saidas.upsert() [só se Responsavel ≠ Carol]
-    6. Gera mensagem WhatsApp
-    7. Tenta criar eventos Google Agenda via MCP
-    8. Exibe panel-confirmacao
+    3. Lançamento no financeiro (dois caminhos — ver abaixo)
+    4. Gera mensagem WhatsApp
+    5. Tenta criar eventos Google Agenda via MCP
+    6. Exibe panel-confirmacao
 ```
 
-### `finSaidaCreate(saida)` — repasse da equipe
+### Lançamento financeiro — dois caminhos
 
-Quando `Responsavel` é um profissional da minha equipe e `Repasse > 0`, o
-fechamento lança uma **despesa** para o repasse não ser confundido com lucro:
+**Carol atende (`Responsavel` vazio)** — fluxo de sempre:
+`finEntryCreate(sinal)` + `finEntryCreate(restante, auto:true)`.
+
+**Minha equipe atende (`Responsavel` preenchido)** — **uma entrada só, com o
+lucro**:
 
 ```js
-{ tipo: 'Repasse para equipe',   // = SAIDA_REPASSE (bate com SAIDA_TIPOS_PROF)
-  dataPag: dataEvento, dataCaixa: dataEvento,
-  valor: repasse, forma, status: 'Pendente', natureza: 'PROFISSIONAL',
-  obs: 'Repasse {profissional} — {cliente} — Orçamento {id}' }
+{ tipo: 'Pagamento', dataPag: dataEvento, dataServ: dataEvento,
+  valor: total - repasse,      // só o que entra na conta da Carol
+  valorTotal: total,           // referência do que a cliente pagou
+  status: 'Previsto', auto: false, responsavel,
+  obs: 'Lucro do atendimento de {prof} (cobrado R$ X · repasse R$ Y) — Orçamento {id}' }
 ```
 
-O sinal e o restante levam `responsavel` para o Financeiro conseguir mostrar
-quem executou. Assim: **entrada** (cliente) − **saída** (repasse) = lucro real.
+> **Regra de negócio:** a cliente paga **direto para a profissional**. O bruto
+> nunca passa pela conta da Carol, então **não existe saída de repasse** — não
+> há dinheiro saindo daqui. Lançar entrada cheia + saída inflaria faturamento e
+> despesa ao mesmo tempo. Sem sinal/restante separados nesse caminho.
+
+`sinal` e `saldo` continuam sendo calculados e gravados no orçamento: eles são o
+**plano de pagamento da cliente** (usado na mensagem de confirmação e na
+descrição do evento), independente de em qual conta o dinheiro cai.
+
+> ⚠️ `saidas.status` aceita **apenas** `Pago | Previsto | Realizado | ''`
+> (CHECK `saidas_status_check`) e `entries.status` só `Realizado | Previsto | ''`.
+> Usar `'Pendente'` devolve erro 23514 e o lançamento falha com "Erro ao lançar
+> no Financeiro". O vocabulário das saídas é **Pago / Previsto**.
 
 ### `finEntryCreate(entry)` — crítico
 

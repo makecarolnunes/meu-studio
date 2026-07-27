@@ -125,10 +125,16 @@ if ($c -notmatch '</html>') { Write-Warning 'ARQUIVO TRUNCADO' }
 Helper único de renderização: `equipeTags(e)` em `utils.js` — usar nas duas
 listas (mobile e desktop), nunca montar a etiqueta inline.
 
-O repasse ao profissional **não** fica na entrada: entra como saída da categoria
-`'Repasse para equipe'`, lançada automaticamente pelo módulo Orçamentos ao
-fechar. Por isso o Resumo já mostra o lucro real sem cálculo extra —
-entradas − saídas. Migration: `sql/equipe-responsavel.sql`.
+Em atendimento da equipe, a cliente paga **direto para a profissional**. O bruto
+nunca passa pela conta da Carol, então o Orçamentos lança **uma única entrada
+com o lucro** (cobrado − repasse) e **nenhuma saída** — não há dinheiro saindo
+daqui. O valor cobrado fica em `valorTotal` só como referência.
+
+> Não recriar a categoria de despesa "Repasse para equipe": lançar entrada cheia
+> + saída de repasse inflaria faturamento e despesa ao mesmo tempo, e o dinheiro
+> do repasse nunca existiu nesta conta.
+
+Migration: `sql/equipe-responsavel.sql`.
 
 ---
 

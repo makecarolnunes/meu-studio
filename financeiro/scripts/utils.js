@@ -355,7 +355,6 @@ function saidaStyle(t) {
         'Assinaturas':                       {bg:'#ede7f6',col:'#4527a0',ico:SVG.repeat},
         'Marketing':                         {bg:'#e8f5e9',col:'#2e7d32',ico:SVG.target},
         'Equipe':                            {bg:'#fbe9e7',col:'#bf360c',ico:SVG.users},
-        'Repasse para equipe':               {bg:'#f3e5f5',col:'#6a1b9a',ico:SVG.users},
         'Outro':                             {bg:'#f5f5f5',col:'#424242',ico:SVG.tag},
         'Pessoal':                           {bg:'#efebe9',col:'#5d4037',ico:SVG.tag},
         // Tipos legados (retrocompatibilidade)
