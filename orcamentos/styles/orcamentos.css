@@ -163,6 +163,12 @@
       animation: agenda-alert 2.2s ease-in-out infinite;
     }
     .entry.is-agenda-ok { border-left-color: var(--ok); border-left-width: 4px; }
+    /* Atendimento executado por profissional da MINHA equipe — bate o olho e
+       sabe que não é a Carol que vai. Vence a cor de status na borda. */
+    .entry.is-equipe {
+      border-left-color: #6a1b9a !important; border-left-width: 4px;
+      background: linear-gradient(90deg, rgba(106,27,154,0.045), var(--card) 42%);
+    }
     @keyframes agenda-alert {
       0%,100% { box-shadow: -3px 0 10px rgba(198,40,40,0.12); }
       50%      { box-shadow: -3px 0 20px rgba(198,40,40,0.35); }
@@ -203,6 +209,18 @@
       margin-top: 2px; display: flex; align-items: center; gap: 5px;
     }
     .e-meta { font-size: 0.63rem; color: var(--muted); margin-top: 3px; }
+
+    /* ── QUEM ATENDE / EQUIPE DE TERCEIROS / CACHEADA ─────── */
+    .e-resp { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+    .tag-resp, .tag-terceiros, .tag-cacheada {
+      display: inline-block; border-radius: 8px;
+      padding: 1px 7px; font-size: 0.62rem; font-weight: 700;
+      vertical-align: middle; white-space: nowrap;
+    }
+    .tag-resp-carol   { background: #f1ece9; color: #6b5b54; }
+    .tag-resp-equipe  { background: #f3e5f5; color: #6a1b9a; }
+    .tag-terceiros    { background: #e0f7fa; color: #006064; }
+    .tag-cacheada     { background: #fff3e0; color: #e65100; }
 
     .e-right { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; flex-shrink: 0; }
     .e-val { font-size: 0.82rem; font-weight: 700; color: var(--brown-d); }
@@ -783,6 +801,34 @@
       text-transform: uppercase; letter-spacing: 0.04em;
     }
     .slot-mini-lbl .form-input { font-size: 0.85rem; padding: 8px 9px; }
+
+    /* ── CHECKBOX COM EXPLICAÇÃO (cacheada / equipe de terceiros) ── */
+    .chk-lbl {
+      display: flex; align-items: center; gap: 8px;
+      cursor: pointer; font-weight: 600; margin-bottom: 2px;
+    }
+    .chk-lbl input[type="checkbox"] {
+      width: 16px; height: 16px; flex-shrink: 0; accent-color: var(--purple);
+    }
+    .chk-hint {
+      font-size: 0.66rem; color: var(--muted);
+      line-height: 1.4; margin: 0 0 6px 24px;
+    }
+
+    /* ── RESPONSÁVEL PELO ATENDIMENTO ────────────────────── */
+    .resp-hint { font-size: 0.66rem; color: var(--muted); line-height: 1.4; margin-top: 5px; }
+    .resp-fin {
+      margin-top: 10px; padding: 10px 11px;
+      background: #faf5fc; border: 1.5px solid #ead9f0; border-radius: 10px;
+    }
+    .resp-fin .form-label { margin-bottom: 5px; }
+    .resp-resumo {
+      display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 8px;
+      font-size: 0.7rem; color: var(--muted);
+    }
+    .resp-resumo strong { color: var(--text); }
+    .resp-resumo .resp-ok  strong { color: var(--ok); }
+    .resp-resumo .resp-neg strong { color: var(--red); }
     /* Linha-resumo: "6 × R$ 500,00 = R$ 3.000,00 · 12:30–18:30" */
     .slot-resumo {
       font-size: 0.68rem; font-weight: 600; color: var(--purple);
@@ -860,19 +906,26 @@
 
     /* ── SERVICES LIST ───────────────────────────────────── */
     .svc-row {
-      display: grid; grid-template-columns: 1fr 100px 26px;
+      display: grid; grid-template-columns: 1fr 92px 26px;
       gap: 7px; align-items: center;
       background: #fdf8fc; border: 1.5px solid var(--border);
       border-radius: 10px; padding: 8px 10px;
       margin-bottom: 7px;
     }
-    .svc-row input {
+    /* Linha de serviço tem também a duração padrão (em horas) */
+    .svc-row.svc-row-dur { grid-template-columns: 1fr 88px 78px 26px; }
+    .svc-row input, .svc-row select {
       padding: 8px 10px; border: 1.5px solid var(--border);
       border-radius: 8px; font-size: 0.85rem;
       background: white; outline: none; font-family: inherit;
       -webkit-appearance: none;
     }
-    .svc-row input:focus { border-color: var(--purple); }
+    .svc-row input:focus, .svc-row select:focus { border-color: var(--purple); }
+    .svc-row .svc-dur { text-align: center; padding-left: 4px; padding-right: 4px; }
+    @media (max-width: 420px) {
+      .svc-row.svc-row-dur { grid-template-columns: 1fr 74px 68px 24px; gap: 5px; padding: 8px; }
+      .svc-row.svc-row-dur input, .svc-row.svc-row-dur select { padding: 7px 6px; font-size: 0.78rem; }
+    }
     .svc-row .svc-name { font-weight: 600; color: var(--text); }
     .svc-row .svc-val  { text-align: right; }
     .svc-del {

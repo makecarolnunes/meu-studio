@@ -115,6 +115,23 @@ if ($c -notmatch '</html>') { Write-Warning 'ARQUIVO TRUNCADO' }
 
 ---
 
+## Equipe nas entradas: `equipe` × `responsavel`
+
+| Campo | Significado | Etiqueta |
+|---|---|---|
+| `equipe` | Carol trabalhou **para a equipe de terceiros** | `.equipe-tag` (ciano) |
+| `responsavel` | **Profissional da minha equipe** executou o atendimento (vazio = Carol) | `.resp-tag` (roxo) |
+
+Helper único de renderização: `equipeTags(e)` em `utils.js` — usar nas duas
+listas (mobile e desktop), nunca montar a etiqueta inline.
+
+O repasse ao profissional **não** fica na entrada: entra como saída da categoria
+`'Repasse para equipe'`, lançada automaticamente pelo módulo Orçamentos ao
+fechar. Por isso o Resumo já mostra o lucro real sem cálculo extra —
+entradas − saídas. Migration: `sql/equipe-responsavel.sql`.
+
+---
+
 ## Saídas: duas datas (competência × banco)
 
 Cada saída tem **duas datas** — não confundir:

@@ -20,7 +20,7 @@
   <title>Orçamentos · Meu Studio</title>
   <link rel="stylesheet" href="../shared/css/tokens.css">
   <link rel="stylesheet" href="../shared/css/base.css">
-  <link rel="stylesheet" href="./styles/orcamentos.css?v=20260617d">
+  <link rel="stylesheet" href="./styles/orcamentos.css?v=20260727a">
 </head>
 <body>
 <div id="orca-app">
@@ -68,7 +68,10 @@
     <button class="d-fil-item"        data-o="Curso de Automaquiagem"   onclick="setOrigem('Curso de Automaquiagem')"><span class="d-fil-dot" style="background:var(--amber)"></span>Curso de Automaquiagem</button>
   </div>
   <div class="dsb-section" id="ds-equipe-section" style="display:none">
-    <!-- Preenchido dinamicamente pelo render() -->
+    <!-- Equipe de terceiros — preenchido dinamicamente pelo render() -->
+  </div>
+  <div class="dsb-section" id="ds-resp-section" style="display:none">
+    <!-- Quem atende (Carol × minha equipe) — preenchido pelo render() -->
   </div>
 </aside>
 
@@ -171,8 +174,11 @@
   <button class="orig-tab"    data-o="Curso de Automaquiagem"  onclick="setOrigem('Curso de Automaquiagem')">Curso</button>
 </div>
 
-<!-- ── FILTRO EQUIPE (mobile, preenchido pelo render()) ───── -->
+<!-- ── FILTRO EQUIPE DE TERCEIROS (mobile, preenchido pelo render()) ───── -->
 <div class="orig-tabs" id="equipe-tabs" style="display:none"></div>
+
+<!-- ── FILTRO QUEM ATENDE (mobile, preenchido pelo render()) ───── -->
+<div class="orig-tabs" id="resp-tabs" style="display:none"></div>
 
 <!-- ── CONTENT ────────────────────────────────────────────── -->
 <div class="content" id="content">
@@ -209,6 +215,17 @@
       </label>
     </div>
 
+    <!-- Cliente cacheada — sugere 3h de duração (continua editável) -->
+    <div class="form-group">
+      <label class="form-label chk-lbl">
+        <input type="checkbox" id="add-cacheada" onchange="toggleAddCacheada(this.checked)"> ★ Cliente cacheada
+      </label>
+      <div class="chk-hint">Sugere 3h de duração no atendimento. A duração continua editável.</div>
+    </div>
+
+    <!-- Responsável pelo atendimento (Carol × profissional da equipe) -->
+    <div id="add-resp-block"></div>
+
     <!-- Slots (serviço + valor + data + hora) -->
     <div style="font-size:0.68rem; font-weight:700; color:var(--purple); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:8px;">
       🛠️ Serviços e datas
@@ -237,10 +254,11 @@
       <textarea class="form-input" id="add-obs" rows="2" placeholder="Ex: cliente quer desconto, casamento dia 20/06..."></textarea>
     </div>
     <div class="form-group">
-      <label class="form-label" style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600">
-        <input type="checkbox" id="add-eq-chk" style="width:16px;height:16px;accent-color:#006064;flex-shrink:0" onchange="toggleAddEquipeInput(this.checked)"> Atendimento realizado por equipe
+      <label class="form-label chk-lbl">
+        <input type="checkbox" id="add-eq-chk" onchange="toggleAddEquipeInput(this.checked)"> ↑ Trabalho para equipe de terceiros
       </label>
-      <input class="form-input" type="text" id="add-equipe" placeholder="Nome da equipe ou assistente" style="display:none" autocomplete="off">
+      <div class="chk-hint">Marque quando <strong>você</strong> está atendendo para a equipe de outra pessoa.</div>
+      <input class="form-input" type="text" id="add-equipe" placeholder="Nome da equipe de terceiros" style="display:none" autocomplete="off">
     </div>
     <button class="btn-primary" onclick="saveNew()">💾 Salvar Orçamento</button>
     <button class="btn-outline" onclick="closeAll()">Cancelar</button>
@@ -355,22 +373,30 @@
     </div>
   </div>
 
-  <!-- ── ACCORDION: Observações & equipe ── -->
+  <!-- ── ACCORDION: Atendimento, observações & equipe ── -->
   <div class="act-acc">
     <div class="act-acc-head" onclick="toggleActAcc(this)">
-      <span class="act-acc-title">Observações &amp; equipe</span>
+      <span class="act-acc-title">Atendimento, observações &amp; equipe</span>
       <svg class="act-chev" viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </div>
     <div class="act-acc-body">
+      <div class="form-group">
+        <label class="form-label chk-lbl">
+          <input type="checkbox" id="act-cacheada" onchange="toggleActCacheada(this.checked)"> ★ Cliente cacheada
+        </label>
+        <div class="chk-hint">Sugere 3h de duração no atendimento. A duração continua editável.</div>
+      </div>
+      <div id="act-resp-block"></div>
       <div class="form-group">
         <label class="form-label">Observações</label>
         <textarea class="form-input" id="act-obs" rows="2" placeholder="Anotações sobre este cliente..."></textarea>
       </div>
       <div class="form-group">
-        <label class="form-label" style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600">
-          <input type="checkbox" id="act-eq-chk" style="width:16px;height:16px;accent-color:var(--brown);flex-shrink:0" onchange="toggleActEquipeInput(this.checked)"> Atendimento realizado por equipe
+        <label class="form-label chk-lbl">
+          <input type="checkbox" id="act-eq-chk" onchange="toggleActEquipeInput(this.checked)"> ↑ Trabalho para equipe de terceiros
         </label>
-        <input class="form-input" type="text" id="act-equipe" placeholder="Nome da equipe ou assistente" style="display:none" autocomplete="off">
+        <div class="chk-hint">Marque quando <strong>você</strong> está atendendo para a equipe de outra pessoa.</div>
+        <input class="form-input" type="text" id="act-equipe" placeholder="Nome da equipe de terceiros" style="display:none" autocomplete="off">
       </div>
     </div>
   </div>
@@ -417,6 +443,7 @@
     <!-- Preview do que vai ser criado -->
     <div class="sync-preview">
       <div class="sync-item"><span class="si-icon">💰</span><span class="si-txt">Sinal + restante no <strong>Sistema Financeiro</strong></span></div>
+      <div class="sync-item"><span class="si-icon">👥</span><span class="si-txt">Repasse da equipe como <strong>despesa</strong> (se houver)</span></div>
       <div class="sync-item"><span class="si-icon">📅</span><span class="si-txt">Evento(s) no <strong>Google Agenda</strong></span></div>
       <div class="sync-item"><span class="si-icon">💬</span><span class="si-txt">Mensagem de confirmação para o <strong>WhatsApp</strong></span></div>
     </div>
@@ -435,6 +462,15 @@
       <label class="form-label">Endereço *</label>
       <input class="form-input" id="fech-addr" type="text" placeholder="Rua, número, complemento, bairro">
     </div>
+
+    <!-- Cliente cacheada + responsável pelo atendimento -->
+    <div class="form-group">
+      <label class="form-label chk-lbl">
+        <input type="checkbox" id="fech-cacheada" onchange="toggleFechCacheada(this.checked)"> ★ Cliente cacheada
+      </label>
+      <div class="chk-hint">Sugere 3h de duração no atendimento. A duração continua editável.</div>
+    </div>
+    <div id="fech-resp-block"></div>
 
     <!-- Datas e Serviços (slots) -->
     <div style="font-size:0.68rem; font-weight:700; color:var(--purple); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:8px;">
@@ -556,6 +592,7 @@
     <div class="settings-tabs">
       <button class="settings-tab on" data-tab="conex"     onclick="setSettingsTab('conex')">🔗 Conexões</button>
       <button class="settings-tab"    data-tab="servicos"  onclick="setSettingsTab('servicos')">🛠️ Serviços</button>
+      <button class="settings-tab"    data-tab="equipe"    onclick="setSettingsTab('equipe')">👥 Equipe</button>
     </div>
 
     <!-- Tab: Conexões -->
@@ -576,11 +613,21 @@
     <!-- Tab: Serviços -->
     <div id="settings-tab-servicos" style="margin-top:14px; display:none;">
       <div class="settings-note">
-        Cadastre os serviços e valores padrão. Ao escolher um serviço em um orçamento, o valor é preenchido automaticamente — mas continua editável.
+        Cadastre os serviços, valores e a <strong>duração padrão</strong>. Ao escolher um serviço em um orçamento, valor e duração são preenchidos automaticamente — mas continuam editáveis em cada atendimento.
       </div>
       <div id="svc-list"></div>
       <button class="btn-add-slot" onclick="addService()" style="margin-top:4px;">+ Adicionar serviço</button>
       <button class="btn-primary" onclick="saveServices()">Salvar serviços</button>
+    </div>
+
+    <!-- Tab: Equipe (profissionais que podem executar um atendimento) -->
+    <div id="settings-tab-equipe" style="margin-top:14px; display:none;">
+      <div class="settings-note">
+        👥 Profissionais da <strong>sua</strong> equipe. Ao marcar um deles como responsável por um atendimento, o repasse vira uma despesa automática no Financeiro. O repasse padrão é só uma sugestão — pode ser ajustado em cada orçamento.
+      </div>
+      <div id="prof-list"></div>
+      <button class="btn-add-slot" onclick="addProfissional()" style="margin-top:4px;">+ Adicionar profissional</button>
+      <button class="btn-primary" onclick="saveProfissionais()">Salvar equipe</button>
     </div>
 
     <button class="btn-outline" onclick="closeAll()">Fechar</button>
@@ -609,11 +656,11 @@
 <!-- ── Dependências externas + infra compartilhada ── -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="../config.js"></script>
-<script src="../shared/js/db.js"></script>
+<script src="../shared/js/db.js?v=2026072701"></script>
 <script src="../shared/js/icons.js"></script>
 
 <!-- ── Módulo Orçamentos ── -->
-<script src="./scripts/orcamentos.js?v=20260706a"></script>
+<script src="./scripts/orcamentos.js?v=20260727a"></script>
 
 <!-- ── Sidebar (último, depende do DOM pronto) ── -->
 <script src="../shared/js/global-search.js"></script>

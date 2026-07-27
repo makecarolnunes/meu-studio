@@ -355,6 +355,7 @@ function saidaStyle(t) {
         'Assinaturas':                       {bg:'#ede7f6',col:'#4527a0',ico:SVG.repeat},
         'Marketing':                         {bg:'#e8f5e9',col:'#2e7d32',ico:SVG.target},
         'Equipe':                            {bg:'#fbe9e7',col:'#bf360c',ico:SVG.users},
+        'Repasse para equipe':               {bg:'#f3e5f5',col:'#6a1b9a',ico:SVG.users},
         'Outro':                             {bg:'#f5f5f5',col:'#424242',ico:SVG.tag},
         'Pessoal':                           {bg:'#efebe9',col:'#5d4037',ico:SVG.tag},
         // Tipos legados (retrocompatibilidade)
@@ -365,6 +366,16 @@ function saidaStyle(t) {
         'Investimento Material':             {bg:'#efebe9',col:'#4e342e',ico:SVG.box},
     };
     return map[t] || { bg:'#f5f5f5', col:'#666', ico:SVG.money };
+}
+
+// Etiquetas de equipe de uma entrada. São coisas diferentes:
+//  `equipe`      → eu trabalhei PARA a equipe de outra pessoa
+//  `responsavel` → um profissional da MINHA equipe executou (gera repasse
+//                  como saída "Repasse para equipe")
+function equipeTags(e) {
+    const terceiros = e.equipe ? `<span class="equipe-tag">↑ ${e.equipe}</span>` : '';
+    const resp = e.responsavel ? `<span class="resp-tag">👥 ${e.responsavel}</span>` : '';
+    return terceiros + resp;
 }
 
 function updateDot(_state) { /* indicador de sync removido — placeholder p/ compat */ }

@@ -972,10 +972,17 @@ body { max-width: var(--fin-container); margin: 0 auto; }
         font-size: .55rem; background: var(--amber-l); color: #7c4a00;
         border-radius: 5px; padding: 1px 4px; margin-left: 4px;
     }
+    /* Trabalho PARA equipe de terceiros */
     .equipe-tag {
         background: #e0f7fa; color: #006064;
         border-radius: 6px; padding: 1px 6px;
         font-size: .65rem; margin-left: 4px; font-weight: 500;
+    }
+    /* Atendimento executado por profissional da MINHA equipe (gera repasse) */
+    .resp-tag {
+        background: #f3e5f5; color: #6a1b9a;
+        border-radius: 6px; padding: 1px 6px;
+        font-size: .65rem; margin-left: 4px; font-weight: 600;
     }
 
     /* ─── PAINEL DE DETALHE ──────────────────────── */

@@ -62,10 +62,11 @@ Lê credenciais de `window.ENV` (definido em `config.js`).
 | Tabela | Campos-chave | Obs |
 |--------|-------------|-----|
 | `usuarios` | `id, usuario, senha_hash, nivel, ativo` | Auth centralizada; acesso só via RPC `autenticar()` |
-| `entries` | `id, data_pag, cliente, tipo, valor, auto, noiva_id` | `auto=true` → Restante Previsto gerado pelo sistema |
+| `entries` | `id, data_pag, cliente, tipo, valor, auto, noiva_id, equipe, responsavel` | `auto=true` → Restante Previsto gerado pelo sistema |
 | `noivas` | `id, nome, data_casamento, valor_contrato` | FK em `entries.noiva_id` |
 | `saidas` | `id, data_pag, tipo, valor, forma, status` | Despesas |
-| `orcamentos` | `id, cliente, status, valor_prop, comprovantes (JSONB)` | — |
+| `orcamentos` | `id, cliente, status, valor_prop, comprovantes (JSONB), equipe, responsavel, repasse, cacheada` | — |
+| `profissionais` | `id, nome, repasse_padrao, ativo` | Minha equipe — quem pode executar um atendimento |
 | **Storage** | bucket `comprovantes` | Público; path: `{orca_id}/{cat}_{ts}.ext` |
 
 RLS ativo em todas as tabelas. `usuarios` não tem política para `anon` — acesso exclusivo via função `SECURITY DEFINER`.
@@ -125,6 +126,24 @@ Níveis disponíveis: `'admin'` (acesso total) · `'view'` (reservado para uso f
 
 ### Orçamentos × Financeiro
 - Ao fechar orçamento: `finEntryCreate(entry)` cria entradas direto no Supabase `entries`
+- Se o atendimento for de um profissional da minha equipe, `finSaidaCreate()`
+  lança o repasse como despesa `'Repasse para equipe'` em `saidas` — entrada
+  (cliente) − saída (repasse) = lucro real
+
+### Equipe: dois conceitos distintos
+| Campo | Significado |
+|---|---|
+| `equipe` | **Trabalho para equipe de terceiros** — Carol atende para a equipe de outra pessoa |
+| `responsavel` | **Profissional da minha equipe** que executa o atendimento (vazio = Carol) |
+
+Nunca tratar os dois como sinônimos: só `responsavel` gera repasse e muda o
+título do evento no Google Agenda.
+
+### Duração dos atendimentos
+Armazenada em **minutos**, sempre exibida e editada em **horas** (`2h30`, nunca
+`150 minutos`). Padrão de Maquiagem + Cabelo = 2h30; cliente cacheada sugere 3h.
+Toda duração é editável por atendimento — a sugestão nunca sobrescreve um ajuste
+manual. Detalhes em `orcamentos/CLAUDE.md`.
 
 ### Arquivos duplicados obrigatórios
 ```bash

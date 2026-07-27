@@ -1,7 +1,7 @@
 // ============================================================
 // shared/js/db.js — Cliente Supabase compartilhado
 // Expõe window.DB com CRUD para entries, noivas, saidas, orcamentos,
-// conteudo, valoresServicos + DB.auth.login()
+// conteudo, valoresServicos, profissionais + DB.auth.login()
 //
 // COMO USAR NAS PÁGINAS:
 //   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -50,6 +50,7 @@ const _ENTRY_KEYS = {
   tipo: 'tipo', valor: 'valor', valorTotal: 'valor_total',
   servico: 'servico', local: 'local', forma: 'forma',
   status: 'status', origem: 'origem', obs: 'obs', equipe: 'equipe',
+  responsavel: 'responsavel',
   auto: 'auto', noivaId: 'noiva_id', createdAt: 'created_at',
   comprovanteUrl: 'comprovante_url',
 };
@@ -77,6 +78,8 @@ const _ORC_KEYS = {
   AgendaCriada: 'agenda_criada', EnderecoEvento: 'endereco_evento', LocalTipo: 'local_tipo',
   SinalFech: 'sinal_fech', SaldoFech: 'saldo_fech', Comprovantes: 'comprovantes',
   Propostas: 'propostas', Equipe: 'equipe', DataCriacao: 'created_at',
+  // Equipe = trabalho PARA equipe de terceiros · Responsavel = quem executa
+  Responsavel: 'responsavel', Repasse: 'repasse', Cacheada: 'cacheada',
 };
 
 // Converte apenas os campos presentes (para update parcial)
@@ -117,6 +120,7 @@ function _entryFromDb(r) {
     origem:     r.origem       || '',
     obs:        r.obs          || '',
     equipe:     r.equipe       || '',
+    responsavel: r.responsavel || '',
     auto:           !!r.auto,
     noivaId:        r.noiva_id       || '',
     createdAt:      r.created_at     || '',
@@ -160,7 +164,8 @@ function _saidaFromDb(r) {
 
 // ── Orçamento ─────────────────────────────────────────────────────────────────
 function _orcToDb(o) {
-  const row = _toDb(o, _ORC_KEYS, ['ValorProp','ValorFechado','SinalFech','SaldoFech']);
+  const row = _toDb(o, _ORC_KEYS, ['ValorProp','ValorFechado','SinalFech','SaldoFech','Repasse']);
+  if ('Cacheada' in o) row.cacheada = o.Cacheada === true || o.Cacheada === 'true';
   // ID pode vir como 'ID' (GAS) ou 'id'
   row.id = String(o.ID || o.id);
   // Comprovantes: aceitar array ou string JSON
@@ -202,6 +207,9 @@ function _orcFromDb(r) {
     Comprovantes:   r.comprovantes     || [],
     Propostas:      r.propostas        || [],
     Equipe:         r.equipe           || '',
+    Responsavel:    r.responsavel      || '',
+    Repasse:        r.repasse          != null ? String(r.repasse) : '',
+    Cacheada:       !!r.cacheada,
     DataCriacao:    r.created_at       || '',
   };
 }
@@ -852,6 +860,47 @@ window.DB = {
         .delete()
         .not('nome', 'in', `(${keep.map(n => `"${n.replace(/"/g,'\\"')}"`).join(',')})`);
       if (error) console.warn('[valoresServicos.replaceAll] erro ao limpar:', error.message);
+    },
+  },
+
+  // ── Profissionais da minha equipe ───────────────────────────────────────────
+  // Quem pode executar um atendimento no lugar da Carol. `repassePadrao` é só
+  // uma sugestão — o repasse real é definido em cada orçamento.
+  profissionais: {
+    async list() {
+      _guard();
+      const { data, error } = await _sb
+        .from('profissionais')
+        .select('id, nome, repasse_padrao, ativo')
+        .order('nome');
+      if (error) throw error;
+      return data.map(r => ({
+        id:            String(r.id),
+        nome:          r.nome || '',
+        repassePadrao: r.repasse_padrao != null ? String(r.repasse_padrao) : '',
+        ativo:         r.ativo !== false,
+      }));
+    },
+    async saveAll(rows) {
+      _guard();
+      const data = (rows || [])
+        .filter(r => r.nome && String(r.nome).trim())
+        .map(r => ({
+          id:             String(r.id || Date.now() + Math.floor(Math.random() * 9999)),
+          nome:           String(r.nome).trim(),
+          repasse_padrao: r.repassePadrao !== '' && r.repassePadrao != null ? parseFloat(r.repassePadrao) || 0 : null,
+          ativo:          r.ativo !== false,
+          updated_at:     new Date().toISOString(),
+        }));
+      if (!data.length) return;
+      const { error } = await _sb.from('profissionais').upsert(data, { onConflict: 'id' });
+      if (error) throw error;
+    },
+    async remove(id) {
+      _guard();
+      if (!id) return;
+      const { error } = await _sb.from('profissionais').delete().eq('id', String(id));
+      if (error) throw error;
     },
   },
 

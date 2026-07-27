@@ -86,9 +86,9 @@ function renderNova() {
         <div class="fg"><label class="fl">Origem</label>${bgroup('origem',['Produção Social','Noiva','Assistência',{l:'Curso Auto',v:'Curso de Automaquiagem'}])}</div>
         <div class="fg">
             <label class="fl" style="display:flex;align-items:center;gap:8px;cursor:pointer;text-transform:none;font-size:.82rem;font-weight:600;letter-spacing:0">
-                <input type="checkbox" id="i-eq-chk" ${F.equipe?'checked':''} style="width:16px;height:16px;accent-color:var(--brand);flex-shrink:0" onchange="toggleEquipeInput(this.checked)"> Atendimento realizado por equipe
+                <input type="checkbox" id="i-eq-chk" ${F.equipe?'checked':''} style="width:16px;height:16px;accent-color:var(--brand);flex-shrink:0" onchange="toggleEquipeInput(this.checked)"> ↑ Trabalho para equipe de terceiros
             </label>
-            <input class="fi" type="text" id="i-eq" placeholder="Nome da equipe ou assistente" value="${F.equipe||''}" autocomplete="off" style="${F.equipe?'margin-top:8px':'display:none'}">
+            <input class="fi" type="text" id="i-eq" placeholder="Nome da equipe de terceiros" value="${F.equipe||''}" autocomplete="off" style="${F.equipe?'margin-top:8px':'display:none'}">
         </div>
         <div class="fg"><label class="fl">Observações</label><textarea class="fi ta" id="i-ob" placeholder="Opcional...">${F.obs}</textarea></div>
     </div>
@@ -151,7 +151,7 @@ function renderLista() {
         const s=entradaStyle(e.origem, e.tipo);
         const extra=e.valorTotal?` · ${brl(e.valorTotal)}`:'';
         const auto=e.auto?`<span style="font-size:.6rem;background:var(--amber-l);color:#7c4a00;border-radius:7px;padding:1px 5px;margin-left:4px">auto</span>`:'';
-        const equipeTag=e.equipe?`<span style="background:#e0f7fa;color:#006064;border-radius:8px;padding:1px 7px;font-size:.68rem;margin-left:5px;font-weight:600">👥 ${e.equipe}</span>`:'';
+        const equipeTag=equipeTags(e);
         const pixBtn = e.status === 'Previsto' && Number(e.valor) > 0
             ? `<button class="pixbtn" onclick="openPixModal('${e.id}')" title="Gerar QR PIX">PIX</button>`
             : '';
@@ -214,7 +214,8 @@ function renderEntryDetailPanel(e) {
         </div>
         <input type="hidden" id="ed-status" value="${e.status||'Realizado'}">
     </div>
-    <div class="fg"><label class="fl">Equipe <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">(opcional)</span></label><input class="fi" type="text" id="ee-equipe" value="${(e.equipe||'').replace(/"/g,'&quot;')}" placeholder="Ex: Julia" autocomplete="off"></div>
+    <div class="fg"><label class="fl">Equipe de terceiros <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">(trabalhei para)</span></label><input class="fi" type="text" id="ee-equipe" value="${(e.equipe||'').replace(/"/g,'&quot;')}" placeholder="Ex: Julia" autocomplete="off"></div>
+    <div class="fg"><label class="fl">Responsável pelo atendimento <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">(vazio = Carol)</span></label><input class="fi" type="text" id="ee-responsavel" value="${(e.responsavel||'').replace(/"/g,'&quot;')}" placeholder="Ex: Juliana" autocomplete="off"></div>
     <div class="fg"><label class="fl">Observações</label><textarea class="fi ta" id="ee-obs">${e.obs||''}</textarea></div>
     <div class="fg">
         <label class="fl">Comprovante de pagamento</label>
@@ -300,7 +301,7 @@ function renderListaDesktop() {
                     const s=entradaStyle(e.origem, e.tipo);
                     const isSel=String(e.id)===String(selectedEntryId);
                     const auto=e.auto?`<span class="auto-tag">auto</span>`:'';
-                    const equipe=e.equipe?`<span class="equipe-tag">👥 ${e.equipe}</span>`:'';
+                    const equipe=equipeTags(e);
                     const pixBtnD = e.status === 'Previsto' && Number(e.valor) > 0
                         ? `<button class="pixbtn" onclick="event.stopPropagation();openPixModal('${e.id}')" title="Gerar QR PIX">PIX</button>`
                         : '';

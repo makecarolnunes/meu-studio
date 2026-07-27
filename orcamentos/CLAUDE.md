@@ -20,8 +20,11 @@ Módulo central do fluxo comercial: recebe pedido → negocia → fecha → sinc
 
 ```js
 let orcamentos  = []          // array em memória (fonte: Supabase)
+let profissionais = []        // minha equipe (Supabase `profissionais` + cache local)
 let curFilter   = 'todos'     // filtro ativo
 let curMonth    = null        // mês selecionado (null = todos)
+let curEquipe   = 'todos'     // filtro: equipe de TERCEIROS
+let curResp     = 'todos'     // filtro: quem atende ('__carol__' | nome)
 let editOrcId   = null        // ID do orçamento aberto no panel-action
 let fechSlots   = []          // slots do panel-fechar (data+serviço+horário)
 let addSlots    = []          // slots do panel-add
@@ -29,6 +32,41 @@ let followupTpls= []          // templates de follow-up (localStorage)
 let serviceMap  = {}          // preços: { 'Maquiagem no Studio': { valor, duracao } }
 let fechSinalManual = false   // flag: usuário editou o sinal manualmente
 ```
+
+---
+
+## Equipe: dois conceitos distintos — **não confundir**
+
+| Campo | Significado | Efeito |
+|---|---|---|
+| `Equipe` | **Trabalho para equipe de terceiros** — eu atendo para a equipe de outra pessoa | Só rotula orçamento, card e evento |
+| `Responsavel` | **Profissional da minha equipe** que executa o atendimento (`''` = Carol) | Muda o título do evento, gera repasse no financeiro |
+| `Repasse` | Valor pago ao profissional da minha equipe | Vira **saída** `'Repasse para equipe'` |
+| `Cacheada` | Cliente cacheada | Sugere 3h de duração (editável) |
+
+Helpers: `respDe(e)`, `isEquipeEntry(e)`, `repasseDe(e)`, `valorCobradoDe(e)`, `lucroDe(e)`.
+
+Profissionais são cadastrados em **⚙️ Configurações › 👥 Equipe** (`DB.profissionais`,
+tabela `profissionais`). `repassePadrao` é só sugestão de preenchimento — o
+repasse real é definido em cada orçamento.
+
+---
+
+## Duração dos atendimentos
+
+- **Armazenada em minutos**, **sempre exibida e editada em horas** (`fmtDur(150) === '2h30'`).
+- O seletor (`durOptionsHTML`) vai de 15 min a 8h em passos de 15 min e preserva
+  qualquer duração fora da grade que já esteja gravada.
+- Padrões: Maquiagem + Cabelo = **150** (`DUR_MAKE_CABELO`) · Noiva = 180 ·
+  demais = 60 · cliente cacheada sugere **180** (`DUR_CACHEADA`).
+- `defaultDuracao(servico, cacheada)` é a única fonte da sugestão. Trocar o
+  serviço só sobrescreve a duração se `_durManual` for falso — ou seja, um ajuste
+  manual nunca é desfeito pelo sistema.
+- A duração real do serviço vem de `valores_servicos.duracao` (editável em
+  ⚙️ › Serviços) e **vence** o `DEFAULT_SERVICES` hardcoded.
+- Alterar a duração recalcula em cascata: resumo da linha → sequenciamento de
+  horários (`expandRows`) → detecção de conflito (`findSlotConflicts`) → fim do
+  evento no Google Agenda (`buildEventos`) → mensagem de WhatsApp.
 
 ---
 
@@ -43,10 +81,26 @@ panel-action → [btn Fechar e Agendar Tudo]
     2. setStatus(orçamento, 'Fechado') → Supabase
     3. finEntryCreate(sinal) → DB.entries.create() [sinal]
     4. finEntryCreate(restante) → DB.entries.create() [restante previsto]
-    5. Gera mensagem WhatsApp
-    6. Tenta criar eventos Google Agenda via MCP
-    7. Exibe panel-confirmacao
+    5. finSaidaCreate(repasse) → DB.saidas.upsert() [só se Responsavel ≠ Carol]
+    6. Gera mensagem WhatsApp
+    7. Tenta criar eventos Google Agenda via MCP
+    8. Exibe panel-confirmacao
 ```
+
+### `finSaidaCreate(saida)` — repasse da equipe
+
+Quando `Responsavel` é um profissional da minha equipe e `Repasse > 0`, o
+fechamento lança uma **despesa** para o repasse não ser confundido com lucro:
+
+```js
+{ tipo: 'Repasse para equipe',   // = SAIDA_REPASSE (bate com SAIDA_TIPOS_PROF)
+  dataPag: dataEvento, dataCaixa: dataEvento,
+  valor: repasse, forma, status: 'Pendente', natureza: 'PROFISSIONAL',
+  obs: 'Repasse {profissional} — {cliente} — Orçamento {id}' }
+```
+
+O sinal e o restante levam `responsavel` para o Financeiro conseguir mostrar
+quem executou. Assim: **entrada** (cliente) − **saída** (repasse) = lucro real.
 
 ### `finEntryCreate(entry)` — crítico
 
@@ -94,7 +148,9 @@ Os formulários "Novo orçamento" e "Fechar" usam slots dinâmicos:
 - `addSlots[]` → gerenciado por `addAddSlot()` / `removeAddSlot()`
 - `fechSlots[]` → gerenciado por `addFechSlot()` / `removeFechSlot()`
 - Cada **linha** de UI: `{ id, servico, valorUnit, data, horario, qtd, duracao }`
-  (`qtd` = quantidade de atendimentos iguais; `duracao` em minutos, editável)
+  (`qtd` = quantidade de atendimentos iguais; `duracao` em minutos, escolhida em
+  horas no seletor). Flags internas (prefixo `_`, nunca persistidas):
+  `_manual` (valor editado), `_durManual` (duração editada), `_cacheada`.
 - Renderização compartilhada: `renderSlotRow()` + `syncSlotField()` (add e fech)
 - Valor total = `Σ(valorUnit × qtd)`
 - Sinal padrão = 30% do total (sobrescrito se `fechSinalManual = true`)
@@ -119,8 +175,21 @@ Usa `window.cowork.callMcpTool('mcp__...__create_event', {...})`. O MCP ID muda 
 
 Formato do título do evento (usado pelo módulo Clientes para matching):
 ```
-HHhMM - HHhMM | Nome Cliente | Serviço | Local
+HHhMM - HHhMM | Nome Cliente | Serviço | Local          ← atendimento da Carol
+EQUIPE | Juliana | HHhMM | Cliente: Nome | Serviço | Local   ← minha equipe
 ```
+
+> ⚠️ O módulo Clientes lê `parts[0]` (horário) e `parts[1]` (nome). No formato
+> EQUIPE essas posições mudam — o matching de horário **não** funciona para
+> atendimentos da equipe. É aceitável (Clientes só exibe horário), mas se algum
+> dia o matching passar a importar, ajustar `clientes.js` para detectar o prefixo.
+
+`buildEventos(ctx)` recebe um objeto:
+`{ nome, slots, endereco, total, sinal, saldo, telefone, equipe, responsavel,
+   repasse, forma, obs, localTipo }`. A descrição sempre traz cliente, serviço,
+data, horário, endereço, valores, forma de pagamento, sinal/restante, contato e
+observações; nos atendimentos da equipe acrescenta **valor cobrado, repasse e
+lucro** (`linhasRepasse`).
 
 `buildEventos()` **agrupa as slots por data**: vários serviços na mesma data
 viram **um único evento** (início = menor horário, fim = maior horário + duração;

@@ -44,8 +44,8 @@ INSERT INTO valores_servicos (nome, valor, duracao) VALUES
   ('Maquiagem em domicílio',             0,   60),
   ('Cabelo no Studio',                   0,   60),
   ('Cabelo em domicílio',                0,   60),
-  ('Maquiagem e Cabelo no Studio',       0,  120),
-  ('Maquiagem e Cabelo em domicílio',    0,  120),
+  ('Maquiagem e Cabelo no Studio',       0,  150),
+  ('Maquiagem e Cabelo em domicílio',    0,  150),
   ('Curso de Automaquiagem no Studio',   0,  120),
   ('Curso de Automaquiagem em domicílio',0,  120),
   ('Noiva',                              0,  180)

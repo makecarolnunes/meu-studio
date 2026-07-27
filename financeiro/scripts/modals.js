@@ -366,7 +366,8 @@ function openEditEntry(id) {
         </div>
         <input type="hidden" id="ed-status" value="${e.status||'Realizado'}">
     </div>
-    <div class="fg"><label class="fl">Atendimento pela equipe <span style="color:var(--muted);font-size:.75rem">(opcional)</span></label><input class="fi" type="text" id="ee-equipe" value="${e.equipe||''}" placeholder="Ex: Julia" autocomplete="off"></div>
+    <div class="fg"><label class="fl">Equipe de terceiros <span style="color:var(--muted);font-size:.75rem">(trabalhei para)</span></label><input class="fi" type="text" id="ee-equipe" value="${e.equipe||''}" placeholder="Ex: Julia" autocomplete="off"></div>
+    <div class="fg"><label class="fl">Responsável pelo atendimento <span style="color:var(--muted);font-size:.75rem">(vazio = Carol)</span></label><input class="fi" type="text" id="ee-responsavel" value="${e.responsavel||''}" placeholder="Ex: Juliana" autocomplete="off"></div>
     <div class="fg"><label class="fl">Observações</label><textarea class="fi ta" id="ee-obs">${e.obs||''}</textarea></div>
     <div class="fg">
         <label class="fl">Comprovante de pagamento</label>
@@ -404,6 +405,7 @@ async function saveEditEntry(id) {
         status: document.getElementById('ed-status').value,
         valor:  String(valor),
         equipe: document.getElementById('ee-equipe').value.trim(),
+        responsavel: (document.getElementById('ee-responsavel') || {}).value?.trim() || '',
         obs:    document.getElementById('ee-obs').value
     };
     // Confirma no Supabase ANTES de aplicar na tela/cache

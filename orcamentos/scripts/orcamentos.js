@@ -12,10 +12,38 @@ const DEFAULT_SERVICES = [
   { nome: 'Maquiagem no Studio',              valor: 0,    duracao: 60  },
   { nome: 'Cabelo em domicílio',              valor: 250,  duracao: 60  },
   { nome: 'Cabelo no Studio',                 valor: 0,    duracao: 60  },
-  { nome: 'Maquiagem e Cabelo em domicílio',  valor: 0,    duracao: 120 },
-  { nome: 'Maquiagem e Cabelo no Studio',     valor: 0,    duracao: 120 },
+  { nome: 'Maquiagem e Cabelo em domicílio',  valor: 0,    duracao: 150 },
+  { nome: 'Maquiagem e Cabelo no Studio',     valor: 0,    duracao: 150 },
   { nome: 'Noiva',                            valor: 1500, duracao: 180 },
 ];
+
+// ── Duração ────────────────────────────────────────────────
+// Armazenada em minutos (facilita os cálculos de horário), mas SEMPRE exibida
+// e editada em horas ("2h30"). A duração do serviço é só o padrão sugerido —
+// qualquer atendimento pode ter a sua ajustada manualmente.
+const DUR_MAKE_CABELO = 150;   // 2h30 — padrão de Maquiagem + Cabelo
+const DUR_CACHEADA    = 180;   // 3h   — sugestão para cliente cacheada
+const DUR_PASSO       = 15;    // granularidade do seletor
+const DUR_MAX         = 480;   // 8h
+
+function fmtDur(min) {
+  const m = Math.max(0, parseInt(min) || 0);
+  if (!m) return '—';
+  const h = Math.floor(m / 60), r = m % 60;
+  if (!h) return r + 'min';
+  return h + 'h' + (r ? pad2(r) : '');
+}
+
+function durOptionsHTML(selected) {
+  const sel = Math.max(0, parseInt(selected) || 0);
+  const vals = [];
+  for (let m = DUR_PASSO; m <= DUR_MAX; m += DUR_PASSO) vals.push(m);
+  if (sel && !vals.includes(sel)) vals.push(sel);   // preserva duração fora da grade
+  vals.sort((a, b) => a - b);
+  return vals.map(m =>
+    '<option value="' + m + '"' + (m === sel ? ' selected' : '') + '>' + fmtDur(m) + '</option>'
+  ).join('');
+}
 
 function pickIcon(s) {
   if (!s) return '🌸';
@@ -50,9 +78,12 @@ let entries     = (function() {
   return raw.filter(e => !deletedIds.includes(String(e.ID)));
 })();
 let services    = safeJSON(localStorage.getItem('orca_services'), DEFAULT_SERVICES);
+// Profissionais da minha equipe (fonte: Supabase, cache local)
+let profissionais = safeJSON(localStorage.getItem('orca_profissionais'), []);
 let curFilter   = 'todos';
 let curOrigem   = 'todos';   // filtro por origem: 'todos' | 'Produção Social' | 'Noiva' | 'Curso de Automaquiagem'
-let curEquipe   = 'todos';   // filtro por equipe: 'todos' | '__sem__' | nome da equipe
+let curEquipe   = 'todos';   // filtro por equipe de TERCEIROS: 'todos' | '__sem__' | nome da equipe
+let curResp     = 'todos';   // filtro por responsável: 'todos' | '__carol__' | nome do profissional
 let curSearch   = '';        // pesquisa por nome do cliente
 let activeId    = null;
 let filterMonth = null;
@@ -104,9 +135,10 @@ function renderEntryCard(e) {
   const sCls   = STATUS_CLASS[e.Status] || 'st-novo';
   const agOk   = e.Status === 'Fechado' && getAgendaCriada(e);
   const agPend = e.Status === 'Fechado' && !getAgendaCriada(e);
-  const cls    = agPend ? 'is-agenda-pend' :
+  const cls    = (isEquipeEntry(e) ? 'is-equipe ' : '') +
+                (agPend ? 'is-agenda-pend' :
                  agOk   ? 'is-agenda-ok'   :
-                 PERDIDO_STATUS.includes(e.Status) ? 'is-perdido' : '';
+                 PERDIDO_STATUS.includes(e.Status) ? 'is-perdido' : '');
   const val    = e.ValorFechado ? parseFloat(e.ValorFechado) : parseFloat(e.ValorProp) || 0;
   const valStr = val ? fmtVal(val) : '—';
   const meta   = e.DataEvento ? 'Evento: ' + fmtDate(e.DataEvento) : '';
@@ -120,12 +152,15 @@ function renderEntryCard(e) {
           : '<span class="chip chip-muted">🧾 Sem comprovante</span>') +
       '</div>'
     : '';
+  const terceiros = e.Equipe
+    ? ' <span class="tag-terceiros">↑ Para equipe ' + esc(e.Equipe) + '</span>' : '';
   return (
     '<div class="entry ' + cls + '" onclick="openAction(\'' + esc(e.ID) + '\')">' +
       '<div class="e-date">' + fmtDateCard(e.DataPedido) + '</div>' +
       '<div class="e-info">' +
-        '<div class="e-name">' + esc(e.Cliente || '—') + (e.Equipe ? ' <span style="display:inline-block;background:#e0f7fa;color:#006064;border-radius:8px;padding:1px 7px;font-size:.65rem;font-weight:600;vertical-align:middle">↑ Equipe ' + esc(e.Equipe) + '</span>' : '') + '</div>' +
+        '<div class="e-name">' + esc(e.Cliente || '—') + terceiros + '</div>' +
         '<div class="e-srv">' + esc(e.Servico || '—') + '</div>' +
+        '<div class="e-resp">' + respBadgeHTML(e) + (e.Cacheada ? '<span class="tag-cacheada">★ Cacheada</span>' : '') + '</div>' +
         (meta ? '<div class="e-meta">' + esc(meta) + '</div>' : '') +
         statusRow +
       '</div>' +
@@ -191,6 +226,7 @@ function esc(s) {
 }
 function cacheEntries() { localStorage.setItem('orca_entries', JSON.stringify(entries)); }
 function cacheServices() { localStorage.setItem('orca_services', JSON.stringify(services)); }
+function cacheProfissionais() { localStorage.setItem('orca_profissionais', JSON.stringify(profissionais)); }
 
 // ── Safeguard: lista de IDs excluídos localmente ──
 function getDeletedIds() {
@@ -276,11 +312,13 @@ async function syncAll() {
   dot('syncing');
   try {
     const deletedIds = getDeletedIds();
-    const [all, svcMap] = await Promise.all([
+    const [all, svcMap, profs] = await Promise.all([
       DB.orcamentos.list(),
       DB.valoresServicos.load().catch(() => null),
+      DB.profissionais.list().catch(() => null),
     ]);
     entries = all.filter(e => !deletedIds.includes(String(e.ID)));
+    if (profs) { profissionais = profs; cacheProfissionais(); }
 
     // Aplica atualizações pendentes (salvas offline durante confirmarFechamento)
     const pending = safeJSON(localStorage.getItem('orca_pending_status'), {});
@@ -361,10 +399,24 @@ async function finEntryCreate(entry) {
   }
 }
 
+// Categoria de despesa usada pelos repasses — precisa bater com
+// SAIDA_TIPOS_PROF em financeiro/scripts/state.js.
+const SAIDA_REPASSE = 'Repasse para equipe';
+
+async function finSaidaCreate(saida) {
+  try {
+    await DB.saidas.upsert(saida);
+    return { ok: true };
+  } catch(e) {
+    console.warn('finSaidaCreate error:', e.message);
+    return { ok: false, error: e.message };
+  }
+}
+
 // ══════════════════════════════════════════════════════════
 //  WHATSAPP — mensagem de confirmação (igual ao confirmacao.html)
 // ══════════════════════════════════════════════════════════
-function buildConfirmacaoMessage(nome, slots, total, sinal, saldo, endereco, localTipo) {
+function buildConfirmacaoMessage(nome, slots, total, sinal, saldo, endereco, localTipo, responsavel) {
   const linhas = [];
   linhas.push('Obrigada, ' + (nome || '[nome]') + '!');
 
@@ -468,6 +520,14 @@ function buildConfirmacaoMessage(nome, slots, total, sinal, saldo, endereco, loc
     });
   }
 
+  // Atendimento da minha equipe: só avisa quem vai atender — o restante da
+  // confirmação é idêntico ao fluxo normal.
+  const resp = (responsavel || '').trim();
+  if (resp) {
+    linhas.push('');
+    linhas.push('Quem fará seu atendimento será nossa profissional ' + resp + '. 💕');
+  }
+
   return linhas.join('\n');
 }
 
@@ -497,9 +557,137 @@ function getServiceDuration(servName) {
   if (svc && svc.duracao) return Number(svc.duracao);
   const low = (servName || '').toLowerCase();
   if (low.includes('noiva')) return 180;
-  if (low.includes('maquiagem') && low.includes('cabelo')) return 120;
+  if (low.includes('maquiagem') && low.includes('cabelo')) return DUR_MAKE_CABELO;
   return 60;
 }
+
+// Duração padrão de um slot: cliente cacheada sugere 3h, senão o padrão do serviço.
+// Em ambos os casos continua editável (`_durManual` trava a sugestão automática).
+function defaultDuracao(servName, cacheada) {
+  return cacheada ? DUR_CACHEADA : getServiceDuration(servName);
+}
+
+// ══════════════════════════════════════════════════════════
+//  RESPONSÁVEL PELO ATENDIMENTO
+//  '' → Carol · nome → profissional da minha equipe (gera repasse).
+//  Não confundir com `Equipe`, que é trabalhar PARA equipe de terceiros.
+// ══════════════════════════════════════════════════════════
+function respDe(e)         { return (e && e.Responsavel || '').trim(); }
+function isEquipeEntry(e)  { return !!respDe(e); }
+function repasseDe(e)      { return parseFloat(e && e.Repasse) || 0; }
+function valorCobradoDe(e) {
+  return parseFloat(e && (e.ValorFechado || e.ValorProp)) || 0;
+}
+function lucroDe(e)        { return Math.max(0, valorCobradoDe(e) - repasseDe(e)); }
+
+function respBadgeHTML(e) {
+  const r = respDe(e);
+  return r
+    ? '<span class="tag-resp tag-resp-equipe">👥 Equipe • ' + esc(r) + '</span>'
+    : '<span class="tag-resp tag-resp-carol">Carol</span>';
+}
+
+function profissionaisAtivos() {
+  return profissionais.filter(p => p.nome && p.nome.trim() && p.ativo !== false);
+}
+
+// Bloco reutilizável "Responsável pelo atendimento" (painéis novo / fechar / ação).
+// `prefix` é o namespace dos ids: add | fech | act
+function renderRespBlock(prefix, resp, repasse) {
+  const sel  = (resp || '').trim();
+  const list = profissionaisAtivos();
+  // Preserva um responsável já gravado que saiu do cadastro
+  if (sel && !list.some(p => p.nome === sel)) list.push({ nome: sel });
+  const opts = list.map(p =>
+    '<option value="' + esc(p.nome) + '"' + (p.nome === sel ? ' selected' : '') + '>' + esc(p.nome) + '</option>'
+  ).join('');
+  const semProf = !list.length;
+  return (
+    '<div class="form-group">' +
+      '<label class="form-label">Responsável pelo atendimento</label>' +
+      '<select class="form-input" id="' + prefix + '-resp" onchange="onRespChange(\'' + prefix + '\')">' +
+        '<option value=""' + (sel ? '' : ' selected') + '>Carol (eu)</option>' +
+        (opts ? '<optgroup label="Profissional da equipe">' + opts + '</optgroup>' : '') +
+      '</select>' +
+      (semProf
+        ? '<div class="resp-hint">Nenhum profissional cadastrado — adicione em ⚙️ Configurações › Equipe.</div>'
+        : '') +
+      '<div id="' + prefix + '-resp-fin" class="resp-fin" style="display:' + (sel ? 'block' : 'none') + '">' +
+        '<label class="form-label">Repasse ao profissional (R$)</label>' +
+        '<input class="form-input" type="number" step="0.01" min="0" id="' + prefix + '-repasse" ' +
+               'placeholder="0,00" value="' + (repasse || '') + '" oninput="updateRespResumo(\'' + prefix + '\')">' +
+        '<div class="resp-resumo" id="' + prefix + '-resp-resumo"></div>' +
+      '</div>' +
+    '</div>');
+}
+
+// Valor cobrado da cliente no contexto de cada painel (para calcular o lucro).
+function respTotal(prefix) {
+  if (prefix === 'fech') return parseFloat((document.getElementById('fech-total') || {}).value) || 0;
+  if (prefix === 'add')  return (addSlots || []).reduce((s, x) => s + (parseFloat(x.valorUnit) || 0) * slotQtd(x), 0);
+  // Painel de ação: usa a prévia ao vivo dos slots em edição; se ainda não há
+  // nada editado, cai no valor já gravado no orçamento.
+  const live = (actEditSlots || []).reduce((s, x) => s + (parseFloat(x.valorUnit) || 0) * slotQtd(x), 0);
+  if (live) return live;
+  return valorCobradoDe(entries.find(x => String(x.ID) === String(activeId)));
+}
+
+function onRespChange(prefix) {
+  const sel  = document.getElementById(prefix + '-resp');
+  const fin  = document.getElementById(prefix + '-resp-fin');
+  const rep  = document.getElementById(prefix + '-repasse');
+  if (!sel || !fin) return;
+  const nome = sel.value.trim();
+  fin.style.display = nome ? 'block' : 'none';
+  if (!nome) { if (rep) rep.value = ''; updateRespResumo(prefix); return; }
+  // Sugere o repasse padrão do profissional quando o campo ainda está vazio
+  if (rep && !rep.value) {
+    const p = profissionais.find(x => x.nome === nome);
+    if (p && p.repassePadrao !== '' && p.repassePadrao != null) rep.value = p.repassePadrao;
+  }
+  updateRespResumo(prefix);
+}
+
+function updateRespResumo(prefix) {
+  const box = document.getElementById(prefix + '-resp-resumo');
+  if (!box) return;
+  const sel = document.getElementById(prefix + '-resp');
+  if (!sel || !sel.value.trim()) { box.innerHTML = ''; return; }
+  const total   = respTotal(prefix);
+  const repasse = parseFloat((document.getElementById(prefix + '-repasse') || {}).value) || 0;
+  const lucro   = total - repasse;
+  box.innerHTML =
+    '<span>Cobrado <strong>R$ ' + fmt(total) + '</strong></span>' +
+    '<span>Repasse <strong>−R$ ' + fmt(repasse) + '</strong></span>' +
+    '<span class="' + (lucro < 0 ? 'resp-neg' : 'resp-ok') + '">Lucro <strong>R$ ' + fmt(lucro) + '</strong></span>';
+}
+
+function getRespValues(prefix) {
+  const sel = document.getElementById(prefix + '-resp');
+  const rep = document.getElementById(prefix + '-repasse');
+  const responsavel = sel ? sel.value.trim() : '';
+  const repasse = responsavel ? (parseFloat(rep && rep.value) || 0) : 0;
+  return { responsavel, repasse };
+}
+
+// ── Cliente cacheada ────────────────────────────────────────
+// Sugere 3h em todas as linhas que ainda não tiveram a duração ajustada à mão.
+function applyCacheada(arr, checked, rerender) {
+  (arr || []).forEach(s => {
+    s._cacheada = checked;
+    if (!s._durManual) s.duracao = defaultDuracao(s.servico, checked);
+  });
+  if (rerender) rerender();
+}
+
+function isCacheadaChecked(prefix) {
+  const el = document.getElementById(prefix + '-cacheada');
+  return !!(el && el.checked);
+}
+
+function toggleAddCacheada(checked) { applyCacheada(addSlots, checked, renderAddSlots); }
+function toggleFechCacheada(checked) { applyCacheada(fechSlots, checked, renderFechSlots); }
+function toggleActCacheada(checked)  { applyCacheada(actEditSlots, checked, renderActEditSlotsList); }
 
 function abrevServico(servName) {
   const low = (servName || '').toLowerCase();
@@ -524,7 +712,7 @@ function simplifyServiceName(servName) {
 
 // Duração de uma slot: usa a duração gravada ou deriva do serviço.
 function slotDuracao(s) {
-  return parseInt(s && s.duracao) || getServiceDuration(s && s.servico);
+  return parseInt(s && s.duracao) || defaultDuracao(s && s.servico, s && s._cacheada);
 }
 
 // Conta os serviços de um grupo (mesma data) por categoria.
@@ -568,12 +756,40 @@ function resumoServicosGrupo(grupo) {
   return partes.join(', ') || abrevServico(grupo[0].servico);
 }
 
+// Bloco financeiro do repasse — só aparece nos atendimentos da minha equipe.
+// Mostra quanto entra, quanto sai e o que sobra, direto no evento da agenda.
+function linhasRepasse(ctx, total) {
+  const resp = (ctx.responsavel || '').trim();
+  if (!resp) return [];
+  const rep = parseFloat(ctx.repasse) || 0;
+  return [
+    '',
+    'Atendimento realizado por: ' + resp + ' (minha equipe)',
+    'Valor cobrado da cliente: R$ ' + fmt(total),
+    'Valor do repasse: R$ ' + fmt(rep),
+    'Lucro: R$ ' + fmt(total - rep),
+  ];
+}
+
+// Rodapé comum a todos os eventos: pagamento, contato e observações.
+function linhasRodape(ctx, sinal, saldo) {
+  const out = [];
+  if (ctx.forma) out.push('Forma de pagamento: ' + ctx.forma);
+  if (sinal > 0 || saldo > 0) {
+    out.push('Pagamento: R$ ' + fmt(sinal) + ' de sinal · R$ ' + fmt(saldo) + ' no dia');
+  }
+  if (ctx.telefone) out.push('Contato: ' + ctx.telefone);
+  if (ctx.obs) { out.push(''); out.push('Observações: ' + ctx.obs); }
+  return out.length ? [''].concat(out) : [];
+}
+
 // Descrição agrupada de um evento único (vários serviços na mesma data).
-function buildGrupoDescricao(grupo, endereco, total, sinal, saldo, telefone, equipe, inicioFmt, fimFmt) {
+function buildGrupoDescricao(grupo, ctx, total, sinal, saldo, inicioFmt, fimFmt) {
+  const endereco = ctx.endereco, equipe = ctx.equipe;
   const c = contarServicosGrupo(grupo);
   const desc = [];
   desc.push('Serviços: ' + (c.partes.join(' e ') || (grupo.length + ' serviços')));
-  if (equipe) desc.push('Equipe responsável: ' + equipe);
+  if (equipe) desc.push('Trabalho para equipe de terceiros: ' + equipe);
   desc.push('Data: ' + (fmtDateWeek(grupo[0].data) || ''));
   desc.push('Horário: ' + inicioFmt + ' às ' + fimFmt);
   desc.push('Endereço: ' + (endereco || ''));
@@ -617,21 +833,41 @@ function buildGrupoDescricao(grupo, endereco, total, sinal, saldo, telefone, equ
     });
   }
 
-  if (telefone) { desc.push(''); desc.push('Contato: ' + telefone); }
-  return desc.join('\n');
+  return desc
+    .concat(linhasRepasse(ctx, total))
+    .concat(linhasRodape(ctx, sinal, saldo))
+    .join('\n');
 }
 
 // Constrói eventos da agenda agrupando slots por data:
 // mesma data com vários serviços → UM evento (12h30–18h30); datas diferentes → eventos separados.
-function buildEventos(nome, slots, endereco, total, sinal, saldo, telefone, equipe) {
+//
+// `ctx` = { nome, slots, endereco, total, sinal, saldo, telefone, equipe,
+//           responsavel, repasse, forma, obs, localTipo }
+// `equipe`      → trabalho PARA equipe de terceiros (só rotula o evento)
+// `responsavel` → profissional da MINHA equipe que executa (muda o título e
+//                 acrescenta o bloco financeiro do repasse na descrição)
+function buildEventos(ctx) {
+  const { nome, slots, endereco, telefone, equipe } = ctx;
+  const total = parseFloat(ctx.total) || 0;
+  const sinal = parseFloat(ctx.sinal) || 0;
+  const saldo = parseFloat(ctx.saldo) || 0;
+  const resp  = (ctx.responsavel || '').trim();
   const eventos = [];
-  const local = fechLocal === 'studio' ? 'Studio' : 'Domicílio';
+  const localTipo = ctx.localTipo || fechLocal;
+  const local = localTipo === 'studio' ? 'Studio' : 'Domicílio';
   const nomeComEquipe = (nome || '[nome]') + (equipe ? ' — Equipe ' + equipe : '');
+
+  // Título do atendimento executado pela minha equipe deixa isso explícito
+  // logo no começo — bate o olho na agenda e sabe que não é comigo.
+  const tituloEvento = (inicioFmt, fimFmt, resumo) => resp
+    ? 'EQUIPE | ' + resp + ' | ' + inicioFmt + ' | Cliente: ' + (nome || '[nome]') + ' | ' + resumo + ' | ' + local
+    : inicioFmt + ' - ' + fimFmt + ' | ' + nomeComEquipe + ' | ' + resumo + ' | ' + local;
 
   // Agrupa por data, preservando a ordem de aparição
   const byData = {};
   const ordem = [];
-  slots.forEach(s => {
+  (slots || []).forEach(s => {
     if (!s.data || !s.horario) return;   // sem data/horário não vira evento
     if (!byData[s.data]) { byData[s.data] = []; ordem.push(s.data); }
     byData[s.data].push(s);
@@ -658,23 +894,26 @@ function buildEventos(nome, slots, endereco, total, sinal, saldo, telefone, equi
     if (grupo.length === 1) {
       // Um único serviço na data — comportamento padrão
       const s = grupo[0];
-      titulo = inicioFmt + ' - ' + fimFmt + ' | ' + nomeComEquipe + ' | ' + abrevServico(s.servico) + ' | ' + local;
+      titulo = tituloEvento(inicioFmt, fimFmt, abrevServico(s.servico));
       const desc = [];
+      desc.push('Cliente: ' + (nome || ''));
       desc.push('Serviço: ' + (s.servico || ''));
-      if (equipe) desc.push('Equipe responsável: ' + equipe);
+      if (equipe) desc.push('Trabalho para equipe de terceiros: ' + equipe);
       desc.push('Data: ' + (fmtDateWeek(s.data) || ''));
-      desc.push('Horário de início: ' + inicioFmt);
+      desc.push('Horário: ' + inicioFmt + ' às ' + fimFmt + ' (' + fmtDur(fimMax - iniMin) + ')');
       desc.push('Endereço: ' + (endereco || ''));
       if (parseFloat(s.valorUnit) > 0) desc.push('Valor deste serviço: R$ ' + fmt(s.valorUnit));
       desc.push('Valor total do orçamento: R$ ' + (total > 0 ? fmt(total) : ''));
       desc.push('Valor pago na reserva: R$ '    + (sinal > 0 ? fmt(sinal) : ''));
       desc.push('Restante a ser pago no dia: R$ ' + (saldo > 0 ? fmt(saldo) : ''));
-      if (telefone) { desc.push(''); desc.push('Contato: ' + telefone); }
-      descricao = desc.join('\n');
+      descricao = desc
+        .concat(linhasRepasse(ctx, total))
+        .concat(linhasRodape(ctx, sinal, saldo))
+        .join('\n');
     } else {
       // Vários serviços na mesma data — UM evento agrupado
-      titulo = inicioFmt + ' - ' + fimFmt + ' | ' + nomeComEquipe + ' | ' + resumoServicosGrupo(grupo) + ' | ' + local;
-      descricao = buildGrupoDescricao(grupo, endereco, total, sinal, saldo, telefone, equipe, inicioFmt, fimFmt);
+      titulo = tituloEvento(inicioFmt, fimFmt, resumoServicosGrupo(grupo));
+      descricao = buildGrupoDescricao(grupo, ctx, total, sinal, saldo, inicioFmt, fimFmt);
     }
 
     eventos.push({
@@ -920,9 +1159,17 @@ function render() {
     }
   }
 
-  // Filtro por equipe
+  // Filtro por equipe de terceiros
   if (curEquipe === '__sem__') list = list.filter(e => !e.Equipe);
   else if (curEquipe !== 'todos') list = list.filter(e => e.Equipe === curEquipe);
+
+  // Filtro por responsável pelo atendimento (Carol × profissional da equipe).
+  // Responsável que sumiu da base volta o filtro para "Todos" antes de filtrar,
+  // senão a lista apareceria vazia até o próximo render.
+  const respDisponiveis = [...new Set(entries.map(e => respDe(e)).filter(Boolean))];
+  if (curResp !== 'todos' && curResp !== '__carol__' && !respDisponiveis.includes(curResp)) curResp = 'todos';
+  if (curResp === '__carol__')  list = list.filter(e => !respDe(e));
+  else if (curResp !== 'todos') list = list.filter(e => respDe(e) === curResp);
 
   // Pesquisa por nome do cliente
   if (curSearch.trim()) {
@@ -943,6 +1190,8 @@ function render() {
   // Atualiza tabs de equipe (mobile + desktop)
   document.querySelectorAll('.equipe-tab').forEach(t => t.classList.toggle('on', t.dataset.eq === curEquipe));
   document.querySelectorAll('.d-fil-item[data-eq]').forEach(t => t.classList.toggle('active', t.dataset.eq === curEquipe));
+
+  renderRespFilters();
 
   // Monta filtro de equipe dinamicamente
   const equipesDisp = [...new Set(entries.map(e => e.Equipe).filter(Boolean))];
@@ -986,7 +1235,8 @@ function render() {
   const content = document.getElementById('content');
   if (list.length === 0) {
     const semFiltro = curFilter === 'todos' && !filterEventDate && !filterMonth &&
-                      !curSearch.trim() && curOrigem === 'todos' && curEquipe === 'todos';
+                      !curSearch.trim() && curOrigem === 'todos' && curEquipe === 'todos' &&
+                      curResp === 'todos';
     let msg;
     if (filterEventDate)   msg = 'Nenhum atendimento marcado para ' + fmtDate(filterEventDate) + '.';
     else if (semFiltro)    msg = 'Nenhum orçamento ainda.<br>Toque em <strong>＋</strong> para adicionar.';
@@ -1024,6 +1274,40 @@ function render() {
 function setF(f) { curFilter = f; localStorage.setItem('orca_cur_filter', f); render(); }
 function setOrigem(v) { curOrigem = v; localStorage.setItem('orca_cur_origem', v); render(); }
 function setEquipe(v) { curEquipe = v; localStorage.setItem('orca_cur_equipe', v); render(); }
+function setResp(v)   { curResp   = v; localStorage.setItem('orca_cur_resp', v);   render(); }
+
+// Filtro "quem atende": só aparece quando existe algum atendimento da equipe.
+function renderRespFilters() {
+  const nomes = [...new Set(entries.map(e => respDe(e)).filter(Boolean))].sort();
+  const mob = document.getElementById('resp-tabs');
+  const dsk = document.getElementById('ds-resp-section');
+  if (!nomes.length) {
+    if (curResp !== 'todos') { curResp = 'todos'; localStorage.setItem('orca_cur_resp', 'todos'); }
+    if (mob) mob.style.display = 'none';
+    if (dsk) dsk.style.display = 'none';
+    return;
+  }
+  // Responsável que sumiu da base volta o filtro para "Todos"
+  if (curResp !== 'todos' && curResp !== '__carol__' && !nomes.includes(curResp)) curResp = 'todos';
+
+  const items = [
+    { k: 'todos',     l: 'Todos' },
+    { k: '__carol__', l: 'Carol' },
+    ...nomes.map(n => ({ k: n, l: 'Equipe • ' + n })),
+  ];
+  if (mob) {
+    mob.style.display = '';
+    mob.innerHTML = items.map(f =>
+      '<button class="orig-tab' + (curResp === f.k ? ' on' : '') + '" onclick="setResp(\'' + esc(f.k) + '\')">' +
+      esc(f.l) + '</button>').join('');
+  }
+  if (dsk) {
+    dsk.style.display = '';
+    dsk.innerHTML = '<div class="dsb-lbl">Quem atende</div>' + items.map(f =>
+      '<button class="d-fil-item' + (curResp === f.k ? ' active' : '') + '" onclick="setResp(\'' + esc(f.k) + '\')">' +
+      '<span class="d-fil-dot" style="background:var(--purple, #6a1b9a)"></span>' + esc(f.l) + '</button>').join('');
+  }
+}
 function setSearch(v) { curSearch = v; render(); }
 function navMonth(dir) {
   const base = filterMonth ? new Date(filterMonth + '-01T12:00:00') : new Date();
@@ -1096,6 +1380,10 @@ function openAddForm() {
   const addEqInp = document.getElementById('add-equipe');
   if (addEqChk) addEqChk.checked = false;
   if (addEqInp) { addEqInp.value = ''; addEqInp.style.display = 'none'; }
+  const addCach = document.getElementById('add-cacheada');
+  if (addCach) addCach.checked = false;
+  const addResp = document.getElementById('add-resp-block');
+  if (addResp) addResp.innerHTML = renderRespBlock('add', '', '');
   slotCheckExcludeId = null;   // orçamento novo: confere contra todos os existentes
   addSlots = [];
   addAddSlot();
@@ -1135,9 +1423,10 @@ function slotQtd(s) { return Math.max(1, parseInt(s && s.qtd) || 1); }
 function slotResumoLinha(s) {
   const qtd = slotQtd(s);
   const val = parseFloat(s.valorUnit) || 0;
-  const dur = parseInt(s.duracao) || getServiceDuration(s.servico);
+  const dur = parseInt(s.duracao) || defaultDuracao(s.servico, s._cacheada);
   const parts = [];
   if (val > 0 || qtd > 1) parts.push(qtd + ' × R$ ' + fmt(val) + ' = R$ ' + fmt(qtd * val));
+  parts.push(fmtDur(dur) + (qtd > 1 ? ' cada' : ''));
   if (s.horario) parts.push(fmtHorario(s.horario) + '–' + addMinutesFmt(s.horario, qtd * dur));
   return parts.join(' · ');
 }
@@ -1288,7 +1577,7 @@ function renderSlotRow(s, idx, count, syncFn, removeFn) {
     '<option value="' + esc(svc.nome) + '"' + (svc.nome === s.servico ? ' selected' : '') + '>' + esc(svc.nome) + '</option>'
   ).join('');
   const qtd = slotQtd(s);
-  const dur = parseInt(s.duracao) || getServiceDuration(s.servico);
+  const dur = parseInt(s.duracao) || defaultDuracao(s.servico, s._cacheada);
   return (
     '<div class="slot-row">' +
       '<div class="slot-num">' + (idx + 1) + '</div>' +
@@ -1305,7 +1594,9 @@ function renderSlotRow(s, idx, count, syncFn, removeFn) {
             '<input class="form-input" type="number" step="0.01" min="0" placeholder="valor" value="' + (s.valorUnit || '') + '" oninput="' + syncFn + '(' + s.id + ', \'valorUnit\', this.value)">' +
           '</label>' +
           '<label class="slot-mini-lbl">Duração' +
-            '<input class="form-input" type="number" min="0" step="5" placeholder="min" value="' + dur + '" oninput="' + syncFn + '(' + s.id + ', \'duracao\', this.value)">' +
+            '<select class="form-input" onchange="' + syncFn + '(' + s.id + ', \'duracao\', this.value)">' +
+              durOptionsHTML(dur) +
+            '</select>' +
           '</label>' +
         '</div>' +
         '<div class="slot-date-row">' +
@@ -1338,7 +1629,7 @@ function syncSlotField(arr, id, campo, valor, rerender, recalc) {
     s.servico = valor;
     const svc = services.find(x => x.nome === valor);
     if (svc && !s._manual) s.valorUnit = svc.valor || 0;
-    if (!s._durManual) s.duracao = getServiceDuration(valor);
+    if (!s._durManual) s.duracao = defaultDuracao(valor, s._cacheada);
     rerender();
   } else if (campo === 'valorUnit') {
     s.valorUnit = parseFloat(valor) || 0;
@@ -1348,6 +1639,8 @@ function syncSlotField(arr, id, campo, valor, rerender, recalc) {
     s.qtd = Math.max(1, parseInt(valor) || 1);
     updateSlotResumo(s);
   } else if (campo === 'duracao') {
+    // Duração vem em minutos do <select>, mas é escolhida/exibida em horas.
+    // Marcar como manual impede que a troca de serviço sobrescreva o ajuste.
     s.duracao = Math.max(0, parseInt(valor) || 0);
     s._durManual = true;
     updateSlotResumo(s);
@@ -1373,6 +1666,7 @@ function syncSlotField(arr, id, campo, valor, rerender, recalc) {
 
 function addAddSlot() {
   const first = services[0] || { nome: '', valor: 0 };
+  const cacheada = isCacheadaChecked('add');
   addSlots.push({
     id: Date.now() + Math.random(),
     servico: first.nome || '',
@@ -1380,7 +1674,8 @@ function addAddSlot() {
     data: '',
     horario: '',
     qtd: 1,
-    duracao: getServiceDuration(first.nome || ''),
+    duracao: defaultDuracao(first.nome || '', cacheada),
+    _cacheada: cacheada,
   });
   renderAddSlots();
   recalcAddTotal();
@@ -1405,6 +1700,7 @@ function syncAddSlot(id, campo, valor) {
 function recalcAddTotal() {
   const total = addSlots.reduce((sum, s) => sum + (parseFloat(s.valorUnit) || 0) * slotQtd(s), 0);
   document.getElementById('add-valor').value = total ? fmt(total) : '';
+  updateRespResumo('add');
 }
 
 // Expande as linhas (com qtd) em slots atômicas (uma por ocorrência),
@@ -1423,7 +1719,7 @@ function expandRows(rows) {
     let cursor = '';
     byData[dataKey].forEach(r => {
       const qtd = slotQtd(r);
-      const dur = parseInt(r.duracao) || getServiceDuration(r.servico);
+      const dur = parseInt(r.duracao) || defaultDuracao(r.servico, r._cacheada);
       if (r.horario) cursor = r.horario;   // linha com horário próprio reposiciona o cursor
       for (let i = 0; i < qtd; i++) {
         out.push({
@@ -1441,10 +1737,10 @@ function expandRows(rows) {
 }
 
 // Inverso: recolhe slots atômicas consecutivas e iguais em uma linha com qtd.
-function collapseSlots(slots) {
+function collapseSlots(slots, cacheada) {
   const rows = [];
   (slots || []).forEach(s => {
-    const dur = parseInt(s.duracao) || getServiceDuration(s.servico);
+    const dur = parseInt(s.duracao) || defaultDuracao(s.servico, cacheada);
     const val = parseFloat(s.valorUnit) || 0;
     const last = rows[rows.length - 1];
     if (last && last.servico === s.servico && last.data === (s.data || '') &&
@@ -1459,6 +1755,9 @@ function collapseSlots(slots) {
         horario: s.horario || '',
         duracao: dur,
         qtd: 1,
+        _cacheada: !!cacheada,
+        // Duração fora do padrão foi ajustada à mão — não deixar o sistema desfazer
+        _durManual: dur !== defaultDuracao(s.servico, cacheada),
       });
     }
   });
@@ -1489,6 +1788,8 @@ async function saveNew() {
   const obs    = document.getElementById('add-obs').value.trim();
   const origem = document.getElementById('add-origem').value;
   const equipe = (document.getElementById('add-equipe') || {}).value?.trim() || '';
+  const cacheada = isCacheadaChecked('add');
+  const { responsavel, repasse } = getRespValues('add');
 
   const semTel = (document.getElementById('add-no-tel') || {}).checked;
   if (!nome) { toast('⚠️ Informe o nome do cliente'); return; }
@@ -1520,6 +1821,9 @@ async function saveNew() {
     Obs:          packSlots(obs, slotsToStore),
     Origem:       origem,
     Equipe:       equipe,
+    Responsavel:  responsavel,
+    Repasse:      responsavel ? repasse : '',
+    Cacheada:     cacheada,
     DataEvento:   dataEvento,
     DataCriacao:  todayStr(),
   };
@@ -1587,7 +1891,13 @@ function openAction(id) {
   if (actEqInp) { actEqInp.value = e.Equipe || ''; actEqInp.style.display = e.Equipe ? '' : 'none'; if (e.Equipe) actEqInp.style.marginTop = '8px'; }
   toggleActEquipeInput(!!(e.Equipe));
 
-  renderActEditSlots(e);
+  const actCach = document.getElementById('act-cacheada');
+  if (actCach) actCach.checked = !!e.Cacheada;
+  const actRespBox = document.getElementById('act-resp-block');
+  if (actRespBox) actRespBox.innerHTML = renderRespBlock('act', respDe(e), e.Repasse || '');
+
+  renderActEditSlots(e);   // define actEditSlots — respTotal('act') depende dele
+  updateRespResumo('act');
   renderActSlots(e);
   renderActGcalSection(e);
   renderActWaSection(e);
@@ -1714,6 +2024,11 @@ async function saveAction() {
   e.Equipe = (actEqInp && document.getElementById('act-eq-chk') && document.getElementById('act-eq-chk').checked)
     ? actEqInp.value.trim() : '';
 
+  const actResp = getRespValues('act');
+  e.Responsavel = actResp.responsavel;
+  e.Repasse     = actResp.responsavel ? actResp.repasse : '';
+  e.Cacheada    = isCacheadaChecked('act');
+
   // Salvar propostas se for noiva (por origem ou serviço)
   if (isNoivaEntry(e) && actPropostas.length > 0) {
     e.Propostas = actPropostas;
@@ -1736,6 +2051,9 @@ async function saveAction() {
     Obs:           e.Obs,
     Propostas:     Array.isArray(e.Propostas) ? e.Propostas : [],
     Equipe:        e.Equipe || '',
+    Responsavel:   e.Responsavel || '',
+    Repasse:       e.Repasse || '',
+    Cacheada:      !!e.Cacheada,
   };
   const result = await postEntry({ action: 'update', id: e.ID, fields });
   if (!result.ok && result.error !== 'no-url') {
@@ -1788,11 +2106,17 @@ function abrirFechamento() {
   document.getElementById('fech-forma').value  = 'PIX';
   document.getElementById('fech-valor-enviado').value = e.ValorProp || '';
 
+  const cacheada = !!e.Cacheada;
+  const fechCach = document.getElementById('fech-cacheada');
+  if (fechCach) fechCach.checked = cacheada;
+  const fechRespBox = document.getElementById('fech-resp-block');
+  if (fechRespBox) fechRespBox.innerHTML = renderRespBlock('fech', respDe(e), e.Repasse || '');
+
   // Recolhe slots atômicas em linhas com qtd (reabre já agrupado)
   const existingSlots = entrySlots(e);
   fechSlots = existingSlots.length
-    ? collapseSlots(existingSlots)
-    : [{ id: Date.now(), servico: (services[0] && services[0].nome) || '', valorUnit: (services[0] && services[0].valor) || 0, data: e.DataEvento || '', horario: '', qtd: 1, duracao: getServiceDuration((services[0] && services[0].nome) || '') }];
+    ? collapseSlots(existingSlots, cacheada)
+    : [{ id: Date.now(), servico: (services[0] && services[0].nome) || '', valorUnit: (services[0] && services[0].valor) || 0, data: e.DataEvento || '', horario: '', qtd: 1, duracao: defaultDuracao((services[0] && services[0].nome) || '', cacheada), _cacheada: cacheada }];
   renderFechSlots();
 
   const totalSlots = fechSlots.reduce((s, x) => s + (parseFloat(x.valorUnit) || 0) * slotQtd(x), 0);
@@ -1812,6 +2136,7 @@ function abrirFechamento() {
 
   updatePropostaSection();
   renderFechPropostas();
+  updateRespResumo('fech');
   openPanel('panel-fechar');
 }
 
@@ -1875,6 +2200,7 @@ function deleteFechProposta(fileId) {
 
 function addFechSlot() {
   const first = services[0] || { nome: '', valor: 0 };
+  const cacheada = isCacheadaChecked('fech');
   fechSlots.push({
     id: Date.now() + Math.random(),
     servico: first.nome || '',
@@ -1882,7 +2208,8 @@ function addFechSlot() {
     data: '',
     horario: '',
     qtd: 1,
-    duracao: getServiceDuration(first.nome || ''),
+    duracao: defaultDuracao(first.nome || '', cacheada),
+    _cacheada: cacheada,
   });
   renderFechSlots();
   recalcFechTotalFromSlots();
@@ -1952,6 +2279,7 @@ function calcFechSaldo() {
   const sinal = parseFloat(document.getElementById('fech-sinal').value) || 0;
   const saldo = Math.max(0, total - sinal);
   document.getElementById('fech-saldo').value = saldo ? saldo.toFixed(2) : '';
+  updateRespResumo('fech');
 }
 
 async function confirmarFechamento() {
@@ -1969,8 +2297,13 @@ async function confirmarFechamento() {
   const forma = document.getElementById('fech-forma').value;
   const origem = document.getElementById('fech-origem').value;
   const obs   = document.getElementById('fech-obs').value.trim();
+  const cacheada = isCacheadaChecked('fech');
+  const { responsavel, repasse } = getRespValues('fech');
 
   if (total <= 0) { toast('⚠️ Informe o valor total'); return; }
+  if (responsavel && repasse > total) {
+    toast('⚠️ O repasse não pode ser maior que o valor cobrado'); return;
+  }
 
   const endereco = fechLocal === 'studio'
     ? END_STUDIO
@@ -2006,6 +2339,9 @@ async function confirmarFechamento() {
   e.SinalFech      = sinal;
   e.SaldoFech      = saldo;
   e.Propostas      = fechPropostas;
+  e.Responsavel    = responsavel;
+  e.Repasse        = responsavel ? repasse : '';
+  e.Cacheada       = cacheada;
   e.AgendaCriada   = false;
   cacheEntries();
 
@@ -2020,6 +2356,9 @@ async function confirmarFechamento() {
     Obs:            e.Obs,
     Origem:         e.Origem,
     Propostas:      Array.isArray(e.Propostas) ? e.Propostas : [],
+    Responsavel:    e.Responsavel || '',
+    Repasse:        e.Repasse || '',
+    Cacheada:       !!e.Cacheada,
   };
   let updResult = await postEntry({ action: 'update', id: e.ID, fields: fechFields });
   if (!updResult.ok) {
@@ -2061,6 +2400,7 @@ async function confirmarFechamento() {
       origem: origem,
       obs: 'Sinal — Orçamento ' + e.ID,
       equipe: e.Equipe || '',
+      responsavel: responsavel,
       auto: false,
       createdAt: new Date().toISOString(),
       noivaId: ''
@@ -2084,6 +2424,7 @@ async function confirmarFechamento() {
       origem: origem,
       obs: 'Restante (sinal: R$ ' + fmt(sinal) + ') — Orçamento ' + e.ID,
       equipe: e.Equipe || '',
+      responsavel: responsavel,
       auto: true,
       createdAt: new Date().toISOString(),
       noivaId: ''
@@ -2092,11 +2433,36 @@ async function confirmarFechamento() {
     if (!r2.ok && finResult.ok) finResult = { ok: false, error: r2.error || 'saldo' };
   }
 
+  // Atendimento feito pela minha equipe: o repasse é uma DESPESA — sem ele o
+  // financeiro mostraria o bruto como se fosse lucro.
+  let repasseCriado = false;
+  if (responsavel && repasse > 0) {
+    const rRep = await finSaidaCreate({
+      id: String(Date.now() + 2),
+      dataPag:   dataEvento,
+      dataCaixa: dataEvento,
+      tipo:      SAIDA_REPASSE,
+      valor:     repasse.toFixed(2),
+      forma:     forma,
+      status:    'Pendente',
+      obs:       'Repasse ' + responsavel + ' — ' + (e.Cliente || 'cliente') + ' — Orçamento ' + e.ID,
+      natureza:  'PROFISSIONAL',
+      recorrencia: 'unica',
+      createdAt: new Date().toISOString(),
+    });
+    repasseCriado = rRep.ok;
+    if (!rRep.ok && finResult.ok) finResult = { ok: false, error: rRep.error || 'repasse' };
+  }
+
   setLoadingStep(2, 'Preparando confirmação...', 'Quase lá!');
 
   // 4) Prepara dados para Google Agenda + WhatsApp (usa slots expandidas)
-  const eventos = buildEventos(e.Cliente, slotsToStore, endereco, total, sinal, saldo, e.Telefone, e.Equipe || '');
-  const waText  = buildConfirmacaoMessage(e.Cliente, slotsToStore, total, sinal, saldo, endereco, fechLocal);
+  const eventos = buildEventos({
+    nome: e.Cliente, slots: slotsToStore, endereco, total, sinal, saldo,
+    telefone: e.Telefone, equipe: e.Equipe || '',
+    responsavel, repasse, forma, obs, localTipo: fechLocal,
+  });
+  const waText  = buildConfirmacaoMessage(e.Cliente, slotsToStore, total, sinal, saldo, endereco, fechLocal, responsavel);
 
   lastFechamento = {
     entryId: e.ID,
@@ -2108,6 +2474,9 @@ async function confirmarFechamento() {
     sheetResult: updResult,
     saldoCriado: saldo > 0,
     sinalCriado: sinal > 0,
+    repasseCriado: repasseCriado,
+    repasseValor: repasse,
+    responsavel: responsavel,
   };
 
   hideLoading();
@@ -2146,6 +2515,10 @@ function abrirSucesso() {
     items.push({ tipo: 'ok', txt: '✅ Financeiro: ' + parts.join(' + ') + ' lançados' });
   } else {
     items.push({ tipo: 'err', txt: '❌ Erro ao lançar no Financeiro' });
+  }
+  if (f.repasseCriado) {
+    items.push({ tipo: 'ok', txt: '✅ Repasse de R$ ' + fmt(f.repasseValor) + ' para ' + f.responsavel +
+                                  ' lançado como despesa (' + SAIDA_REPASSE + ')' });
   }
   items.push({ tipo: 'warn', txt: '📅 Clique em "Adicionar ao Google Agenda" abaixo' });
 
@@ -2235,7 +2608,10 @@ function setSettingsTab(tab) {
     t.classList.toggle('on', t.dataset.tab === tab));
   document.getElementById('settings-tab-conex').style.display     = tab === 'conex'     ? 'block' : 'none';
   document.getElementById('settings-tab-servicos').style.display  = tab === 'servicos'  ? 'block' : 'none';
+  const eq = document.getElementById('settings-tab-equipe');
+  if (eq) eq.style.display = tab === 'equipe' ? 'block' : 'none';
   if (tab === 'servicos')  renderServices();
+  if (tab === 'equipe')    renderProfissionais();
 }
 
 function saveSettings() {
@@ -2248,9 +2624,12 @@ function saveSettings() {
 function renderServices() {
   const list = document.getElementById('svc-list');
   list.innerHTML = services.map((svc, idx) =>
-    '<div class="svc-row">' +
+    '<div class="svc-row svc-row-dur">' +
       '<input class="svc-name" type="text" value="' + esc(svc.nome) + '" placeholder="Nome do serviço" oninput="services[' + idx + '].nome = this.value; cacheServices();">' +
       '<input class="svc-val"  type="number" step="0.01" min="0" value="' + (svc.valor || '') + '" placeholder="R$ 0,00" oninput="services[' + idx + '].valor = parseFloat(this.value) || 0; cacheServices();">' +
+      '<select class="svc-dur" title="Duração padrão" onchange="services[' + idx + '].duracao = parseInt(this.value) || 60; cacheServices();">' +
+        durOptionsHTML(svc.duracao || getServiceDuration(svc.nome)) +
+      '</select>' +
       '<button class="svc-del" onclick="removeService(' + idx + ')" title="Remover">✕</button>' +
     '</div>'
   ).join('');
@@ -2260,6 +2639,57 @@ function addService() {
   services.push({ nome: '', valor: 0, duracao: 60 });
   cacheServices();
   renderServices();
+}
+
+// ── Profissionais da minha equipe (⚙️ › Equipe) ─────────────
+function renderProfissionais() {
+  const list = document.getElementById('prof-list');
+  if (!list) return;
+  if (!profissionais.length) {
+    list.innerHTML = '<p style="font-size:.75rem;color:var(--muted);margin:0 0 8px">Nenhum profissional cadastrado ainda.</p>';
+    return;
+  }
+  list.innerHTML = profissionais.map((p, idx) =>
+    '<div class="svc-row">' +
+      '<input class="svc-name" type="text" value="' + esc(p.nome || '') + '" placeholder="Nome do profissional" oninput="profissionais[' + idx + '].nome = this.value; cacheProfissionais();">' +
+      '<input class="svc-val"  type="number" step="0.01" min="0" value="' + (p.repassePadrao || '') + '" placeholder="Repasse padrão" oninput="profissionais[' + idx + '].repassePadrao = this.value; cacheProfissionais();">' +
+      '<button class="svc-del" onclick="removeProfissional(' + idx + ')" title="Remover">✕</button>' +
+    '</div>'
+  ).join('');
+}
+
+function addProfissional() {
+  profissionais.push({ id: String(Date.now()) + Math.floor(Math.random() * 999), nome: '', repassePadrao: '', ativo: true });
+  cacheProfissionais();
+  renderProfissionais();
+}
+
+async function removeProfissional(idx) {
+  const removed = profissionais[idx];
+  profissionais.splice(idx, 1);
+  cacheProfissionais();
+  renderProfissionais();
+  if (removed && removed.id) {
+    try { await DB.profissionais.remove(removed.id); }
+    catch(e) { console.warn('[profissionais] erro ao remover:', e.message); }
+  }
+}
+
+async function saveProfissionais() {
+  profissionais = profissionais.filter(p => p.nome && p.nome.trim());
+  cacheProfissionais();
+  renderProfissionais();
+  dot('syncing');
+  try {
+    await DB.profissionais.saveAll(profissionais);
+    dot('ok');
+    toast('✅ Equipe salva');
+  } catch(e) {
+    console.warn('[profissionais] erro ao salvar no Supabase:', e.message);
+    dot('offline');
+    toast('Salvo localmente (Supabase offline)');
+  }
+  render();
 }
 
 async function removeService(idx) {
@@ -2392,11 +2822,13 @@ let actEditSlots = [];
 function renderActEditSlots(e) {
   const acc = document.getElementById('act-edit-slots-acc');
   if (!acc) return;
-  if (e.Status === 'Fechado') { acc.style.display = 'none'; return; }
+  // Fechado usa o editor enxuto (act-slots-section). Limpa para não deixar
+  // slots do orçamento anterior influenciando o resumo do repasse.
+  if (e.Status === 'Fechado') { actEditSlots = []; acc.style.display = 'none'; return; }
   acc.style.display = 'block';
 
   slotCheckExcludeId = e.ID;   // não conflita com os próprios slots deste orçamento
-  const existentes = collapseSlots(entrySlots(e));
+  const existentes = collapseSlots(entrySlots(e), !!e.Cacheada);
   const first = services[0] || { nome: '', valor: 0 };
   actEditSlots = existentes.length ? existentes : [{
     id: Date.now() + Math.random(),
@@ -2405,7 +2837,8 @@ function renderActEditSlots(e) {
     data:      e.DataEvento || '',
     horario:   '',
     qtd:       1,
-    duracao:   getServiceDuration(e.Servico || first.nome || ''),
+    duracao:   defaultDuracao(e.Servico || first.nome || '', !!e.Cacheada),
+    _cacheada: !!e.Cacheada,
   }];
   renderActEditSlotsList();
 }
@@ -2424,6 +2857,7 @@ function syncActEditSlot(id, campo, valor) {
 
 function addActEditSlot() {
   const first = services[0] || { nome: '', valor: 0 };
+  const cacheada = isCacheadaChecked('act');
   actEditSlots.push({
     id: Date.now() + Math.random(),
     servico:   first.nome || '',
@@ -2431,7 +2865,8 @@ function addActEditSlot() {
     data:      '',
     horario:   '',
     qtd:       1,
-    duracao:   getServiceDuration(first.nome || ''),
+    duracao:   defaultDuracao(first.nome || '', cacheada),
+    _cacheada: cacheada,
   });
   renderActEditSlotsList();
   recalcActEdit();
@@ -2462,6 +2897,8 @@ function recalcActEdit() {
 
   const enviado = document.getElementById('act-val-enviado');
   if (enviado) enviado.value = total || '';
+
+  updateRespResumo('act');
 }
 
 function renderActGcalSection(e) {
@@ -2511,7 +2948,7 @@ function buildActWaText(e) {
     ? parseFloat(e.SinalFech) : Math.round(total * 0.30 * 100) / 100;
   const saldo = (e.SaldoFech !== undefined && e.SaldoFech !== '')
     ? parseFloat(e.SaldoFech) : Math.max(0, total - sinal);
-  return buildConfirmacaoMessage(e.Cliente, slots, total, sinal, saldo, endereco, localTipo);
+  return buildConfirmacaoMessage(e.Cliente, slots, total, sinal, saldo, endereco, localTipo, respDe(e));
 }
 
 // Mostra a mensagem do WhatsApp no action sheet (só para fechados).
@@ -2620,7 +3057,12 @@ async function adicionarAgendaDeAction() {
   const sinal = parseFloat(e.SinalFech)    || Math.round(total * 0.30 * 100) / 100;
   const saldo = parseFloat(e.SaldoFech)    || Math.max(0, total - sinal);
 
-  const eventos = buildEventos(e.Cliente, slots, endereco, total, sinal, saldo, e.Telefone, e.Equipe || '');
+  const eventos = buildEventos({
+    nome: e.Cliente, slots, endereco, total, sinal, saldo,
+    telefone: e.Telefone, equipe: e.Equipe || '',
+    responsavel: respDe(e), repasse: repasseDe(e),
+    forma: '', obs: entryCleanObs(e), localTipo: localTipoSalvo,
+  });
   const validos = eventos.filter(ev => ev.startISO && ev.endISO);
 
   if (!validos.length) {
@@ -2918,6 +3360,7 @@ function openFromUrl() {
   curFilter = localStorage.getItem('orca_cur_filter') || 'todos';
   curOrigem = localStorage.getItem('orca_cur_origem') || 'todos';
   curEquipe = localStorage.getItem('orca_cur_equipe') || 'todos';
+  curResp   = localStorage.getItem('orca_cur_resp')   || 'todos';
   render();
   syncAll().then(openFromUrl);
 })();
