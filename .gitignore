@@ -8,3 +8,8 @@ Thumbs.db
 
 # Backups de dados (dumps do Supabase — não versionar)
 backups/
+
+# Propostas de curso — arquivo de trabalho local.
+# Não versionar: o GitHub Pages publica a raiz e isso deixaria
+# os valores acessíveis por URL pública.
+cursos/
