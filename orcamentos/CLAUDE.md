@@ -31,7 +31,80 @@ let addSlots    = []          // slots do panel-add
 let followupTpls= []          // templates de follow-up (localStorage)
 let serviceMap  = {}          // preços: { 'Maquiagem no Studio': { valor, duracao } }
 let fechSinalManual = false   // flag: usuário editou o sinal manualmente
+let fechLocal   = 'studio'    // local escolhido no panel-fechar
+let actLocal    = 'studio'    // local escolhido no panel-action
 ```
+
+---
+
+## Layout do painel do orçamento (`panel-action`)
+
+Ordem fixa, do topo para baixo. **Informação principal fica sempre visível** —
+só o que é secundário mora em accordion (`.act-acc`):
+
+| Bloco | Tipo | Conteúdo |
+|---|---|---|
+| `.act-summary` | fixo | cliente, telefone, status, vitais, serviço e **data de cadastro** (`act-data-pedido`, editável, nunca em accordion) |
+| Fechar e Agendar / Agenda / Mensagem | ação | botões do fluxo de fechamento (mensagem em accordion) |
+| Status do pedido | `.act-sec` | segmented control |
+| Serviços, datas e horários | `.act-sec` | editor de slots (só não-fechados) |
+| Valores | `.act-sec` | **valor enviado à cliente** + valor fechado |
+| Atendimento | `.act-sec` | local, endereço, cacheada, responsável |
+| Observações | `.act-sec` | textarea |
+| Equipe | `.act-sec` | trabalho para equipe de terceiros |
+| Comprovante do sinal · Proposta | `.act-acc` | secundários — recolhidos |
+
+`.act-sec` = seção sempre aberta (título + subtítulo + corpo). `.act-acc` = seção
+recolhível, fundo rebaixado. **Não empurrar campo principal para accordion.**
+
+O campo do valor da proposta chama-se sempre **“Valor enviado à cliente”**
+(`ValorProp`) — nunca “valor recolhido”.
+
+---
+
+## Local do atendimento e endereço
+
+- `LocalTipo` (`studio` | `domicilio`) e `EnderecoEvento` são editáveis **em
+  qualquer status**, na seção *Atendimento* do `panel-action` (`setActLocal`,
+  `syncActLocalUI`) — não só no fechamento.
+- **O serviço manda no local.** `localDoServico(nome)` lê "domicílio" / "studio"
+  no nome do serviço; escolher o serviço acerta a etiqueta sozinho, nos dois
+  painéis (`autoDetectActLocal` no orçamento, `autoDetectLocal` no fechamento) e
+  também em `saveNew()` — o orçamento já nasce com `LocalTipo` e o card com a
+  etiqueta certa. Serviço sem pista (ex.: `Noiva`) não mexe no que está escolhido.
+- **O campo de endereço fica sempre visível** (`pintarEndereco`):
+  - **Studio** → preenchido com `END_STUDIO`, `readOnly` + `.input-readonly`,
+    rótulo "Endereço do studio";
+  - **Domicílio** → editável, com o endereço da cliente, rótulo "Endereço da
+    cliente". **Nunca obrigatório** — `confirmarFechamento()` não bloqueia por
+    endereço vazio; a cliente pode informar depois.
+- `enderecoCliente = { act, fech }` guarda o que foi digitado para domicílio, para
+  alternar Studio ↔ Domicílio não apagar nada. `resetEndereco(prefix, salvo)`
+  zera o campo ao trocar de orçamento — sem isso o endereço da cliente anterior
+  seria capturado como se fosse desta.
+- Ordem da dedução ao abrir: `LocalTipo` gravado → `localDoServico(e.Servico)` →
+  serviço da primeira linha → `studio`. O `e.Servico` vem antes da linha porque,
+  num orçamento sem slots gravados, a linha nasce com o primeiro serviço do
+  catálogo — que é chute.
+- Os botões usam `data-local` (fechar) e `data-actlocal` (orçamento) — atributos
+  diferentes de propósito, os seletores são globais e se atropelariam.
+
+---
+
+## Card da listagem (`renderEntryCard`)
+
+Hierarquia escaneável, do mais para o menos importante:
+
+1. **Nome da cliente** + badge de status
+2. Serviço orçado
+3. **Data do evento** em destaque (`fmtDateEvento` → `25/08/26 · ter`) + valor;
+   `+2 datas` quando o orçamento tem mais de uma data
+4. Badges: equipe (quem executa), domicílio, equipe de terceiros, cacheada,
+   noiva, agenda pendente/ok, sinal comprovado/a comprovar
+
+A data do **pedido** não aparece no card — quem mostra é o cabeçalho do grupo
+(`fmtDateGroup`), que agrupa a lista por `DataPedido`. Atendimento da Carol não
+ganha badge: ausência de badge de equipe já significa "sou eu".
 
 ---
 
@@ -105,6 +178,10 @@ lucro**:
 > nunca passa pela conta da Carol, então **não existe saída de repasse** — não
 > há dinheiro saindo daqui. Lançar entrada cheia + saída inflaria faturamento e
 > despesa ao mesmo tempo. Sem sinal/restante separados nesse caminho.
+
+> `fechFields` (payload do Supabase) inclui `LocalTipo`, `EnderecoEvento`,
+> `SinalFech` e `SaldoFech`. Sem eles o endereço e o plano de pagamento só
+> existiam no `localStorage` e sumiam ao recarregar em outro aparelho.
 
 `sinal` e `saldo` continuam sendo calculados e gravados no orçamento: eles são o
 **plano de pagamento da cliente** (usado na mensagem de confirmação e na

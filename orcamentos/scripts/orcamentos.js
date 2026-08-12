@@ -92,6 +92,7 @@ let filterEventDate = null;   // data do atendimento (YYYY-MM-DD) — filtra por
 let addSlots          = [];
 let fechSlots         = [];
 let fechLocal         = 'studio';
+let actLocal          = 'studio';   // local do atendimento no painel do orçamento
 let fechSinalRecebido = true;
 let fechSinalManual   = false;
 let fechPropostas     = [];
@@ -114,14 +115,6 @@ function fmtDate(s) {
   const [y,m,d] = s.split('-');
   return d + '/' + m + '/' + y;
 }
-function fmtDateCard(s) {
-  if (!s) return '<span class="e-date-day">—</span><span class="e-date-mon"></span>';
-  const parts = s.split('-');
-  const d = parseInt(parts[2], 10) || '—';
-  const meses = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
-  const mon = parts[1] ? (meses[parseInt(parts[1],10)-1] || '') : '';
-  return '<span class="e-date-day">' + d + '</span><span class="e-date-mon">' + mon + '</span>';
-}
 function fmtDateGroup(s) {
   if (!s) return 'Sem data';
   const parts = s.split('-').map(Number);
@@ -131,6 +124,16 @@ function fmtDateGroup(s) {
   const dias  = ['dom','seg','ter','qua','qui','sex','sáb'];
   return pad(d) + ' ' + meses[m-1] + ' · ' + dias[new Date(y, m-1, d).getDay()];
 }
+// Data do evento no card: curta e escaneável — "25/08/26 · ter"
+function fmtDateEvento(s) {
+  if (!s) return '';
+  const [y, m, d] = s.split('-').map(Number);
+  if (!y || !m || !d) return s;
+  const dias = ['dom','seg','ter','qua','qui','sex','sáb'];
+  return pad(d) + '/' + pad(m) + '/' + String(y).slice(2) + ' · ' + dias[new Date(y, m-1, d).getDay()];
+}
+
+// Card da listagem — hierarquia: cliente › serviço › data do evento › sinalizações.
 function renderEntryCard(e) {
   const sCls   = STATUS_CLASS[e.Status] || 'st-novo';
   const agOk   = e.Status === 'Fechado' && getAgendaCriada(e);
@@ -141,33 +144,47 @@ function renderEntryCard(e) {
                  PERDIDO_STATUS.includes(e.Status) ? 'is-perdido' : '');
   const val    = e.ValorFechado ? parseFloat(e.ValorFechado) : parseFloat(e.ValorProp) || 0;
   const valStr = val ? fmtVal(val) : '—';
-  const meta   = e.DataEvento ? 'Evento: ' + fmtDate(e.DataEvento) : '';
-  const compOk = hasComprovante(e);
-  const statusRow = e.Status === 'Fechado'
-    ? '<div class="status-row">' +
-        (agOk ? '<span class="chip chip-ok">📅 Na agenda</span>'
-              : '<span class="chip chip-warn">📅 Agenda pendente</span>') +
-        (compOk
-          ? '<span class="chip chip-ok">🧾 ' + (Array.isArray(e.Comprovantes) && e.Comprovantes.length > 1 ? e.Comprovantes.length + ' comprovantes' : 'Comprovante') + '</span>'
-          : '<span class="chip chip-muted">🧾 Sem comprovante</span>') +
-      '</div>'
-    : '';
-  const terceiros = e.Equipe
-    ? ' <span class="tag-terceiros">↑ Para equipe ' + esc(e.Equipe) + '</span>' : '';
+
+  // Data do evento — informação de consulta rápida, com o maior destaque do card
+  const datas   = entryEventDates(e).sort();
+  const dataEv  = e.DataEvento || datas[0] || '';
+  const outras  = datas.filter(d => d !== dataEv).length;
+  const dataHTML = dataEv
+    ? '<span class="e-ev-val">' + esc(fmtDateEvento(dataEv)) + '</span>' +
+      (outras ? '<span class="e-ev-extra">+' + outras + (outras > 1 ? ' datas' : ' data') + '</span>' : '')
+    : '<span class="e-ev-val is-empty">A definir</span>';
+
+  // Sinalizações — badges/chips na ordem: quem atende › local › equipe de
+  // terceiros › cacheada › noiva › agenda › sinal
+  const tags = [];
+  if (isEquipeEntry(e))               tags.push('<span class="tag-resp tag-resp-equipe">👥 ' + esc(respDe(e)) + '</span>');
+  if ((e.LocalTipo || '') === 'domicilio') tags.push('<span class="tag-local">🚗 Domicílio</span>');
+  if (e.Equipe)                       tags.push('<span class="tag-terceiros">↑ Equipe ' + esc(e.Equipe) + '</span>');
+  if (e.Cacheada)                     tags.push('<span class="tag-cacheada">★ Cacheada</span>');
+  if (isNoivaEntry(e))                tags.push('<span class="tag-noiva">💍 Noiva</span>');
+  if (e.Status === 'Fechado') {
+    tags.push(agOk ? '<span class="chip chip-ok">📅 Na agenda</span>'
+                   : '<span class="chip chip-warn">📅 Agenda pendente</span>');
+    tags.push(hasComprovante(e)
+      ? '<span class="chip chip-ok">🧾 Sinal comprovado</span>'
+      : '<span class="chip chip-muted">🧾 Sinal a comprovar</span>');
+  }
+
   return (
     '<div class="entry ' + cls + '" onclick="openAction(\'' + esc(e.ID) + '\')">' +
-      '<div class="e-date">' + fmtDateCard(e.DataPedido) + '</div>' +
-      '<div class="e-info">' +
-        '<div class="e-name">' + esc(e.Cliente || '—') + terceiros + '</div>' +
-        '<div class="e-srv">' + esc(e.Servico || '—') + '</div>' +
-        '<div class="e-resp">' + respBadgeHTML(e) + (e.Cacheada ? '<span class="tag-cacheada">★ Cacheada</span>' : '') + '</div>' +
-        (meta ? '<div class="e-meta">' + esc(meta) + '</div>' : '') +
-        statusRow +
-      '</div>' +
-      '<div class="e-right">' +
+      '<div class="e-top">' +
+        '<div class="e-name">' + esc(e.Cliente || '—') + '</div>' +
         '<span class="badge ' + sCls + '">' + esc(e.Status || 'Novo') + '</span>' +
+      '</div>' +
+      '<div class="e-srv">' + esc(e.Servico || 'Serviço não informado') + '</div>' +
+      '<div class="e-evrow">' +
+        '<div class="e-ev">' +
+          '<span class="e-ev-lbl">Data do evento</span>' +
+          dataHTML +
+        '</div>' +
         '<span class="e-val">' + valStr + '</span>' +
       '</div>' +
+      (tags.length ? '<div class="e-tags">' + tags.join('') + '</div>' : '') +
     '</div>');
 }
 function fmtDateWeek(s) {
@@ -563,13 +580,6 @@ function valorCobradoDe(e) {
   return parseFloat(e && (e.ValorFechado || e.ValorProp)) || 0;
 }
 function lucroDe(e)        { return Math.max(0, valorCobradoDe(e) - repasseDe(e)); }
-
-function respBadgeHTML(e) {
-  const r = respDe(e);
-  return r
-    ? '<span class="tag-resp tag-resp-equipe">👥 Equipe • ' + esc(r) + '</span>'
-    : '<span class="tag-resp tag-resp-carol">Carol</span>';
-}
 
 function profissionaisAtivos() {
   return profissionais.filter(p => p.nome && p.nome.trim() && p.ativo !== false);
@@ -1351,7 +1361,9 @@ function updatePeriodToggle() {
 // ══════════════════════════════════════════════════════════
 function openPanel(id) {
   document.getElementById('overlay').classList.add('show');
-  document.getElementById(id).classList.add('show');
+  const p = document.getElementById(id);
+  p.classList.add('show');
+  p.scrollTop = 0;   // abre sempre pelo topo (cliente, status e data do pedido)
 }
 function closePanel(id) {
   const p = document.getElementById(id);
@@ -1366,6 +1378,8 @@ function closeAll() {
 //  NOVO ORÇAMENTO — multi-slot
 // ══════════════════════════════════════════════════════════
 function openAddForm() {
+  const addData = document.getElementById('add-data-pedido');
+  if (addData) addData.value = todayStr();   // data de cadastro — editável
   document.getElementById('add-nome').value     = '';
   document.getElementById('add-tel').value      = '';
   const addNoTel = document.getElementById('add-no-tel');
@@ -1401,16 +1415,72 @@ function toggleNoPhone(checked) {
   else { inp.disabled = false; inp.placeholder = '11 98765-4321'; }
 }
 
-function toggleActEquipeInput(checked) {
+// `focar` = false ao abrir o orçamento: o campo agora fica sempre visível no fim
+// do painel, e dar foco nele jogaria o painel inteiro para baixo na abertura.
+function toggleActEquipeInput(checked, focar) {
   const inp = document.getElementById('act-equipe');
   if (!inp) return;
-  if (checked) { inp.style.display = ''; inp.style.marginTop = '8px'; inp.focus(); }
+  if (checked) { inp.style.display = ''; inp.style.marginTop = '8px'; if (focar !== false) inp.focus(); }
   else { inp.style.display = 'none'; inp.value = ''; }
-  const toToggle = ['act-val-enviado-wrap', 'act-comp-wrap'];
+  // Trabalho para equipe de terceiros: quem cobra é a equipe, então o valor
+  // enviado e o comprovante do sinal não são desta casa.
+  const toToggle = ['act-valores-sec', 'act-comp-wrap'];
   toToggle.forEach(id => {
     const el = document.getElementById(id);
     if (el) el.style.display = checked ? 'none' : '';
   });
+}
+
+// ── Endereço × local ────────────────────────────────────────
+// O endereço do studio é fixo: em Studio o campo aparece preenchido e travado;
+// em Domicílio ele volta a ser editável com o endereço da cliente. O que a
+// cliente informou fica guardado aqui, então alternar Studio ↔ Domicílio não
+// apaga o que já foi digitado.
+const enderecoCliente = { act: '', fech: '' };
+
+function pintarEndereco(prefix) {
+  const inp = document.getElementById(prefix + '-addr');
+  if (!inp) return;
+  const studio = (prefix === 'act' ? actLocal : fechLocal) !== 'domicilio';
+  const atual = inp.value.trim();
+  if (atual && atual !== END_STUDIO) enderecoCliente[prefix] = atual;
+
+  inp.value    = studio ? END_STUDIO : enderecoCliente[prefix];
+  inp.readOnly = studio;
+  inp.classList.toggle('input-readonly', studio);
+
+  const lbl  = document.getElementById(prefix + '-addr-lbl');
+  const hint = document.getElementById(prefix + '-addr-hint');
+  if (lbl)  lbl.textContent  = studio ? 'Endereço do studio' : 'Endereço da cliente';
+  if (hint) hint.textContent = studio
+    ? 'Endereço fixo do studio — preenchido sozinho.'
+    : 'Opcional — pode ser preenchido antes ou depois do fechamento.';
+}
+
+// Zera o campo antes de carregar outro orçamento, senão o endereço da cliente
+// anterior seria capturado como se fosse desta.
+function resetEndereco(prefix, enderecoSalvo) {
+  enderecoCliente[prefix] = (enderecoSalvo && enderecoSalvo !== END_STUDIO) ? enderecoSalvo : '';
+  const inp = document.getElementById(prefix + '-addr');
+  if (inp) inp.value = '';
+}
+
+// ── Local do atendimento no painel do orçamento (studio × domicílio) ──
+// Mesma semântica do painel de fechamento, mas editável a qualquer momento:
+// o endereço pode chegar antes ou depois do orçamento ser fechado.
+function setActLocal(btn) { syncActLocalUI(btn.dataset.actlocal); }
+
+function syncActLocalUI(tipo) {
+  actLocal = tipo === 'domicilio' ? 'domicilio' : 'studio';
+  document.querySelectorAll('[data-actlocal]').forEach(b =>
+    b.classList.toggle('on', b.dataset.actlocal === actLocal));
+  pintarEndereco('act');
+}
+
+// Escolher um serviço "em domicílio" / "no studio" já acerta o local
+function autoDetectActLocal(servName) {
+  const sugerido = localDoServico(servName);
+  if (sugerido && sugerido !== actLocal) syncActLocalUI(sugerido);
 }
 
 // ── Slots: total de ocorrências de uma linha = valorUnit × qtd ──
@@ -1804,9 +1874,19 @@ async function saveNew() {
   // Expande qtd → slots atômicas (uma por ocorrência, horários sequenciados)
   const slotsToStore = expandRows(slotsValidos);
 
+  const dataPedido = (document.getElementById('add-data-pedido') || {}).value || todayStr();
+
+  // Local deduzido do serviço já no cadastro — o card nasce com a etiqueta certa
+  // e o endereço do studio vem preenchido, sem precisar abrir o orçamento.
+  let localNovo = '';
+  for (const s of slotsValidos) {
+    localNovo = localDoServico(s.servico);
+    if (localNovo) break;
+  }
+
   const entry = {
     ID:           String(Date.now()),
-    DataPedido:   todayStr(),
+    DataPedido:   dataPedido,
     Cliente:      nome,
     Telefone:     tel,
     Servico:      servicoDesc,
@@ -1823,6 +1903,8 @@ async function saveNew() {
     Cacheada:     cacheada,
     DataEvento:   dataEvento,
     DataCriacao:  todayStr(),
+    LocalTipo:      localNovo,
+    EnderecoEvento: localNovo === 'studio' ? END_STUDIO : '',
   };
 
   entries.unshift(entry);
@@ -1854,8 +1936,6 @@ function openAction(id) {
   document.getElementById('act-avatar').textContent = initials(e.Cliente);
   document.getElementById('act-name').textContent   = e.Cliente || '—';
   document.getElementById('act-phone').textContent  = e.Telefone || 'Sem telefone';
-  const reqDateEl = document.getElementById('act-request-date');
-  if (reqDateEl) reqDateEl.textContent = e.DataPedido ? 'Pedido em ' + fmtDateWeekFull(e.DataPedido) : '';
   const dataPedidoEl = document.getElementById('act-data-pedido');
   if (dataPedidoEl) dataPedidoEl.value = e.DataPedido || '';
 
@@ -1878,20 +1958,23 @@ function openAction(id) {
 
   syncStatusSegUI(e.Status);
 
-  document.getElementById('val-fechado-row').style.display = e.Status === 'Fechado' ? 'block' : 'none';
-  document.getElementById('act-val-fechado').value = e.ValorFechado || '';
   document.getElementById('act-val-enviado').value = e.ValorProp || '';
   document.getElementById('act-obs').value      = entryCleanObs(e);
   const actEqChk = document.getElementById('act-eq-chk');
   const actEqInp = document.getElementById('act-equipe');
   if (actEqChk) actEqChk.checked = !!(e.Equipe);
   if (actEqInp) { actEqInp.value = e.Equipe || ''; actEqInp.style.display = e.Equipe ? '' : 'none'; if (e.Equipe) actEqInp.style.marginTop = '8px'; }
-  toggleActEquipeInput(!!(e.Equipe));
+  toggleActEquipeInput(!!(e.Equipe), false);
 
   const actCach = document.getElementById('act-cacheada');
   if (actCach) actCach.checked = !!e.Cacheada;
   const actRespBox = document.getElementById('act-resp-block');
   if (actRespBox) actRespBox.innerHTML = renderRespBlock('act', respDe(e), e.Repasse || '');
+
+  // Local do atendimento + endereço — editáveis em qualquer status.
+  // Sem local gravado, deduz do nome do serviço.
+  resetEndereco('act', e.EnderecoEvento);
+  syncActLocalUI(e.LocalTipo || localDoServico(e.Servico) || 'studio');
 
   renderActEditSlots(e);   // define actEditSlots — respTotal('act') depende dele
   updateRespResumo('act');
@@ -1912,8 +1995,6 @@ async function applyStatusValue(newStatus) {
   if (badge) { badge.textContent = newStatus; badge.className = 'act-pill ' + (STATUS_CLASS[newStatus] || 'st-novo'); }
   if (newStatus === 'Orçamento Enviado' && !e.DataEnvio) e.DataEnvio = todayStr();
   if (newStatus === 'Fechado' && !e.DataFechamento)     e.DataFechamento = todayStr();
-  const vfr = document.getElementById('val-fechado-row');
-  if (vfr) vfr.style.display = newStatus === 'Fechado' ? 'block' : 'none';
   // Seções que dependem do status (slots, Google Agenda, mensagem WhatsApp, botão Fechar)
   renderActEditSlots(e);
   renderActSlots(e);
@@ -1974,8 +2055,6 @@ async function updateDataPedido() {
   const nova = document.getElementById('act-data-pedido').value;
   if (!nova) return;
   e.DataPedido = nova;
-  const reqDateEl = document.getElementById('act-request-date');
-  if (reqDateEl) reqDateEl.textContent = 'Pedido em ' + fmtDateWeekFull(e.DataPedido);
   cacheEntries();
   render();
 
@@ -2013,9 +2092,8 @@ async function saveAction() {
 
   const dpEl = document.getElementById('act-data-pedido');
   if (dpEl && dpEl.value) e.DataPedido = dpEl.value;
-  const vf = document.getElementById('act-val-fechado').value;
+  // O valor fechado é gravado pelo painel de fechamento — aqui só o enviado
   const ve = document.getElementById('act-val-enviado').value;
-  if (e.Status === 'Fechado' && vf) e.ValorFechado = vf;
   if (ve) e.ValorProp = ve;
   const actEqInp = document.getElementById('act-equipe');
   e.Equipe = (actEqInp && document.getElementById('act-eq-chk') && document.getElementById('act-eq-chk').checked)
@@ -2025,6 +2103,13 @@ async function saveAction() {
   e.Responsavel = actResp.responsavel;
   e.Repasse     = actResp.responsavel ? actResp.repasse : '';
   e.Cacheada    = isCacheadaChecked('act');
+
+  // Local + endereço do atendimento (endereço é opcional em qualquer status)
+  const addrInp = document.getElementById('act-addr');
+  e.LocalTipo      = actLocal;
+  e.EnderecoEvento = actLocal === 'domicilio'
+    ? ((addrInp && addrInp.value.trim()) || '')
+    : END_STUDIO;
 
   // Salvar propostas se for noiva (por origem ou serviço)
   if (isNoivaEntry(e) && actPropostas.length > 0) {
@@ -2051,6 +2136,8 @@ async function saveAction() {
     Responsavel:   e.Responsavel || '',
     Repasse:       e.Repasse || '',
     Cacheada:      !!e.Cacheada,
+    LocalTipo:     e.LocalTipo || '',
+    EnderecoEvento: e.EnderecoEvento || '',
   };
   const result = await postEntry({ action: 'update', id: e.ID, fields });
   if (!result.ok && result.error !== 'no-url') {
@@ -2097,7 +2184,8 @@ function abrirFechamento() {
   slotCheckExcludeId = e.ID;   // não conflita com os próprios slots deste orçamento
 
   document.getElementById('fech-nome').textContent = e.Cliente || '';
-  document.getElementById('fech-addr').value = '';
+  // Endereço já informado no orçamento chega preenchido aqui
+  resetEndereco('fech', e.EnderecoEvento);
   document.getElementById('fech-obs').value  = entryCleanObs(e);
   document.getElementById('fech-origem').value = e.Origem || 'Produção Social';
   document.getElementById('fech-forma').value  = 'PIX';
@@ -2121,11 +2209,15 @@ function abrirFechamento() {
   document.getElementById('fech-total').value = totalFinal || '';
   calcFechSinal();
 
-  document.querySelectorAll('[data-local]').forEach(b => b.classList.toggle('on', b.dataset.local === 'studio'));
-  document.getElementById('fech-addr-row').classList.remove('show');
-  // Auto-detect local a partir do serviço pré-preenchido
-  const _primarySvc = (fechSlots[0] && fechSlots[0].servico) || '';
-  if (_primarySvc) autoDetectLocal(_primarySvc);
+  // Local: o já gravado no orçamento manda; senão deduz do serviço; senão Studio.
+  // O serviço do orçamento vem antes do da linha porque, num orçamento sem slots
+  // gravados, a linha nasce com o primeiro serviço do catálogo — que é chute.
+  const _primarySvc  = (fechSlots[0] && fechSlots[0].servico) || '';
+  const _localInicial = (e.LocalTipo === 'domicilio' || e.LocalTipo === 'studio')
+    ? e.LocalTipo
+    : (localDoServico(e.Servico) || localDoServico(_primarySvc) || 'studio');
+  const _btnLocal = document.querySelector('#panel-fechar [data-local="' + _localInicial + '"]');
+  if (_btnLocal) setFechLocal(_btnLocal);
   document.querySelectorAll('[data-ss]').forEach(b => {
     b.classList.remove('on', 'on-ok');
     if (b.dataset.ss === 'recebido') b.classList.add('on-ok');
@@ -2224,15 +2316,19 @@ function renderFechSlots() {
     fechSlots.map((s, idx) => renderSlotRow(s, idx, fechSlots.length, 'syncFechSlot', 'removerFechSlot')).join('');
 }
 
-function autoDetectLocal(servName) {
+// Local sugerido pelo nome do serviço ('' = não dá para inferir)
+function localDoServico(servName) {
   const low = (servName || '').toLowerCase();
-  if (low.includes('domicílio') || low.includes('domicilio')) {
-    const btn = document.querySelector('[data-local="domicilio"]');
-    if (btn && fechLocal !== 'domicilio') setFechLocal(btn);
-  } else if (low.includes('studio') || low.includes('estúdio') || low.includes('estudio')) {
-    const btn = document.querySelector('[data-local="studio"]');
-    if (btn && fechLocal !== 'studio') setFechLocal(btn);
-  }
+  if (low.includes('domicílio') || low.includes('domicilio')) return 'domicilio';
+  if (low.includes('studio') || low.includes('estúdio') || low.includes('estudio')) return 'studio';
+  return '';
+}
+
+function autoDetectLocal(servName) {
+  const sugerido = localDoServico(servName);
+  if (!sugerido || sugerido === fechLocal) return;
+  const btn = document.querySelector('#panel-fechar [data-local="' + sugerido + '"]');
+  if (btn) setFechLocal(btn);
 }
 
 function syncFechSlot(id, campo, valor) {
@@ -2250,8 +2346,8 @@ function recalcFechTotalFromSlots() {
 
 function setFechLocal(btn) {
   fechLocal = btn.dataset.local;
-  document.querySelectorAll('[data-local]').forEach(b => b.classList.toggle('on', b === btn));
-  document.getElementById('fech-addr-row').classList.toggle('show', fechLocal === 'domicilio');
+  document.querySelectorAll('#panel-fechar [data-local]').forEach(b => b.classList.toggle('on', b === btn));
+  pintarEndereco('fech');
 }
 
 function setFechSinalStatus(btn) {
@@ -2302,13 +2398,11 @@ async function confirmarFechamento() {
     toast('⚠️ O repasse não pode ser maior que o valor cobrado'); return;
   }
 
+  // Endereço é opcional: a cliente pode informar depois do fechamento — dá para
+  // completar no orçamento a qualquer momento (seção Atendimento).
   const endereco = fechLocal === 'studio'
     ? END_STUDIO
     : (document.getElementById('fech-addr').value.trim() || '');
-
-  if (fechLocal === 'domicilio' && !endereco) {
-    toast('⚠️ Informe o endereço da cliente'); return;
-  }
 
   // ── Ativa loading e bloqueia o botão ──
   const fechBtn = document.getElementById('fech-confirm-btn');
@@ -2356,6 +2450,12 @@ async function confirmarFechamento() {
     Responsavel:    e.Responsavel || '',
     Repasse:        e.Repasse || '',
     Cacheada:       !!e.Cacheada,
+    // Local, endereço e plano de pagamento também vão para o Supabase — sem
+    // isso a mensagem de confirmação e o endereço se perdiam ao recarregar.
+    LocalTipo:      e.LocalTipo || '',
+    EnderecoEvento: e.EnderecoEvento || '',
+    SinalFech:      e.SinalFech,
+    SaldoFech:      e.SaldoFech,
   };
   let updResult = await postEntry({ action: 'update', id: e.ID, fields: fechFields });
   if (!updResult.ok) {
@@ -2871,6 +2971,7 @@ function renderActEditSlotsList() {
 }
 
 function syncActEditSlot(id, campo, valor) {
+  if (campo === 'servico') autoDetectActLocal(valor);
   syncSlotField(actEditSlots, id, campo, valor, renderActEditSlotsList, recalcActEdit);
 }
 

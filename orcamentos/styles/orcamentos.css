@@ -148,8 +148,8 @@
     /* ── ENTRY CARD ──────────────────────────────────────── */
     .entry {
       background: var(--card); border-radius: 13px;
-      padding: 11px 13px; margin-bottom: 7px;
-      display: flex; align-items: center; gap: 10px;
+      padding: 12px 14px; margin-bottom: 8px;
+      display: block;
       box-shadow: 0 1px 4px rgba(0,0,0,0.07);
       border-left: 3px solid var(--border);
       cursor: pointer; transition: transform 0.1s;
@@ -193,37 +193,58 @@
     .date-group-line { flex: 1; height: 1px; background: var(--border); }
 
     .e-icon { display: none; }
-    .e-date {
-      flex-shrink: 0; display: flex; flex-direction: column; align-items: center;
-      justify-content: center; width: 32px; text-align: center;
-    }
-    .e-date-day { font-size: 0.95rem; font-weight: 800; color: var(--brown-d); line-height: 1.1; }
-    .e-date-mon { font-size: 0.57rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
-    .e-info { flex: 1; min-width: 0; }
+
+    /* Linha 1 — cliente (informação principal) + status */
+    .e-top { display: flex; align-items: flex-start; gap: 8px; }
     .e-name {
-      font-size: 0.88rem; font-weight: 700;
+      flex: 1; min-width: 0;
+      font-size: 0.97rem; font-weight: 800; line-height: 1.2; color: var(--text);
       overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     }
-    .e-srv {
-      font-size: 0.69rem; color: var(--muted);
-      margin-top: 2px; display: flex; align-items: center; gap: 5px;
-    }
-    .e-meta { font-size: 0.63rem; color: var(--muted); margin-top: 3px; }
+    .e-top .badge { flex-shrink: 0; margin-top: 1px; }
 
-    /* ── QUEM ATENDE / EQUIPE DE TERCEIROS / CACHEADA ─────── */
-    .e-resp { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
-    .tag-resp, .tag-terceiros, .tag-cacheada {
-      display: inline-block; border-radius: 8px;
-      padding: 1px 7px; font-size: 0.62rem; font-weight: 700;
-      vertical-align: middle; white-space: nowrap;
+    /* Linha 2 — serviço orçado */
+    .e-srv {
+      font-size: 0.75rem; color: var(--muted); line-height: 1.35;
+      margin-top: 3px;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+
+    /* Linha 3 — data do evento (consulta rápida) + valor */
+    .e-evrow {
+      display: flex; align-items: flex-end; justify-content: space-between;
+      gap: 10px; margin-top: 9px;
+    }
+    .e-ev { min-width: 0; }
+    .e-ev-lbl {
+      display: block; font-size: 0.56rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted);
+    }
+    .e-ev-val {
+      font-size: 0.95rem; font-weight: 800; color: var(--brown-d);
+      line-height: 1.2; letter-spacing: -0.01em;
+    }
+    .e-ev-val.is-empty { font-size: 0.8rem; font-weight: 700; color: var(--muted); }
+    .e-ev-extra {
+      margin-left: 6px; font-size: 0.6rem; font-weight: 700;
+      color: var(--purple); background: var(--purple-l);
+      padding: 2px 6px; border-radius: 20px; white-space: nowrap;
+    }
+    .e-val { font-size: 0.86rem; font-weight: 800; color: var(--brown-d); white-space: nowrap; }
+
+    /* Linha 4 — sinalizações (equipe, domicílio, cacheada, agenda, sinal) */
+    .e-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 9px; }
+    .tag-resp, .tag-terceiros, .tag-cacheada, .tag-local, .tag-noiva {
+      display: inline-block; border-radius: 20px;
+      padding: 3px 8px; font-size: 0.6rem; font-weight: 800;
+      vertical-align: middle; white-space: nowrap; letter-spacing: 0.02em;
     }
     .tag-resp-carol   { background: #f1ece9; color: #6b5b54; }
     .tag-resp-equipe  { background: #f3e5f5; color: #6a1b9a; }
     .tag-terceiros    { background: #e0f7fa; color: #006064; }
     .tag-cacheada     { background: #fff3e0; color: #e65100; }
-
-    .e-right { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; flex-shrink: 0; }
-    .e-val { font-size: 0.82rem; font-weight: 700; color: var(--brown-d); }
+    .tag-local        { background: var(--blue-l);  color: var(--blue); }
+    .tag-noiva        { background: var(--purple-l); color: var(--purple); }
 
     /* ── STATUS BADGES ───────────────────────────────────── */
     .badge {
@@ -667,6 +688,42 @@
     }
     .act-svc { margin-top: 11px; font-size: 0.78rem; font-weight: 600; color: var(--text); line-height: 1.35; }
 
+    /* Data de cadastro do pedido — campo compacto, sempre visível no topo */
+    .act-inline {
+      display: flex; align-items: center; gap: 10px;
+      margin-top: 13px; padding-top: 12px; border-top: 1px solid var(--border);
+    }
+    .act-inline-lbl {
+      flex: 1; min-width: 0;
+      font-size: 0.62rem; font-weight: 800; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.06em;
+    }
+    .act-inline-input {
+      flex-shrink: 0; padding: 7px 10px;
+      border: 1.5px solid var(--border); border-radius: 9px;
+      font-size: 0.8rem; font-family: inherit; font-weight: 700;
+      color: var(--brown-d); background: var(--surface-2);
+      -webkit-appearance: none; outline: none;
+    }
+    .act-inline-input:focus { border-color: var(--purple); background: #fff; }
+
+    /* Seções sempre visíveis do orçamento (informação principal) */
+    .act-sec {
+      margin: 0 14px 14px; padding: 15px;
+      background: var(--card); border: 0.5px solid var(--border);
+      border-radius: 16px; box-shadow: 0 1px 3px rgba(56,25,11,0.05);
+    }
+    .act-sec-hdr { margin-bottom: 13px; }
+    .act-sec-title {
+      font-size: 0.86rem; font-weight: 800; color: var(--brown-d); line-height: 1.25;
+    }
+    .act-sec-sub {
+      font-size: 0.68rem; color: var(--muted); line-height: 1.45; margin-top: 3px;
+    }
+    /* O último campo da seção não empurra o fundo do cartão */
+    .act-sec-body > *:last-child { margin-bottom: 0; }
+    .act-sec-body > div:last-child > .form-group:last-child { margin-bottom: 0; }
+
     .act-section-label {
       font-size: 0.62rem; font-weight: 800; color: var(--muted);
       text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 8px;
@@ -697,10 +754,10 @@
     }
     .seg-sub button.on { border-color: var(--red); background: var(--red-l); color: var(--red); }
 
-    /* Accordions (progressive disclosure das seções de config) */
+    /* Accordions — só informação secundária (comprovante, proposta, mensagem) */
     .act-acc {
-      margin: 0 18px 9px; background: var(--card);
-      border: 0.5px solid var(--border); border-radius: 12px; overflow: hidden;
+      margin: 0 14px 10px; background: var(--surface-2);
+      border: 0.5px solid var(--border); border-radius: 14px; overflow: hidden;
     }
     .act-acc-head {
       display: flex; align-items: center; gap: 10px;
@@ -878,10 +935,6 @@
     /* ── READONLY INPUT ─────────────────────────────────────── */
     .input-readonly { background: #f0ede8 !important; color: var(--muted) !important; cursor: default; }
 
-    /* ── ADDR ROW TOGGLE ────────────────────────────────────── */
-    #fech-addr-row { display: none; }
-    #fech-addr-row.show { display: block; }
-
     /* ── SETTINGS ────────────────────────────────────────── */
     .settings-tabs {
       display: flex; gap: 6px; padding: 0 18px 8px;
@@ -1032,6 +1085,8 @@
       font-size:0.6rem; font-weight:800; padding:3px 8px;
       border-radius:20px; white-space:nowrap; letter-spacing:0.02em;
     }
+    /* Dentro do card os chips são etiquetas — não esticam como os KPIs do topo */
+    .e-tags .chip { flex:0 0 auto; box-shadow:none; text-align:left; }
     .chip-ok   { background:var(--ok-l);    color:var(--ok);   }
     .chip-warn {
       background:var(--red-l); color:var(--red);

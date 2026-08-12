@@ -20,7 +20,7 @@
   <title>Orçamentos · Meu Studio</title>
   <link rel="stylesheet" href="../shared/css/tokens.css">
   <link rel="stylesheet" href="../shared/css/base.css">
-  <link rel="stylesheet" href="./styles/orcamentos.css?v=20260727b">
+  <link rel="stylesheet" href="./styles/orcamentos.css?v=20260812a">
 </head>
 <body>
 <div id="orca-app">
@@ -204,6 +204,10 @@
   <div class="panel-sub">Registre o pedido recebido pelo WhatsApp</div>
   <div class="panel-body">
     <div class="form-group">
+      <label class="form-label">Data do pedido</label>
+      <input class="form-input" id="add-data-pedido" type="date">
+    </div>
+    <div class="form-group">
       <label class="form-label">Nome do cliente *</label>
       <input class="form-input" id="add-nome" type="text" placeholder="Ex: Maria Santos" autocomplete="off">
     </div>
@@ -275,32 +279,77 @@
       <div class="act-summary-id">
         <div class="action-name" id="act-name">—</div>
         <div class="action-phone" id="act-phone">—</div>
-        <div class="action-request-date" id="act-request-date"></div>
       </div>
       <span class="act-pill st-novo" id="act-badge">—</span>
     </div>
     <div class="act-vitals">
-      <div class="act-vital"><span class="act-vital-lbl">📅 Evento</span><span class="act-vital-val" id="act-vital-data">—</span></div>
-      <div class="act-vital"><span class="act-vital-lbl">⏰ Horário</span><span class="act-vital-val" id="act-vital-hora">—</span></div>
-      <div class="act-vital"><span class="act-vital-lbl">💰 Valor</span><span class="act-vital-val" id="act-vital-valor">—</span></div>
+      <div class="act-vital"><span class="act-vital-lbl">Evento</span><span class="act-vital-val" id="act-vital-data">—</span></div>
+      <div class="act-vital"><span class="act-vital-lbl">Horário</span><span class="act-vital-val" id="act-vital-hora">—</span></div>
+      <div class="act-vital"><span class="act-vital-lbl">Valor</span><span class="act-vital-val" id="act-vital-valor">—</span></div>
     </div>
     <div class="act-svc" id="act-vital-svc">—</div>
+
+    <!-- Data de cadastro do pedido — sempre visível e aberta para edição -->
+    <div class="act-inline">
+      <label class="act-inline-lbl" for="act-data-pedido">Pedido recebido em</label>
+      <input class="act-inline-input" id="act-data-pedido" type="date" onchange="updateDataPedido()">
+    </div>
   </div>
 
   <!-- ★ FECHAR E AGENDAR TUDO ★ -->
-  <div id="act-fech-btn-area" style="padding: 0 18px 12px;">
+  <div id="act-fech-btn-area" style="padding: 0 14px 14px;">
     <button class="btn-fechar" onclick="abrirFechamento()">Fechar e Agendar Tudo</button>
   </div>
 
-  <!-- ★ DATA / HORÁRIO DOS SERVIÇOS (para fechados) ★ -->
-  <div id="act-slots-section" style="display:none; padding: 0 18px 10px;">
-    <div class="act-section-label">Data e horário dos serviços</div>
-    <div id="act-slots-list"></div>
-    <div id="act-slots-hint" style="font-size:0.66rem; color:var(--muted); margin-top:4px; line-height:1.4;">Edite aqui se algum horário ficou faltando. Salva automaticamente.</div>
+  <!-- ── Atendimento: local, endereço, quem executa e quando ──
+       Mesma ordem do painel de fechamento. Os dois editores de data/horário
+       (fechado × em aberto) ficam aqui dentro; o render() mostra um por vez. -->
+  <div class="act-sec" id="act-atend-sec">
+    <div class="act-sec-hdr">
+      <div class="act-sec-title">Atendimento</div>
+      <div class="act-sec-sub">Onde acontece, quem executa e quando.</div>
+    </div>
+    <div class="act-sec-body">
+      <div class="form-group">
+        <label class="form-label">Local</label>
+        <div class="toggle-row">
+          <button type="button" class="toggle-btn on" data-actlocal="studio"    onclick="setActLocal(this)">🏠 Studio</button>
+          <button type="button" class="toggle-btn"    data-actlocal="domicilio" onclick="setActLocal(this)">🚗 Domicílio</button>
+        </div>
+      </div>
+      <div class="form-group" id="act-addr-row">
+        <label class="form-label" id="act-addr-lbl" for="act-addr">Endereço do studio</label>
+        <input class="form-input" id="act-addr" type="text" placeholder="Rua, número, complemento, bairro" autocomplete="off">
+        <div class="chk-hint" id="act-addr-hint">Endereço fixo do studio — preenchido sozinho.</div>
+      </div>
+
+      <div id="act-resp-block"></div>
+
+      <!-- Data e horário — orçamento já fechado (editor enxuto) -->
+      <div id="act-slots-section" style="display:none;">
+        <div class="act-section-label">Data e horário dos serviços</div>
+        <div id="act-slots-list"></div>
+        <div class="chk-hint" id="act-slots-hint">Edite aqui se algum horário ficou faltando — salva automaticamente.</div>
+      </div>
+
+      <!-- Serviço, data e horário — orçamento em aberto (editor completo) -->
+      <div id="act-edit-slots-acc" style="display:none;">
+        <div class="act-section-label">Serviços, datas e horários</div>
+        <div id="act-edit-slots-list"></div>
+        <button class="btn-add-slot" type="button" onclick="addActEditSlot()">+ Adicionar serviço / data</button>
+      </div>
+
+      <div class="form-group chk-cacheada" style="margin-top:13px">
+        <label class="form-label chk-lbl">
+          <input type="checkbox" id="act-cacheada" onchange="toggleActCacheada(this.checked)"> ★ Cliente cacheada
+        </label>
+        <div class="chk-hint">Sugere 3h de duração no atendimento (editável) e destaca o alerta no Google Agenda.</div>
+      </div>
+    </div>
   </div>
 
   <!-- ★ GOOGLE AGENDA (para fechados) ★ -->
-  <div id="act-gcal-section" style="display:none; padding: 0 18px 10px;">
+  <div id="act-gcal-section" style="display:none; padding: 0 14px 14px;">
     <button class="btn-gcal" id="act-gcal-btn" onclick="adicionarAgendaDeAction()" style="margin-top:0;">📅 Adicionar ao Google Agenda</button>
     <div id="act-gcal-result" class="gcal-status"></div>
   </div>
@@ -319,79 +368,59 @@
   </div>
 
   <!-- ── STATUS (segmented control) ── -->
-  <div style="padding: 6px 18px 0;">
-    <div class="act-section-label">Status do pedido</div>
-    <div class="seg-status" id="status-seg">
-      <button data-s="Novo Pedido"       onclick="setStatusSeg(this)">Novo</button>
-      <button data-s="Orçamento Enviado" onclick="setStatusSeg(this)">Enviado</button>
-      <button data-s="Fechado"           onclick="setStatusSeg(this)">Fechado</button>
-      <button data-seg="perdido" class="seg-danger" onclick="setStatusSeg(this)">Perdido</button>
+  <div class="act-sec">
+    <div class="act-sec-hdr">
+      <div class="act-sec-title">Status do pedido</div>
     </div>
-    <div class="seg-sub" id="status-sub">
-      <button data-s="Perdido - Sem Resposta"        onclick="setStatusSub(this)">Sem resposta</button>
-      <button data-s="Perdido - Sem Disponibilidade" onclick="setStatusSub(this)">Sem disponib.</button>
-      <button data-s="Perdido - Outros motivos"      onclick="setStatusSub(this)">Outros</button>
-    </div>
-  </div>
-
-  <!-- ── ACCORDION: Datas, horário e serviço (editável — não fechados) ── -->
-  <div class="act-acc open" id="act-edit-slots-acc" style="display:none; margin-top:14px;">
-    <div class="act-acc-head" onclick="toggleActAcc(this)">
-      <span class="act-acc-title">📅 Datas, horário e serviço</span>
-      <svg class="act-chev" viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    </div>
-    <div class="act-acc-body">
-      <div id="act-edit-slots-list"></div>
-      <button class="btn-add-slot" type="button" onclick="addActEditSlot()">+ Adicionar serviço / data</button>
-      <div style="font-size:0.66rem; color:var(--muted); margin-top:6px; line-height:1.4;">Corrija a data, o horário, o serviço ou o valor. Toque em <b>Salvar alterações</b> no fim para gravar.</div>
-    </div>
-  </div>
-
-  <!-- ── ACCORDION: Valores e cadastro ── -->
-  <div class="act-acc" style="margin-top:14px;">
-    <div class="act-acc-head" onclick="toggleActAcc(this)">
-      <span class="act-acc-title">Valores e cadastro</span>
-      <svg class="act-chev" viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    </div>
-    <div class="act-acc-body">
-      <div id="act-val-enviado-wrap">
-        <div class="form-group">
-          <label class="form-label">Valor enviado à cliente (R$)</label>
-          <input class="form-input" id="act-val-enviado" type="number" placeholder="0,00" step="0.01">
-        </div>
+    <div class="act-sec-body">
+      <div class="seg-status" id="status-seg">
+        <button data-s="Novo Pedido"       onclick="setStatusSeg(this)">Novo</button>
+        <button data-s="Orçamento Enviado" onclick="setStatusSeg(this)">Enviado</button>
+        <button data-s="Fechado"           onclick="setStatusSeg(this)">Fechado</button>
+        <button data-seg="perdido" class="seg-danger" onclick="setStatusSeg(this)">Perdido</button>
       </div>
-      <div id="val-fechado-row" style="display:none;">
-        <div class="form-group">
-          <label class="form-label">Valor fechado (R$)</label>
-          <input class="form-input" id="act-val-fechado" type="number" placeholder="0,00" step="0.01">
-        </div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Data do pedido (cadastro)</label>
-        <input class="form-input" id="act-data-pedido" type="date" onchange="updateDataPedido()">
+      <div class="seg-sub" id="status-sub">
+        <button data-s="Perdido - Sem Resposta"        onclick="setStatusSub(this)">Sem resposta</button>
+        <button data-s="Perdido - Sem Disponibilidade" onclick="setStatusSub(this)">Sem disponib.</button>
+        <button data-s="Perdido - Outros motivos"      onclick="setStatusSub(this)">Outros</button>
       </div>
     </div>
   </div>
 
-  <!-- ── ACCORDION: Atendimento, observações & equipe ── -->
-  <div class="act-acc">
-    <div class="act-acc-head" onclick="toggleActAcc(this)">
-      <span class="act-acc-title">Atendimento, observações &amp; equipe</span>
-      <svg class="act-chev" viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  <!-- ── Valores ── -->
+  <div class="act-sec" id="act-valores-sec">
+    <div class="act-sec-hdr">
+      <div class="act-sec-title">Valores</div>
     </div>
-    <div class="act-acc-body">
-      <div class="form-group chk-cacheada">
-        <label class="form-label chk-lbl">
-          <input type="checkbox" id="act-cacheada" onchange="toggleActCacheada(this.checked)"> ★ Cliente cacheada
-        </label>
-        <div class="chk-hint">Sugere 3h de duração no atendimento (editável) e destaca o alerta no Google Agenda.</div>
+    <div class="act-sec-body">
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label">Valor enviado à cliente (R$)</label>
+        <input class="form-input" id="act-val-enviado" type="number" placeholder="0,00" step="0.01">
+        <div class="chk-hint">Valor informado à cliente no orçamento.</div>
       </div>
-      <div id="act-resp-block"></div>
-      <div class="form-group">
-        <label class="form-label">Observações</label>
-        <textarea class="form-input" id="act-obs" rows="2" placeholder="Anotações sobre este cliente..."></textarea>
+    </div>
+  </div>
+
+  <!-- ── Observações ── -->
+  <div class="act-sec">
+    <div class="act-sec-hdr">
+      <div class="act-sec-title">Observações</div>
+    </div>
+    <div class="act-sec-body">
+      <div class="form-group" style="margin-bottom:0">
+        <textarea class="form-input" id="act-obs" rows="3" placeholder="Anotações sobre esta cliente..."></textarea>
       </div>
-      <div class="form-group">
+    </div>
+  </div>
+
+  <!-- ── Equipe ── -->
+  <div class="act-sec">
+    <div class="act-sec-hdr">
+      <div class="act-sec-title">Equipe</div>
+      <div class="act-sec-sub">Equipe de outra pessoa. Quem executa o atendimento fica em <b>Atendimento</b>.</div>
+    </div>
+    <div class="act-sec-body">
+      <div class="form-group" style="margin-bottom:0">
         <label class="form-label chk-lbl">
           <input type="checkbox" id="act-eq-chk" onchange="toggleActEquipeInput(this.checked)"> ↑ Trabalho para equipe de terceiros
         </label>
@@ -426,7 +455,7 @@
     </div>
   </div>
 
-  <div style="padding: 14px 18px 32px;">
+  <div style="padding: 6px 14px 32px;">
     <button class="btn-primary" onclick="saveAction()">💾 Salvar alterações</button>
     <button class="btn-outline" onclick="closeAll()">Fechar</button>
     <button class="btn-danger" onclick="excluirOrcamento()">🗑 Excluir orçamento</button>
@@ -457,10 +486,11 @@
       </div>
     </div>
 
-    <!-- Endereço (só Domicílio) -->
+    <!-- Endereço — studio vem travado e preenchido; domicílio é opcional -->
     <div class="form-group" id="fech-addr-row">
-      <label class="form-label">Endereço *</label>
+      <label class="form-label" id="fech-addr-lbl" for="fech-addr">Endereço do studio</label>
       <input class="form-input" id="fech-addr" type="text" placeholder="Rua, número, complemento, bairro">
+      <div class="chk-hint" id="fech-addr-hint">Endereço fixo do studio — preenchido sozinho.</div>
     </div>
 
     <!-- Responsável pelo atendimento -->
@@ -662,7 +692,7 @@
 <script src="../shared/js/icons.js"></script>
 
 <!-- ── Módulo Orçamentos ── -->
-<script src="./scripts/orcamentos.js?v=20260727b"></script>
+<script src="./scripts/orcamentos.js?v=20260812a"></script>
 
 <!-- ── Sidebar (último, depende do DOM pronto) ── -->
 <script src="../shared/js/global-search.js"></script>
