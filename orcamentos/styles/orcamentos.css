@@ -203,6 +203,16 @@
     }
     .e-top .badge { flex-shrink: 0; margin-top: 1px; }
 
+    /* Pendências (agenda · sinal) — marcadores fixos, sempre na mesma posição */
+    .e-states { display: flex; gap: 4px; flex-shrink: 0; margin-top: 1px; }
+    .e-st {
+      width: 21px; height: 21px; border-radius: 50%;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 0.63rem; line-height: 1; cursor: help;
+    }
+    .e-st.ok   { background: var(--ok-l); opacity: 0.75; }
+    .e-st.pend { background: var(--red-l); box-shadow: inset 0 0 0 1.5px var(--red); }
+
     /* Linha 2 — serviço orçado */
     .e-srv {
       font-size: 0.75rem; color: var(--muted); line-height: 1.35;
@@ -508,8 +518,15 @@
       .content { padding: 16px 28px 64px; }
 
       /* ── Cards 2 colunas no desktop ── */
-      .content { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; align-items: start; }
-      .content .entry { margin-bottom: 0 !important; }
+      /* stretch (e não start): cards da mesma linha terminam alinhados, mesmo
+         quando um tem etiquetas e o outro não — a lista fica menos serrilhada. */
+      .content { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; align-items: stretch; }
+      .content .entry {
+        margin-bottom: 0 !important;
+        display: flex; flex-direction: column;
+      }
+      /* Etiquetas coladas no rodapé do card, para as linhas baterem */
+      .content .entry .e-tags { margin-top: auto; padding-top: 9px; }
       /* Groups e empty/loader ocupam as 2 colunas */
       .date-group { display: contents; }
       .date-group-hdr { grid-column: 1 / -1; }
@@ -686,8 +703,6 @@
       color: var(--brown-d); margin-top: 2px; white-space: nowrap;
       overflow: hidden; text-overflow: ellipsis;
     }
-    .act-svc { margin-top: 11px; font-size: 0.78rem; font-weight: 600; color: var(--text); line-height: 1.35; }
-
     /* Data de cadastro do pedido — campo compacto, sempre visível no topo */
     .act-inline {
       display: flex; align-items: center; gap: 10px;
@@ -723,6 +738,23 @@
     /* O último campo da seção não empurra o fundo do cartão */
     .act-sec-body > *:last-child { margin-bottom: 0; }
     .act-sec-body > div:last-child > .form-group:last-child { margin-bottom: 0; }
+
+    /* Campos do painel do orçamento são mais compactos que os dos formulários
+       de cadastro: aqui a tela é de consulta e ajuste rápido, não de digitação
+       longa — várias seções precisam caber sem virar rolagem infinita. */
+    .act-sec .form-group  { gap: 4px; margin-bottom: 10px; }
+    .act-sec .form-input  { padding: 8px 11px; font-size: 0.88rem; border-radius: 9px; }
+    .act-sec textarea.form-input { padding: 9px 11px; }
+    .act-sec .form-label  { font-size: 0.64rem; }
+    .act-sec .toggle-btn  { padding: 8px; font-size: 0.79rem; border-radius: 9px; }
+    /* A dica só é indentada quando acompanha um checkbox */
+    .act-sec .chk-hint    { font-size: 0.63rem; margin: 1px 0 0 0; }
+    .act-sec .chk-cacheada .chk-hint,
+    .act-sec .form-group > .chk-lbl + .chk-hint { margin-left: 24px; }
+    .act-sec .chk-cacheada { padding: 9px 10px 8px; margin-top: 2px; }
+    .act-sec .resp-fin    { margin-top: 8px; padding: 9px 10px; }
+    .act-sec .resp-hint   { font-size: 0.63rem; margin-top: 4px; }
+    .act-sec .resp-resumo { margin-top: 6px; font-size: 0.68rem; }
 
     .act-section-label {
       font-size: 0.62rem; font-weight: 800; color: var(--muted);
@@ -837,27 +869,31 @@
 
     /* ── SLOT ROWS (datas/serviços do fechamento) ───────────── */
     .slot-row {
-      display: flex; align-items: flex-start; gap: 8px;
-      background: #fdf8fc; border: 1.5px solid var(--border);
-      border-radius: 11px; padding: 10px 11px 10px;
-      margin-bottom: 8px;
+      display: flex; align-items: flex-start; gap: 7px;
+      background: #fdf8fc; border: 1px solid var(--border);
+      border-radius: 10px; padding: 8px 9px;
+      margin-bottom: 6px;
     }
+    /* Campos do slot são mais baixos que os do resto do formulário: a caixa
+       repete quatro vezes na tela e não pode dominar o painel. */
+    .slot-row .form-input { padding: 7px 9px; font-size: 0.84rem; border-radius: 8px; }
     .slot-num {
-      width: 22px; height: 22px; border-radius: 50%;
+      width: 19px; height: 19px; border-radius: 50%;
       background: var(--purple); color: white;
-      font-size: 0.68rem; font-weight: 800;
+      font-size: 0.62rem; font-weight: 800;
       display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0; margin-top: 2px;
+      flex-shrink: 0; margin-top: 6px;
     }
-    .slot-fields { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 7px; }
+    .slot-fields { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
     /* Qtd · R$ unitário · Duração — três campos compactos lado a lado */
-    .slot-qty-row { display: grid; grid-template-columns: 0.7fr 1fr 1fr; gap: 7px; }
+    .slot-qty-row { display: grid; grid-template-columns: 0.7fr 1fr 1fr; gap: 6px; }
     .slot-mini-lbl {
-      display: flex; flex-direction: column; gap: 2px;
-      font-size: 0.6rem; font-weight: 700; color: var(--muted);
+      display: flex; flex-direction: column; gap: 1px;
+      font-size: 0.56rem; font-weight: 700; color: var(--muted);
       text-transform: uppercase; letter-spacing: 0.04em;
     }
-    .slot-mini-lbl .form-input { font-size: 0.85rem; padding: 8px 9px; }
+    .slot-mini-lbl .form-input { font-size: 0.82rem; padding: 6px 8px; }
+    .slot-del { align-self: flex-start; margin-top: 4px; }
 
     /* ── CHECKBOX COM EXPLICAÇÃO (cacheada / equipe de terceiros) ── */
     .chk-lbl {
@@ -895,16 +931,41 @@
     .resp-resumo strong { color: var(--text); }
     .resp-resumo .resp-ok  strong { color: var(--ok); }
     .resp-resumo .resp-neg strong { color: var(--red); }
-    /* Linha-resumo: "6 × R$ 500,00 = R$ 3.000,00 · 12:30–18:30" */
+    /* Linha-resumo: "sábado · 6 × R$ 500,00 = R$ 3.000,00 · 12h30–18h30" */
     .slot-resumo {
-      font-size: 0.68rem; font-weight: 600; color: var(--purple);
-      min-height: 0.85rem; padding-left: 2px;
+      font-size: 0.67rem; font-weight: 600; color: var(--purple);
+      padding-left: 1px; line-height: 1.5;
     }
     .slot-resumo:empty { display: none; }
+    /* Dia da semana da data escolhida — confere a agenda sem abrir calendário */
+    .slot-dia {
+      display: inline-block; margin-right: 6px;
+      background: var(--purple); color: #fff;
+      padding: 1px 8px; border-radius: 20px;
+      font-size: 0.63rem; font-weight: 800; letter-spacing: 0.02em;
+    }
     /* ── Data do slot em listas (Dia / Mês / Ano) + Hora ── */
-    .slot-date-row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
-    .slot-date-row .form-input { flex: 1 1 0; min-width: 56px; padding-left: 8px; padding-right: 6px; }
+    .slot-date-row { display: flex; gap: 5px; flex-wrap: wrap; align-items: center; }
+    .slot-date-row .form-input { flex: 1 1 0; min-width: 54px; padding-left: 7px; padding-right: 5px; }
     .slot-date-row .slot-sel-hora { flex: 1 1 72px; min-width: 72px; }
+
+    /* ── RESUMO DE VALORES (sinal/restante antes de fechar) ── */
+    .val-resumo {
+      margin-top: 12px; padding: 11px 12px;
+      background: var(--surface-2); border-radius: 12px;
+    }
+    .val-resumo:empty { display: none; }
+    .val-linha {
+      display: flex; align-items: baseline; justify-content: space-between;
+      gap: 12px; font-size: 0.76rem; color: var(--muted);
+      padding: 3px 0;
+    }
+    .val-linha strong {
+      font-size: 0.86rem; font-weight: 800; color: var(--brown-d);
+      font-variant-numeric: tabular-nums;
+    }
+    .val-linha + .val-linha { border-top: 1px solid var(--border); }
+    .val-nota { font-size: 0.64rem; color: var(--muted); line-height: 1.45; margin-top: 7px; }
     /* ── Aviso de conflito de agenda no slot ── */
     .slot-conflict { display: flex; flex-direction: column; gap: 4px; }
     .slot-conflict:empty { display: none; }

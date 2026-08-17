@@ -44,12 +44,12 @@ só o que é secundário mora em accordion (`.act-acc`):
 
 | Bloco | Tipo | Conteúdo |
 |---|---|---|
-| `.act-summary` | fixo | cliente, telefone, status, vitais, serviço e **data de cadastro** (`act-data-pedido`, editável, nunca em accordion) |
-| Fechar e Agendar / Agenda / Mensagem | ação | botões do fluxo de fechamento (mensagem em accordion) |
-| Status do pedido | `.act-sec` | segmented control |
-| Serviços, datas e horários | `.act-sec` | editor de slots (só não-fechados) |
-| Valores | `.act-sec` | **valor enviado à cliente** + valor fechado |
-| Atendimento | `.act-sec` | local, endereço, cacheada, responsável |
+| `.act-summary` | fixo | cliente, telefone, status, vitais (evento · horário · valor) e **data de cadastro** (`act-data-pedido`, editável, nunca em accordion) |
+| Status do pedido | `.act-sec` | segmented control — **fica no topo**, é o campo mais mexido |
+| Fechar e Agendar | ação | botão do fluxo de fechamento |
+| Atendimento | `.act-sec` | local, endereço, responsável, **datas/serviços**, cacheada |
+| Agenda · Mensagem | ação | Google Agenda e WhatsApp (mensagem em accordion) |
+| Valores | `.act-sec` | **valor enviado à cliente** + prévia de sinal/restante |
 | Observações | `.act-sec` | textarea |
 | Equipe | `.act-sec` | trabalho para equipe de terceiros |
 | Comprovante do sinal · Proposta | `.act-acc` | secundários — recolhidos |
@@ -57,8 +57,19 @@ só o que é secundário mora em accordion (`.act-acc`):
 `.act-sec` = seção sempre aberta (título + subtítulo + corpo). `.act-acc` = seção
 recolhível, fundo rebaixado. **Não empurrar campo principal para accordion.**
 
+Os campos dentro de `.act-sec` são **mais compactos** que os dos formulários de
+cadastro e fechamento (`.act-sec .form-input`, `.toggle-btn`, `.chk-hint`): o
+painel é de consulta e ajuste rápido, e precisa caber várias seções sem virar
+rolagem infinita. Não unificar com os outros painéis.
+
 O campo do valor da proposta chama-se sempre **“Valor enviado à cliente”**
-(`ValorProp`) — nunca “valor recolhido”.
+(`ValorProp`) — nunca “valor recolhido”. O **valor fechado não é editável aqui**:
+só o painel de fechamento grava `ValorFechado`.
+
+`renderActValResumo()` mostra total · sinal · restante ao vivo (30% enquanto o
+orçamento está aberto, os valores gravados depois de fechado) — dá para conferir
+o plano de pagamento sem entrar no "Fechar e Agendar Tudo". É **prévia**: nada é
+lançado no financeiro fora do fechamento.
 
 ---
 
@@ -95,16 +106,35 @@ O campo do valor da proposta chama-se sempre **“Valor enviado à cliente”**
 
 Hierarquia escaneável, do mais para o menos importante:
 
-1. **Nome da cliente** + badge de status
-2. Serviço orçado
+1. **Nome da cliente** + marcadores de pendência + badge de status
+2. Serviço orçado — nome curto via `servicoCard()`
 3. **Data do evento** em destaque (`fmtDateEvento` → `25/08/26 · ter`) + valor;
    `+2 datas` quando o orçamento tem mais de uma data
-4. Badges: equipe (quem executa), domicílio, equipe de terceiros, cacheada,
-   noiva, agenda pendente/ok, sinal comprovado/a comprovar
+4. Etiquetas: quem executa, domicílio, equipe de terceiros, cacheada, noiva
+
+**Duas famílias de sinalização — não misturar:**
+
+| | O que é | Onde fica |
+|---|---|---|
+| Etiquetas (`.e-tags`) | característica do trabalho (domicílio, cacheada, equipe…) | rodapé do card |
+| Marcadores (`.e-states`) | **pendência operacional** (agenda criada? sinal comprovado?) | topo, ao lado do status |
+
+Os marcadores são dois ícones de posição fixa — agenda à esquerda, sinal à
+direita — vermelhos com anel quando falta fazer, verdes apagados quando está
+resolvido. Viraram ícone porque como chips a fila crescia e competia com as
+etiquetas. Pendência nova entra aqui, não em `.e-tags`.
+
+`servicoCard(e)` monta o nome curto a partir das slots: `Servico` guarda a
+descrição longa com as datas (`descreveSlots`), que no card só repetiria a data
+do evento logo abaixo. "Maquiagem + Cabelo · Maquiagem", "Noiva · 3× Maquiagem".
 
 A data do **pedido** não aparece no card — quem mostra é o cabeçalho do grupo
 (`fmtDateGroup`), que agrupa a lista por `DataPedido`. Atendimento da Carol não
-ganha badge: ausência de badge de equipe já significa "sou eu".
+ganha etiqueta: ausência de etiqueta de equipe já significa "sou eu".
+
+No desktop os cards são grade de 2 colunas com `align-items: stretch` e as
+etiquetas ancoradas no rodapé (`margin-top: auto`) — cards da mesma linha
+terminam alinhados mesmo com quantidades diferentes de etiqueta.
 
 ---
 
@@ -140,6 +170,9 @@ repasse real é definido em cada orçamento.
 - Alterar a duração recalcula em cascata: resumo da linha → sequenciamento de
   horários (`expandRows`) → detecção de conflito (`findSlotConflicts`) → fim do
   evento no Google Agenda (`buildEventos`) → mensagem de WhatsApp.
+- A linha-resumo de cada slot (`slotResumoHTML`) abre com o **dia da semana** da
+  data escolhida (`diaDaSemana`), em etiqueta destacada: dá para conferir a
+  agenda sem abrir calendário. Atualiza a cada mudança de dia/mês/ano.
 
 ---
 

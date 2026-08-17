@@ -287,12 +287,30 @@
       <div class="act-vital"><span class="act-vital-lbl">Horário</span><span class="act-vital-val" id="act-vital-hora">—</span></div>
       <div class="act-vital"><span class="act-vital-lbl">Valor</span><span class="act-vital-val" id="act-vital-valor">—</span></div>
     </div>
-    <div class="act-svc" id="act-vital-svc">—</div>
-
     <!-- Data de cadastro do pedido — sempre visível e aberta para edição -->
     <div class="act-inline">
       <label class="act-inline-lbl" for="act-data-pedido">Pedido recebido em</label>
       <input class="act-inline-input" id="act-data-pedido" type="date" onchange="updateDataPedido()">
+    </div>
+  </div>
+
+  <!-- ── STATUS (segmented control) — primeira coisa depois da identificação ── -->
+  <div class="act-sec">
+    <div class="act-sec-hdr">
+      <div class="act-sec-title">Status do pedido</div>
+    </div>
+    <div class="act-sec-body">
+      <div class="seg-status" id="status-seg">
+        <button data-s="Novo Pedido"       onclick="setStatusSeg(this)">Novo</button>
+        <button data-s="Orçamento Enviado" onclick="setStatusSeg(this)">Enviado</button>
+        <button data-s="Fechado"           onclick="setStatusSeg(this)">Fechado</button>
+        <button data-seg="perdido" class="seg-danger" onclick="setStatusSeg(this)">Perdido</button>
+      </div>
+      <div class="seg-sub" id="status-sub">
+        <button data-s="Perdido - Sem Resposta"        onclick="setStatusSub(this)">Sem resposta</button>
+        <button data-s="Perdido - Sem Disponibilidade" onclick="setStatusSub(this)">Sem disponib.</button>
+        <button data-s="Perdido - Outros motivos"      onclick="setStatusSub(this)">Outros</button>
+      </div>
     </div>
   </div>
 
@@ -367,26 +385,6 @@
     </div>
   </div>
 
-  <!-- ── STATUS (segmented control) ── -->
-  <div class="act-sec">
-    <div class="act-sec-hdr">
-      <div class="act-sec-title">Status do pedido</div>
-    </div>
-    <div class="act-sec-body">
-      <div class="seg-status" id="status-seg">
-        <button data-s="Novo Pedido"       onclick="setStatusSeg(this)">Novo</button>
-        <button data-s="Orçamento Enviado" onclick="setStatusSeg(this)">Enviado</button>
-        <button data-s="Fechado"           onclick="setStatusSeg(this)">Fechado</button>
-        <button data-seg="perdido" class="seg-danger" onclick="setStatusSeg(this)">Perdido</button>
-      </div>
-      <div class="seg-sub" id="status-sub">
-        <button data-s="Perdido - Sem Resposta"        onclick="setStatusSub(this)">Sem resposta</button>
-        <button data-s="Perdido - Sem Disponibilidade" onclick="setStatusSub(this)">Sem disponib.</button>
-        <button data-s="Perdido - Outros motivos"      onclick="setStatusSub(this)">Outros</button>
-      </div>
-    </div>
-  </div>
-
   <!-- ── Valores ── -->
   <div class="act-sec" id="act-valores-sec">
     <div class="act-sec-hdr">
@@ -398,6 +396,8 @@
         <input class="form-input" id="act-val-enviado" type="number" placeholder="0,00" step="0.01">
         <div class="chk-hint">Valor informado à cliente no orçamento.</div>
       </div>
+      <!-- Sinal e restante calculados ao vivo, antes de fechar -->
+      <div class="val-resumo" id="act-val-resumo"></div>
     </div>
   </div>
 

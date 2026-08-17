@@ -133,6 +133,40 @@ function fmtDateEvento(s) {
   return pad(d) + '/' + pad(m) + '/' + String(y).slice(2) + ' · ' + dias[new Date(y, m-1, d).getDay()];
 }
 
+// Nome curto do serviço para o card: "Maquiagem + Cabelo", "Noiva", "Cabelo".
+// O local (domicílio/studio) já é etiqueta, então sai do nome.
+function servicoCurto(nome) {
+  const low = (nome || '').toLowerCase();
+  const make   = low.includes('maquiagem') || low.includes('make');
+  const cabelo = low.includes('cabelo')    || low.includes('penteado');
+  if (low.includes('noiva'))  return 'Noiva';
+  if (make && cabelo)         return 'Maquiagem + Cabelo';
+  if (make)                   return 'Maquiagem';
+  if (cabelo)                 return 'Cabelo';
+  return (nome || '').replace(/\s+(em domicílio|em domicilio|no studio|no estúdio|no estudio)\s*$/i, '').trim();
+}
+
+// Linha de serviço do card. `Servico` guarda a descrição longa com as datas
+// ("Maquiagem e Cabelo em domicílio (12/10/2026), ..."), que no card só repete
+// a data do evento logo abaixo — aqui vira "Maquiagem + Cabelo + Maquiagem".
+function servicoCard(e) {
+  const nomes = [], qtds = {};
+  // Slots antigos podem ter só data, sem nome de serviço — aí vale o Servico
+  const slots = entrySlots(e).filter(s => s && s.servico);
+  const brutos = slots.length
+    ? slots.map(s => s.servico)
+    : String(e.Servico || '').replace(/\s*\([^)]*\)/g, '').split(',');
+  brutos.forEach(b => {
+    const nome = servicoCurto(String(b || '').trim());
+    if (!nome) return;
+    if (!qtds[nome]) { qtds[nome] = 0; nomes.push(nome); }
+    qtds[nome]++;
+  });
+  if (!nomes.length) return 'Serviço não informado';
+  // separador " · " porque o próprio nome já usa " + " ("Maquiagem + Cabelo")
+  return nomes.map(n => (qtds[n] > 1 ? qtds[n] + '× ' : '') + n).join(' · ');
+}
+
 // Card da listagem — hierarquia: cliente › serviço › data do evento › sinalizações.
 function renderEntryCard(e) {
   const sCls   = STATUS_CLASS[e.Status] || 'st-novo';
@@ -154,29 +188,39 @@ function renderEntryCard(e) {
       (outras ? '<span class="e-ev-extra">+' + outras + (outras > 1 ? ' datas' : ' data') + '</span>' : '')
     : '<span class="e-ev-val is-empty">A definir</span>';
 
-  // Sinalizações — badges/chips na ordem: quem atende › local › equipe de
-  // terceiros › cacheada › noiva › agenda › sinal
+  // Etiquetas — só o que caracteriza o trabalho: quem atende › local › equipe
+  // de terceiros › cacheada › noiva
   const tags = [];
   if (isEquipeEntry(e))               tags.push('<span class="tag-resp tag-resp-equipe">👥 ' + esc(respDe(e)) + '</span>');
   if ((e.LocalTipo || '') === 'domicilio') tags.push('<span class="tag-local">🚗 Domicílio</span>');
   if (e.Equipe)                       tags.push('<span class="tag-terceiros">↑ Equipe ' + esc(e.Equipe) + '</span>');
   if (e.Cacheada)                     tags.push('<span class="tag-cacheada">★ Cacheada</span>');
   if (isNoivaEntry(e))                tags.push('<span class="tag-noiva">💍 Noiva</span>');
+
+  // Pendências do orçamento fechado — dois marcadores fixos no alto, em vez de
+  // chips largos disputando espaço com as etiquetas. Posição sempre a mesma:
+  // agenda à esquerda, sinal à direita. Vermelho = falta fazer.
+  let estados = '';
   if (e.Status === 'Fechado') {
-    tags.push(agOk ? '<span class="chip chip-ok">📅 Na agenda</span>'
-                   : '<span class="chip chip-warn">📅 Agenda pendente</span>');
-    tags.push(hasComprovante(e)
-      ? '<span class="chip chip-ok">🧾 Sinal comprovado</span>'
-      : '<span class="chip chip-muted">🧾 Sinal a comprovar</span>');
+    estados =
+      '<div class="e-states">' +
+        (agOk
+          ? '<span class="e-st ok"   title="Evento criado no Google Agenda">📅</span>'
+          : '<span class="e-st pend" title="Falta criar o evento no Google Agenda">📅</span>') +
+        (hasComprovante(e)
+          ? '<span class="e-st ok"   title="Comprovante do sinal anexado">🧾</span>'
+          : '<span class="e-st pend" title="Sinal ainda sem comprovante">🧾</span>') +
+      '</div>';
   }
 
   return (
     '<div class="entry ' + cls + '" onclick="openAction(\'' + esc(e.ID) + '\')">' +
       '<div class="e-top">' +
         '<div class="e-name">' + esc(e.Cliente || '—') + '</div>' +
+        estados +
         '<span class="badge ' + sCls + '">' + esc(e.Status || 'Novo') + '</span>' +
       '</div>' +
-      '<div class="e-srv">' + esc(e.Servico || 'Serviço não informado') + '</div>' +
+      '<div class="e-srv">' + esc(servicoCard(e)) + '</div>' +
       '<div class="e-evrow">' +
         '<div class="e-ev">' +
           '<span class="e-ev-lbl">Data do evento</span>' +
@@ -1465,6 +1509,29 @@ function resetEndereco(prefix, enderecoSalvo) {
   if (inp) inp.value = '';
 }
 
+// Sinal e restante do orçamento, calculados ao vivo — dá para conferir o plano
+// de pagamento sem passar pelo "Fechar e Agendar Tudo". Num orçamento já fechado
+// mostra o que foi gravado; nos demais, a prévia de 30%.
+function renderActValResumo() {
+  const box = document.getElementById('act-val-resumo');
+  if (!box) return;
+  const e = entries.find(x => String(x.ID) === String(activeId));
+  const total = e ? respTotal('act') : 0;
+  if (!total) { box.innerHTML = ''; return; }
+
+  const gravado = e.SinalFech !== undefined && e.SinalFech !== '' && e.SinalFech !== null;
+  const sinal = gravado ? parseFloat(e.SinalFech) || 0 : Math.round(total * 0.30 * 100) / 100;
+  const saldo = (gravado && e.SaldoFech !== '' && e.SaldoFech != null)
+    ? parseFloat(e.SaldoFech) || 0
+    : Math.max(0, total - sinal);
+
+  box.innerHTML =
+    '<div class="val-linha"><span>Total dos serviços</span><strong>' + fmtVal(total) + '</strong></div>' +
+    '<div class="val-linha"><span>Sinal' + (gravado ? '' : ' (30%)') + '</span><strong>' + fmtVal(sinal) + '</strong></div>' +
+    '<div class="val-linha"><span>Restante no dia</span><strong>' + fmtVal(saldo) + '</strong></div>' +
+    (gravado ? '' : '<div class="val-nota">Prévia — o sinal só é lançado no financeiro ao fechar o orçamento.</div>');
+}
+
 // ── Local do atendimento no painel do orçamento (studio × domicílio) ──
 // Mesma semântica do painel de fechamento, mas editável a qualquer momento:
 // o endereço pode chegar antes ou depois do orçamento ser fechado.
@@ -1492,10 +1559,24 @@ function slotResumoLinha(s) {
   const val = parseFloat(s.valorUnit) || 0;
   const dur = parseInt(s.duracao) || defaultDuracao(s.servico, s._cacheada);
   const parts = [];
-  if (val > 0 || qtd > 1) parts.push(qtd + ' × R$ ' + fmt(val) + ' = R$ ' + fmt(qtd * val));
+  if (val > 0 || qtd > 1) parts.push(qtd + ' × ' + fmtVal(val) + ' = ' + fmtVal(qtd * val));
   parts.push(fmtDur(dur) + (qtd > 1 ? ' cada' : ''));
   if (s.horario) parts.push(fmtHorario(s.horario) + '–' + addMinutesFmt(s.horario, qtd * dur));
   return parts.join(' · ');
+}
+
+// Dia da semana da data escolhida — "segunda-feira", "sábado"…
+function diaDaSemana(dataStr) {
+  if (!dataStr || !slotDateYearValid(dataStr)) return '';
+  const [y, m, d] = dataStr.split('-').map(Number);
+  if (!y || !m || !d) return '';
+  return DIAS[new Date(y, m - 1, d).getDay()] || '';
+}
+
+// Resumo da linha com o dia da semana em destaque na frente
+function slotResumoHTML(s) {
+  const dia = diaDaSemana(s.data);
+  return (dia ? '<span class="slot-dia">' + esc(dia) + '</span>' : '') + esc(slotResumoLinha(s));
 }
 
 // ── Detecção de conflito de agenda (data + horário) ──────────────
@@ -1670,7 +1751,7 @@ function renderSlotRow(s, idx, count, syncFn, removeFn) {
           buildSlotDateSelects(s, syncFn) +
           '<input class="form-input slot-sel-hora" type="time" placeholder="Início" value="' + (s.horario || '') + '" oninput="' + syncFn + '(' + s.id + ', \'horario\', this.value)">' +
         '</div>' +
-        '<div class="slot-resumo" id="resumo-' + s.id + '">' + esc(slotResumoLinha(s)) + '</div>' +
+        '<div class="slot-resumo" id="resumo-' + s.id + '">' + slotResumoHTML(s) + '</div>' +
         '<div class="slot-conflict" id="conflict-' + s.id + '">' + slotConflictHTML(s, slotCheckExcludeId) + '</div>' +
       '</div>' +
       (count > 1
@@ -1682,7 +1763,7 @@ function renderSlotRow(s, idx, count, syncFn, removeFn) {
 // Atualiza só a linha-resumo (sem re-render — preserva o foco nos inputs)
 function updateSlotResumo(s) {
   const el = document.getElementById('resumo-' + s.id);
-  if (el) el.textContent = slotResumoLinha(s);
+  if (el) el.innerHTML = slotResumoHTML(s);
   const cf = document.getElementById('conflict-' + s.id);
   if (cf) cf.innerHTML = slotConflictHTML(s, slotCheckExcludeId);
 }
@@ -1949,12 +2030,10 @@ function openAction(id) {
   const _vData = document.getElementById('act-vital-data');
   const _vHora = document.getElementById('act-vital-hora');
   const _vVal  = document.getElementById('act-vital-valor');
-  const _vSvc  = document.getElementById('act-vital-svc');
   if (_vData) _vData.textContent = e.DataEvento ? fmtDate(e.DataEvento) : '—';
   if (_vHora) _vHora.textContent = _vhoras.length ? fmtHorario(_vhoras[0]) : '—';
   const _vNum = parseFloat(e.Status === 'Fechado' ? (e.ValorFechado || e.ValorProp) : e.ValorProp) || 0;
   if (_vVal) _vVal.textContent = _vNum ? fmtVal(_vNum) : '—';
-  if (_vSvc) _vSvc.textContent = e.Servico || '—';
 
   syncStatusSegUI(e.Status);
 
@@ -1978,6 +2057,7 @@ function openAction(id) {
 
   renderActEditSlots(e);   // define actEditSlots — respTotal('act') depende dele
   updateRespResumo('act');
+  renderActValResumo();
   renderActSlots(e);
   renderActGcalSection(e);
   renderActWaSection(e);
@@ -2000,6 +2080,7 @@ async function applyStatusValue(newStatus) {
   renderActSlots(e);
   renderActGcalSection(e);
   renderActWaSection(e);
+  renderActValResumo();
   cacheEntries();
   render();
 
@@ -3009,16 +3090,15 @@ function recalcActEdit() {
   const vData = document.getElementById('act-vital-data');
   const vHora = document.getElementById('act-vital-hora');
   const vVal  = document.getElementById('act-vital-valor');
-  const vSvc  = document.getElementById('act-vital-svc');
   if (vData) vData.textContent = datas.length ? fmtDate(datas[0]) : '—';
   if (vHora) vHora.textContent = horas.length ? fmtHorario(horas[0]) : '—';
   if (vVal)  vVal.textContent  = total ? fmtVal(total) : '—';
-  if (vSvc)  vSvc.textContent  = validos.length ? descreveSlots(validos) : '—';
 
   const enviado = document.getElementById('act-val-enviado');
   if (enviado) enviado.value = total || '';
 
   updateRespResumo('act');
+  renderActValResumo();
 }
 
 function renderActGcalSection(e) {
