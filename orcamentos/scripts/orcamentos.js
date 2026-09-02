@@ -1459,20 +1459,30 @@ function toggleNoPhone(checked) {
   else { inp.disabled = false; inp.placeholder = '11 98765-4321'; }
 }
 
-// `focar` = false ao abrir o orçamento: o campo agora fica sempre visível no fim
-// do painel, e dar foco nele jogaria o painel inteiro para baixo na abertura.
+// Trabalho para equipe de terceiros marcado no painel do orçamento
+function isActEquipe() {
+  const chk = document.getElementById('act-eq-chk');
+  return !!(chk && chk.checked);
+}
+
+// `focar` = false ao abrir o orçamento: dar foco no campo abriria a seção
+// e jogaria o painel inteiro para baixo já na abertura.
 function toggleActEquipeInput(checked, focar) {
-  const inp = document.getElementById('act-equipe');
-  if (!inp) return;
-  if (checked) { inp.style.display = ''; inp.style.marginTop = '8px'; if (focar !== false) inp.focus(); }
-  else { inp.style.display = 'none'; inp.value = ''; }
-  // Trabalho para equipe de terceiros: quem cobra é a equipe, então o valor
-  // enviado e o comprovante do sinal não são desta casa.
-  const toToggle = ['act-valores-sec', 'act-comp-wrap'];
-  toToggle.forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.style.display = checked ? 'none' : '';
-  });
+  const wrap = document.getElementById('act-eq-nome-wrap');
+  const inp  = document.getElementById('act-equipe');
+  if (wrap) wrap.style.display = checked ? '' : 'none';
+  if (inp) {
+    if (!checked) inp.value = '';
+    else if (focar !== false) inp.focus();
+  }
+  // Trabalho para equipe de terceiros: quem recebe o sinal é a equipe, então
+  // não há sinal a cobrar aqui nem comprovante de sinal para guardar. Os
+  // valores continuam visíveis — com o sinal zerado e o restante recalculado.
+  const comp = document.getElementById('act-comp-wrap');
+  if (comp) comp.style.display = checked ? 'none' : '';
+  renderActValResumo();
+  renderActOrcaMsg();
+  renderActSecMetas();
 }
 
 // ── Endereço × local ────────────────────────────────────────
@@ -1509,33 +1519,72 @@ function resetEndereco(prefix, enderecoSalvo) {
   if (inp) inp.value = '';
 }
 
+// Total usado na prévia de valores e na mensagem de orçamento.
+// Num orçamento em aberto quem manda é o "valor enviado à cliente" — é ele que
+// vai para `ValorProp` ao salvar, e `recalcActEdit` já o mantém sincronizado com
+// o total dos serviços. Num fechado vale o valor fechado (não editável aqui).
+function actTotalPrevisto() {
+  const e = entries.find(x => String(x.ID) === String(activeId));
+  if (e && e.Status !== 'Fechado') {
+    const digitado = parseFloat((document.getElementById('act-val-enviado') || {}).value);
+    if (digitado) return digitado;
+  }
+  return respTotal('act');
+}
+
+// Prévia ao vivo enquanto o valor enviado à cliente é digitado
+function onActValEnviadoInput() {
+  renderActValResumo();
+  renderActOrcaMsg();
+  renderActSecMetas();
+}
+
 // Sinal e restante do orçamento, calculados ao vivo — dá para conferir o plano
 // de pagamento sem passar pelo "Fechar e Agendar Tudo". Num orçamento já fechado
 // mostra o que foi gravado; nos demais, a prévia de 30%.
+// Trabalho para equipe de terceiros zera o sinal: quem recebe é a equipe.
 function renderActValResumo() {
   const box = document.getElementById('act-val-resumo');
   if (!box) return;
   const e = entries.find(x => String(x.ID) === String(activeId));
-  const total = e ? respTotal('act') : 0;
+  const total = e ? actTotalPrevisto() : 0;
   if (!total) { box.innerHTML = ''; return; }
 
-  const gravado = e.SinalFech !== undefined && e.SinalFech !== '' && e.SinalFech !== null;
-  const sinal = gravado ? parseFloat(e.SinalFech) || 0 : Math.round(total * 0.30 * 100) / 100;
-  const saldo = (gravado && e.SaldoFech !== '' && e.SaldoFech != null)
-    ? parseFloat(e.SaldoFech) || 0
-    : Math.max(0, total - sinal);
+  const equipe  = isActEquipe();
+  const gravado = !equipe && e.SinalFech !== undefined && e.SinalFech !== '' && e.SinalFech !== null;
+  const sinal = equipe ? 0
+    : (gravado ? parseFloat(e.SinalFech) || 0 : Math.round(total * 0.30 * 100) / 100);
+  const saldo = equipe ? total
+    : ((gravado && e.SaldoFech !== '' && e.SaldoFech != null)
+        ? parseFloat(e.SaldoFech) || 0
+        : Math.max(0, total - sinal));
 
   box.innerHTML =
-    '<div class="val-linha"><span>Total dos serviços</span><strong>' + fmtVal(total) + '</strong></div>' +
-    '<div class="val-linha"><span>Sinal' + (gravado ? '' : ' (30%)') + '</span><strong>' + fmtVal(sinal) + '</strong></div>' +
-    '<div class="val-linha"><span>Restante no dia</span><strong>' + fmtVal(saldo) + '</strong></div>' +
-    (gravado ? '' : '<div class="val-nota">Prévia — o sinal só é lançado no financeiro ao fechar o orçamento.</div>');
+    '<div class="val-total-lbl">Total dos serviços</div>' +
+    '<div class="val-total">' + fmtVal(total) + '</div>' +
+    '<div class="val-split">' +
+      '<div class="val-cel' + (equipe ? ' zerado' : '') + '">' +
+        '<span class="val-cel-lbl">Sinal' + (equipe || gravado ? '' : ' (30%)') + '</span>' +
+        '<span class="val-cel-val">' + fmtVal(sinal) + '</span>' +
+      '</div>' +
+      '<div class="val-cel">' +
+        '<span class="val-cel-lbl">Restante no dia</span>' +
+        '<span class="val-cel-val">' + fmtVal(saldo) + '</span>' +
+      '</div>' +
+    '</div>' +
+    (equipe
+      ? '<div class="val-nota alerta">Trabalho para equipe de terceiros — não há sinal a receber aqui.</div>'
+      : (gravado ? '' : '<div class="val-nota">Prévia — o sinal só é lançado no financeiro ao fechar o orçamento.</div>'));
 }
 
 // ── Local do atendimento no painel do orçamento (studio × domicílio) ──
 // Mesma semântica do painel de fechamento, mas editável a qualquer momento:
 // o endereço pode chegar antes ou depois do orçamento ser fechado.
-function setActLocal(btn) { syncActLocalUI(btn.dataset.actlocal); }
+function setActLocal(btn) {
+  syncActLocalUI(btn.dataset.actlocal);
+  renderActOrcaMsg();
+  renderActSecMetas();
+}
 
 function syncActLocalUI(tipo) {
   actLocal = tipo === 'domicilio' ? 'domicilio' : 'studio';
@@ -2037,13 +2086,17 @@ function openAction(id) {
 
   syncStatusSegUI(e.Status);
 
+  // Todas as seções começam recolhidas — a tela abre limpa, mostrando só
+  // os títulos e o resumo de cada um.
+  collapseActSecs();
+  msgOrcaEditada = false;
+
   document.getElementById('act-val-enviado').value = e.ValorProp || '';
   document.getElementById('act-obs').value      = entryCleanObs(e);
   const actEqChk = document.getElementById('act-eq-chk');
   const actEqInp = document.getElementById('act-equipe');
   if (actEqChk) actEqChk.checked = !!(e.Equipe);
-  if (actEqInp) { actEqInp.value = e.Equipe || ''; actEqInp.style.display = e.Equipe ? '' : 'none'; if (e.Equipe) actEqInp.style.marginTop = '8px'; }
-  toggleActEquipeInput(!!(e.Equipe), false);
+  if (actEqInp) actEqInp.value = e.Equipe || '';
 
   const actCach = document.getElementById('act-cacheada');
   if (actCach) actCach.checked = !!e.Cacheada;
@@ -2057,12 +2110,13 @@ function openAction(id) {
 
   renderActEditSlots(e);   // define actEditSlots — respTotal('act') depende dele
   updateRespResumo('act');
-  renderActValResumo();
   renderActSlots(e);
   renderActGcalSection(e);
   renderActWaSection(e);
   renderActCompSection(String(id));
   renderActPropostaSection(e);
+  // Depois dos slots: o resumo de valores e a mensagem dependem do total ao vivo
+  toggleActEquipeInput(!!(e.Equipe), false);
   openPanel('panel-action');
 }
 
@@ -2081,6 +2135,8 @@ async function applyStatusValue(newStatus) {
   renderActGcalSection(e);
   renderActWaSection(e);
   renderActValResumo();
+  renderActOrcaMsg();
+  renderActSecMetas();
   cacheEntries();
   render();
 
@@ -2122,10 +2178,50 @@ function setStatusSub(btn) {
   syncStatusSegUI(btn.dataset.s);
 }
 
-// Accordion (seções recolhíveis) do action sheet
-function toggleActAcc(head) {
-  const acc = head.closest('.act-acc');
-  if (acc) acc.classList.toggle('open');
+// Accordion (seções recolhíveis) do action sheet.
+// Todas as seções do painel usam o mesmo componente e abrem de forma
+// independente — `openAction` deixa todas fechadas ao abrir um orçamento.
+function toggleActSec(hdr) {
+  const sec = hdr.closest('.act-sec');
+  if (sec) sec.classList.toggle('open');
+}
+
+// Fecha todas as seções — chamado ao trocar de orçamento, para a tela
+// começar limpa em vez de herdar o que estava aberto no anterior.
+function collapseActSecs() {
+  document.querySelectorAll('#panel-action .act-sec').forEach(s => s.classList.remove('open'));
+}
+
+// Resumo curto ao lado de cada título fechado: dá para conferir a seção
+// sem abrir. Vazio some (`.act-sec-meta:empty`).
+function renderActSecMetas() {
+  const e = entries.find(x => String(x.ID) === String(activeId));
+  if (!e) return;
+  const set = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt || ''; };
+
+  const rows  = (e.Status !== 'Fechado' && actEditSlots.length) ? actEditSlots : entrySlots(e);
+  const datas = Object.keys(rows.reduce((acc, s) => { if (s.data) acc[s.data] = 1; return acc; }, {}));
+  const atend = [];
+  if (datas.length) atend.push(datas.length + (datas.length === 1 ? ' data' : ' datas'));
+  atend.push(actLocal === 'domicilio' ? 'Domicílio' : 'Studio');
+  set('act-meta-atend', atend.join(' · '));
+
+  const total = actTotalPrevisto();
+  set('act-meta-val', total ? fmtVal(total) : '—');
+
+  const eqNome = (document.getElementById('act-equipe') || {}).value || '';
+  set('act-meta-eq', isActEquipe() ? (eqNome.trim() || 'Sim') : 'Não');
+
+  const obs = (document.getElementById('act-obs') || {}).value || '';
+  set('act-meta-obs', obs.trim() ? 'Preenchido' : 'Vazio');
+
+  const nComp = getComprovantesArray(e).filter(c => c.categoria === 'sinal').length;
+  set('act-meta-comp', nComp ? nComp + (nComp === 1 ? ' arquivo' : ' arquivos') : 'Pendente');
+
+  const nProp = (actPropostas || []).length;
+  set('act-meta-prop', nProp ? nProp + (nProp === 1 ? ' arquivo' : ' arquivos') : 'Nenhuma');
+
+  set('act-meta-msg', msgOrcaEditada ? 'Editada' : 'Pronta');
 }
 
 // Edita a data de cadastro/recebimento do orçamento (DataPedido).
@@ -2290,6 +2386,17 @@ function abrirFechamento() {
   document.getElementById('fech-total').value = totalFinal || '';
   calcFechSinal();
 
+  // Trabalho para equipe de terceiros: o campo do sinal fica travado em zero —
+  // a cliente acerta direto com a equipe, não há sinal a receber aqui.
+  const sinalInp = document.getElementById('fech-sinal');
+  if (sinalInp) {
+    const equipeTerceiros = !!e.Equipe;
+    sinalInp.readOnly = equipeTerceiros;
+    sinalInp.classList.toggle('input-readonly', equipeTerceiros);
+    sinalInp.placeholder = equipeTerceiros ? 'sem sinal' : 'auto 30%';
+    if (equipeTerceiros) { sinalInp.value = ''; calcFechSaldo(); }
+  }
+
   // Local: o já gravado no orçamento manda; senão deduz do serviço; senão Studio.
   // O serviço do orçamento vem antes do da linha porque, num orçamento sem slots
   // gravados, a linha nasce com o primeiro serviço do catálogo — que é chute.
@@ -2441,6 +2548,14 @@ function setFechSinalStatus(btn) {
 
 function calcFechSinal() {
   const total = parseFloat(document.getElementById('fech-total').value) || 0;
+  // Trabalho para equipe de terceiros: quem recebe o sinal é a equipe, então
+  // não há sinal a cobrar aqui — nem por engano, nem por edição manual.
+  const e = entries.find(x => String(x.ID) === String(activeId));
+  if (e && e.Equipe) {
+    document.getElementById('fech-sinal').value = '';
+    calcFechSaldo();
+    return;
+  }
   if (!fechSinalManual) {
     const sinal = Math.round(total * 0.30 * 100) / 100;
     document.getElementById('fech-sinal').value = sinal ? sinal.toFixed(2) : '';
@@ -3099,6 +3214,8 @@ function recalcActEdit() {
 
   updateRespResumo('act');
   renderActValResumo();
+  renderActOrcaMsg();
+  renderActSecMetas();
 }
 
 function renderActGcalSection(e) {
@@ -3135,6 +3252,105 @@ function renderActGcalSection(e) {
     if (btn) { btn.textContent = '📅 Adicionar ao Google Agenda'; btn.classList.remove('ok'); btn.disabled = false; }
     if (res) { res.className = 'gcal-status'; res.textContent = ''; }
   }
+}
+
+// ══════════════════════════════════════════════════════════
+//  MENSAGEM DE ORÇAMENTO PARA WHATSAPP
+//  Resumo do que foi orçado, para enviar ANTES de fechar — principalmente
+//  quando há várias datas. Não confundir com buildConfirmacaoMessage(), que
+//  é a confirmação do atendimento já agendado (só orçamentos fechados).
+//  A mensagem é editável: o que for digitado à mão sobrevive aos recálculos
+//  até o botão ↺ (regerarMsgOrcamento) pedir uma nova.
+// ══════════════════════════════════════════════════════════
+let msgOrcaEditada = false;
+
+function marcarMsgOrcaEditada() {
+  msgOrcaEditada = true;
+  renderActSecMetas();
+}
+
+function buildOrcamentoMessage(e) {
+  if (!e) return '';
+
+  // Linhas agrupadas (com qtd), não slots atômicas: "3× Maquiagem" numa linha só
+  const rows = (e.Status !== 'Fechado' && actEditSlots.length)
+    ? actEditSlots.filter(s => s.servico)
+    : collapseSlots(entrySlots(e), !!e.Cacheada);
+
+  const total  = actTotalPrevisto() || parseFloat(e.ValorProp) || 0;
+  const equipe = isActEquipe();
+  const sinal  = equipe ? 0 : Math.round(total * 0.30 * 100) / 100;
+  const saldo  = Math.max(0, total - sinal);
+
+  const L = [];
+  L.push('Oi, ' + (e.Cliente || '') + '! Tudo bem? 💕');
+  L.push('');
+  L.push('Segue o resumo do orçamento:');
+
+  const porData = {}, ordem = [];
+  rows.forEach(s => {
+    const key = s.data || '__semdata__';
+    if (!porData[key]) { porData[key] = []; ordem.push(key); }
+    porData[key].push(s);
+  });
+  ordem.sort();
+
+  ordem.forEach(key => {
+    L.push('');
+    L.push('📅 ' + (key === '__semdata__' ? 'Data a combinar' : fmtDateWeekFull(key)));
+    porData[key].forEach(s => {
+      const qtd  = slotQtd(s);
+      const unit = parseFloat(s.valorUnit) || 0;
+      const nome = servicoCurto(s.servico) || s.servico || 'Serviço';
+      const hora = s.horario ? ' · ' + fmtHorario(s.horario) : '';
+      L.push('• ' + (qtd > 1 ? qtd + '× ' : '') + nome + ' — ' + fmtVal(unit * qtd) + hora);
+    });
+  });
+
+  // Onde acontece só entra quando é em domicílio ou o studio tem endereço
+  const localTipo = actLocal || e.LocalTipo || 'studio';
+  L.push('');
+  L.push(localTipo === 'domicilio' ? 'Atendimento em domicílio.' : 'Atendimento no studio.');
+
+  L.push('');
+  L.push('Valor total: ' + fmtVal(total));
+  if (sinal > 0) {
+    L.push('Sinal: ' + fmtVal(sinal));
+    L.push('Restante: ' + fmtVal(saldo));
+  }
+  L.push('');
+  L.push('Se estiver tudo certinho, me avisa para seguirmos com a confirmação da data! 💕');
+  return L.join('\n');
+}
+
+// Repinta a mensagem — respeita uma edição manual até o ↺
+function renderActOrcaMsg() {
+  const ta = document.getElementById('act-orca-msg');
+  if (!ta || msgOrcaEditada) return;
+  const e = entries.find(x => String(x.ID) === String(activeId));
+  if (!e) return;
+  ta.value = buildOrcamentoMessage(e);
+}
+
+function regerarMsgOrcamento() {
+  msgOrcaEditada = false;
+  renderActOrcaMsg();
+  renderActSecMetas();
+  toast('↺ Mensagem refeita');
+}
+
+function copiarMsgOrcamento() {
+  const ta = document.getElementById('act-orca-msg');
+  if (!ta) return;
+  navigator.clipboard.writeText(ta.value).then(() => toast('📋 Mensagem copiada'));
+}
+
+function enviarMsgOrcamento() {
+  const e  = entries.find(x => String(x.ID) === String(activeId));
+  const ta = document.getElementById('act-orca-msg');
+  if (!e || !ta) return;
+  const url = 'https://wa.me/' + formatPhone(e.Telefone) + '?text=' + encodeURIComponent(ta.value);
+  window.open(url, '_blank');
 }
 
 // Reconstrói a mensagem de confirmação do WhatsApp de um orçamento já fechado,
@@ -3211,6 +3427,7 @@ function renderActPropostas() {
         <button class="delbtn" style="width:24px;height:24px;flex-shrink:0;padding:0;border:none;background:none;cursor:pointer" type="button" onclick="deleteActProposta('${esc(p.fileId || '')}');" title="Remover">${trash}</button>
       </div>`).join('');
   }
+  renderActSecMetas();
 }
 
 async function uploadActProposal() {
@@ -3451,6 +3668,7 @@ function renderActCompSection(id) {
     '</div>';
 
   el.innerHTML = html;
+  renderActSecMetas();
 }
 
 async function handleComprovanteUpload(event, id) {

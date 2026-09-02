@@ -722,22 +722,49 @@
     }
     .act-inline-input:focus { border-color: var(--purple); background: #fff; }
 
-    /* Seções sempre visíveis do orçamento (informação principal) */
+    /* ── Seções recolhíveis do orçamento ──────────────────
+       Todas as seções do painel são accordions independentes, fechados por
+       padrão (openAction). Só identificação, status e as ações de fechamento
+       ficam fora — é o que se mexe em todo orçamento.
+       O título fechado carrega um resumo curto (.act-sec-meta): dá para
+       conferir a seção sem abrir. */
     .act-sec {
-      margin: 0 14px 14px; padding: 15px;
+      margin: 0 14px 9px;
       background: var(--card); border: 0.5px solid var(--border);
-      border-radius: 16px; box-shadow: 0 1px 3px rgba(56,25,11,0.05);
+      border-radius: 14px; overflow: hidden;
+      transition: box-shadow 0.18s, border-color 0.18s;
     }
-    .act-sec-hdr { margin-bottom: 13px; }
+    .act-sec.open { box-shadow: 0 2px 10px rgba(56,25,11,0.07); border-color: #e3d5cb; }
+    .act-sec-hdr {
+      display: flex; align-items: center; gap: 10px; width: 100%;
+      padding: 14px; background: none; border: none; cursor: pointer;
+      font-family: inherit; text-align: left; color: inherit;
+    }
+    .act-sec-hdr:focus-visible { outline: 2px solid var(--purple); outline-offset: -2px; }
     .act-sec-title {
-      font-size: 0.86rem; font-weight: 800; color: var(--brown-d); line-height: 1.25;
+      flex: 1; min-width: 0;
+      font-size: 0.72rem; font-weight: 800; color: var(--brown-d);
+      text-transform: uppercase; letter-spacing: 0.11em; line-height: 1.25;
     }
-    .act-sec-sub {
-      font-size: 0.68rem; color: var(--muted); line-height: 1.45; margin-top: 3px;
+    .act-sec-meta {
+      font-size: 0.7rem; font-weight: 700; color: var(--muted);
+      white-space: nowrap; font-variant-numeric: tabular-nums;
     }
+    .act-sec-meta:empty { display: none; }
+    .act-sec.open .act-sec-meta { opacity: 0; }
+    .act-sec-body { display: none; padding: 2px 14px 15px; border-top: 1px solid var(--border); }
+    .act-sec.open .act-sec-body { display: block; animation: actSecIn 0.18s ease; }
+    .act-sec-body > *:first-child { margin-top: 13px; }
     /* O último campo da seção não empurra o fundo do cartão */
     .act-sec-body > *:last-child { margin-bottom: 0; }
     .act-sec-body > div:last-child > .form-group:last-child { margin-bottom: 0; }
+    @keyframes actSecIn {
+      from { opacity: 0; transform: translateY(-3px); }
+      to   { opacity: 1; transform: none; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .act-sec.open .act-sec-body { animation: none; }
+    }
 
     /* Campos do painel do orçamento são mais compactos que os dos formulários
        de cadastro: aqui a tela é de consulta e ajuste rápido, não de digitação
@@ -760,6 +787,9 @@
       font-size: 0.62rem; font-weight: 800; color: var(--muted);
       text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 8px;
     }
+
+    /* Status fica fora dos accordions — é o campo mais mexido do painel */
+    .act-statusbar { margin: 0 14px 12px; }
 
     /* Segmented control de status (1 escolha, sem 6 blocos coloridos) */
     .seg-status {
@@ -786,21 +816,20 @@
     }
     .seg-sub button.on { border-color: var(--red); background: var(--red-l); color: var(--red); }
 
-    /* Accordions — só informação secundária (comprovante, proposta, mensagem) */
-    .act-acc {
-      margin: 0 14px 10px; background: var(--surface-2);
-      border: 0.5px solid var(--border); border-radius: 14px; overflow: hidden;
-    }
-    .act-acc-head {
-      display: flex; align-items: center; gap: 10px;
-      padding: 13px 14px; cursor: pointer; user-select: none;
-    }
-    .act-acc-title { flex: 1; font-size: 0.86rem; font-weight: 700; color: var(--text); }
     .act-chev { width: 15px; height: 15px; flex-shrink: 0; color: var(--text-subtle); transition: transform 0.2s; }
-    .act-acc.open .act-chev { transform: rotate(90deg); }
-    .act-acc-body { display: none; padding: 2px 14px 14px; border-top: 1px solid var(--border); }
-    .act-acc.open .act-acc-body { display: block; }
-    .act-acc-body .form-group:first-child { margin-top: 12px; }
+    .act-sec.open .act-chev { transform: rotate(90deg); color: var(--purple); }
+
+    /* ── Mensagem de orçamento para WhatsApp ─────────────── */
+    .msg-orca { min-height: 240px; font-size: 0.83rem; line-height: 1.5; background: #fff; }
+    .msg-orca-actions { display: flex; gap: 8px; }
+    .msg-orca-actions .btn-copy { flex: 1; margin-top: 0; }
+    .btn-icon {
+      flex-shrink: 0; padding: 11px 14px;
+      background: transparent; color: var(--muted);
+      border: 1.5px solid var(--border); border-radius: 10px;
+      font-size: 0.95rem; font-weight: 700; cursor: pointer; font-family: inherit;
+    }
+    .btn-icon:active { background: var(--surface-2); }
 
     /* ── TOGGLE BUTTONS ─────────────────────────────────────── */
     .toggle-row { display: flex; gap: 8px; }
@@ -949,23 +978,36 @@
     .slot-date-row .form-input { flex: 1 1 0; min-width: 54px; padding-left: 7px; padding-right: 5px; }
     .slot-date-row .slot-sel-hora { flex: 1 1 72px; min-width: 72px; }
 
-    /* ── RESUMO DE VALORES (sinal/restante antes de fechar) ── */
+    /* ── RESUMO DE VALORES (sinal/restante antes de fechar) ──
+       Total é o número que se procura primeiro, então leva o maior peso;
+       sinal e restante ficam em duas células logo abaixo. */
     .val-resumo {
-      margin-top: 12px; padding: 11px 12px;
-      background: var(--surface-2); border-radius: 12px;
+      margin-top: 13px; padding: 13px 14px;
+      background: var(--surface-2); border-radius: 13px;
     }
     .val-resumo:empty { display: none; }
-    .val-linha {
-      display: flex; align-items: baseline; justify-content: space-between;
-      gap: 12px; font-size: 0.76rem; color: var(--muted);
-      padding: 3px 0;
+    .val-total-lbl {
+      font-size: 0.58rem; font-weight: 800; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.1em;
     }
-    .val-linha strong {
-      font-size: 0.86rem; font-weight: 800; color: var(--brown-d);
+    .val-total {
+      font-size: 1.72rem; font-weight: 800; color: var(--brown-d);
+      line-height: 1.05; margin-top: 1px; letter-spacing: -0.02em;
       font-variant-numeric: tabular-nums;
     }
-    .val-linha + .val-linha { border-top: 1px solid var(--border); }
-    .val-nota { font-size: 0.64rem; color: var(--muted); line-height: 1.45; margin-top: 7px; }
+    .val-split { display: flex; gap: 9px; margin-top: 12px; }
+    .val-cel { flex: 1; min-width: 0; background: var(--card); border-radius: 10px; padding: 9px 10px; }
+    .val-cel-lbl {
+      display: block; font-size: 0.56rem; font-weight: 800; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.06em;
+    }
+    .val-cel-val {
+      display: block; font-size: 1rem; font-weight: 800; color: var(--brown-d);
+      margin-top: 2px; font-variant-numeric: tabular-nums;
+    }
+    .val-cel.zerado .val-cel-val { color: var(--text-subtle); }
+    .val-nota { font-size: 0.64rem; color: var(--muted); line-height: 1.45; margin-top: 9px; }
+    .val-nota.alerta { color: #8a5800; font-weight: 600; }
     /* ── Aviso de conflito de agenda no slot ── */
     .slot-conflict { display: flex; flex-direction: column; gap: 4px; }
     .slot-conflict:empty { display: none; }

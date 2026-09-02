@@ -294,39 +294,45 @@
     </div>
   </div>
 
-  <!-- ── STATUS (segmented control) — primeira coisa depois da identificação ── -->
-  <div class="act-sec">
-    <div class="act-sec-hdr">
-      <div class="act-sec-title">Status do pedido</div>
+  <!-- ── STATUS (segmented control) — fora dos accordions: é o campo mais mexido ── -->
+  <div class="act-statusbar">
+    <div class="seg-status" id="status-seg">
+      <button data-s="Novo Pedido"       onclick="setStatusSeg(this)">Novo</button>
+      <button data-s="Orçamento Enviado" onclick="setStatusSeg(this)">Enviado</button>
+      <button data-s="Fechado"           onclick="setStatusSeg(this)">Fechado</button>
+      <button data-seg="perdido" class="seg-danger" onclick="setStatusSeg(this)">Perdido</button>
     </div>
-    <div class="act-sec-body">
-      <div class="seg-status" id="status-seg">
-        <button data-s="Novo Pedido"       onclick="setStatusSeg(this)">Novo</button>
-        <button data-s="Orçamento Enviado" onclick="setStatusSeg(this)">Enviado</button>
-        <button data-s="Fechado"           onclick="setStatusSeg(this)">Fechado</button>
-        <button data-seg="perdido" class="seg-danger" onclick="setStatusSeg(this)">Perdido</button>
-      </div>
-      <div class="seg-sub" id="status-sub">
-        <button data-s="Perdido - Sem Resposta"        onclick="setStatusSub(this)">Sem resposta</button>
-        <button data-s="Perdido - Sem Disponibilidade" onclick="setStatusSub(this)">Sem disponib.</button>
-        <button data-s="Perdido - Outros motivos"      onclick="setStatusSub(this)">Outros</button>
-      </div>
+    <div class="seg-sub" id="status-sub">
+      <button data-s="Perdido - Sem Resposta"        onclick="setStatusSub(this)">Sem resposta</button>
+      <button data-s="Perdido - Sem Disponibilidade" onclick="setStatusSub(this)">Sem disponib.</button>
+      <button data-s="Perdido - Outros motivos"      onclick="setStatusSub(this)">Outros</button>
     </div>
   </div>
 
-  <!-- ★ FECHAR E AGENDAR TUDO ★ -->
-  <div id="act-fech-btn-area" style="padding: 0 14px 14px;">
+  <!-- ★ AÇÕES — fechamento e agenda ficam fora dos accordions ★ -->
+  <div id="act-fech-btn-area" style="padding: 0 14px 12px;">
     <button class="btn-fechar" onclick="abrirFechamento()">Fechar e Agendar Tudo</button>
   </div>
+  <div id="act-gcal-section" style="display:none; padding: 0 14px 12px;">
+    <button class="btn-gcal" id="act-gcal-btn" onclick="adicionarAgendaDeAction()" style="margin-top:0;">📅 Adicionar ao Google Agenda</button>
+    <div id="act-gcal-result" class="gcal-status"></div>
+  </div>
 
-  <!-- ── Atendimento: local, endereço, quem executa e quando ──
-       Mesma ordem do painel de fechamento. Os dois editores de data/horário
-       (fechado × em aberto) ficam aqui dentro; o render() mostra um por vez. -->
-  <div class="act-sec" id="act-atend-sec">
-    <div class="act-sec-hdr">
-      <div class="act-sec-title">Atendimento</div>
-      <div class="act-sec-sub">Onde acontece, quem executa e quando.</div>
-    </div>
+  <!-- ══════════════════════════════════════════════════════
+       SEÇÕES RECOLHÍVEIS — todas fecham por padrão (openAction).
+       Ordem fixa: Atendimento · Valores · Trabalho para equipe ·
+       Observações · Comprovante do sinal · Mensagem para WhatsApp.
+       O título fechado carrega um resumo curto (.act-sec-meta) para
+       não ser preciso abrir a seção só para conferir.
+       ══════════════════════════════════════════════════════ -->
+
+  <!-- ── 1. ATENDIMENTO ── -->
+  <section class="act-sec" id="act-atend-sec">
+    <button class="act-sec-hdr" type="button" onclick="toggleActSec(this)">
+      <span class="act-sec-title">Atendimento</span>
+      <span class="act-sec-meta" id="act-meta-atend"></span>
+      <svg class="act-chev" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
     <div class="act-sec-body">
       <div class="form-group">
         <label class="form-label">Local</label>
@@ -338,7 +344,6 @@
       <div class="form-group" id="act-addr-row">
         <label class="form-label" id="act-addr-lbl" for="act-addr">Endereço do studio</label>
         <input class="form-input" id="act-addr" type="text" placeholder="Rua, número, complemento, bairro" autocomplete="off">
-        <div class="chk-hint" id="act-addr-hint">Endereço fixo do studio — preenchido sozinho.</div>
       </div>
 
       <div id="act-resp-block"></div>
@@ -347,7 +352,6 @@
       <div id="act-slots-section" style="display:none;">
         <div class="act-section-label">Data e horário dos serviços</div>
         <div id="act-slots-list"></div>
-        <div class="chk-hint" id="act-slots-hint">Edite aqui se algum horário ficou faltando — salva automaticamente.</div>
       </div>
 
       <!-- Serviço, data e horário — orçamento em aberto (editor completo) -->
@@ -361,99 +365,119 @@
         <label class="form-label chk-lbl">
           <input type="checkbox" id="act-cacheada" onchange="toggleActCacheada(this.checked)"> ★ Cliente cacheada
         </label>
-        <div class="chk-hint">Sugere 3h de duração no atendimento (editável) e destaca o alerta no Google Agenda.</div>
       </div>
     </div>
-  </div>
+  </section>
 
-  <!-- ★ GOOGLE AGENDA (para fechados) ★ -->
-  <div id="act-gcal-section" style="display:none; padding: 0 14px 14px;">
-    <button class="btn-gcal" id="act-gcal-btn" onclick="adicionarAgendaDeAction()" style="margin-top:0;">📅 Adicionar ao Google Agenda</button>
-    <div id="act-gcal-result" class="gcal-status"></div>
-  </div>
-
-  <!-- ★ MENSAGEM WHATSAPP (para fechados) — abrir/fechar ★ -->
-  <div class="act-acc" id="act-wa-section" style="display:none;">
-    <div class="act-acc-head" onclick="toggleActAcc(this)">
-      <span class="act-acc-title">💬 Mensagem de confirmação</span>
-      <svg class="act-chev" viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    </div>
-    <div class="act-acc-body">
-      <div class="wa-bubble" id="act-wa-text" style="margin-top:12px;"></div>
-      <button class="btn-wa" onclick="sendWAAction()"><span>💬</span> Enviar pelo WhatsApp</button>
-      <button class="btn-copy" onclick="copiarMensagemAction()">📋 Copiar mensagem</button>
-    </div>
-  </div>
-
-  <!-- ── Valores ── -->
-  <div class="act-sec" id="act-valores-sec">
-    <div class="act-sec-hdr">
-      <div class="act-sec-title">Valores</div>
-    </div>
+  <!-- ── 2. VALORES ── -->
+  <section class="act-sec" id="act-valores-sec">
+    <button class="act-sec-hdr" type="button" onclick="toggleActSec(this)">
+      <span class="act-sec-title">Valores</span>
+      <span class="act-sec-meta" id="act-meta-val"></span>
+      <svg class="act-chev" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
     <div class="act-sec-body">
-      <div class="form-group" style="margin-bottom:0">
-        <label class="form-label">Valor enviado à cliente (R$)</label>
-        <input class="form-input" id="act-val-enviado" type="number" placeholder="0,00" step="0.01">
-        <div class="chk-hint">Valor informado à cliente no orçamento.</div>
+      <div class="form-group">
+        <label class="form-label" for="act-val-enviado">Valor enviado à cliente (R$)</label>
+        <input class="form-input" id="act-val-enviado" type="number" placeholder="0,00" step="0.01" oninput="onActValEnviadoInput()">
       </div>
-      <!-- Sinal e restante calculados ao vivo, antes de fechar -->
+      <!-- Total em destaque + sinal e restante calculados ao vivo -->
       <div class="val-resumo" id="act-val-resumo"></div>
     </div>
-  </div>
+  </section>
 
-  <!-- ── Observações ── -->
-  <div class="act-sec">
-    <div class="act-sec-hdr">
-      <div class="act-sec-title">Observações</div>
-    </div>
+  <!-- ── 3. TRABALHO PARA EQUIPE ── -->
+  <section class="act-sec" id="act-equipe-sec">
+    <button class="act-sec-hdr" type="button" onclick="toggleActSec(this)">
+      <span class="act-sec-title">Trabalho para equipe</span>
+      <span class="act-sec-meta" id="act-meta-eq"></span>
+      <svg class="act-chev" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
     <div class="act-sec-body">
-      <div class="form-group" style="margin-bottom:0">
-        <textarea class="form-input" id="act-obs" rows="3" placeholder="Anotações sobre esta cliente..."></textarea>
+      <label class="chk-lbl">
+        <input type="checkbox" id="act-eq-chk" onchange="toggleActEquipeInput(this.checked)"> Trabalho para equipe de terceiros
+      </label>
+      <div class="form-group" id="act-eq-nome-wrap" style="display:none; margin-top:11px;">
+        <label class="form-label" for="act-equipe">Com quem</label>
+        <input class="form-input" type="text" id="act-equipe" placeholder="Nome da pessoa ou equipe" autocomplete="off" oninput="renderActSecMetas()">
       </div>
     </div>
-  </div>
+  </section>
 
-  <!-- ── Equipe ── -->
-  <div class="act-sec">
-    <div class="act-sec-hdr">
-      <div class="act-sec-title">Equipe</div>
-      <div class="act-sec-sub">Equipe de outra pessoa. Quem executa o atendimento fica em <b>Atendimento</b>.</div>
-    </div>
+  <!-- ── 4. OBSERVAÇÕES ── -->
+  <section class="act-sec" id="act-obs-sec">
+    <button class="act-sec-hdr" type="button" onclick="toggleActSec(this)">
+      <span class="act-sec-title">Observações</span>
+      <span class="act-sec-meta" id="act-meta-obs"></span>
+      <svg class="act-chev" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
     <div class="act-sec-body">
-      <div class="form-group" style="margin-bottom:0">
-        <label class="form-label chk-lbl">
-          <input type="checkbox" id="act-eq-chk" onchange="toggleActEquipeInput(this.checked)"> ↑ Trabalho para equipe de terceiros
-        </label>
-        <div class="chk-hint">Marque quando <strong>você</strong> está atendendo para a equipe de outra pessoa.</div>
-        <input class="form-input" type="text" id="act-equipe" placeholder="Nome da equipe de terceiros" style="display:none" autocomplete="off">
+      <div class="form-group">
+        <textarea class="form-input" id="act-obs" rows="3" placeholder="Anotações sobre esta cliente..." oninput="renderActSecMetas()"></textarea>
       </div>
     </div>
-  </div>
+  </section>
 
-  <!-- ── ACCORDION: Comprovante do sinal ── -->
-  <div class="act-acc" id="act-comp-wrap">
-    <div class="act-acc-head" onclick="toggleActAcc(this)">
-      <span class="act-acc-title">🧾 Comprovante do sinal</span>
-      <svg class="act-chev" viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    </div>
-    <div class="act-acc-body">
-      <div id="act-comp-hint" style="font-size:0.7rem; color:var(--muted); margin-bottom:6px;">Restante é registrado no módulo Financeiro no dia do atendimento.</div>
+  <!-- ── 5. COMPROVANTE DO SINAL ── -->
+  <section class="act-sec" id="act-comp-wrap">
+    <button class="act-sec-hdr" type="button" onclick="toggleActSec(this)">
+      <span class="act-sec-title">Comprovante do sinal</span>
+      <span class="act-sec-meta" id="act-meta-comp"></span>
+      <svg class="act-chev" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <div class="act-sec-body">
       <div id="act-comp-content"></div>
       <input type="file" id="act-comp-input" style="display:none" accept="image/*,application/pdf">
     </div>
-  </div>
+  </section>
 
-  <!-- ── ACCORDION: Proposta (apenas Noivas) ── -->
-  <div class="act-acc" id="act-proposta-section" style="display:none;">
-    <div class="act-acc-head" onclick="toggleActAcc(this)">
-      <span class="act-acc-title">📄 Proposta enviada</span>
-      <svg class="act-chev" viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  <!-- ── 6. MENSAGEM PARA WHATSAPP ──
+       Resumo do orçamento para enviar ANTES de fechar. Editável: o que for
+       digitado à mão sobrevive à regeneração automática até o ↺. -->
+  <section class="act-sec" id="act-orcamsg-sec">
+    <button class="act-sec-hdr" type="button" onclick="toggleActSec(this)">
+      <span class="act-sec-title">Mensagem para WhatsApp</span>
+      <span class="act-sec-meta" id="act-meta-msg"></span>
+      <svg class="act-chev" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <div class="act-sec-body">
+      <div class="form-group">
+        <textarea class="form-input msg-orca" id="act-orca-msg" rows="14" oninput="marcarMsgOrcaEditada()"></textarea>
+      </div>
+      <div class="msg-orca-actions">
+        <button class="btn-copy" type="button" id="act-orca-copy" onclick="copiarMsgOrcamento()">📋 Copiar mensagem</button>
+        <button class="btn-icon" type="button" onclick="regerarMsgOrcamento()" title="Refazer a mensagem com os dados atuais">↺</button>
+      </div>
+      <button class="btn-wa" type="button" onclick="enviarMsgOrcamento()" style="margin-top:8px;"><span>💬</span> Enviar pelo WhatsApp</button>
     </div>
-    <div class="act-acc-body">
+  </section>
+
+  <!-- ── MENSAGEM DE CONFIRMAÇÃO (só orçamentos fechados) ── -->
+  <section class="act-sec" id="act-wa-section" style="display:none;">
+    <button class="act-sec-hdr" type="button" onclick="toggleActSec(this)">
+      <span class="act-sec-title">Mensagem de confirmação</span>
+      <span class="act-sec-meta">Fechado</span>
+      <svg class="act-chev" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <div class="act-sec-body">
+      <div class="wa-bubble" id="act-wa-text"></div>
+      <button class="btn-wa" onclick="sendWAAction()"><span>💬</span> Enviar pelo WhatsApp</button>
+      <button class="btn-copy" onclick="copiarMensagemAction()" style="margin-top:8px;">📋 Copiar mensagem</button>
+    </div>
+  </section>
+
+  <!-- ── PROPOSTA ENVIADA (só noivas) ── -->
+  <section class="act-sec" id="act-proposta-section" style="display:none;">
+    <button class="act-sec-hdr" type="button" onclick="toggleActSec(this)">
+      <span class="act-sec-title">Proposta enviada</span>
+      <span class="act-sec-meta" id="act-meta-prop"></span>
+      <svg class="act-chev" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <div class="act-sec-body">
       <div id="act-proposta-list" style="margin-bottom:10px"></div>
-      <button class="btn-add-slot" type="button" onclick="uploadActProposal()" style="margin-bottom:8px">+ Anexar Proposta</button>
+      <button class="btn-add-slot" type="button" onclick="uploadActProposal()" style="margin-bottom:0">+ Anexar Proposta</button>
     </div>
-  </div>
+  </section>
 
   <div style="padding: 6px 14px 32px;">
     <button class="btn-primary" onclick="saveAction()">💾 Salvar alterações</button>

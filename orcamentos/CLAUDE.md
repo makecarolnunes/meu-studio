@@ -39,28 +39,43 @@ let actLocal    = 'studio'    // local escolhido no panel-action
 
 ## Layout do painel do orçamento (`panel-action`)
 
-Ordem fixa, do topo para baixo. **Informação principal fica sempre visível** —
-só o que é secundário mora em accordion (`.act-acc`):
+**Tudo que é campo mora em seção recolhível.** Só identificação, status e as
+ações de fechamento ficam fixos no topo — é o que se mexe em todo orçamento.
 
 | Bloco | Tipo | Conteúdo |
 |---|---|---|
-| `.act-summary` | fixo | cliente, telefone, status, vitais (evento · horário · valor) e **data de cadastro** (`act-data-pedido`, editável, nunca em accordion) |
-| Status do pedido | `.act-sec` | segmented control — **fica no topo**, é o campo mais mexido |
-| Fechar e Agendar | ação | botão do fluxo de fechamento |
-| Atendimento | `.act-sec` | local, endereço, responsável, **datas/serviços**, cacheada |
-| Agenda · Mensagem | ação | Google Agenda e WhatsApp (mensagem em accordion) |
-| Valores | `.act-sec` | **valor enviado à cliente** + prévia de sinal/restante |
-| Observações | `.act-sec` | textarea |
-| Equipe | `.act-sec` | trabalho para equipe de terceiros |
-| Comprovante do sinal · Proposta | `.act-acc` | secundários — recolhidos |
+| `.act-summary` | fixo | cliente, telefone, status, vitais (evento · horário · valor) e **data de cadastro** (`act-data-pedido`, editável) |
+| `.act-statusbar` | fixo | segmented control do status |
+| Fechar e Agendar · Google Agenda | fixo | ações do fluxo de fechamento |
+| 1. ATENDIMENTO | `.act-sec` | local, endereço, responsável, **datas/serviços**, cacheada |
+| 2. VALORES | `.act-sec` | **valor enviado à cliente** + total/sinal/restante |
+| 3. TRABALHO PARA EQUIPE | `.act-sec` | checkbox + nome de quem (equipe de terceiros) |
+| 4. OBSERVAÇÕES | `.act-sec` | textarea |
+| 5. COMPROVANTE DO SINAL | `.act-sec` | upload no Storage |
+| 6. MENSAGEM PARA WHATSAPP | `.act-sec` | resumo do orçamento, editável (ver abaixo) |
+| Mensagem de confirmação | `.act-sec` | só status `Fechado` |
+| Proposta enviada | `.act-sec` | só noivas |
 
-`.act-sec` = seção sempre aberta (título + subtítulo + corpo). `.act-acc` = seção
-recolhível, fundo rebaixado. **Não empurrar campo principal para accordion.**
+`.act-sec` é um accordion independente: cabeçalho `<button class="act-sec-hdr">`
+com título em CAPS (`.act-sec-title`), resumo curto (`.act-sec-meta`) e chevron.
+`toggleActSec(hdr)` alterna a classe `.open`; `collapseActSecs()` fecha todas.
+**`openAction` abre o painel com todas recolhidas** — a tela começa mostrando só
+os títulos. Não abrir seção por padrão: a limpeza da tela é o objetivo.
+
+`renderActSecMetas()` preenche os resumos dos títulos fechados (`2 datas ·
+Studio`, `R$ 830,00`, `Pendente`) — é o que evita ter de abrir a seção só para
+conferir. Toda seção nova entra com seu meta; chamar `renderActSecMetas()`
+depois de qualquer coisa que mude o conteúdo de uma seção.
+
+**Sem textos explicativos.** Nada de subtítulo abaixo do título nem `chk-hint`
+descrevendo o que a seção faz — título e label bastam. Só sobrevive a dica que
+muda o comportamento do campo (ex.: o rótulo do endereço, que alterna entre
+studio e cliente).
 
 Os campos dentro de `.act-sec` são **mais compactos** que os dos formulários de
-cadastro e fechamento (`.act-sec .form-input`, `.toggle-btn`, `.chk-hint`): o
-painel é de consulta e ajuste rápido, e precisa caber várias seções sem virar
-rolagem infinita. Não unificar com os outros painéis.
+cadastro e fechamento (`.act-sec .form-input`, `.toggle-btn`): o painel é de
+consulta e ajuste rápido, e precisa caber várias seções sem virar rolagem
+infinita. Não unificar com os outros painéis.
 
 O campo do valor da proposta chama-se sempre **“Valor enviado à cliente”**
 (`ValorProp`) — nunca “valor recolhido”. O **valor fechado não é editável aqui**:
@@ -69,7 +84,30 @@ só o painel de fechamento grava `ValorFechado`.
 `renderActValResumo()` mostra total · sinal · restante ao vivo (30% enquanto o
 orçamento está aberto, os valores gravados depois de fechado) — dá para conferir
 o plano de pagamento sem entrar no "Fechar e Agendar Tudo". É **prévia**: nada é
-lançado no financeiro fora do fechamento.
+lançado no financeiro fora do fechamento. O **total leva o maior peso visual**
+(`.val-total`); sinal e restante ficam em duas células (`.val-cel`) abaixo.
+
+`actTotalPrevisto()` é o total usado na prévia e na mensagem: num orçamento em
+aberto vale o **valor enviado à cliente** digitado (é ele que vai para
+`ValorProp` ao salvar, e `recalcActEdit` o mantém sincronizado com o total dos
+serviços); num fechado vale `respTotal('act')`. Não trocar por `respTotal` nos
+dois casos — o resumo do repasse continua seguindo os serviços.
+
+---
+
+## Mensagem de orçamento para WhatsApp
+
+`buildOrcamentoMessage(e)` monta o **resumo do que foi orçado**, para enviar
+antes de fechar — principalmente quando há várias datas. Não confundir com
+`buildConfirmacaoMessage()`, que é a confirmação do atendimento já agendado e só
+existe para status `Fechado`.
+
+- Agrupa por data, uma linha por serviço (`3× Maquiagem` numa linha só — usa
+  `collapseSlots`, não as slots atômicas), e fecha com total · sinal · restante.
+- A linha do sinal **some quando o sinal é zero** (equipe de terceiros).
+- `msgOrcaEditada` marca edição manual: enquanto for `true`, nenhum recálculo
+  sobrescreve o texto. O botão ↺ (`regerarMsgOrcamento`) é a única forma de
+  refazer. `openAction` reseta a flag ao trocar de orçamento.
 
 ---
 
@@ -148,6 +186,20 @@ terminam alinhados mesmo com quantidades diferentes de etiqueta.
 | `Cacheada` | Cliente cacheada | Sugere 3h de duração (editável) |
 
 Helpers: `respDe(e)`, `isEquipeEntry(e)`, `repasseDe(e)`, `valorCobradoDe(e)`, `lucroDe(e)`.
+
+### Equipe de terceiros zera o sinal
+
+Nesse trabalho **a cliente acerta direto com a equipe** — não há sinal a receber
+aqui. Marcar a caixa no painel (`toggleActEquipeInput`):
+
+- `renderActValResumo()` mostra **Sinal R$ 0,00** e o restante passa a ser o
+  total (`isActEquipe()` manda sobre o cálculo de 30% e sobre `SinalFech`);
+- a seção *Comprovante do sinal* some — não há sinal para comprovar;
+- no `panel-fechar`, `calcFechSinal()` zera o campo e `abrirFechamento()` o deixa
+  `readOnly`: nem por edição manual sobra um sinal ali por engano.
+
+O valor **continua visível** — a Carol precisa ver o zero e o restante
+recalculado. Não voltar a esconder a seção *Valores*.
 
 Profissionais são cadastrados em **⚙️ Configurações › 👥 Equipe** (`DB.profissionais`,
 tabela `profissionais`). `repassePadrao` é só sugestão de preenchimento — o
