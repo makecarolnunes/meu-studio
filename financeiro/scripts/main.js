@@ -20,4 +20,12 @@ noivas  = noivas.map(normalizeN);
 initF(); initFs();
 checkAuth();
 
+// Atalho do Início: ?tela=nova abre direto o formulário de lançamento
+(function () {
+    const t = new URLSearchParams(location.search).get('tela');
+    if (['nova', 'lista', 'saidas', 'noivas'].indexOf(t) === -1) return;
+    history.replaceState(null, '', location.pathname);
+    go(t);
+})();
+
 // 6.A.3 · Atalho "/" agora vive no shared/js/global-search.js (cross-módulo).

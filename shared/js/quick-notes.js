@@ -52,11 +52,11 @@
     s.id = 'qn-css';
     s.textContent = [
       '#qn-fab{position:fixed;bottom:22px;right:18px;z-index:1200;width:46px;height:46px;',
-      'border-radius:50%;background:linear-gradient(135deg,#9c27b0,#ce93d8);border:none;',
-      'cursor:pointer;box-shadow:0 3px 14px rgba(0,0,0,.22);display:flex;align-items:center;',
+      'border-radius:50%;background:rgba(255,255,255,.95);border:1px solid var(--border,#ECE9E5);color:var(--text,#22201E);',
+      'cursor:pointer;box-shadow:0 2px 8px rgba(20,18,16,.06);display:flex;align-items:center;',
       'justify-content:center;transition:transform .18s,box-shadow .18s;}',
-      '#qn-fab:hover{transform:scale(1.07);box-shadow:0 5px 18px rgba(0,0,0,.28);}',
-      '#qn-badge{position:absolute;top:-5px;right:-5px;background:#e91e63;color:#fff;',
+      '#qn-fab:hover{background:#fff;box-shadow:0 4px 14px rgba(20,18,16,.10);}',
+      '#qn-badge{position:absolute;top:-5px;right:-5px;background:var(--danger,#B4483C);color:#fff;',
       'border-radius:10px;font-size:10px;font-weight:700;min-width:18px;height:18px;',
       'padding:0 4px;display:none;align-items:center;justify-content:center;',
       'border:2px solid #fff;line-height:1;}',
@@ -149,7 +149,7 @@
     // FAB
     var fab=document.createElement('button');
     fab.id='qn-fab'; fab.title='Quick Notes';
-    fab.innerHTML='<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg><span id="qn-badge"></span>';
+    fab.innerHTML='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg><span id="qn-badge"></span>';
 
     // Painel
     var isConteudo=window.location.pathname.indexOf('/conteudo')!==-1;

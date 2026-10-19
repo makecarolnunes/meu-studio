@@ -224,7 +224,9 @@
   }});
 
   // 6) Gestão: tarefa atrasada
-  registerRule({ id:'tarefa-atrasada', domain:'Gestão', evaluate:function(ctx){
+  //  Desligada enquanto Tarefas está fora do menu (rota tarefas/ segue ativa).
+  //  Para religar: remover `off:true`.
+  registerRule({ id:'tarefa-atrasada', domain:'Gestão', off:true, evaluate:function(ctx){
     var out=[];
     (ctx.data.tarefas||[]).forEach(function(t){
       if(t.feita) return;
@@ -401,6 +403,7 @@
   function computeAll(){
     var ctx={ data:_data, cfg:CFG, today:startOfToday() }, all=[];
     RULES.forEach(function(rule){
+      if(rule.off) return;
       var out; try{ out=rule.evaluate(ctx)||[]; }catch(e){ out=[]; }
       out.slice(0, CFG.maxPorRegra).forEach(function(a){
         a.ruleId=a.ruleId||rule.id; a.domain=a.domain||rule.domain; all.push(a);
@@ -416,15 +419,15 @@
     if(byId('mk-al-css')) return;
     var s=document.createElement('style'); s.id='mk-al-css';
     s.textContent = [
-      '#mk-al-fab{position:fixed;top:13px;right:13px;z-index:897;width:36px;height:36px;border-radius:50%;',
-      'border:.5px solid rgba(255,255,255,.18);background:rgba(18,5,1,.82);backdrop-filter:blur(10px);',
-      '-webkit-backdrop-filter:blur(10px);color:rgba(255,255,255,.85);display:flex;align-items:center;',
-      'justify-content:center;cursor:pointer;box-shadow:0 2px 12px rgba(0,0,0,.32);padding:0;',
-      'transition:opacity .22s,transform .18s,background .15s;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;}',
-      '#mk-al-fab:hover{background:rgba(18,5,1,.97)}#mk-al-fab:active{transform:scale(.9)}',
-      '#mk-al-badge{position:absolute;top:-4px;right:-4px;min-width:16px;height:16px;border-radius:9px;',
-      'background:#C62828;color:#fff;font-size:10px;font-weight:700;line-height:16px;text-align:center;',
-      'padding:0 4px;box-shadow:0 0 0 2px rgba(18,5,1,.9);display:none;}',
+      '#mk-al-fab{position:fixed;top:12px;right:12px;z-index:897;width:36px;height:36px;border-radius:50%;',
+      'border:1px solid var(--border,#ECE9E5);background:rgba(255,255,255,.92);backdrop-filter:blur(8px);',
+      '-webkit-backdrop-filter:blur(8px);color:var(--text,#22201E);display:flex;align-items:center;',
+      'justify-content:center;cursor:pointer;padding:0;',
+      'transition:opacity .2s,transform .15s,background .15s;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;}',
+      '#mk-al-fab:hover{background:#fff}#mk-al-fab:active{transform:scale(.92)}',
+      '#mk-al-badge{position:absolute;top:-3px;right:-3px;min-width:15px;height:15px;border-radius:8px;',
+      'background:var(--danger,#B4483C);color:#fff;font-size:9.5px;font-weight:600;line-height:15px;text-align:center;',
+      'padding:0 4px;box-shadow:0 0 0 2px var(--bg,#F8F7F5);display:none;}',
       '#mk-al-bd{position:fixed;inset:0;z-index:1400;background:rgba(0,0,0,.45);opacity:0;pointer-events:none;transition:opacity .3s ease;}',
       '#mk-al-bd.on{opacity:1;pointer-events:auto;}',
       '#mk-al-panel{position:fixed;top:0;right:0;height:100vh;height:100dvh;width:344px;max-width:88vw;z-index:1401;',

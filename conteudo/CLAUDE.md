@@ -1,16 +1,28 @@
 # CLAUDE.md — Conteúdo
 
-Módulo de planejamento de posts e ideias para redes sociais, reorganizado como **Centro de Comando** (2026-06): a home é o painel **Hoje** (o que gravar/publicar/editar + stories do dia + próximos dias); o acervo (lista/board/calendário) virou seção secundária.
+Módulo de planejamento de posts e ideias para redes sociais. Desde 2026-10 a home é o **Quadro** (Kanban estilo Trello); o painel **Hoje**, a Agenda e a lista continuam como visões secundárias.
+
+## Quadro (visão padrão) — `scripts/quadro.js` + `styles/quadro.css`
+
+- Colunas = `ST_ORDER` (Ideias · Gravar · Editando · Pronto · Publicado). Publicado mostra os 8 mais recentes + "Ver todos".
+- Card mínimo: título + formato + data de publicação (vermelha se atrasada) + "roteiro" se houver.
+- **Arrastar**: mouse (≥6px) ou toque com pressão longa (280ms); muda `status` via `persistIdea()` e a ordem.
+- **Ordem** dos cards: array de ids em `localStorage mk_content_board_order` + `configuracoes` chave `conteudo_board_order` (sem tabela/coluna nova). Cards sem posição aparecem no topo da coluna.
+- **+ Adicionar** em cada coluna cria a ideia direto naquela etapa (Enter salva e mantém o campo aberto).
+- **Clique** abre o painel de edição rápida (título, etapa, formato, data de publicação); "Roteiro, legenda e notas" abre o editor completo (`openModal`).
+- `body.cq-mode` esconde a casca antiga (header, abas, sidebar própria) só nessa visão. `quadro.js` carrega **antes** de `conteudo.js`.
+- `?idea=<id>` abre o card (usado pela busca global).
 
 ## Views
 
 | View | O que é | Acesso |
 |---|---|---|
+| `quadro` | Kanban (default) | aba Quadro / `?view=quadro` |
 | `hoje` | Painel do dia (default). Desktop: 3 zonas (Hoje 45% · Stories 26% · Próximos dias 29%) + gaveta do banco de ideias. Mobile: herói "próxima ação" + seções empilhadas | tab ☀️ Hoje / sidebar |
 | `stories` | Checklist de stories dos próximos 7 dias (mobile; no desktop a coluna da view Hoje cobre) | tab 📱 Stories |
 | `cal` | Calendário mensal (inalterado) | tab/nav 📅 Agenda |
 | `list` / `board` / `inbox` | Lista de ideias + quick notes (os antigos) | tab/nav 💡 Ideias · 📥 Inbox |
-| `acervo` | **Acervo** — banco de matéria-prima: materiais (lotes de fotos/vídeos) → IA garima oportunidades classificadas por formato+objetivo → promove p/ Planejamento | tab/nav 🎞️ Acervo |
+| `acervo` | **Acervo** — banco de matéria-prima: materiais (lotes de fotos/vídeos) → IA garima oportunidades classificadas por formato+objetivo → promove p/ Planejamento | **fora da navegação** — só pela rota `?view=acervo` (listada em `/modulos/`) |
 
 Navegação: **mobile** = tabs fixas inferiores (`.m-tabs`); **desktop** = nav na sidebar + pipeline com contadores (`buildSidebar`). O header mobile some no desktop (`.hdr{display:none}` ≥1024px).
 

@@ -3781,5 +3781,10 @@ function openFromUrl() {
   curEquipe = localStorage.getItem('orca_cur_equipe') || 'todos';
   curResp   = localStorage.getItem('orca_cur_resp')   || 'todos';
   render();
+  // Atalho do Início: ?novo=1 abre direto o formulário de novo orçamento
+  if (new URLSearchParams(location.search).get('novo') === '1') {
+    history.replaceState(null, '', location.pathname);
+    openAddForm();
+  }
   syncAll().then(openFromUrl);
 })();

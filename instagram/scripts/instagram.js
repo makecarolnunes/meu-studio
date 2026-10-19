@@ -4088,7 +4088,12 @@ reavalBlock +
   // Usado pelos cards do hub: instagram/?tab=validador e instagram/?tab=concorrentes
   function handleDeepLink() {
     var tab = new URLSearchParams(window.location.search).get('tab');
-    if (tab === 'validador') { switchTab('validador'); window.scrollTo(0,0); }
+    if (tab === 'validador') {
+      // Aba oculta da navegação — revelada só quando acessada pela rota
+      var vb = document.querySelector('.ig-tab[data-tab="validador"]');
+      if (vb) vb.style.display = '';
+      switchTab('validador'); window.scrollTo(0,0);
+    }
   }
 
   // ── BOOT ──────────────────────────────────────────────────

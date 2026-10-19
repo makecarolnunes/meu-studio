@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="../shared/css/tokens.css">
   <link rel="stylesheet" href="../shared/css/base.css">
   <link rel="stylesheet" href="./styles/instagram.css">
+  <link rel="stylesheet" href="../shared/css/calm.css?v=20261018">
 </head>
 <body>
 
@@ -96,7 +97,8 @@
         <button class="ig-tab active" data-tab="visao" onclick="switchTab('visao')">📊 Visão Geral</button>
         <button class="ig-tab" data-tab="performance" onclick="switchTab('performance')">📈 Performance</button>
         <button class="ig-tab" data-tab="estrategia" onclick="switchTab('estrategia')">🧠 Insights IA</button>
-        <button class="ig-tab" data-tab="validador" onclick="switchTab('validador')">✨ Validador</button>
+        <!-- Validador fora da navegação: só aparece via rota instagram/?tab=validador -->
+        <button class="ig-tab" data-tab="validador" onclick="switchTab('validador')" style="display:none">✨ Validador</button>
         <button class="ig-tab" data-tab="brand" onclick="switchTab('brand')">🧬 Brand</button>
       </nav>
 
@@ -421,12 +423,12 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="../config.js"></script>
 <script src="../shared/js/db.js"></script>
-<script src="./scripts/instagram.js"></script>
+<script src="./scripts/instagram.js?v=20261018"></script>
 <script src="../shared/js/quick-notes.js"></script>
 <script>QuickNotes.init('instagram');</script>
 <script src="../shared/js/global-search.js"></script>
 <script src="../shared/js/global-notes.js"></script>
-<script src="../shared/js/sidebar.js"></script>
-<script src="../shared/js/alerts.js"></script>
+<script src="../shared/js/sidebar.js?v=20261019"></script>
+<script src="../shared/js/alerts.js?v=20261018"></script>
 </body>
 </html>

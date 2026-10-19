@@ -1,7 +1,8 @@
 /* ─────────────────────────────────────────────────────────────
    Meu Studio — Design Tokens
-   Fonte única de tokens para Hub, Financeiro, Orçamentos,
-   Clientes, Agendamentos e Conteúdo.
+   Fonte única de tokens para todos os módulos.
+   A camada visual minimalista (cabeçalhos claros, cards planos)
+   fica em shared/css/calm.css, carregada por último nos módulos.
 
    Como usar em um módulo:
      <link rel="stylesheet" href="../design-tokens.css">
@@ -14,37 +15,44 @@
 
 :root {
   /* ── MARCA ─────────────────────────────────────────────── */
-  --brand:        #a36844;   /* Marrom claro — accents primários */
-  --brand-dark:   #38190b;   /* Marrom escuro — headers, ênfase */
-  --brand-soft:   rgba(163, 104, 68, 0.10);  /* fundo de hover */
-  --brand-ring:   rgba(163, 104, 68, 0.25);  /* foco */
+  /* Identidade minimalista (2026-10): grafite quente como cor de ação,
+     fundo neutro e cor só para status e alertas. */
+  --brand:        #2F2B28;   /* grafite — ações primárias, itens ativos */
+  --brand-dark:   #1E1B19;   /* ênfase máxima */
+  --brand-soft:   rgba(47, 43, 40, 0.06);  /* fundo de hover */
+  --brand-ring:   rgba(47, 43, 40, 0.16);  /* foco */
+
+  /* Destaque único (marrom da marca, suavizado): ícones de módulo,
+     item ativo, links de ação. Usar com parcimônia — dá hierarquia. */
+  --accent:       #9A6B4F;
+  --accent-soft:  #F4EDE8;
 
   /* ── SUPERFÍCIES ───────────────────────────────────────── */
-  --bg:           #FAF8F6;   /* fundo da página */
+  --bg:           #F8F7F5;   /* fundo da página */
   --surface:      #ffffff;   /* cards */
-  --surface-2:    #F5EFEA;   /* hover sutil / agrupamento */
-  --border:       #EDE4DF;   /* divisor padrão */
-  --border-strong:#D9CDC4;   /* divisor com mais peso */
+  --surface-2:    #F3F1EE;   /* hover sutil / agrupamento */
+  --border:       #ECE9E5;   /* divisor padrão */
+  --border-strong:#DAD6D0;   /* divisor com mais peso */
 
   /* ── TEXTO ─────────────────────────────────────────────── */
-  --text:         #2C2420;   /* texto principal */
-  --text-muted:   #6F6660;   /* secundário */
-  --text-subtle:  #A8A199;   /* terciário / placeholders */
-  --text-on-dark: #FEFEFE;   /* texto sobre fundo --brand-dark */
+  --text:         #22201E;   /* texto principal */
+  --text-muted:   #6E6963;   /* secundário */
+  --text-subtle:  #A19C96;   /* terciário / placeholders */
+  --text-on-dark: #FEFEFE;   /* texto sobre fundo --brand */
 
-  /* ── ACCENTS POR MÓDULO ────────────────────────────────── */
-  /* Mantidos para hierarquia visual entre sistemas */
-  --rose:         #D4537E;   --rose-soft:   #FBEAF0;   --rose-dark:   #993556;
-  --amber:        #BA7517;   --amber-soft:  #FAEEDA;   --amber-dark:  #633806;
-  --green:        #3B6D11;   --green-soft:  #EAF3DE;
-  --brown:        #8B6B61;   --brown-soft:  #FAF3EE;
-  --mauve-soft:   #F5EDF3;
+  /* ── ACCENTS (dessaturados) ────────────────────────────── */
+  /* Mantidos por compatibilidade; usar só quando a cor carrega significado */
+  --rose:         #A8677A;   --rose-soft:   #F6EFF1;   --rose-dark:   #7E4B5A;
+  --amber:        #A87B35;   --amber-soft:  #F7F1E6;   --amber-dark:  #6B4E1F;
+  --green:        #557A4E;   --green-soft:  #EEF3EC;
+  --brown:        #7F6A60;   --brown-soft:  #F5F1EE;
+  --mauve-soft:   #F4F0F2;
 
   /* ── SEMÂNTICAS ────────────────────────────────────────── */
-  --success:      #3B6D11;   --success-soft: #EAF3DE;
-  --danger:       #C62828;   --danger-soft:  #FCE7E7;
-  --warning:      #BA7517;   --warning-soft: #FAEEDA;
-  --info:         #1565C0;   --info-soft:    #E3F2FD;
+  --success:      #4F7A4A;   --success-soft: #EDF3EB;
+  --danger:       #B4483C;   --danger-soft:  #F8ECEA;
+  --warning:      #A87B35;   --warning-soft: #F7F1E6;
+  --info:         #4E6E8E;   --info-soft:    #EDF2F6;
 
   /* ── RAIO ──────────────────────────────────────────────── */
   --radius-xs:    6px;       /* badges, pills pequenos */
@@ -55,10 +63,10 @@
   --radius-full:  9999px;    /* avatares, chips */
 
   /* ── SOMBRA ────────────────────────────────────────────── */
-  --shadow-sm:    0 1px 2px  rgba(56, 25, 11, 0.05);
-  --shadow-md:    0 2px 8px  rgba(56, 25, 11, 0.08);
-  --shadow-lg:    0 4px 16px rgba(56, 25, 11, 0.12);
-  --shadow-xl:    0 8px 32px rgba(56, 25, 11, 0.16);
+  --shadow-sm:    0 1px 2px  rgba(20, 18, 16, 0.04);
+  --shadow-md:    0 2px 8px  rgba(20, 18, 16, 0.05);
+  --shadow-lg:    0 6px 20px rgba(20, 18, 16, 0.07);
+  --shadow-xl:    0 12px 40px rgba(20, 18, 16, 0.10);
 
   /* ── ESPAÇAMENTO (grid 4/8) ────────────────────────────── */
   --space-1:      4px;

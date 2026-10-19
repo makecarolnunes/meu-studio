@@ -23,13 +23,41 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 | Módulo | Path (GitHub Pages) | Backend |
 |--------|---------------------|---------|
-| **Hub / Login** | `/` | Auth Supabase + estático |
+| **Início / Login** | `/` | Auth Supabase + estático |
 | **Financeiro** | `/financeiro/` | Supabase `entries`, `noivas`, `saidas` |
 | **Orçamentos** | `/orcamentos/` | Supabase `orcamentos` + Storage `comprovantes` |
-| **Clientes** | `/clientes/` | HTML estático |
-| **Conteúdo** | `/conteudo/` | HTML estático |
+| **Conteúdo** (Quadro Kanban) | `/conteudo/` | Supabase `conteudo_ideas` |
+| **Outros módulos** | `/modulos/` | Lista das rotas fora do menu |
 
 > `hub.html` é o arquivo **editável** do hub. `index.html` é sempre uma cópia (`cp hub.html index.html`). Pastas sem `index.html` próprio têm um redirect para o arquivo ativo.
+
+### Navegação (reestruturação 2026-10)
+
+Menu principal enxuto, definido **só** em `shared/js/sidebar.js` (`GROUPS`) — o Hub
+também usa essa sidebar:
+- **Operação:** Orçamentos, Financeiro
+- **Conteúdo:** Lista de Conteúdos, Instagram
+- **Organização:** Anotações
+
+Fora do menu, mas **funcionando nas próprias rotas** e listados em `/modulos/`
+(link "Outros módulos" no rodapé da sidebar e do Início): Clientes, Tarefas,
+Estoque, Acervo (`conteudo/?view=acervo`), Laboratório Criativo, Validador
+(`instagram/?tab=validador`), Cachos & Crespos, Manual de Marca, Raio-X da Marca,
+Insights de Mercado, TikTok. Nenhum dado, tabela ou código foi removido.
+Para trazer um de volta: adicionar em `GROUPS` e tirar de `HIDDEN` no `sidebar.js`.
+A regra de alerta "tarefa atrasada" está desligada (`off:true` em `alerts.js`)
+enquanto Tarefas estiver fora do menu.
+
+**Atalhos por URL** usados pelo Início: `orcamentos/orcamentos_novo.html?novo=1`
+(abre novo orçamento) · `financeiro/?tela=nova` (abre novo lançamento).
+
+### Identidade visual
+
+- `shared/css/tokens.css` — paleta neutra (grafite `--brand`, fundo `#F8F7F5`,
+  accents dessaturados). Cor só para status/alerta.
+- `shared/css/calm.css` — camada **só visual** carregada por último nos módulos do
+  menu (cabeçalhos claros, cards planos, sem gradientes). Não muda classes nem lógica;
+  remover o `<link>` desfaz o efeito no módulo.
 
 ### Data Flow
 
@@ -180,8 +208,9 @@ globais ordenados (sem build step, sem ES modules).
 ├── index.html / hub.html         ← Hub (entry point)
 ├── config.js / config.example.js ← credenciais (gitignored)
 ├── hub-assets/{styles,scripts}/  ← assets do Hub
+├── modulos/index.html            ← "Outros módulos" (rotas fora do menu)
 ├── shared/
-│   ├── css/{tokens,base}.css     ← design tokens + reset global
+│   ├── css/{tokens,base,calm}.css ← tokens + reset + camada minimalista
 │   └── js/
 │       ├── db.js                 ← cliente Supabase (window.DB)
 │       ├── icons.js              ← SVG icons (window.SVG)

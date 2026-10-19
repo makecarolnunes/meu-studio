@@ -1,13 +1,14 @@
 // ══════════════════════════════════════════════════════════
-//  HUB — Painel de Gestão (Studio Flow)
-//  Rail de navegação + widgets dos pilares (dado real) + lançador por seção.
+//  INÍCIO — página inicial minimalista
+//  Saudação + Orçamentos e Financeiro (uma informação cada) + atalhos.
+//  A navegação completa fica no menu compartilhado (shared/js/sidebar.js).
 // ══════════════════════════════════════════════════════════
 
 // ── UTILS ──
 function safeJSON(s, fb){ try { return s ? JSON.parse(s) : fb; } catch(e){ return fb; } }
 function pad(n){ return String(n).padStart(2,'0'); }
 function todayStr(){ var t=new Date(); return t.getFullYear()+'-'+pad(t.getMonth()+1)+'-'+pad(t.getDate()); }
-function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function brl(v){ return Number(v||0).toLocaleString('pt-BR', { style:'currency', currency:'BRL', maximumFractionDigits:0 }); }
 
 var MESES = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
 var DIAS  = ['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'];
@@ -16,7 +17,8 @@ var DIAS  = ['domingo','segunda-feira','terça-feira','quarta-feira','quinta-fei
 (function init(){
   var now = new Date();
   var hd = document.getElementById('hero-date');
-  if (hd) hd.textContent = DIAS[now.getDay()] + ', ' + now.getDate() + ' de ' + MESES[now.getMonth()] + ' de ' + now.getFullYear();
+  var dia = DIAS[now.getDay()];
+  if (hd) hd.textContent = dia.charAt(0).toUpperCase() + dia.slice(1) + ', ' + now.getDate() + ' de ' + MESES[now.getMonth()];
   checkAuth();
 })();
 
@@ -38,6 +40,7 @@ function showHub(){
   document.getElementById('login-overlay').style.display = 'none';
   document.getElementById('hub-app').style.display = 'block';
   renderGreeting();
+  renderEye();
   loadWidgets();
 }
 async function doLogin(){
@@ -85,98 +88,115 @@ function renderGreeting(){
   var u = (sess && sess.usuario) ? sess.usuario : 'carol';
   var nome = u.charAt(0).toUpperCase() + u.slice(1);
   var g = document.getElementById('hub-greet'); if (g) g.textContent = saud + ', ' + nome;
-  var un = document.getElementById('rail-un'); if (un) un.textContent = '@' + u;
-  var av = document.querySelector('.rail-av'); if (av) av.textContent = nome.charAt(0);
 }
 
-// ── RAIL (interações) ──
-function hubGrp(id){ var el = document.getElementById(id); if (el) el.classList.toggle('closed'); }
-function hubOpenRail(){ document.getElementById('rail').classList.add('open'); document.getElementById('bd').classList.add('open'); }
-function hubCloseRail(){ document.getElementById('rail').classList.remove('open'); document.getElementById('bd').classList.remove('open'); }
+// ── OCULTAR VALORES (privacidade ao abrir o app perto de alguém) ──
+var HIDE_KEY = 'mk_hub_hide_vals';
+function valoresOcultos(){ try { return localStorage.getItem(HIDE_KEY) === '1'; } catch(e){ return false; } }
+function toggleValores(){
+  try { localStorage.setItem(HIDE_KEY, valoresOcultos() ? '0' : '1'); } catch(e){}
+  renderEye(); renderFin(); renderSummary();
+}
+function renderEye(){
+  var b = document.getElementById('h-eye'); if (!b) return;
+  b.innerHTML = valoresOcultos()
+    ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M17.9 17.9A10 10 0 0 1 12 20c-7 0-11-8-11-8a18 18 0 0 1 5.1-5.9M9.9 4.2A9 9 0 0 1 12 4c7 0 11 8 11 8a18 18 0 0 1-2.2 3.2"/><line x1="1" y1="1" x2="23" y2="23"/></svg>'
+    : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+}
 
 // ════════════════════════════════════════════════════════════
-//  WIDGETS DOS PILARES (dado real)
+//  CARTÕES (dado real, só leitura)
 // ════════════════════════════════════════════════════════════
+function setText(id, txt){ var el = document.getElementById(id); if (el) el.textContent = txt; }
+
 function loadWidgets(){
-  if (typeof DB === 'undefined' || window._SB_ERROR) return;
-  loadWOrca();
-  loadWTarefas();
-  loadWConteudo();
+  if (typeof DB === 'undefined' || window._SB_ERROR) {
+    setText('h-summary', 'Sem conexão com o banco de dados.'); return;
+  }
+  loadOrca();
+  loadFin();
+  loadConteudo();
 }
 
-function setW(id, html){ var el = document.getElementById(id); if (el) el.innerHTML = html; }
-function wFail(id, metric){ setW(id, '<div class="w-metric">'+metric+'</div><div class="w-empty">Sem conexão</div>'); }
+// Estado dos cartões — alimenta também a frase de resumo do dia
+var _orca = null, _fin = null, _cont = null;
 
-// Orçamentos — pipeline (contagens, sem valores)
-async function loadWOrca(){
+// Orçamentos — quantos estão em aberto + follow-ups vencidos
+// "Em aberto" = mesma regra do filtro Novos do módulo (Novo Pedido + Orçamento Enviado);
+// Fechado e "Perdido - <motivo>" ficam de fora.
+async function loadOrca(){
   try {
     var all = await DB.orcamentos.list();
     var hoje = todayStr();
-    var aberto = function(o){ return o.Status !== 'Fechado' && o.Status !== 'Perdido'; };
-    var novos    = all.filter(function(o){ return !o.Status || o.Status === 'Novo Pedido'; }).length;
-    var enviados = all.filter(function(o){ return o.Status === 'Enviado'; }).length;
-    var aFechar  = all.filter(function(o){ return aberto(o) && o.ProxFollowup && o.ProxFollowup <= hoje; }).length;
-    var mes = MESES[new Date().getMonth()];
-    setW('w-orca',
-      '<div class="w-metric" style="margin-bottom:12px;">Pipeline <small>· ' + mes + '</small></div>' +
-      '<div class="pipe">' +
-        '<div class="pipe-cell"><div class="pipe-n">' + novos + '</div><div class="pipe-l">Novos</div></div>' +
-        '<div class="pipe-cell"><div class="pipe-n">' + enviados + '</div><div class="pipe-l">Enviados</div></div>' +
-        '<div class="pipe-cell warn"><div class="pipe-n">' + aFechar + '</div><div class="pipe-l">A fechar</div></div>' +
-      '</div>');
-  } catch(e) { console.error('[w-orca]', e); wFail('w-orca', 'Pipeline'); }
+    var novo    = function(o){ return !o.Status || o.Status === 'Novo Pedido'; };
+    var enviado = function(o){ return o.Status === 'Orçamento Enviado'; };
+    var abertos = all.filter(function(o){ return novo(o) || enviado(o); });
+    _orca = {
+      abertos:  abertos.length,
+      novos:    abertos.filter(novo).length,
+      enviados: abertos.filter(enviado).length,
+      followups: abertos.filter(function(o){ return o.ProxFollowup && o.ProxFollowup <= hoje; }).length
+    };
+    setText('h-orca-val',   String(_orca.abertos));
+    setText('h-orca-novos', String(_orca.novos));
+    setText('h-orca-env',   String(_orca.enviados));
+    setText('h-orca-alert', _orca.followups
+      ? _orca.followups + (_orca.followups === 1 ? ' follow-up para hoje' : ' follow-ups para hoje') : '');
+  } catch(e) { console.error('[inicio-orca]', e); setText('h-orca-val', '—'); }
+  renderSummary();
 }
 
-// Tarefas — foco do dia (ou pendentes)
-function tareDot(t){
-  if (t.prioridade === 'urgente') return 'var(--danger)';
-  return t.area === 'conteudo' ? 'var(--rose)' :
-         t.area === 'clientes' ? 'var(--amber)' :
-         t.area === 'producao' ? 'var(--green)' :
-         t.area === 'admin'    ? 'var(--brown)' : 'var(--brand)';
-}
-async function loadWTarefas(){
+// Financeiro — recebido no mês corrente + o que ainda falta entrar
+async function loadFin(){
   try {
-    var all = await DB.tarefas.list();
-    var pend = all.filter(function(t){ return !t.feita && t.status !== 'ideia'; });
-    var foco = pend.filter(function(t){ return t.foco; });
-    var useFoco = foco.length > 0;
-    var list = useFoco ? foco : pend;
-    var metric = useFoco
-      ? foco.length + ' <small>no foco de hoje</small>'
-      : pend.length + ' <small>pendente' + (pend.length !== 1 ? 's' : '') + '</small>';
-    var items = list.slice(0, 3).map(function(t){
-      return '<div class="w-item"><span class="w-dot" style="background:' + tareDot(t) + '"></span>' +
-        '<span class="tt">' + esc(t.titulo) + '</span>' +
-        (t.prioridade === 'urgente' ? '<span class="tag tag-urg">urgente</span>' : '') + '</div>';
-    }).join('');
-    if (!list.length) items = '<div class="w-empty">Nada pendente 🤎</div>';
-    setW('w-tarefas', '<div class="w-metric">' + metric + '</div>' + items);
-  } catch(e) { console.error('[w-tarefas]', e); wFail('w-tarefas', 'Foco de hoje'); }
+    var all = await DB.entries.list();
+    var t = new Date(), ym = t.getFullYear() + '-' + pad(t.getMonth() + 1);
+    var doMes = all.filter(function(e){ return (e.dataPag || '').slice(0, 7) === ym; });
+    var soma = function(st){ return doMes.filter(function(e){ return e.status === st; })
+                                         .reduce(function(s, e){ return s + Number(e.valor || 0); }, 0); };
+    _fin = { recebido: soma('Realizado'), previsto: soma('Previsto'), mes: MESES[t.getMonth()] };
+    renderFin();
+  } catch(e) { console.error('[inicio-fin]', e); }
+  renderSummary();
+}
+function renderFin(){
+  if (!_fin) return;
+  var oculto = valoresOcultos();
+  var v = function(n){ return oculto ? 'R$ ••••' : brl(n); };
+  var total = _fin.recebido + _fin.previsto;
+  var val = document.getElementById('h-fin-val');
+  if (val) { val.textContent = v(_fin.recebido); val.classList.toggle('is-hidden-val', oculto); }
+  setText('h-fin-mes',  _fin.mes.charAt(0).toUpperCase() + _fin.mes.slice(1));
+  setText('h-fin-prev', v(_fin.previsto));
+  setText('h-fin-tot',  v(total));
+  var bar = document.getElementById('h-fin-bar');
+  if (bar) bar.style.width = (total > 0 ? Math.round(_fin.recebido / total * 100) : 0) + '%';
 }
 
-// Conteúdo — fila (prontos + total)
-async function loadWConteudo(){
+// Conteúdo — uma linha no bloco "Também no studio"
+async function loadConteudo(){
   try {
     var all = await DB.conteudo.list();
-    var posted = function(s){ return /postad|publicad/i.test(s || ''); };
-    var ready  = function(s){ return /pronto|aprovad/i.test(s || ''); };
-    var fila = all.filter(function(c){ return !posted(c.status); });
-    var prontos = fila.filter(function(c){ return ready(c.status); });
-    var metric = (prontos.length ? prontos.length + ' <small>prontos · </small>' : '') +
-                 fila.length + ' <small>na fila</small>';
-    var ordered = fila.slice().sort(function(a, b){
-      var ar = ready(a.status) ? 0 : 1, br = ready(b.status) ? 0 : 1;
-      if (ar !== br) return ar - br;
-      var ad = a.scheduledDate || '9999', bd = b.scheduledDate || '9999';
-      return ad < bd ? -1 : ad > bd ? 1 : 0;
-    });
-    var items = ordered.slice(0, 3).map(function(c){
-      return '<div class="w-item"><span class="w-dot" style="background:var(--rose)"></span>' +
-        '<span class="tt">' + esc(c.title || '(sem título)') + '</span>' +
-        (ready(c.status) ? '<span class="tag tag-rdy">pronto</span>' : '') + '</div>';
-    }).join('');
-    if (!fila.length) items = '<div class="w-empty">Fila vazia ✨</div>';
-    setW('w-conteudo', '<div class="w-metric">' + metric + '</div>' + items);
-  } catch(e) { console.error('[w-conteudo]', e); wFail('w-conteudo', 'Fila de conteúdo'); }
+    _cont = {
+      prontos: all.filter(function(c){ return c.status === 'Pronto'; }).length,
+      prod:    all.filter(function(c){ return c.status === 'Fila de Gravacao' || c.status === 'Editando'; }).length
+    };
+    setText('h-cont-sub', _cont.prontos ? _cont.prontos + (_cont.prontos === 1 ? ' pronto para publicar' : ' prontos para publicar')
+                        : _cont.prod    ? _cont.prod + ' em produção' : 'Quadro de produção');
+  } catch(e) { /* silencioso: é informação secundária */ }
+  renderSummary();
+}
+
+// Frase de resumo do dia (o que pede atenção primeiro)
+function renderSummary(){
+  var el = document.getElementById('h-summary'); if (!el) return;
+  if (!_orca && !_fin) return;
+  var partes = [];
+  if (_orca && _orca.followups) partes.push('<span class="warn">' + _orca.followups + (_orca.followups === 1 ? ' follow-up' : ' follow-ups') + ' para hoje</span>');
+  if (_orca && _orca.novos)     partes.push('<b>' + _orca.novos + (_orca.novos === 1 ? ' pedido novo' : ' pedidos novos') + '</b>');
+  if (_fin && _fin.previsto > 0) partes.push('<b>' + (valoresOcultos() ? 'R$ ••••' : brl(_fin.previsto)) + '</b> a receber este mês');
+  if (_cont && _cont.prontos)   partes.push(_cont.prontos + (_cont.prontos === 1 ? ' conteúdo pronto' : ' conteúdos prontos') + ' para publicar');
+  if (!partes.length) { el.textContent = 'Tudo em dia por aqui.'; return; }
+  var ult = partes.pop();
+  el.innerHTML = 'Hoje você tem ' + (partes.length ? partes.join(', ') + ' e ' : '') + ult + '.';
 }

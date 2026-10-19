@@ -1,0 +1,173 @@
+/* ─────────────────────────────────────────────────────────────
+   shared/css/calm.css — Camada visual minimalista
+   Carregar POR ÚLTIMO (depois do CSS do módulo) nos módulos do menu:
+   Financeiro, Fiscal, Orçamentos, Conteúdo, Instagram, Anotações.
+
+   Só aparência: não muda estrutura, classes nem lógica.
+   Princípios: superfícies claras, cor apenas para status/alerta,
+   menos sombra e borda, mais respiro. Para desfazer, basta remover
+   o <link> deste arquivo do módulo.
+   ───────────────────────────────────────────────────────────── */
+
+/* ══ 1. CABEÇALHOS — de gradiente escuro para superfície clara ══ */
+.hdr, .fs-hdr, .ig-hdr, .chat-hdr {
+  background: var(--surface) !important;
+  color: var(--text) !important;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+.hdr { padding-top: 14px; padding-bottom: 14px; }
+.hdr h1, .fs-hdr-center h1, .ig-hdr-center h1 {
+  color: var(--text); font-weight: 650; letter-spacing: -.015em;
+}
+.hdr-sub, .fs-hdr-sub, .ig-hdr-sub {
+  color: var(--text-muted); opacity: 1 !important;
+}
+.gear-btn, .icon-btn, .fs-iconbtn, .ig-icon-btn, .hdr-trash {
+  background: transparent !important;
+  color: var(--text-muted) !important;
+  box-shadow: none !important;
+}
+.gear-btn:hover, .icon-btn:hover, .fs-iconbtn:hover, .ig-icon-btn:hover, .hdr-trash:hover,
+.gear-btn:active, .icon-btn:active, .fs-iconbtn:active, .ig-icon-btn:active, .hdr-trash:active {
+  background: var(--surface-2) !important;
+  color: var(--text) !important;
+}
+.hdr-save-status { color: var(--text-subtle); }
+.chat-hdr .chat-back, .chat-hdr button { color: var(--text-muted) !important; }
+
+/* Fundo da página sempre neutro (havia gradientes no desktop) */
+body { background: var(--bg) !important; }
+
+/* ══ 2. SUPERFÍCIES — cards planos, borda fina, sem sombra ══ */
+.card, .msel, .eitem, .rsum-card, .chip, .month-hero, .login-card,
+.entry, .idea-card, .board-card, .d-bcard {
+  box-shadow: none !important;
+  border: 1px solid var(--border);
+}
+.card { border-radius: 14px; padding: 18px; margin-bottom: 14px; }
+.card[style*="#fbf6f1"] { background: var(--surface) !important; }
+.card-title { font-weight: 600; letter-spacing: .04em; }
+.eitem { margin-bottom: 8px; }
+.entry, .idea-card { border-left-width: 3px; margin-bottom: 10px; }
+
+/* Etiquetas de categoria: neutras (cor fica para status) */
+.tag-resp, .tag-terceiros, .tag-cacheada, .tag-local, .tag-noiva,
+.tag-resp-carol, .tag-resp-equipe {
+  background: var(--surface-2) !important;
+  color: var(--text-muted) !important;
+}
+.entry.is-equipe { background: var(--card) !important; border-left-color: var(--rose) !important; }
+.entry.is-agenda-pend { animation: none; }
+
+/* ══ 3. BOTÕES — sólidos, sem brilho nem sombra ══ */
+.bsub, .add-btn, .login-btn, .dsb-novo-btn, .btn-fechar, .d-sb-nova-btn, .hj-nova {
+  box-shadow: none !important;
+  background-image: none !important;
+}
+.btn-fechar { background: var(--success) !important; border-radius: 12px; }
+.add-btn--saida { background: var(--surface) !important; color: var(--danger) !important; border: 1px solid var(--border) !important; }
+.add-btn--import { box-shadow: none !important; }
+.d-sb-nova-btn, .hj-nova { background: var(--brand) !important; }
+
+/* Botões flutuantes: discretos */
+.fab, .fab-chat {
+  background: var(--brand) !important;
+  background-image: none !important;
+  box-shadow: 0 4px 14px rgba(20,18,16,.16) !important;
+}
+.fab { border-radius: 16px; font-weight: 300; }
+.action-avatar, .loading-logo { background: var(--surface-2) !important; color: var(--text) !important; }
+
+/* Pills / filtros: borda fina */
+.ftab, .stab, .ctab, .bt, .orig-tab, .equipe-tab, .gbtn {
+  border-width: 1px !important;
+}
+.equipe-tab.on { background: var(--brand) !important; border-color: var(--brand) !important; }
+
+/* ══ 4. NAVEGAÇÃO INFERIOR / LATERAL DOS MÓDULOS ══ */
+.bnav, .fs-bnav, .m-tabs {
+  box-shadow: none !important;
+  border-top: 1px solid var(--border);
+}
+@media (min-width: 1024px) {
+  /* Financeiro e Fiscal: a .bnav vira coluna lateral no desktop */
+  .bnav, .fs-bnav {
+    background: var(--surface) !important;
+    border-top: none; border-right: 1px solid var(--border) !important;
+  }
+  .ni.active, .fs-ni.active {
+    background: var(--surface-2) !important;
+    color: var(--text) !important;
+    box-shadow: none !important;
+  }
+  .ni.active svg, .fs-ni.active svg { stroke: var(--text) !important; }
+  .ni:not(.active):hover, .fs-ni:not(.active):not(:disabled):hover {
+    background: var(--surface-2) !important; color: var(--text) !important;
+  }
+
+  /* Orçamentos: sidebar desktop clara */
+  #orca-app .d-sidebar { background: var(--surface) !important; }
+  .dsb-brand { background: none !important; color: var(--text) !important; padding-top: 22px !important; }
+  .dsb-back { color: var(--text-subtle) !important; }
+  .dsb-sub { color: var(--text-muted); opacity: 1 !important; }
+  .dsb-kpi { background: var(--bg) !important; border-color: transparent !important; }
+  .d-fil-item.active {
+    background: var(--surface-2) !important;
+    color: var(--text) !important; box-shadow: none !important;
+  }
+  .d-fil-item.active .d-fil-cnt { background: var(--surface) !important; color: var(--text-muted) !important; }
+  .d-fil-item:hover:not(.active) { background: var(--bg) !important; }
+}
+
+/* ══ 5. CONTEÚDO (visões antigas: Hoje, Agenda, Ideias) ══ */
+.view-toggle { background: var(--surface-2) !important; }
+.vbtn { color: var(--text-muted) !important; }
+.vbtn.on { background: var(--surface) !important; color: var(--text) !important; }
+.ptabs { background: var(--surface) !important; }
+.m-tab.on .m-tab-lbl { color: var(--text) !important; }
+.m-tab.on { border-top-color: var(--text) !important; }
+@media (min-width: 1024px) {
+  #cont-app .d-sidebar {
+    background: var(--surface) !important;
+    border-right: 1px solid var(--border);
+  }
+  #cont-app .d-sb-brand h2 { color: var(--text) !important; font-weight: 600 !important; }
+  #cont-app .d-sb-brand-icon { background: var(--surface-2) !important; }
+  #cont-app .d-sb-brand-icon svg { stroke: var(--text); }
+  #cont-app .d-sb-nav-item { color: var(--text-muted) !important; font-weight: 500 !important; }
+  #cont-app .d-sb-nav-item:hover { background: var(--bg) !important; }
+  #cont-app .d-sb-nav-item.on { background: var(--surface-2) !important; color: var(--text) !important; font-weight: 600 !important; }
+  #cont-app .d-sb-lbl { color: var(--text-subtle) !important; }
+  #cont-app .d-sb-st-item:hover { background: var(--bg) !important; }
+  #cont-app .d-sb-st-name { color: var(--text) !important; font-weight: 500 !important; }
+  #cont-app .d-sb-st-cnt { background: var(--surface-2) !important; color: var(--text-muted) !important; }
+}
+
+/* ══ 6. TELAS DE LOGIN LEGADAS (o login é centralizado no Hub) ══ */
+.login-screen { background: var(--bg) !important; }
+.login-screen .login-logo { color: var(--text) !important; }
+.login-screen .login-logo .icon { filter: none !important; }
+
+/* ══ 7. MOVIMENTO — menos animação chamativa ══ */
+.w:hover, .entry:hover { transform: none; }
+
+/* ══ 8. FOLGA PARA OS BOTÕES FLUTUANTES GLOBAIS (menu/voltar à esquerda, sino à direita) ══ */
+@media (min-width: 1024px) {
+  #cont-app .d-sidebar { padding-top: 64px !important; }
+  #cont-app .cal-nav { padding-right: 52px; }
+}
+
+/* ══ 9. CABEÇALHO NO CELULAR — título à esquerda, folga para os botões globais ══
+   O botão "voltar" antigo de cada módulo foi substituído pelo da sidebar;
+   sem ele o grid de 3 colunas empurrava o título para baixo dos botões. */
+@media (max-width: 1023px) {
+  .hdr {
+    display: flex !important; align-items: center; gap: 8px;
+    padding: 14px 56px 14px 100px !important;
+  }
+  .hdr > div:empty { display: none; }
+  .hdr-center { flex: 1; min-width: 0; text-align: left !important; }
+  .hdr h1 { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+}

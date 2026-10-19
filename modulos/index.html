@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script>
+  /* Auth guard — redireciona ao hub se não houver sessão válida */
+  (function(){
+    try {
+      var s = JSON.parse(localStorage.getItem('mk_session') || 'null');
+      if (s && s.expires && Date.now() < s.expires) return;
+    } catch(e) {}
+    localStorage.removeItem('mk_session');
+    window.location.href = '../';
+  })();
+  </script>
+  <title>Outros módulos · Meu Studio</title>
+  <link rel="stylesheet" href="../shared/css/tokens.css">
+  <link rel="stylesheet" href="../shared/css/base.css">
+  <style>
+    /* Módulos fora do menu principal — continuam funcionando nas próprias rotas.
+       Para trazer um de volta ao menu: adicionar o item em GROUPS (shared/js/sidebar.js). */
+    .om { max-width: 640px; margin: 0 auto; padding: 72px 20px 64px; }
+    .om h1 { font-size: 1.5rem; font-weight: 600; letter-spacing: -.01em; }
+    .om-lead { margin-top: 8px; font-size: .92rem; line-height: 1.6; color: var(--text-muted); max-width: 46ch; }
+    .om-grp { margin-top: 40px; }
+    .om-grp-lbl { font-size: .72rem; font-weight: 500; letter-spacing: .04em; color: var(--text-subtle); padding: 0 4px 8px; }
+    .om-list { border-top: 1px solid var(--border); }
+    .om-row {
+      display: flex; align-items: baseline; justify-content: space-between; gap: 16px;
+      padding: 16px 4px; border-bottom: 1px solid var(--border);
+      text-decoration: none; color: var(--text); transition: background var(--t-fast);
+    }
+    .om-row:hover { background: var(--surface-2); }
+    .om-nm { font-size: .95rem; font-weight: 500; }
+    .om-ds { font-size: .8rem; color: var(--text-muted); margin-top: 3px; line-height: 1.45; }
+    .om-rt { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .72rem; color: var(--text-subtle); white-space: nowrap; }
+    @media (max-width: 520px) { .om-rt { display: none; } }
+  </style>
+</head>
+<body>
+
+<main class="om">
+  <h1>Outros módulos</h1>
+  <p class="om-lead">Módulos que saíram do menu para deixar o dia a dia mais simples. Nada foi apagado: dados e funções continuam aqui, cada um na sua rota.</p>
+
+  <section class="om-grp">
+    <div class="om-grp-lbl">Gestão</div>
+    <div class="om-list">
+      <a class="om-row" href="../clientes/"><div><div class="om-nm">Clientes</div><div class="om-ds">Cadastro e histórico de clientes</div></div><span class="om-rt">/clientes/</span></a>
+      <a class="om-row" href="../tarefas/"><div><div class="om-nm">Tarefas</div><div class="om-ds">Foco do dia e pendências</div></div><span class="om-rt">/tarefas/</span></a>
+      <a class="om-row" href="../estoque/"><div><div class="om-nm">Estoque</div><div class="om-ds">Produtos e reposição</div></div><span class="om-rt">/estoque/</span></a>
+    </div>
+  </section>
+
+  <section class="om-grp">
+    <div class="om-grp-lbl">Conteúdo e marca</div>
+    <div class="om-list">
+      <a class="om-row" href="../conteudo/index.html?view=acervo"><div><div class="om-nm">Acervo</div><div class="om-ds">Banco de fotos e vídeos com garimpo de ideias por IA</div></div><span class="om-rt">/conteudo/?view=acervo</span></a>
+      <a class="om-row" href="../conteudo/direcao-criativa.html"><div><div class="om-nm">Laboratório Criativo</div><div class="om-ds">Direção criativa dos conteúdos</div></div><span class="om-rt">/conteudo/direcao-criativa.html</span></a>
+      <a class="om-row" href="../instagram/?tab=validador"><div><div class="om-nm">Validador</div><div class="om-ds">Análise de posts antes de publicar</div></div><span class="om-rt">/instagram/?tab=validador</span></a>
+      <a class="om-row" href="../formacao-vip/"><div><div class="om-nm">Cachos &amp; Crespos</div><div class="om-ds">Formação VIP e material de apoio</div></div><span class="om-rt">/formacao-vip/</span></a>
+      <a class="om-row" href="../estrategia/centro-de-comando.html"><div><div class="om-nm">Manual de Marca</div><div class="om-ds">Posicionamento, tom de voz e pilares</div></div><span class="om-rt">/estrategia/centro-de-comando.html</span></a>
+      <a class="om-row" href="../conteudo/centro-de-marca.html"><div><div class="om-nm">Raio-X da Marca</div><div class="om-ds">Diagnóstico da presença da marca</div></div><span class="om-rt">/conteudo/centro-de-marca.html</span></a>
+    </div>
+  </section>
+
+  <section class="om-grp">
+    <div class="om-grp-lbl">Pesquisa</div>
+    <div class="om-list">
+      <a class="om-row" href="../conteudo/brand-brain.html"><div><div class="om-nm">Insights de Mercado</div><div class="om-ds">Tendências e concorrentes</div></div><span class="om-rt">/conteudo/brand-brain.html</span></a>
+      <a class="om-row" href="../conteudo/tiktok-radar.html"><div><div class="om-nm">TikTok</div><div class="om-ds">Radar de tendências do TikTok</div></div><span class="om-rt">/conteudo/tiktok-radar.html</span></a>
+    </div>
+  </section>
+</main>
+
+<script src="../shared/js/sidebar.js"></script>
+</body>
+</html>

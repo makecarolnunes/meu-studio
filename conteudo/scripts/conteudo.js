@@ -32,7 +32,7 @@ var stories=[];               // checklist diário de stories
 var planos=[];                // notas livres por dia (Próximos dias) — só localStorage
 var bankCat='todos';          // filtro de tema da gaveta do banco
 var promoIdeaId=null;         // ideia alvo do menu "promover" (⤴)
-var curView='hoje', curSF='todos', curCF=[], curPlats=[];
+var curView='quadro', curSF='todos', curCF=[], curPlats=[];
 var curSort='status'; // 'date' | 'category' | 'status' | 'scheduled' — padrão: por etapa de produção
 var colIdx=0, editId=null;
 var fCats=[CATS[0]], fFmts=['Reels'], fSt='Nao Iniciado', fPlats=['Instagram'];
@@ -603,6 +603,8 @@ function buildFilters(){
    ============================================================ */
 function setView(v){
   curView=v;
+  // Quadro (Kanban): casca própria — quadro.css esconde header/abas/sidebar antigos
+  document.body.classList.toggle('cq-mode', v==='quadro');
   // Toggle do header mobile (Lista/Board/Inbox) — só visível no acervo
   var ideiasCtx=(v==='list'||v==='board'||v==='inbox');
   var vt=document.getElementById('view-toggle');
@@ -811,7 +813,8 @@ function render(){
     if(hc) hc.textContent=total+' ideia'+(total!==1?'s':'')+' • '+label;
   }
   buildSidebar();
-  if(curView==='hoje'){ renderHoje(); buildBank(); }
+  if(curView==='quadro') renderQuadro();
+  else if(curView==='hoje'){ renderHoje(); buildBank(); }
   else if(curView==='stories') renderStoriesView();
   else if(curView==='list')  renderList();
   else if(curView==='board'){
@@ -2525,11 +2528,17 @@ for(var si=0;si<stBtns.length;si++){(function(btn){btn.onclick=function(){
    ============================================================ */
 loadData();
 loadMateriais();   // Acervo — banco de matéria-prima (carrega em paralelo)
-// Deep-link: ?view=acervo (atalho do hub) abre direto na view pedida; senão, painel do dia
+// Deep-link: ?view=<visão> abre direto na visão pedida (ex.: ?view=acervo, rota
+// do Acervo fora do menu); senão, o Quadro. ?idea=<id> (busca global) abre o card.
 (function(){
-  var qv = new URLSearchParams(location.search).get('view');
-  var allowed = ['hoje','stories','cal','list','board','inbox','acervo'];
-  setView(allowed.indexOf(qv) >= 0 ? qv : 'hoje');
+  var qs = new URLSearchParams(location.search);
+  var qv = qs.get('view');
+  var allowed = ['quadro','hoje','stories','cal','list','board','inbox','acervo'];
+  setView(allowed.indexOf(qv) >= 0 ? qv : 'quadro');
+  var qi = qs.get('idea');
+  if(qi && byIdIdea(qi)){
+    if(curView==='quadro') cqOpen(qi); else openModal(qi);
+  }
 })();
 updateInboxBadges();
 
