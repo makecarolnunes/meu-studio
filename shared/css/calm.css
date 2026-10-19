@@ -50,7 +50,7 @@ body { background: var(--bg) !important; }
 .card[style*="#fbf6f1"] { background: var(--surface) !important; }
 .card-title { font-weight: 600; letter-spacing: .04em; }
 .eitem { margin-bottom: 8px; }
-.entry, .idea-card { border-left-width: 3px; margin-bottom: 10px; }
+.idea-card { border-left-width: 3px; margin-bottom: 10px; }
 
 /* Etiquetas de categoria: neutras (cor fica para status) */
 .tag-resp, .tag-terceiros, .tag-cacheada, .tag-local, .tag-noiva,
@@ -58,8 +58,7 @@ body { background: var(--bg) !important; }
   background: var(--surface-2) !important;
   color: var(--text-muted) !important;
 }
-.entry.is-equipe { background: var(--card) !important; border-left-color: var(--rose) !important; }
-.entry.is-agenda-pend { animation: none; }
+.entry.is-agenda-pend { animation: none; }   /* card de Orçamentos: estilo próprio em orcamentos.css */
 
 /* ══ 3. BOTÕES — sólidos, sem brilho nem sombra ══ */
 .bsub, .add-btn, .login-btn, .dsb-novo-btn, .btn-fechar, .d-sb-nova-btn, .hj-nova {
@@ -171,3 +170,8 @@ body { background: var(--bg) !important; }
   .hdr-center { flex: 1; min-width: 0; text-align: left !important; }
   .hdr h1 { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 }
+
+/* ══ 10. TIPOGRAFIA — Open Sauce Sans em todo o sistema ══
+   (alguns módulos fixavam -apple-system no body; formulários não herdam fonte) */
+body, button, input, select, textarea { font-family: var(--font-sans) !important; }
+code, pre, kbd, samp { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important; }

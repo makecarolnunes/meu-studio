@@ -104,7 +104,7 @@
   var CSS = '\
 #mk-sb-fab,#mk-sb-back,#mk-sidebar,#mk-sb-bd{\
   box-sizing:border-box;\
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;\
+  font-family:var(--font-sans,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif);\
   -webkit-tap-highlight-color:transparent;\
 }\
 \

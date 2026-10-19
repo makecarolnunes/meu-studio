@@ -140,41 +140,38 @@ existe para status `Fechado`.
 
 ---
 
-## Card da listagem (`renderEntryCard`)
+## Card da listagem (`renderEntryCard`) — compacto (2026-10)
 
-Hierarquia escaneável, do mais para o menos importante:
+Grade de 3 colunas: **bloco de data** do evento (mês · dia · semana) ›
+**cliente + serviço + etiquetas** › **marcadores + status + valor**.
 
-1. **Nome da cliente** + marcadores de pendência + badge de status
-2. Serviço orçado — nome curto via `servicoCard()`
-3. **Data do evento** em destaque (`fmtDateEvento` → `25/08/26 · ter`) + valor;
-   `+2 datas` quando o orçamento tem mais de uma data
-4. Etiquetas: quem executa, domicílio, equipe de terceiros, cacheada, noiva
+1. Bloco de data à esquerda — o que se consulta primeiro (`a definir` sem data;
+   ano só aparece se não for o atual)
+2. **Nome da cliente** (600) e serviço curto (`servicoCard()`; até 2 linhas no celular)
+3. Etiquetas pequenas em CAPS: quem executa, domicílio, equipe de terceiros,
+   cacheada, noiva, `+N datas`
+4. Direita: marcadores de pendência + badge com status curto (`STATUS_CURTO`) e valor
 
 **Duas famílias de sinalização — não misturar:**
 
 | | O que é | Onde fica |
 |---|---|---|
-| Etiquetas (`.e-tags`) | característica do trabalho (domicílio, cacheada, equipe…) | rodapé do card |
-| Marcadores (`.e-states`) | **pendência operacional** (agenda criada? sinal comprovado?) | topo, ao lado do status |
+| Etiquetas (`.e-tags`) | característica do trabalho (domicílio, cacheada, equipe…) | abaixo do serviço |
+| Marcadores (`.e-states`) | **pendência operacional** (agenda criada? sinal comprovado?) | à direita, antes do status |
 
-Os marcadores são dois ícones de posição fixa — agenda à esquerda, sinal à
-direita — vermelhos com anel quando falta fazer, verdes apagados quando está
-resolvido. Viraram ícone porque como chips a fila crescia e competia com as
-etiquetas. Pendência nova entra aqui, não em `.e-tags`.
+Marcadores são ícones SVG de traço (`ICO_AGENDA`, `ICO_SINAL`), posição fixa —
+agenda à esquerda, sinal à direita — vermelhos com anel quando falta fazer,
+verdes apagados quando resolvido. Pendência nova entra aqui, não em `.e-tags`.
+Atendimento da minha equipe ganha um filete rosado à esquerda (`.is-equipe`).
 
-`servicoCard(e)` monta o nome curto a partir das slots: `Servico` guarda a
-descrição longa com as datas (`descreveSlots`), que no card só repetiria a data
-do evento logo abaixo. "Maquiagem + Cabelo · Maquiagem", "Noiva · 3× Maquiagem".
+**Sem emojis decorativos na interface** (botões, etiquetas, avisos). Emojis só
+ficam onde são conteúdo: mensagens de WhatsApp para a cliente, descrição do
+evento na agenda (`★★★ CLIENTE CACHEADA ★★★`), indicador de conexão e alertas
+de conflito de horário.
 
 A data do **pedido** não aparece no card — quem mostra é o cabeçalho do grupo
-(`fmtDateGroup`), que agrupa a lista por `DataPedido`. Atendimento da Carol não
-ganha etiqueta: ausência de etiqueta de equipe já significa "sou eu".
-
-No desktop os cards são grade de 2 colunas com `align-items: stretch` e as
-etiquetas ancoradas no rodapé (`margin-top: auto`) — cards da mesma linha
-terminam alinhados mesmo com quantidades diferentes de etiqueta.
-
----
+(`fmtDateGroup`, em CAPS), que agrupa a lista por `DataPedido`. No desktop o
+filtro de status fica **só na barra lateral** (a fileira `.ftabs` some ≥1024px).
 
 ## Equipe: dois conceitos distintos — **não confundir**
 
@@ -229,6 +226,15 @@ repasse real é definido em cada orçamento.
 ---
 
 ## Fluxo de fechamento (`abrirFechamento → confirmarFechamento`)
+
+**Atalho no cadastro:** o botão *Salvar, fechar e agendar* do painel Novo
+orçamento chama `saveNew({ fechar: true })` — grava o orçamento, **espera o
+insert** (o fechamento faz update na mesma linha) e abre `abrirFechamento()` com
+tudo preenchido. Cancelar ali deixa o orçamento salvo como Novo Pedido.
+
+**Google Agenda sempre disponível:** mesmo com `AgendaCriada`, o botão continua
+ativo como *Adicionar novamente ao Google Agenda* (com confirmação, porque pode
+duplicar o evento) e a linha "Evento já está no Google Agenda" indica o estado.
 
 ```
 panel-action → [btn Fechar e Agendar Tudo]

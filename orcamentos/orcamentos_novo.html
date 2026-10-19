@@ -20,8 +20,8 @@
   <title>Orçamentos · Meu Studio</title>
   <link rel="stylesheet" href="../shared/css/tokens.css">
   <link rel="stylesheet" href="../shared/css/base.css">
-  <link rel="stylesheet" href="./styles/orcamentos.css?v=20260812a">
-  <link rel="stylesheet" href="../shared/css/calm.css?v=20261018">
+  <link rel="stylesheet" href="./styles/orcamentos.css?v=20261019">
+  <link rel="stylesheet" href="../shared/css/calm.css?v=20261019">
 </head>
 <body>
 <div id="orca-app">
@@ -105,7 +105,7 @@
   <div class="chip"><div class="chip-lbl">Conversão</div><div class="chip-val" id="c-conv">—</div></div>
   <div class="chip"><div class="chip-lbl" style="color:var(--brown-d)">Receita</div><div class="chip-val" id="c-receita" style="color:var(--brown-d); font-size:0.82rem">—</div></div>
   <button class="chip" onclick="openConversaoDashboard()" title="Dashboard de conversão" style="background:var(--brand-soft);border:1px solid var(--brand);cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;color:var(--brand-dark);font-weight:700;font-size:.78rem">
-    📊 Dashboard
+    Dashboard
   </button>
 </div>
 
@@ -144,7 +144,7 @@
 
 <!-- ── DATA DO ATENDIMENTO (mobile) ────────────────────────── -->
 <div class="event-date-bar">
-  <label class="event-date-lbl" for="m-event-date">📅 Atende em</label>
+  <label class="event-date-lbl" for="m-event-date">Atende em</label>
   <input type="date" id="m-event-date" class="event-date-input" onchange="setEventDate(this.value)">
   <button class="event-date-clear" id="m-event-clear" onclick="clearEventDate()" title="Limpar data" style="display:none">✕</button>
 </div>
@@ -160,11 +160,11 @@
 <!-- ── FILTER TABS ────────────────────────────────────────── -->
 <div class="ftabs">
   <button class="ftab on" data-f="todos"        onclick="setF('todos')">Todos</button>
-  <button class="ftab"    data-f="novos"        onclick="setF('novos')">🆕 Novos</button>
-  <button class="ftab"    data-f="perdidos"     onclick="setF('perdidos')">❌ Perdidos</button>
-  <button class="ftab"    data-f="fechados"     onclick="setF('fechados')">✅ Fechados</button>
-  <button class="ftab"    data-f="agenda-pend"  onclick="setF('agenda-pend')">📅 Agenda ⚠️</button>
-  <button class="ftab"    data-f="agenda-ok"    onclick="setF('agenda-ok')">📅 Agenda ✅</button>
+  <button class="ftab"    data-f="novos"        onclick="setF('novos')">Novos</button>
+  <button class="ftab"    data-f="perdidos"     onclick="setF('perdidos')">Perdidos</button>
+  <button class="ftab"    data-f="fechados"     onclick="setF('fechados')">Fechados</button>
+  <button class="ftab"    data-f="agenda-pend"  onclick="setF('agenda-pend')">Agenda pendente</button>
+  <button class="ftab"    data-f="agenda-ok"    onclick="setF('agenda-ok')">Agenda confirmada</button>
 </div>
 
 <!-- ── FILTRO ORIGEM (mobile) ─────────────────────────────── -->
@@ -225,7 +225,7 @@
 
     <!-- Slots (serviço + valor + data + hora) -->
     <div style="font-size:0.68rem; font-weight:700; color:var(--purple); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:8px;">
-      🛠️ Serviços e datas
+      Serviços e datas
     </div>
     <div id="add-slots-list"></div>
     <button class="btn-add-slot" onclick="addAddSlot()">+ Adicionar outro serviço / data</button>
@@ -233,7 +233,7 @@
     <!-- Cliente cacheada — logo abaixo dos serviços, porque mexe na duração deles -->
     <div class="form-group chk-cacheada">
       <label class="form-label chk-lbl">
-        <input type="checkbox" id="add-cacheada" onchange="toggleAddCacheada(this.checked)"> ★ Cliente cacheada
+        <input type="checkbox" id="add-cacheada" onchange="toggleAddCacheada(this.checked)"> Cliente cacheada
       </label>
       <div class="chk-hint">Sugere 3h de duração no atendimento (editável) e destaca o alerta no Google Agenda.</div>
     </div>
@@ -260,13 +260,15 @@
     </div>
     <div class="form-group">
       <label class="form-label chk-lbl">
-        <input type="checkbox" id="add-eq-chk" onchange="toggleAddEquipeInput(this.checked)"> ↑ Trabalho para equipe de terceiros
+        <input type="checkbox" id="add-eq-chk" onchange="toggleAddEquipeInput(this.checked)"> Trabalho para equipe de terceiros
       </label>
       <div class="chk-hint">Marque quando <strong>você</strong> está atendendo para a equipe de outra pessoa.</div>
       <input class="form-input" type="text" id="add-equipe" placeholder="Nome da equipe de terceiros" style="display:none" autocomplete="off">
     </div>
-    <button class="btn-primary" onclick="saveNew()">💾 Salvar Orçamento</button>
-    <button class="btn-outline" onclick="closeAll()">Cancelar</button>
+    <button class="btn-primary" onclick="saveNew()">Salvar orçamento</button>
+    <!-- Atalho: cliente já fechou na conversa → salva e abre o "Fechar e agendar" -->
+    <button class="btn-outline btn-save-fechar" onclick="saveNew({ fechar: true })">Salvar, fechar e agendar</button>
+    <button class="btn-text" onclick="closeAll()">Cancelar</button>
   </div>
 </div>
 
@@ -315,7 +317,7 @@
     <button class="btn-fechar" onclick="abrirFechamento()">Fechar e Agendar Tudo</button>
   </div>
   <div id="act-gcal-section" style="display:none; padding: 0 14px 12px;">
-    <button class="btn-gcal" id="act-gcal-btn" onclick="adicionarAgendaDeAction()" style="margin-top:0;">📅 Adicionar ao Google Agenda</button>
+    <button class="btn-gcal" id="act-gcal-btn" onclick="adicionarAgendaDeAction()" style="margin-top:0;">Adicionar ao Google Agenda</button>
     <div id="act-gcal-result" class="gcal-status"></div>
   </div>
 
@@ -338,8 +340,8 @@
       <div class="form-group">
         <label class="form-label">Local</label>
         <div class="toggle-row">
-          <button type="button" class="toggle-btn on" data-actlocal="studio"    onclick="setActLocal(this)">🏠 Studio</button>
-          <button type="button" class="toggle-btn"    data-actlocal="domicilio" onclick="setActLocal(this)">🚗 Domicílio</button>
+          <button type="button" class="toggle-btn on" data-actlocal="studio"    onclick="setActLocal(this)">Studio</button>
+          <button type="button" class="toggle-btn"    data-actlocal="domicilio" onclick="setActLocal(this)">Domicílio</button>
         </div>
       </div>
       <div class="form-group" id="act-addr-row">
@@ -364,7 +366,7 @@
 
       <div class="form-group chk-cacheada" style="margin-top:13px">
         <label class="form-label chk-lbl">
-          <input type="checkbox" id="act-cacheada" onchange="toggleActCacheada(this.checked)"> ★ Cliente cacheada
+          <input type="checkbox" id="act-cacheada" onchange="toggleActCacheada(this.checked)"> Cliente cacheada
         </label>
       </div>
     </div>
@@ -446,10 +448,10 @@
         <textarea class="form-input msg-orca" id="act-orca-msg" rows="14" oninput="marcarMsgOrcaEditada()"></textarea>
       </div>
       <div class="msg-orca-actions">
-        <button class="btn-copy" type="button" id="act-orca-copy" onclick="copiarMsgOrcamento()">📋 Copiar mensagem</button>
+        <button class="btn-copy" type="button" id="act-orca-copy" onclick="copiarMsgOrcamento()">Copiar mensagem</button>
         <button class="btn-icon" type="button" onclick="regerarMsgOrcamento()" title="Refazer a mensagem com os dados atuais">↺</button>
       </div>
-      <button class="btn-wa" type="button" onclick="enviarMsgOrcamento()" style="margin-top:8px;"><span>💬</span> Enviar pelo WhatsApp</button>
+      <button class="btn-wa" type="button" onclick="enviarMsgOrcamento()" style="margin-top:8px;">Enviar pelo WhatsApp</button>
     </div>
   </section>
 
@@ -462,8 +464,8 @@
     </button>
     <div class="act-sec-body">
       <div class="wa-bubble" id="act-wa-text"></div>
-      <button class="btn-wa" onclick="sendWAAction()"><span>💬</span> Enviar pelo WhatsApp</button>
-      <button class="btn-copy" onclick="copiarMensagemAction()" style="margin-top:8px;">📋 Copiar mensagem</button>
+      <button class="btn-wa" onclick="sendWAAction()">Enviar pelo WhatsApp</button>
+      <button class="btn-copy" onclick="copiarMensagemAction()" style="margin-top:8px;">Copiar mensagem</button>
     </div>
   </section>
 
@@ -481,33 +483,33 @@
   </section>
 
   <div style="padding: 6px 14px 32px;">
-    <button class="btn-primary" onclick="saveAction()">💾 Salvar alterações</button>
+    <button class="btn-primary" onclick="saveAction()">Salvar alterações</button>
     <button class="btn-outline" onclick="closeAll()">Fechar</button>
-    <button class="btn-danger" onclick="excluirOrcamento()">🗑 Excluir orçamento</button>
+    <button class="btn-danger" onclick="excluirOrcamento()">Excluir orçamento</button>
   </div>
 </div>
 
 <!-- ── PANEL: FECHAR E AGENDAR TUDO ────────────────────── -->
 <div class="panel" id="panel-fechar">
   <div class="panel-handle"></div>
-  <div class="panel-title">🚀 Fechar e Agendar Tudo</div>
+  <div class="panel-title">Fechar e agendar</div>
   <div class="panel-sub" id="fech-nome" style="padding:2px 18px 0; font-size:0.82rem; color:var(--brown); font-weight:700;"></div>
   <div class="panel-body">
 
     <!-- Preview do que vai ser criado -->
     <div class="sync-preview">
-      <div class="sync-item"><span class="si-icon">💰</span><span class="si-txt">Sinal + restante no <strong>Sistema Financeiro</strong></span></div>
-      <div class="sync-item"><span class="si-icon">👥</span><span class="si-txt">Atendimento da equipe: entra só o <strong>lucro</strong></span></div>
-      <div class="sync-item"><span class="si-icon">📅</span><span class="si-txt">Evento(s) no <strong>Google Agenda</strong></span></div>
-      <div class="sync-item"><span class="si-icon">💬</span><span class="si-txt">Mensagem de confirmação para o <strong>WhatsApp</strong></span></div>
+      <div class="sync-item"><span class="si-txt">Sinal + restante no <strong>Sistema Financeiro</strong></span></div>
+      <div class="sync-item"><span class="si-txt">Atendimento da equipe: entra só o <strong>lucro</strong></span></div>
+      <div class="sync-item"><span class="si-txt">Evento(s) no <strong>Google Agenda</strong></span></div>
+      <div class="sync-item"><span class="si-txt">Mensagem de confirmação para o <strong>WhatsApp</strong></span></div>
     </div>
 
     <!-- Local -->
     <div class="form-group">
       <label class="form-label">Local</label>
       <div class="toggle-row">
-        <button class="toggle-btn on" data-local="studio"    onclick="setFechLocal(this)">🏠 Studio</button>
-        <button class="toggle-btn"    data-local="domicilio" onclick="setFechLocal(this)">🚗 Domicílio</button>
+        <button class="toggle-btn on" data-local="studio"    onclick="setFechLocal(this)">Studio</button>
+        <button class="toggle-btn"    data-local="domicilio" onclick="setFechLocal(this)">Domicílio</button>
       </div>
     </div>
 
@@ -523,7 +525,7 @@
 
     <!-- Datas e Serviços (slots) -->
     <div style="font-size:0.68rem; font-weight:700; color:var(--purple); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:8px;">
-      📅 Datas, horários e serviços
+      Datas, horários e serviços
     </div>
     <div id="fech-slots-list"></div>
     <button class="btn-add-slot" onclick="addFechSlot()">+ Adicionar outra data / serviço</button>
@@ -531,7 +533,7 @@
     <!-- Cliente cacheada — logo abaixo dos serviços, porque mexe na duração deles -->
     <div class="form-group chk-cacheada">
       <label class="form-label chk-lbl">
-        <input type="checkbox" id="fech-cacheada" onchange="toggleFechCacheada(this.checked)"> ★ Cliente cacheada
+        <input type="checkbox" id="fech-cacheada" onchange="toggleFechCacheada(this.checked)"> Cliente cacheada
       </label>
       <div class="chk-hint">Sugere 3h de duração no atendimento (editável) e destaca o alerta no Google Agenda.</div>
     </div>
@@ -563,8 +565,8 @@
     <div class="form-group">
       <label class="form-label">Sinal já recebido?</label>
       <div class="toggle-row">
-        <button class="toggle-btn on-ok" data-ss="recebido" onclick="setFechSinalStatus(this)">✅ Já recebi</button>
-        <button class="toggle-btn"       data-ss="pendente" onclick="setFechSinalStatus(this)">⏳ Vou receber</button>
+        <button class="toggle-btn on-ok" data-ss="recebido" onclick="setFechSinalStatus(this)">Já recebi</button>
+        <button class="toggle-btn"       data-ss="pendente" onclick="setFechSinalStatus(this)">Vou receber</button>
       </div>
     </div>
 
@@ -594,7 +596,7 @@
     <!-- Proposta (apenas para Noivas) -->
     <div id="fech-proposta-section" style="display:none">
       <div style="font-size:0.68rem;font-weight:700;color:var(--rose-dark);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;margin-top:4px">
-        📄 Proposta Enviada
+        Proposta enviada
       </div>
       <div id="fech-proposta-list" style="margin-bottom:10px"></div>
       <button class="btn-add-slot" type="button" onclick="uploadOrcProposal()" style="margin-bottom:12px">+ Anexar Proposta</button>
@@ -607,7 +609,7 @@
     </div>
 
     <button class="btn-fechar" id="fech-confirm-btn" onclick="confirmarFechamento()">
-      ✅ Confirmar e Sincronizar Tudo
+      Confirmar e sincronizar tudo
     </button>
     <button class="btn-outline" style="margin-top:8px;" onclick="voltarFechamento()">← Voltar</button>
   </div>
@@ -616,40 +618,40 @@
 <!-- ── PANEL: CONFIRMAÇÃO / SUCESSO ─────────────────────── -->
 <div class="panel" id="panel-confirmacao">
   <div class="panel-handle"></div>
-  <div class="panel-title">🎉 Confirmado!</div>
+  <div class="panel-title">Orçamento fechado</div>
   <div class="panel-sub" id="conf-client" style="padding:2px 18px 0; font-size:0.82rem; color:var(--ok); font-weight:700;"></div>
   <div class="panel-body">
 
     <div class="success-list" id="conf-list"></div>
 
     <div style="font-size:0.68rem; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:8px;">
-      💬 Mensagem de confirmação para o cliente
+      Mensagem de confirmação para a cliente
     </div>
     <div class="wa-bubble" id="conf-wa-text"></div>
 
     <button class="btn-wa" onclick="sendConfirmationWA()">
-      <span>💬</span> Enviar pelo WhatsApp
+      Enviar pelo WhatsApp
     </button>
 
     <button class="btn-gcal" id="conf-gcal-btn" onclick="abrirGcalConfirmacao()">
-      📅 Adicionar ao Google Agenda
+      Adicionar ao Google Agenda
     </button>
     <div id="conf-gcal-status" class="gcal-status"></div>
 
-    <button class="btn-copy" onclick="copiarMensagem()">📋 Copiar mensagem</button>
-    <button class="btn-outline" style="margin-top:10px;" onclick="closeAll()">✔️ Concluído</button>
+    <button class="btn-copy" onclick="copiarMensagem()">Copiar mensagem</button>
+    <button class="btn-outline" style="margin-top:10px;" onclick="closeAll()">Concluído</button>
   </div>
 </div>
 
 <!-- ── PANEL: SETTINGS ────────────────────────────────────── -->
 <div class="panel" id="panel-settings">
   <div class="panel-handle"></div>
-  <div class="panel-title">⚙️ Configurações</div>
+  <div class="panel-title">Configurações</div>
   <div class="panel-body">
     <div class="settings-tabs">
-      <button class="settings-tab on" data-tab="conex"     onclick="setSettingsTab('conex')">🔗 Conexões</button>
-      <button class="settings-tab"    data-tab="servicos"  onclick="setSettingsTab('servicos')">🛠️ Serviços</button>
-      <button class="settings-tab"    data-tab="equipe"    onclick="setSettingsTab('equipe')">👥 Equipe</button>
+      <button class="settings-tab on" data-tab="conex"     onclick="setSettingsTab('conex')">Conexões</button>
+      <button class="settings-tab"    data-tab="servicos"  onclick="setSettingsTab('servicos')">Serviços</button>
+      <button class="settings-tab"    data-tab="equipe"    onclick="setSettingsTab('equipe')">Equipe</button>
     </div>
 
     <!-- Tab: Conexões -->
@@ -658,7 +660,7 @@
         🟡 Verificando conexão com Supabase...
       </div>
       <div class="settings-note">
-        📅 <strong>Google Agenda:</strong> ID da agenda usada para os eventos.
+        <strong>Google Agenda:</strong> ID da agenda usada para os eventos.
       </div>
       <div class="settings-field">
         <label>Calendar ID (Google Agenda)</label>
@@ -680,7 +682,7 @@
     <!-- Tab: Equipe (profissionais que podem executar um atendimento) -->
     <div id="settings-tab-equipe" style="margin-top:14px; display:none;">
       <div class="settings-note">
-        👥 Profissionais da <strong>sua</strong> equipe. Ao marcar um deles como responsável por um atendimento, o repasse vira uma despesa automática no Financeiro. O repasse padrão é só uma sugestão — pode ser ajustado em cada orçamento.
+        Profissionais da <strong>sua</strong> equipe. Ao marcar um deles como responsável por um atendimento, o repasse vira uma despesa automática no Financeiro. O repasse padrão é só uma sugestão — pode ser ajustado em cada orçamento.
       </div>
       <div id="prof-list"></div>
       <button class="btn-add-slot" onclick="addProfissional()" style="margin-top:4px;">+ Adicionar profissional</button>
@@ -695,7 +697,7 @@
 <div class="loading-screen" id="loading-screen">
   <div class="loading-card">
     <div class="loading-wrap">
-      <div class="loading-logo">🚀</div>
+      <div class="loading-logo"></div>
       <div class="loading-ring"></div>
     </div>
     <div class="loading-msg" id="loading-msg">Processando...</div>
@@ -717,7 +719,7 @@
 <script src="../shared/js/icons.js"></script>
 
 <!-- ── Módulo Orçamentos ── -->
-<script src="./scripts/orcamentos.js?v=20261018"></script>
+<script src="./scripts/orcamentos.js?v=20261019"></script>
 
 <!-- ── Sidebar (último, depende do DOM pronto) ── -->
 <script src="../shared/js/global-search.js"></script>

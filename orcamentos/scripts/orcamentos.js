@@ -167,7 +167,15 @@ function servicoCard(e) {
   return nomes.map(n => (qtds[n] > 1 ? qtds[n] + '× ' : '') + n).join(' · ');
 }
 
-// Card da listagem — hierarquia: cliente › serviço › data do evento › sinalizações.
+// Card da listagem — compacto: bloco de data à esquerda · cliente e serviço ·
+// status e valor à direita · etiquetas numa linha só. Mesmas informações e
+// sinalizações de antes, com menos altura.
+const ICO_AGENDA = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><line x1="16" y1="3" x2="16" y2="7"/><line x1="8" y1="3" x2="8" y2="7"/><line x1="3" y1="10" x2="21" y2="10"/></svg>';
+const ICO_SINAL  = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="9" y1="12" x2="15" y2="12"/></svg>';
+const CLIP_ICO   = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.4 11.1l-9.2 9.2a6 6 0 0 1-8.5-8.5l9.2-9.2a4 4 0 0 1 5.7 5.7l-9.2 9.2a2 2 0 0 1-2.8-2.8l8.5-8.5"/></svg>';
+const MESES_CURTOS = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+const DIAS_CURTOS  = ['dom','seg','ter','qua','qui','sex','sáb'];
+
 function renderEntryCard(e) {
   const sCls   = STATUS_CLASS[e.Status] || 'st-novo';
   const agOk   = e.Status === 'Fechado' && getAgendaCriada(e);
@@ -179,58 +187,63 @@ function renderEntryCard(e) {
   const val    = e.ValorFechado ? parseFloat(e.ValorFechado) : parseFloat(e.ValorProp) || 0;
   const valStr = val ? fmtVal(val) : '—';
 
-  // Data do evento — informação de consulta rápida, com o maior destaque do card
-  const datas   = entryEventDates(e).sort();
-  const dataEv  = e.DataEvento || datas[0] || '';
-  const outras  = datas.filter(d => d !== dataEv).length;
-  const dataHTML = dataEv
-    ? '<span class="e-ev-val">' + esc(fmtDateEvento(dataEv)) + '</span>' +
-      (outras ? '<span class="e-ev-extra">+' + outras + (outras > 1 ? ' datas' : ' data') + '</span>' : '')
-    : '<span class="e-ev-val is-empty">A definir</span>';
+  // Bloco de data do evento — o que se consulta primeiro
+  const datas  = entryEventDates(e).sort();
+  const dataEv = e.DataEvento || datas[0] || '';
+  const outras = datas.filter(d => d !== dataEv).length;
+  let dataHTML = '<div class="e-date is-empty"><span class="e-d">—</span><span class="e-m">a definir</span></div>';
+  if (dataEv) {
+    const [y, m, d] = dataEv.split('-').map(Number);
+    if (y && m && d) {
+      dataHTML = '<div class="e-date" title="' + esc(fmtDateEvento(dataEv)) + '">' +
+        '<span class="e-m">' + MESES_CURTOS[m-1] + (y !== new Date().getFullYear() ? ' ' + String(y).slice(2) : '') + '</span>' +
+        '<span class="e-d">' + pad(d) + '</span>' +
+        '<span class="e-w">' + DIAS_CURTOS[new Date(y, m-1, d).getDay()] + '</span>' +
+      '</div>';
+    }
+  }
 
   // Etiquetas — só o que caracteriza o trabalho: quem atende › local › equipe
   // de terceiros › cacheada › noiva
   const tags = [];
-  if (isEquipeEntry(e))               tags.push('<span class="tag-resp tag-resp-equipe">👥 ' + esc(respDe(e)) + '</span>');
-  if ((e.LocalTipo || '') === 'domicilio') tags.push('<span class="tag-local">🚗 Domicílio</span>');
-  if (e.Equipe)                       tags.push('<span class="tag-terceiros">↑ Equipe ' + esc(e.Equipe) + '</span>');
-  if (e.Cacheada)                     tags.push('<span class="tag-cacheada">★ Cacheada</span>');
-  if (isNoivaEntry(e))                tags.push('<span class="tag-noiva">💍 Noiva</span>');
+  if (isEquipeEntry(e))               tags.push('<span class="tag-resp tag-resp-equipe">' + esc(respDe(e)) + '</span>');
+  if ((e.LocalTipo || '') === 'domicilio') tags.push('<span class="tag-local">Domicílio</span>');
+  if (e.Equipe)                       tags.push('<span class="tag-terceiros">Equipe ' + esc(e.Equipe) + '</span>');
+  if (e.Cacheada)                     tags.push('<span class="tag-cacheada">Cacheada</span>');
+  if (isNoivaEntry(e))                tags.push('<span class="tag-noiva">Noiva</span>');
+  if (outras)                         tags.push('<span class="tag-datas">+' + outras + (outras > 1 ? ' datas' : ' data') + '</span>');
 
-  // Pendências do orçamento fechado — dois marcadores fixos no alto, em vez de
-  // chips largos disputando espaço com as etiquetas. Posição sempre a mesma:
-  // agenda à esquerda, sinal à direita. Vermelho = falta fazer.
+  // Pendências do orçamento fechado — marcadores fixos: agenda à esquerda,
+  // sinal à direita. Vermelho = falta fazer; verde apagado = resolvido.
   let estados = '';
   if (e.Status === 'Fechado') {
     estados =
-      '<div class="e-states">' +
-        (agOk
-          ? '<span class="e-st ok"   title="Evento criado no Google Agenda">📅</span>'
-          : '<span class="e-st pend" title="Falta criar o evento no Google Agenda">📅</span>') +
-        (hasComprovante(e)
-          ? '<span class="e-st ok"   title="Comprovante do sinal anexado">🧾</span>'
-          : '<span class="e-st pend" title="Sinal ainda sem comprovante">🧾</span>') +
-      '</div>';
+      '<span class="e-states">' +
+        '<span class="e-st ' + (agOk ? 'ok' : 'pend') + '" title="' + (agOk ? 'Evento criado no Google Agenda' : 'Falta criar o evento no Google Agenda') + '">' + ICO_AGENDA + '</span>' +
+        '<span class="e-st ' + (hasComprovante(e) ? 'ok' : 'pend') + '" title="' + (hasComprovante(e) ? 'Comprovante do sinal anexado' : 'Sinal ainda sem comprovante') + '">' + ICO_SINAL + '</span>' +
+      '</span>';
   }
 
   return (
     '<div class="entry ' + cls + '" onclick="openAction(\'' + esc(e.ID) + '\')">' +
-      '<div class="e-top">' +
+      dataHTML +
+      '<div class="e-main">' +
         '<div class="e-name">' + esc(e.Cliente || '—') + '</div>' +
-        estados +
-        '<span class="badge ' + sCls + '">' + esc(e.Status || 'Novo') + '</span>' +
+        '<div class="e-srv">' + esc(servicoCard(e)) + '</div>' +
+        (tags.length ? '<div class="e-tags">' + tags.join('') + '</div>' : '') +
       '</div>' +
-      '<div class="e-srv">' + esc(servicoCard(e)) + '</div>' +
-      '<div class="e-evrow">' +
-        '<div class="e-ev">' +
-          '<span class="e-ev-lbl">Data do evento</span>' +
-          dataHTML +
-        '</div>' +
+      '<div class="e-side">' +
+        '<div class="e-side-top">' + estados + '<span class="badge ' + sCls + '">' + esc(STATUS_CURTO[e.Status] || e.Status || 'Novo') + '</span></div>' +
         '<span class="e-val">' + valStr + '</span>' +
       '</div>' +
-      (tags.length ? '<div class="e-tags">' + tags.join('') + '</div>' : '') +
     '</div>');
 }
+// Rótulo curto do status no card (o completo segue no painel do orçamento)
+const STATUS_CURTO = {
+  'Novo Pedido': 'Novo', 'Orçamento Enviado': 'Enviado', 'Fechado': 'Fechado',
+  'Perdido - Sem Resposta': 'Sem resposta', 'Perdido - Sem Disponibilidade': 'Sem agenda',
+  'Perdido - Outros motivos': 'Perdido',
+};
 function fmtDateWeek(s) {
   if (!s) return '';
   const [y,m,d] = s.split('-').map(Number);
@@ -648,7 +661,7 @@ function renderRespBlock(prefix, resp, repasse) {
         (opts ? '<optgroup label="Profissional da equipe">' + opts + '</optgroup>' : '') +
       '</select>' +
       (semProf
-        ? '<div class="resp-hint">Nenhum profissional cadastrado — adicione em ⚙️ Configurações › Equipe.</div>'
+        ? '<div class="resp-hint">Nenhum profissional cadastrado — adicione em Configurações › Equipe.</div>'
         : '') +
       '<div id="' + prefix + '-resp-fin" class="resp-fin" style="display:' + (sel ? 'block' : 'none') + '">' +
         '<label class="form-label">Repasse ao profissional (R$)</label>' +
@@ -1004,7 +1017,7 @@ async function salvarEventosDireto(eventos, statusEl) {
     if (statusEl) {
       statusEl.className = 'gcal-status ok';
       const n = eventos.length;
-      statusEl.textContent = '✅ ' + n + (n === 1 ? ' evento salvo' : ' eventos salvos') + ' na agenda!';
+      statusEl.textContent = '' + n + (n === 1 ? ' evento salvo' : ' eventos salvos') + ' na agenda!';
     }
     return { ok: true };
   } catch (err) {
@@ -1027,17 +1040,17 @@ function abrirEventosNoNavegador(eventos, statusEl) {
     if (url) window.open(url, '_blank');
     if (statusEl) {
       statusEl.className = 'gcal-status warn';
-      statusEl.textContent = '⚠️ Na tela do Google Agenda, troque para a agenda "Clientes" antes de salvar.';
+      statusEl.textContent = 'Na tela do Google Agenda, troque para a agenda "Clientes" antes de salvar.';
     }
     return { ok: true };
   }
   if (statusEl) {
     statusEl.className = 'gcal-status info';
     let h = '<div style="font-size:13px;font-weight:600;margin-bottom:8px;">Clique para adicionar cada evento:</div>';
-    h += '<div style="font-size:12px;color:#b45309;margin-bottom:6px;">⚠️ Lembre de trocar para a agenda Clientes antes de salvar.</div>';
+    h += '<div style="font-size:12px;color:#b45309;margin-bottom:6px;">Lembre de trocar para a agenda Clientes antes de salvar.</div>';
     eventos.forEach(ev => {
       const url = buildGCalURL(ev.titulo, ev.data, ev.horario, ev.durMinutes, ev.endereco, ev.descricao);
-      if (url) h += '<a href="' + esc(url) + '" target="_blank" class="gcal-link-btn">📅 ' + esc(fmtDate(ev.data)) + ' ' + esc(fmtHorario(ev.horario)) + '</a>';
+      if (url) h += '<a href="' + esc(url) + '" target="_blank" class="gcal-link-btn">' + esc(fmtDate(ev.data)) + ' ' + esc(fmtHorario(ev.horario)) + '</a>';
     });
     statusEl.innerHTML = h;
   }
@@ -1127,7 +1140,7 @@ function openConversaoDashboard() {
   };
 
   const html = `
-    <div style="font-size:1.05rem;font-weight:800;color:#38190b;margin-bottom:14px">📊 Conversão · ${meses[mM]} ${mY}</div>
+    <div style="font-size:1.05rem;font-weight:800;color:#38190b;margin-bottom:14px">Conversão · ${meses[mM]} ${mY}</div>
     ${card(meses[mM] + ' ' + mY, 'mês corrente', mesAtual, { deltaConv, deltaRec })}
     ${card(meses[mesAntDate.getMonth()] + ' ' + mesAntDate.getFullYear(), 'mês anterior · comparação', mesAnt)}
     ${card('Últimos 3 meses', `${meses[inicio3Date.getMonth()]} → ${meses[mM]}`, ult3)}
@@ -1294,7 +1307,7 @@ function render() {
     else                   msg = 'Nenhum orçamento neste filtro.';
     content.innerHTML =
       '<div class="empty">' +
-        '<span class="ico">' + (semFiltro ? '💰' : '🔍') + '</span>' +
+        
         '<p>' + msg + '</p>' +
       '</div>';
     return;
@@ -1879,7 +1892,7 @@ function addAddSlot() {
 }
 
 function removerAddSlot(id) {
-  if (addSlots.length <= 1) { toast('⚠️ Pelo menos um serviço é necessário'); return; }
+  if (addSlots.length <= 1) { toast('Pelo menos um serviço é necessário'); return; }
   addSlots = addSlots.filter(s => s.id !== id);
   renderAddSlots();
   recalcAddTotal();
@@ -1979,7 +1992,10 @@ function descreveSlots(slots) {
   }).join(', ');
 }
 
-async function saveNew() {
+// opts.fechar = true → "Salvar, fechar e agendar": grava o orçamento e já abre
+// o painel de fechamento com os dados preenchidos (sem ter que reabrir o card).
+async function saveNew(opts) {
+  const fecharAgora = !!(opts && opts.fechar);
   const nome   = document.getElementById('add-nome').value.trim();
   const tel    = document.getElementById('add-tel').value.trim();
   const obs    = document.getElementById('add-obs').value.trim();
@@ -1989,12 +2005,12 @@ async function saveNew() {
   const { responsavel, repasse } = getRespValues('add');
 
   const semTel = (document.getElementById('add-no-tel') || {}).checked;
-  if (!nome) { toast('⚠️ Informe o nome do cliente'); return; }
-  if (!tel && !semTel) { toast('⚠️ Informe o telefone'); return; }
+  if (!nome) { toast('Informe o nome do cliente'); return; }
+  if (!tel && !semTel) { toast('Informe o telefone'); return; }
   const slotsValidos = addSlots.filter(s => s.servico);
-  if (!slotsValidos.length) { toast('⚠️ Adicione pelo menos um serviço'); return; }
+  if (!slotsValidos.length) { toast('Adicione pelo menos um serviço'); return; }
   const dataInvalida = slotsValidos.find(s => s.data && !slotDateYearValid(s.data));
-  if (dataInvalida) { toast('⚠️ Confira a data do serviço — ano fora do intervalo: ' + fmtDate(dataInvalida.data)); return; }
+  if (dataInvalida) { toast('Confira a data do serviço — ano fora do intervalo: ' + fmtDate(dataInvalida.data)); return; }
 
   const total = slotsValidos.reduce((s, x) => s + (parseFloat(x.valorUnit) || 0) * slotQtd(x), 0);
   const servicoDesc = descreveSlots(slotsValidos);
@@ -2041,13 +2057,20 @@ async function saveNew() {
   cacheEntries();
   closeAll();
   render();
-  toast('✅ Orçamento salvo!');
+  toast(fecharAgora ? 'Orçamento salvo — agora é só fechar' : 'Orçamento salvo!');
 
+  // Espera o insert terminar antes de abrir o fechamento: o fechamento faz um
+  // update na mesma linha e não pode chegar ao Supabase antes dela existir.
   const result = await postEntry({ action: 'save', entry });
   if (!result.ok && result.error !== 'no-url') {
-    toast('⚠️ Salvo localmente, falha ao sincronizar');
+    toast('Salvo localmente, falha ao sincronizar');
   } else if (result.ok) {
     dot('ok');
+  }
+
+  if (fecharAgora) {
+    activeId = entry.ID;
+    abrirFechamento();
   }
 }
 
@@ -2143,7 +2166,7 @@ async function applyStatusValue(newStatus) {
   const fields = { Status: e.Status, DataEnvio: e.DataEnvio, DataFechamento: e.DataFechamento };
   const result = await postEntry({ action: 'update', id: e.ID, fields });
   if (!result.ok && result.error !== 'no-url') {
-    toast('⚠️ Sincronização do status falhou');
+    toast('Sincronização do status falhou');
   }
 }
 
@@ -2237,9 +2260,9 @@ async function updateDataPedido() {
 
   const result = await postEntry({ action: 'update', id: e.ID, fields: { DataPedido: e.DataPedido } });
   if (!result.ok && result.error !== 'no-url') {
-    toast('⚠️ Sincronização da data falhou');
+    toast('Sincronização da data falhou');
   } else if (result.ok) {
-    toast('✅ Data do pedido atualizada');
+    toast('Data do pedido atualizada');
   }
 }
 
@@ -2256,7 +2279,7 @@ async function saveAction() {
     const validos = actEditSlots.filter(s => s.servico);
     if (validos.length) {
       const dataInvalida = validos.find(s => s.data && !slotDateYearValid(s.data));
-      if (dataInvalida) { toast('⚠️ Confira a data do serviço — ano fora do intervalo: ' + fmtDate(dataInvalida.data)); return; }
+      if (dataInvalida) { toast('Confira a data do serviço — ano fora do intervalo: ' + fmtDate(dataInvalida.data)); return; }
       slotsForPack   = expandRows(validos);
       e.Servico      = descreveSlots(validos);
       const datas    = validos.map(s => s.data).filter(Boolean).sort();
@@ -2296,7 +2319,7 @@ async function saveAction() {
   cacheEntries();
   closeAll();
   render();
-  toast('✅ Alterações salvas');
+  toast('Alterações salvas');
 
   const fields = {
     Status:        e.Status,
@@ -2318,7 +2341,7 @@ async function saveAction() {
   };
   const result = await postEntry({ action: 'update', id: e.ID, fields });
   if (!result.ok && result.error !== 'no-url') {
-    toast('⚠️ Sincronização falhou');
+    toast('Sincronização falhou');
   }
 }
 
@@ -2335,14 +2358,14 @@ async function excluirOrcamento() {
   cacheEntries();
   closeAll();
   render();
-  toast('🗑 Orçamento excluído');
+  toast('Orçamento excluído');
 
   // 3) Envia o delete para o servidor (Apps Script)
   //    O deletedIds PERMANECE no localStorage independente da resposta,
   //    impedindo que o orçamento reapareça em qualquer dispositivo durante o sync.
   const result = await postEntry({ action: 'delete', id: idToDelete });
   if (!result.ok && result.error !== 'no-url') {
-    toast('⚠️ Falha ao excluir da planilha — verifique o Apps Script');
+    toast('Falha ao excluir da planilha — verifique o Apps Script');
   }
 }
 
@@ -2440,7 +2463,7 @@ function renderFechPropostas() {
     list.innerHTML = fechPropostas.map(p => `
       <div style="display:flex;align-items:center;gap:8px;padding:8px;background:#fafafa;border-radius:8px;margin-bottom:6px">
         <span style="flex:1;font-size:0.85rem;color:var(--brown);word-break:break-word">${esc(p.nome || 'proposta')}</span>
-        <a href="${esc(p.link || '#')}" target="_blank" rel="noopener" style="font-size:0.75rem;color:#1976d2;padding:4px 8px;border-radius:4px;background:#e3f2fd;text-decoration:none;white-space:nowrap">📄 Ver</a>
+        <a href="${esc(p.link || '#')}" target="_blank" rel="noopener" style="font-size:0.75rem;color:#1976d2;padding:4px 8px;border-radius:4px;background:#e3f2fd;text-decoration:none;white-space:nowrap">Ver</a>
         <button class="delbtn" style="width:24px;height:24px;flex-shrink:0;padding:0;border:none;background:none;cursor:pointer" type="button" onclick="deleteFechProposta('${esc(p.fileId || '')}');" title="Remover">${trash}</button>
       </div>`).join('');
   }
@@ -2493,7 +2516,7 @@ function addFechSlot() {
 }
 
 function removerFechSlot(id) {
-  if (fechSlots.length <= 1) { toast('⚠️ Pelo menos uma data é necessária'); return; }
+  if (fechSlots.length <= 1) { toast('Pelo menos uma data é necessária'); return; }
   fechSlots = fechSlots.filter(s => s.id !== id);
   renderFechSlots();
   recalcFechTotalFromSlots();
@@ -2576,9 +2599,9 @@ async function confirmarFechamento() {
   if (!e) return;
 
   const slotsValidos = fechSlots.filter(s => s.servico);
-  if (!slotsValidos.length) { toast('⚠️ Adicione pelo menos um serviço'); return; }
+  if (!slotsValidos.length) { toast('Adicione pelo menos um serviço'); return; }
   const dataInvalida = slotsValidos.find(s => s.data && !slotDateYearValid(s.data));
-  if (dataInvalida) { toast('⚠️ Confira a data do serviço — ano fora do intervalo: ' + fmtDate(dataInvalida.data)); return; }
+  if (dataInvalida) { toast('Confira a data do serviço — ano fora do intervalo: ' + fmtDate(dataInvalida.data)); return; }
 
   const total = parseFloat(document.getElementById('fech-total').value) || 0;
   const sinal = parseFloat(document.getElementById('fech-sinal').value) || 0;
@@ -2589,9 +2612,9 @@ async function confirmarFechamento() {
   const cacheada = isCacheadaChecked('fech');
   const { responsavel, repasse } = getRespValues('fech');
 
-  if (total <= 0) { toast('⚠️ Informe o valor total'); return; }
+  if (total <= 0) { toast('Informe o valor total'); return; }
   if (responsavel && repasse > total) {
-    toast('⚠️ O repasse não pode ser maior que o valor cobrado'); return;
+    toast('O repasse não pode ser maior que o valor cobrado'); return;
   }
 
   // Endereço é opcional: a cliente pode informar depois do fechamento — dá para
@@ -2798,7 +2821,7 @@ async function confirmarFechamento() {
   } catch(err) {
     hideLoading();
     if (fechBtn) fechBtn.disabled = false;
-    toast('⚠️ Erro ao processar: ' + (err.message || 'tente novamente'));
+    toast('Erro ao processar: ' + (err.message || 'tente novamente'));
   }
 }
 
@@ -2812,9 +2835,9 @@ function abrirSucesso() {
 
   const list = document.getElementById('conf-list');
   const items = [];
-  if (f.sheetResult && f.sheetResult.ok) items.push({ tipo: 'ok', txt: '✅ Orçamento marcado como Fechado' });
-  else if (f.sheetResult && f.sheetResult.error === 'no-url') items.push({ tipo: 'warn', txt: '⚠️ Sheet de orçamentos não configurado' });
-  else items.push({ tipo: 'warn', txt: '⚠️ Orçamento salvo localmente — será sincronizado automaticamente ao reconectar' });
+  if (f.sheetResult && f.sheetResult.ok) items.push({ tipo: 'ok', txt: 'Orçamento marcado como Fechado' });
+  else if (f.sheetResult && f.sheetResult.error === 'no-url') items.push({ tipo: 'warn', txt: 'Sheet de orçamentos não configurado' });
+  else items.push({ tipo: 'warn', txt: 'Orçamento salvo localmente — será sincronizado automaticamente ao reconectar' });
 
   if (false) { // removido: integração financeiro agora via Supabase direto
     items.push({ tipo: 'warn', txt: '' });
@@ -2822,20 +2845,20 @@ function abrirSucesso() {
     if (f.responsavel) {
       // Equipe: só o lucro entra na conta — a cliente acerta o resto direto
       // com a profissional, então não há sinal, restante nem despesa de repasse.
-      items.push({ tipo: 'ok', txt: '✅ Financeiro: entrada de R$ ' + fmt(f.lucroValor) +
+      items.push({ tipo: 'ok', txt: 'Financeiro: entrada de R$ ' + fmt(f.lucroValor) +
                                     ' (lucro — cobrado R$ ' + fmt(f.totalCobrado) +
                                     ' · repasse R$ ' + fmt(f.repasseValor) + ' para ' + f.responsavel + ')' });
-      items.push({ tipo: 'warn', txt: 'ℹ️ A cliente paga direto para ' + f.responsavel + ' — nada de sinal/restante aqui' });
+      items.push({ tipo: 'warn', txt: 'A cliente paga direto para ' + f.responsavel + ' — nada de sinal/restante aqui' });
     } else {
       const parts = [];
       if (f.sinalCriado) parts.push('Sinal');
       if (f.saldoCriado) parts.push('Restante (previsto)');
-      items.push({ tipo: 'ok', txt: '✅ Financeiro: ' + parts.join(' + ') + ' lançados' });
+      items.push({ tipo: 'ok', txt: 'Financeiro: ' + parts.join(' + ') + ' lançados' });
     }
   } else {
-    items.push({ tipo: 'err', txt: '❌ Erro ao lançar no Financeiro' });
+    items.push({ tipo: 'err', txt: 'Erro ao lançar no Financeiro' });
   }
-  items.push({ tipo: 'warn', txt: '📅 Clique em "Adicionar ao Google Agenda" abaixo' });
+  items.push({ tipo: 'warn', txt: 'Clique em "Adicionar ao Google Agenda" abaixo' });
 
   list.innerHTML = items.map(it =>
     '<div class="success-item ' + it.tipo + '">' + esc(it.txt) + '</div>'
@@ -2846,7 +2869,7 @@ function abrirSucesso() {
   gcalStatus.className = 'gcal-status'; gcalStatus.textContent = '';
   const gcalBtn = document.getElementById('conf-gcal-btn');
   gcalBtn.classList.remove('ok');
-  gcalBtn.textContent = '📅 Adicionar ao Google Agenda';
+  gcalBtn.textContent = 'Adicionar ao Google Agenda';
 
   openPanel('panel-confirmacao');
 }
@@ -2874,7 +2897,7 @@ async function abrirGcalConfirmacao() {
       btn.textContent = '✓ Eventos salvos!';
       setTimeout(() => {
         btn.classList.remove('ok');
-        btn.textContent = '📅 Adicionar ao Google Agenda';
+        btn.textContent = 'Adicionar ao Google Agenda';
       }, 4000);
     }
   } else {
@@ -2884,7 +2907,7 @@ async function abrirGcalConfirmacao() {
     btn.textContent = '✓ Agenda aberta!';
     setTimeout(() => {
       btn.classList.remove('ok');
-      btn.textContent = '📅 Adicionar ao Google Agenda';
+      btn.textContent = 'Adicionar ao Google Agenda';
     }, 4000);
   }
 }
@@ -2900,7 +2923,7 @@ function sendConfirmationWA() {
 function copiarMensagem() {
   const f = lastFechamento;
   if (!f) return;
-  navigator.clipboard.writeText(f.waText || '').then(() => toast('📋 Mensagem copiada'));
+  navigator.clipboard.writeText(f.waText || '').then(() => toast('Mensagem copiada'));
 }
 
 // ══════════════════════════════════════════════════════════
@@ -2932,7 +2955,7 @@ function setSettingsTab(tab) {
 function saveSettings() {
   const calId = document.getElementById('cfg-cal-id').value.trim();
   if (calId) localStorage.setItem('orca_cal_id', calId); else localStorage.removeItem('orca_cal_id');
-  toast('✅ Configurações salvas');
+  toast('Configurações salvas');
   syncAll();
 }
 
@@ -2998,7 +3021,7 @@ async function saveProfissionais() {
   try {
     await DB.profissionais.saveAll(profissionais);
     dot('ok');
-    toast('✅ Equipe salva');
+    toast('Equipe salva');
   } catch(e) {
     console.warn('[profissionais] erro ao salvar no Supabase:', e.message);
     dot('offline');
@@ -3027,7 +3050,7 @@ async function saveServices() {
   try {
     await DB.valoresServicos.saveAll(services);
     dot('ok');
-    toast('✅ Serviços salvos');
+    toast('Serviços salvos');
   } catch(e) {
     console.warn('[serviços] erro ao salvar no Supabase:', e.message);
     dot('offline');
@@ -3042,7 +3065,7 @@ function gerarLinkAcesso() {
   const link = location.href.split('?')[0];
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(link).then(() => {
-      toast('📋 Link copiado!');
+      toast('Link copiado!');
     }).catch(() => prompt('Link do sistema:', link));
   } else {
     prompt('Link do sistema:', link);
@@ -3096,7 +3119,7 @@ function renderActSlots(e) {
             '<input class="form-input" type="date" value="' + esc(s.data || '') + '" oninput="syncActSlot(' + idx + ', \'data\', this.value)">' +
             '<input class="form-input" type="time" placeholder="Horário" value="' + esc(s.horario || '') + '" oninput="syncActSlot(' + idx + ', \'horario\', this.value)">' +
           '</div>' +
-          (warnRow ? '<div style="font-size:0.66rem; color:#c62828;">⚠️ Preencha ' + warnMsgs.join(' e ') + ' para poder agendar</div>' : '') +
+          (warnRow ? '<div style="font-size:0.66rem; color:#c62828;">Preencha ' + warnMsgs.join(' e ') + ' para poder agendar</div>' : '') +
         '</div>' +
       '</div>'
     );
@@ -3189,7 +3212,7 @@ function addActEditSlot() {
 }
 
 function removerActEditSlot(id) {
-  if (actEditSlots.length <= 1) { toast('⚠️ Pelo menos um serviço é necessário'); return; }
+  if (actEditSlots.length <= 1) { toast('Pelo menos um serviço é necessário'); return; }
   actEditSlots = actEditSlots.filter(s => s.id !== id);
   renderActEditSlotsList();
   recalcActEdit();
@@ -3237,19 +3260,22 @@ function renderActGcalSection(e) {
   // Google Agenda sempre visível para fechados
   section.style.display = 'block';
 
+  // Mesmo já criado, o botão continua ativo: dá para adicionar de novo a
+  // qualquer momento (data mudou, evento apagado sem querer, outra agenda…).
   if (getAgendaCriada(e)) {
     const btn = document.getElementById('act-gcal-btn');
     const res = document.getElementById('act-gcal-result');
     if (btn) {
-      btn.textContent = '✓ Evento já adicionado à Agenda';
-      btn.classList.add('ok');
-      btn.disabled = true;
+      btn.textContent = 'Adicionar novamente ao Google Agenda';
+      btn.classList.remove('ok');
+      btn.classList.add('is-again');
+      btn.disabled = false;
     }
-    if (res) { res.className = 'gcal-status'; res.textContent = ''; }
+    if (res) { res.className = 'gcal-status is-done'; res.innerHTML = '<div class="gcal-done">Evento já está no Google Agenda</div>'; }
   } else {
     const btn = document.getElementById('act-gcal-btn');
     const res = document.getElementById('act-gcal-result');
-    if (btn) { btn.textContent = '📅 Adicionar ao Google Agenda'; btn.classList.remove('ok'); btn.disabled = false; }
+    if (btn) { btn.textContent = 'Adicionar ao Google Agenda'; btn.classList.remove('ok', 'is-again'); btn.disabled = false; }
     if (res) { res.className = 'gcal-status'; res.textContent = ''; }
   }
 }
@@ -3336,13 +3362,13 @@ function regerarMsgOrcamento() {
   msgOrcaEditada = false;
   renderActOrcaMsg();
   renderActSecMetas();
-  toast('↺ Mensagem refeita');
+  toast('Mensagem refeita');
 }
 
 function copiarMsgOrcamento() {
   const ta = document.getElementById('act-orca-msg');
   if (!ta) return;
-  navigator.clipboard.writeText(ta.value).then(() => toast('📋 Mensagem copiada'));
+  navigator.clipboard.writeText(ta.value).then(() => toast('Mensagem copiada'));
 }
 
 function enviarMsgOrcamento() {
@@ -3382,7 +3408,7 @@ function renderActWaSection(e) {
 function copiarMensagemAction() {
   const e = entries.find(x => String(x.ID) === String(activeId));
   if (!e) return;
-  navigator.clipboard.writeText(buildActWaText(e)).then(() => toast('📋 Mensagem copiada'));
+  navigator.clipboard.writeText(buildActWaText(e)).then(() => toast('Mensagem copiada'));
 }
 
 function sendWAAction() {
@@ -3423,7 +3449,7 @@ function renderActPropostas() {
     list.innerHTML = actPropostas.map(p => `
       <div style="display:flex;align-items:center;gap:8px;padding:8px;background:#fafafa;border-radius:8px;margin-bottom:6px">
         <span style="flex:1;font-size:0.85rem;color:var(--brown);word-break:break-word">${esc(p.nome || 'proposta')}</span>
-        <a href="${esc(p.link || '#')}" target="_blank" rel="noopener" style="font-size:0.75rem;color:#1976d2;padding:4px 8px;border-radius:4px;background:#e3f2fd;text-decoration:none;white-space:nowrap">📄 Ver</a>
+        <a href="${esc(p.link || '#')}" target="_blank" rel="noopener" style="font-size:0.75rem;color:#1976d2;padding:4px 8px;border-radius:4px;background:#e3f2fd;text-decoration:none;white-space:nowrap">Ver</a>
         <button class="delbtn" style="width:24px;height:24px;flex-shrink:0;padding:0;border:none;background:none;cursor:pointer" type="button" onclick="deleteActProposta('${esc(p.fileId || '')}');" title="Remover">${trash}</button>
       </div>`).join('');
   }
@@ -3462,9 +3488,11 @@ function deleteActProposta(fileId) {
 async function adicionarAgendaDeAction() {
   const e = entries.find(x => String(x.ID) === String(activeId));
   if (!e) return;
+  if (getAgendaCriada(e) &&
+      !confirm('Este orçamento já tem evento no Google Agenda.\nAdicionar de novo? Se o anterior ainda existir, ele fica duplicado.')) return;
 
   const slots = entrySlots(e);
-  if (!slots.length) { toast('⚠️ Sem dados de serviço para criar o evento'); return; }
+  if (!slots.length) { toast('Sem dados de serviço para criar o evento'); return; }
 
   // Recuperar dados armazenados no fechamento
   const localTipoSalvo = e.LocalTipo || 'studio';
@@ -3484,7 +3512,7 @@ async function adicionarAgendaDeAction() {
   const validos = eventos.filter(ev => ev.startISO && ev.endISO);
 
   if (!validos.length) {
-    toast('⚠️ Preencha data e horário acima — destacados em amarelo');
+    toast('Preencha data e horário acima — destacados em amarelo');
     const sec = document.getElementById('act-slots-section');
     if (sec) sec.scrollIntoView({ behavior: 'smooth', block: 'center' });
     return;
@@ -3564,12 +3592,12 @@ async function removeComprovanteItem(entryId, compId) {
   render();
   postEntry({ action: 'update', id: e.ID, fields: { Comprovantes: JSON.stringify(e.Comprovantes) } });
   renderActCompSection(String(entryId));
-  toast('🗑 Comprovante removido');
+  toast('Comprovante removido');
 }
 
 function renderCompItem(entryId, item) {
-  const catIcons = { sinal: '💰', restante: '🏦', outros: '📄' };
-  const icon   = catIcons[item.categoria] || '📎';
+  const catIcons = { sinal: CLIP_ICO, restante: CLIP_ICO, outros: CLIP_ICO };
+  const icon   = catIcons[item.categoria] || CLIP_ICO;
   const data   = item.dataUpload ? item.dataUpload.slice(0, 10) : '';
   const catLbl = { sinal: 'Sinal', restante: 'Restante', outros: 'Outros' }[item.categoria] || item.categoria;
   return (
@@ -3581,8 +3609,8 @@ function renderCompItem(entryId, item) {
           '<div class="comp-item-meta">' + catLbl + (data ? ' · ' + data : '') + '</div>' +
         '</div>' +
         '<div class="comp-item-btns">' +
-          '<button class="comp-item-btn view" onclick="verComprovanteItem(\'' + esc(item.driveLink) + '\')">👁 Abrir</button>' +
-          '<button class="comp-item-btn del"  onclick="removeComprovanteItem(\'' + esc(entryId) + '\',\'' + esc(item.id) + '\')">🗑</button>' +
+          '<button class="comp-item-btn view" onclick="verComprovanteItem(\'' + esc(item.driveLink) + '\')">Abrir</button>' +
+          '<button class="comp-item-btn del"  onclick="removeComprovanteItem(\'' + esc(entryId) + '\',\'' + esc(item.id) + '\')">Remover</button>' +
         '</div>' +
       '</div>' +
     '</div>'
@@ -3599,7 +3627,7 @@ function renderActCompSection(id) {
   const e    = entries.find(x => String(x.ID) === String(id));
   const arr  = getComprovantesArray(e);
   const cats = ['sinal', 'restante', 'outros'];
-  const catLabels = { sinal: 'Sinal 💰', restante: 'Restante 🏦', outros: 'Outros 📄' };
+  const catLabels = { sinal: 'Sinal', restante: 'Restante', outros: 'Outros' };
 
   let html = '<div class="comp-list">';
 
@@ -3615,7 +3643,7 @@ function renderActCompSection(id) {
           '<div class="comp-item-meta">Salvo localmente — re-envie para sincronizar</div>' +
         '</div>' +
         '<div class="comp-item-btns">' +
-          '<button class="comp-item-btn del" onclick="localStorage.removeItem(\'orca_comp_\' + \'' + esc(id) + '\');renderActCompSection(\'' + esc(id) + '\')">🗑</button>' +
+          '<button class="comp-item-btn del" onclick="localStorage.removeItem(\'orca_comp_\' + \'' + esc(id) + '\');renderActCompSection(\'' + esc(id) + '\')">Remover</button>' +
         '</div>' +
       '</div>' +
     '</div>';
@@ -3626,13 +3654,13 @@ function renderActCompSection(id) {
     const lk = e.Comprovante;
     html += '<div class="comp-item">' +
       '<div class="comp-item-head">' +
-        '<span class="comp-item-icon">📎</span>' +
+        '<span class="comp-item-icon">' + CLIP_ICO + '</span>' +
         '<div class="comp-item-info">' +
           '<div class="comp-item-nome">' + esc(lk.nome || 'comprovante') + '</div>' +
           '<div class="comp-item-meta">' + (lk.dataUpload ? lk.dataUpload.slice(0,10) : '') + '</div>' +
         '</div>' +
         '<div class="comp-item-btns">' +
-          '<button class="comp-item-btn view" onclick="window.open(\'' + esc(lk.driveLink) + '\',\'_blank\')">👁 Abrir</button>' +
+          '<button class="comp-item-btn view" onclick="window.open(\'' + esc(lk.driveLink) + '\',\'_blank\')">Abrir</button>' +
         '</div>' +
       '</div>' +
     '</div>';
@@ -3662,7 +3690,7 @@ function renderActCompSection(id) {
   html +=
     '<div class="comp-add-area">' +
       '<div class="comp-upload" onclick="document.getElementById(\'act-comp-input\').click()">' +
-        '📎 Adicionar comprovante do sinal<br>' +
+        'Adicionar comprovante do sinal<br>' +
         '<span style="font-size:0.7rem;opacity:0.7">Imagem ou PDF · máx. 10 MB</span>' +
       '</div>' +
     '</div>';
@@ -3677,13 +3705,13 @@ async function handleComprovanteUpload(event, id) {
   event.target.value = '';
 
   const MAX_BYTES = 10 * 1024 * 1024;
-  if (file.size > MAX_BYTES) { toast('⚠️ Arquivo muito grande. Máximo 10 MB.'); return; }
+  if (file.size > MAX_BYTES) { toast('Arquivo muito grande. Máximo 10 MB.'); return; }
 
   const categoria = 'sinal';
 
   // Loading isolado dentro da área de comprovante (não bloqueia o resto)
   const addArea = document.querySelector('.comp-add-area');
-  if (addArea) addArea.innerHTML = '<div class="comp-uploading">⏳ Enviando comprovante...</div>';
+  if (addArea) addArea.innerHTML = '<div class="comp-uploading">Enviando comprovante...</div>';
 
   try {
     // Ler como base64 (sem prefixo data:...)
@@ -3724,11 +3752,11 @@ async function handleComprovanteUpload(event, id) {
     }
 
     renderActCompSection(id);
-    toast('✅ Comprovante enviado com sucesso!');
+    toast('Comprovante enviado com sucesso!');
 
   } catch(err) {
     console.error('Upload comprovante:', err);
-    toast('❌ Erro ao enviar: ' + (err.message || err));
+    toast('Erro ao enviar: ' + (err.message || err));
     renderActCompSection(id);
   }
 }

@@ -423,7 +423,7 @@
       'border:1px solid var(--border,#ECE9E5);background:rgba(255,255,255,.92);backdrop-filter:blur(8px);',
       '-webkit-backdrop-filter:blur(8px);color:var(--text,#22201E);display:flex;align-items:center;',
       'justify-content:center;cursor:pointer;padding:0;',
-      'transition:opacity .2s,transform .15s,background .15s;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;}',
+      'transition:opacity .2s,transform .15s,background .15s;font-family:var(--font-sans,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif);}',
       '#mk-al-fab:hover{background:#fff}#mk-al-fab:active{transform:scale(.92)}',
       '#mk-al-badge{position:absolute;top:-3px;right:-3px;min-width:15px;height:15px;border-radius:8px;',
       'background:var(--danger,#B4483C);color:#fff;font-size:9.5px;font-weight:600;line-height:15px;text-align:center;',
@@ -433,7 +433,7 @@
       '#mk-al-panel{position:fixed;top:0;right:0;height:100vh;height:100dvh;width:344px;max-width:88vw;z-index:1401;',
       'background:#FAF8F6;box-shadow:-8px 0 36px rgba(0,0,0,.22);transform:translateX(380px);',
       'transition:transform .3s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;',
-      'font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;}',
+      'font-family:var(--font-sans,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif);}',
       '#mk-al-panel.on{transform:translateX(0);}',
       '.al-hd{display:flex;align-items:center;justify-content:space-between;padding:18px 16px 13px;',
       'border-bottom:.5px solid #EDE4DF;flex-shrink:0;}',
@@ -462,7 +462,7 @@
       '.al-toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(12px);z-index:1500;',
       'background:rgba(28,20,16,.95);color:#fff;font-size:12.5px;font-weight:500;padding:9px 16px;border-radius:9px;',
       'box-shadow:0 6px 24px rgba(0,0,0,.3);opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;',
-      'font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;max-width:80vw;text-align:center;}',
+      'font-family:var(--font-sans,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif);max-width:80vw;text-align:center;}',
       '.al-toast.on{opacity:1;transform:translateX(-50%) translateY(0);}',
     ].join('');
     document.head.appendChild(s);
