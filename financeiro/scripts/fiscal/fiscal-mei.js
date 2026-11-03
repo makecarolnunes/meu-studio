@@ -70,7 +70,7 @@ function fsMovimentosPrevistos(entries, ano) {
 
 function fsMovimentosOrcamentos(orcamentos, ano) {
   // Status em negociação. Excluímos 'Fechado' (já em entries) e 'Perdido*'.
-  const ABERTOS = ['Novo Pedido', 'Orçamento Enviado'];
+  const ABERTOS = ['A revisar', 'Novo Pedido', 'Orçamento Enviado'];
   const out = [];
   for (const o of orcamentos || []) {
     if (!ABERTOS.includes(o.Status)) continue;

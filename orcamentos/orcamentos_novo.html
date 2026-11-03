@@ -20,7 +20,7 @@
   <title>Orçamentos · Meu Studio</title>
   <link rel="stylesheet" href="../shared/css/tokens.css">
   <link rel="stylesheet" href="../shared/css/base.css">
-  <link rel="stylesheet" href="./styles/orcamentos.css?v=20261019">
+  <link rel="stylesheet" href="./styles/orcamentos.css?v=20261103">
   <link rel="stylesheet" href="../shared/css/calm.css?v=20261019">
 </head>
 <body>
@@ -49,10 +49,12 @@
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       Novo Orçamento
     </button>
+    <button class="dsb-colar-btn" onclick="openColar()">Colar do WhatsApp</button>
   </div>
   <div class="dsb-section">
     <div class="dsb-lbl">Status</div>
     <button class="d-fil-item active" data-f="todos"       onclick="setF('todos')"><span class="d-fil-dot" style="background:var(--muted)"></span>Todos<span class="d-fil-cnt" id="dsf-total">—</span></button>
+    <button class="d-fil-item"        data-f="revisar"      onclick="setF('revisar')" style="display:none"><span class="d-fil-dot" style="background:var(--orange)"></span>A revisar<span class="d-fil-cnt" id="dsf-revisar"></span></button>
     <button class="d-fil-item"        data-f="novos"        onclick="setF('novos')"><span class="d-fil-dot" style="background:var(--blue)"></span>Novos</button>
     <button class="d-fil-item"        data-f="perdidos"     onclick="setF('perdidos')"><span class="d-fil-dot" style="background:var(--red)"></span>Perdidos</button>
     <button class="d-fil-item"        data-f="fechados"     onclick="setF('fechados')"><span class="d-fil-dot" style="background:var(--ok)"></span>Fechados</button>
@@ -160,6 +162,7 @@
 <!-- ── FILTER TABS ────────────────────────────────────────── -->
 <div class="ftabs">
   <button class="ftab on" data-f="todos"        onclick="setF('todos')">Todos</button>
+  <button class="ftab"    data-f="revisar"      onclick="setF('revisar')" style="display:none">A revisar</button>
   <button class="ftab"    data-f="novos"        onclick="setF('novos')">Novos</button>
   <button class="ftab"    data-f="perdidos"     onclick="setF('perdidos')">Perdidos</button>
   <button class="ftab"    data-f="fechados"     onclick="setF('fechados')">Fechados</button>
@@ -181,12 +184,19 @@
 <!-- ── FILTRO QUEM ATENDE (mobile, preenchido pelo render()) ───── -->
 <div class="orig-tabs" id="resp-tabs" style="display:none"></div>
 
+<!-- ── AVISO: pedidos do WhatsApp a revisar (preenchido pelo render()) ── -->
+<div id="revisar-aviso"></div>
+
 <!-- ── CONTENT ────────────────────────────────────────────── -->
 <div class="content" id="content">
   <div class="loader"><div class="spinner"></div><br>Carregando orçamentos...</div>
 </div>
 
 <!-- ── FAB ────────────────────────────────────────────────── -->
+<button class="fab-colar" onclick="openColar()" title="Colar pedido do WhatsApp">
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg>
+  Colar do WhatsApp
+</button>
 <button class="fab" onclick="openAddForm()" title="Novo orçamento">＋</button>
 
 </div><!-- /orca-app -->
@@ -204,6 +214,7 @@
   <div class="panel-title">Novo Orçamento</div>
   <div class="panel-sub">Registre o pedido recebido pelo WhatsApp</div>
   <div class="panel-body">
+    <button class="btn-colar-atalho" onclick="openColar()">Preencher colando a conversa do WhatsApp</button>
     <div class="form-group">
       <label class="form-label">Data do pedido</label>
       <input class="form-input" id="add-data-pedido" type="date">
@@ -272,6 +283,29 @@
   </div>
 </div>
 
+<!-- ── PANEL: COLAR DO WHATSAPP (scripts/colar-whatsapp.js) ── -->
+<div class="panel" id="panel-colar">
+  <div class="panel-handle"></div>
+  <div class="panel-title">Colar do WhatsApp</div>
+  <div class="panel-sub">Cole a conversa ou anexe um print. O sistema preenche o orçamento.</div>
+  <div class="panel-body">
+    <div id="colar-entrada">
+      <textarea class="form-input colar-txt" id="colar-txt" rows="7" placeholder="Cole aqui a mensagem da cliente. Pode colar várias conversas de uma vez."></textarea>
+      <div class="colar-entrada-btns">
+        <button class="colar-mini" onclick="colarDaAreaTransferencia()">Colar</button>
+        <label class="colar-mini">Anexar print
+          <input type="file" accept="image/*" multiple hidden onchange="colarAnexarPrints(this)">
+        </label>
+      </div>
+      <div class="colar-prints" id="colar-prints"></div>
+      <button class="btn-primary" id="colar-ler-btn" onclick="colarLer()">Ler pedido</button>
+    </div>
+    <div id="colar-resultado"></div>
+    <a class="colar-link" href="./atalho-iphone.html">Como mandar direto do WhatsApp no iPhone</a>
+    <button class="btn-text" onclick="closeAll()">Fechar</button>
+  </div>
+</div>
+
 <!-- ── PANEL: ACTION SHEET ────────────────────────────────── -->
 <div class="panel" id="panel-action">
   <div class="panel-handle"></div>
@@ -295,6 +329,12 @@
       <label class="act-inline-lbl" for="act-data-pedido">Pedido recebido em</label>
       <input class="act-inline-input" id="act-data-pedido" type="date" onchange="updateDataPedido()">
     </div>
+  </div>
+
+  <!-- ── PEDIDO A REVISAR — lido do WhatsApp pela IA, ainda não conferido ── -->
+  <div class="act-revisar" id="act-revisar" style="display:none">
+    <div class="act-revisar-txt"><strong>Pedido lido do WhatsApp.</strong> Confira os dados antes de responder a cliente.</div>
+    <button class="act-revisar-btn" onclick="confirmarRevisao()">Está certo</button>
   </div>
 
   <!-- ── STATUS (segmented control) — fora dos accordions: é o campo mais mexido ── -->
@@ -719,12 +759,13 @@
 <script src="../shared/js/icons.js"></script>
 
 <!-- ── Módulo Orçamentos ── -->
-<script src="./scripts/orcamentos.js?v=20261019"></script>
+<script src="./scripts/orcamentos.js?v=20261103"></script>
+<script src="./scripts/colar-whatsapp.js?v=20261103"></script>
 
 <!-- ── Sidebar (último, depende do DOM pronto) ── -->
 <script src="../shared/js/global-search.js"></script>
 <script src="../shared/js/global-notes.js"></script>
 <script src="../shared/js/sidebar.js?v=20261019"></script>
-<script src="../shared/js/alerts.js?v=20261018"></script>
+<script src="../shared/js/alerts.js?v=20261103"></script>
 </body>
 </html>

@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script>
+  /* Auth guard — redireciona ao hub se não houver sessão válida */
+  (function(){
+    try {
+      var s = JSON.parse(localStorage.getItem('mk_session') || 'null');
+      if (s && s.expires && Date.now() < s.expires) return;
+    } catch(e) {}
+    localStorage.removeItem('mk_session');
+    window.location.href = '../';
+  })();
+  </script>
+  <title>Atalhos do iPhone · Meu Studio</title>
+  <link rel="stylesheet" href="../shared/css/tokens.css">
+  <link rel="stylesheet" href="../shared/css/base.css">
+  <style>
+    body { max-width: 480px; margin: 0 auto; background: var(--bg); color: var(--text);
+           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    .top { display: flex; align-items: center; gap: 10px; padding: 14px 16px 6px; }
+    .top a { color: var(--text-muted); text-decoration: none; font-size: .86rem; }
+    h1 { font-size: 1.15rem; font-weight: 700; padding: 4px 16px 2px; }
+    .lead { font-size: .84rem; color: var(--text-muted); padding: 0 16px 10px; line-height: 1.5; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+            margin: 12px 16px; padding: 16px; }
+    h2 { font-size: .98rem; font-weight: 700; margin-bottom: 4px; }
+    .card > p { font-size: .82rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 10px; }
+    ol { padding-left: 20px; }
+    li { font-size: .86rem; line-height: 1.55; margin-bottom: 10px; }
+    li ul { padding-left: 16px; margin-top: 4px; }
+    li ul li { margin-bottom: 4px; }
+    b { font-weight: 700; }
+    .copy { display: flex; gap: 6px; align-items: stretch; margin: 6px 0 2px; }
+    .copy code { flex: 1; min-width: 0; font-size: .7rem; line-height: 1.4; padding: 8px 9px;
+                 background: var(--surface-2); border-radius: 8px; word-break: break-all; }
+    .copy button { flex-shrink: 0; padding: 0 12px; border-radius: 8px; border: 1px solid var(--border);
+                   background: var(--surface); font-family: inherit; font-size: .76rem; font-weight: 600; cursor: pointer; }
+    .copy button.ok { color: var(--success); border-color: var(--success); }
+    .nota { font-size: .78rem; color: var(--text-muted); line-height: 1.5; background: var(--surface-2);
+            border-radius: 10px; padding: 10px 12px; margin-top: 6px; }
+    .uso { font-size: .84rem; line-height: 1.55; }
+    .uso li { margin-bottom: 6px; }
+  </style>
+</head>
+<body>
+  <div class="top"><a href="./orcamentos_novo.html">‹ Orçamentos</a></div>
+  <h1>Mandar pedidos direto do WhatsApp</h1>
+  <p class="lead">Dois atalhos do app <b>Atalhos</b> do iPhone: um para mandar a conversa ao Meu Studio com dois toques, e outro que avisa quando houver pedidos esperando revisão. Você só configura uma vez.</p>
+
+  <!-- ── 1. COMPARTILHAR ─────────────────────────────────── -->
+  <div class="card">
+    <h2>1. Atalho “Meu Studio” (compartilhar)</h2>
+    <p>Aparece no menu Compartilhar do WhatsApp. Também funciona tocando no ícone dele depois de copiar a mensagem.</p>
+    <ol>
+      <li>Abra o app <b>Atalhos</b> e toque em <b>+</b>. Dê o nome <b>Meu Studio</b>.</li>
+      <li>Toque no <b>ⓘ</b> (embaixo) e ative <b>Mostrar na Planilha de Compartilhamento</b>.
+        <ul>
+          <li>Em <b>Receber</b>, deixe marcado só <b>Texto</b>.</li>
+          <li>Em <b>Se não houver entrada</b>, escolha <b>Obter Área de Transferência</b>.</li>
+        </ul>
+      </li>
+      <li>Adicione a ação <b>Codificar URL</b>. Ela já pega a <i>Entrada do Atalho</i>.</li>
+      <li>Adicione a ação <b>Escolher do Menu</b>, com a pergunta <i>O que fazer com o pedido?</i> e duas opções:
+        <b>Revisar depois</b> e <b>Conferir agora</b>.</li>
+      <li>Dentro de <b>Revisar depois</b>, adicione a ação <b>URL</b>, cole o endereço abaixo e, colado no fim dele (sem espaço), insira a variável que sai da ação <b>Codificar URL</b>:
+        <div class="copy"><code id="url-revisar"></code><button onclick="copiar('url-revisar', this)">Copiar</button></div>
+        Depois adicione <b>Abrir URLs</b>.
+      </li>
+      <li>Dentro de <b>Conferir agora</b>, faça o mesmo com este endereço:
+        <div class="copy"><code id="url-conferir"></code><button onclick="copiar('url-conferir', this)">Copiar</button></div>
+        E também <b>Abrir URLs</b>.
+      </li>
+    </ol>
+    <div class="nota">
+      <b>Como usar:</b> no WhatsApp, toque e segure a mensagem › <b>Mais…</b> › marque as mensagens do pedido › botão <b>Compartilhar</b> › <b>Meu Studio</b>.
+      Se o Meu Studio não aparecer na lista, use <b>Copiar</b> e toque no atalho na tela de início ou no widget.<br><br>
+      <b>Revisar depois</b> salva sozinho e mostra “salvo para revisar”. <b>Conferir agora</b> mostra o que foi lido, com os botões Salvar, A revisar e Editar.<br><br>
+      O atalho abre o Meu Studio no <b>Safari</b>. Deixe o login feito lá com <b>Lembrar</b> marcado (dura 30 dias).
+    </div>
+  </div>
+
+  <!-- ── 2. LEMBRETE ─────────────────────────────────────── -->
+  <div class="card">
+    <h2>2. Lembrete de pedidos a revisar</h2>
+    <p>Todo dia, no horário que você escolher, o iPhone confere o sistema e manda uma notificação com o nome das clientes que estão em “A revisar”. Se não houver nenhuma, ele fica quieto.</p>
+    <ol>
+      <li>No app <b>Atalhos</b>, toque em <b>+</b> e dê o nome <b>Pedidos a revisar</b>.</li>
+      <li>Adicione a ação <b>Obter Conteúdo do URL</b> e cole este endereço:
+        <div class="copy"><code id="url-consulta"></code><button onclick="copiar('url-consulta', this)">Copiar</button></div>
+        Toque na setinha da ação › <b>Cabeçalhos</b> › <b>Adicionar novo cabeçalho</b>:
+        <ul>
+          <li>Chave: <b>apikey</b></li>
+          <li>Texto:
+            <div class="copy"><code id="anon-key"></code><button onclick="copiar('anon-key', this)">Copiar</button></div>
+          </li>
+        </ul>
+      </li>
+      <li>Adicione <b>Repetir com Cada</b> (o item é o <i>Conteúdo do URL</i>). Dentro da repetição:
+        <ul>
+          <li><b>Obter Valor do Dicionário</b>: valor da chave <b>cliente</b> em <i>Item Repetido</i>;</li>
+          <li><b>Adicionar à Variável</b>: dê o nome <b>Clientes</b>.</li>
+        </ul>
+      </li>
+      <li>Depois do <i>Fim da Repetição</i>, adicione <b>Combinar Texto</b> com a variável <b>Clientes</b>, separador <b>Personalizado</b> “<b>, </b>”.</li>
+      <li>Adicione <b>Se</b>: <i>Texto Combinado</i> <b>tem algum valor</b>. Dentro dele, <b>Mostrar Notificação</b> com o texto:
+        <div class="copy"><code id="txt-notif">Pedidos do WhatsApp para revisar: </code><button onclick="copiar('txt-notif', this)">Copiar</button></div>
+        e insira a variável <b>Texto Combinado</b> no fim.
+      </li>
+      <li>Agora a automação: aba <b>Automação</b> › <b>+</b> › <b>Hora do Dia</b>. Escolha o horário (sugestão: <b>10:00</b>), <b>Diariamente</b>, e marque <b>Executar Imediatamente</b>. Na tela seguinte, escolha o atalho <b>Pedidos a revisar</b>.</li>
+      <li>Quer dois avisos por dia? Repita o passo 6 com outro horário (por exemplo <b>18:00</b>).</li>
+    </ol>
+    <div class="nota">Dentro do Meu Studio o lembrete também aparece: aviso laranja no topo de Orçamentos, no sino de alertas e no card de Orçamentos do Início. A partir do dia seguinte ao pedido, o alerta fica vermelho.</div>
+  </div>
+
+  <div style="height:24px"></div>
+
+<script src="../config.js"></script>
+<script>
+  (function () {
+    var env = window.ENV || {};
+    var pagina = location.origin + location.pathname.replace(/atalho-iphone\.html$/, 'orcamentos_novo.html');
+    var set = function (id, v) { var el = document.getElementById(id); if (el) el.textContent = v; };
+    set('url-revisar',  pagina + '?acao=revisar&colar=');
+    set('url-conferir', pagina + '?acao=conferir&colar=');
+    set('url-consulta', (env.SUPABASE_URL || '') + '/rest/v1/orcamentos?status=eq.A%20revisar&select=cliente');
+    set('anon-key',     env.SUPABASE_ANON || '');
+  })();
+
+  function copiar(id, btn) {
+    var txt = document.getElementById(id).textContent;
+    var ok = function () {
+      btn.textContent = 'Copiado'; btn.classList.add('ok');
+      setTimeout(function () { btn.textContent = 'Copiar'; btn.classList.remove('ok'); }, 1600);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(txt).then(ok).catch(function () { selecionar(id); });
+    } else { selecionar(id); }
+  }
+  function selecionar(id) {
+    var r = document.createRange(); r.selectNodeContents(document.getElementById(id));
+    var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+  }
+</script>
+</body>
+</html>

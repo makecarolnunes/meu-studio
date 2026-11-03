@@ -128,20 +128,25 @@ async function loadOrca(){
   try {
     var all = await DB.orcamentos.list();
     var hoje = todayStr();
-    var novo    = function(o){ return !o.Status || o.Status === 'Novo Pedido'; };
+    // "A revisar" = pedido colado do WhatsApp ainda não conferido — conta como novo
+    var revisar = function(o){ return o.Status === 'A revisar'; };
+    var novo    = function(o){ return !o.Status || o.Status === 'Novo Pedido' || revisar(o); };
     var enviado = function(o){ return o.Status === 'Orçamento Enviado'; };
     var abertos = all.filter(function(o){ return novo(o) || enviado(o); });
     _orca = {
       abertos:  abertos.length,
       novos:    abertos.filter(novo).length,
       enviados: abertos.filter(enviado).length,
+      revisar:  abertos.filter(revisar).length,
       followups: abertos.filter(function(o){ return o.ProxFollowup && o.ProxFollowup <= hoje; }).length
     };
     setText('h-orca-val',   String(_orca.abertos));
     setText('h-orca-novos', String(_orca.novos));
     setText('h-orca-env',   String(_orca.enviados));
-    setText('h-orca-alert', _orca.followups
-      ? _orca.followups + (_orca.followups === 1 ? ' follow-up para hoje' : ' follow-ups para hoje') : '');
+    var avisos = [];
+    if (_orca.revisar)   avisos.push(_orca.revisar + (_orca.revisar === 1 ? ' pedido para revisar' : ' pedidos para revisar'));
+    if (_orca.followups) avisos.push(_orca.followups + (_orca.followups === 1 ? ' follow-up para hoje' : ' follow-ups para hoje'));
+    setText('h-orca-alert', avisos.join(' · '));
   } catch(e) { console.error('[inicio-orca]', e); setText('h-orca-val', '—'); }
   renderSummary();
 }

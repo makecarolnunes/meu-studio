@@ -50,6 +50,8 @@ enquanto Tarefas estiver fora do menu.
 
 **Atalhos por URL** usados pelo Início: `orcamentos/orcamentos_novo.html?novo=1`
 (abre novo orçamento) · `financeiro/?tela=nova` (abre novo lançamento).
+Atalho do iPhone: `orcamentos/orcamentos_novo.html?colar=<texto>&acao=revisar|conferir`
+(lê o pedido do WhatsApp com IA — ver `orcamentos/CLAUDE.md` › Colar do WhatsApp).
 
 ### Identidade visual
 

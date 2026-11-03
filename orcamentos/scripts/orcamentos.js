@@ -57,6 +57,7 @@ function pickIcon(s) {
 }
 
 const STATUS_CLASS = {
+  'A revisar':                     'st-revisar',
   'Novo Pedido':                   'st-novo',
   'Orçamento Enviado':             'st-enviado',
   'Fechado':                       'st-fechado',
@@ -67,6 +68,10 @@ const STATUS_CLASS = {
 
 // Todos os status de "perdido" (qualquer motivo)
 const PERDIDO_STATUS = ['Perdido - Sem Resposta', 'Perdido - Sem Disponibilidade', 'Perdido - Outros motivos'];
+
+// Pedido lido do WhatsApp pela IA e salvo sem conferência (scripts/colar-whatsapp.js).
+// Conta como orçamento em aberto; vira 'Novo Pedido' quando a Carol confirma.
+const STATUS_REVISAR = 'A revisar';
 
 const DIAS = ['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'];
 
@@ -240,7 +245,7 @@ function renderEntryCard(e) {
 }
 // Rótulo curto do status no card (o completo segue no painel do orçamento)
 const STATUS_CURTO = {
-  'Novo Pedido': 'Novo', 'Orçamento Enviado': 'Enviado', 'Fechado': 'Fechado',
+  'A revisar': 'Revisar', 'Novo Pedido': 'Novo', 'Orçamento Enviado': 'Enviado', 'Fechado': 'Fechado',
   'Perdido - Sem Resposta': 'Sem resposta', 'Perdido - Sem Disponibilidade': 'Sem agenda',
   'Perdido - Outros motivos': 'Perdido',
 };
@@ -1206,7 +1211,8 @@ function render() {
   syncEventDateUI();
 
   // Filtro por status
-  if (curFilter === 'novos')             list = list.filter(e => ['Novo Pedido','Orçamento Enviado'].includes(e.Status));
+  if (curFilter === 'novos')             list = list.filter(e => [STATUS_REVISAR,'Novo Pedido','Orçamento Enviado'].includes(e.Status));
+  else if (curFilter === 'revisar')      list = list.filter(e => e.Status === STATUS_REVISAR);
   else if (curFilter === 'perdidos')     list = list.filter(e => PERDIDO_STATUS.includes(e.Status));
   else if (curFilter === 'fechados')     list = list.filter(e => e.Status === 'Fechado');
   else if (curFilter === 'agenda-pend')  list = list.filter(e => e.Status === 'Fechado' && !getAgendaCriada(e));
@@ -1296,6 +1302,8 @@ function render() {
   // Atualiza o period toggle do desktop
   updatePeriodToggle();
 
+  renderRevisarAviso();
+
   const content = document.getElementById('content');
   if (list.length === 0) {
     const semFiltro = curFilter === 'todos' && !filterEventDate && !filterMonth &&
@@ -1336,6 +1344,26 @@ function render() {
 //  FILTROS
 // ══════════════════════════════════════════════════════════
 function setF(f) { curFilter = f; localStorage.setItem('orca_cur_filter', f); render(); }
+
+// Aviso no topo da lista enquanto houver pedidos "A revisar" — é o lembrete
+// dentro do app (o sino global e o atalho do iPhone avisam fora daqui).
+function renderRevisarAviso() {
+  const n = entries.filter(e => e.Status === STATUS_REVISAR).length;
+  document.querySelectorAll('[data-f="revisar"]').forEach(b => {
+    b.style.display = n || curFilter === 'revisar' ? '' : 'none';
+  });
+  const cnt = document.getElementById('dsf-revisar');
+  if (cnt) cnt.textContent = n || '';
+  const box = document.getElementById('revisar-aviso');
+  if (!box) return;
+  if (!n || curFilter === 'revisar') { box.innerHTML = ''; return; }
+  box.innerHTML =
+    '<button class="revisar-aviso" onclick="setF(\'revisar\')">' +
+      '<span class="revisar-aviso-n">' + n + '</span>' +
+      '<span class="revisar-aviso-txt">' + (n === 1 ? 'pedido do WhatsApp para revisar' : 'pedidos do WhatsApp para revisar') + '</span>' +
+      '<span class="revisar-aviso-ver">Ver</span>' +
+    '</button>';
+}
 function setOrigem(v) { curOrigem = v; localStorage.setItem('orca_cur_origem', v); render(); }
 function setEquipe(v) { curEquipe = v; localStorage.setItem('orca_cur_equipe', v); render(); }
 function setResp(v)   { curResp   = v; localStorage.setItem('orca_cur_resp', v);   render(); }
@@ -1435,6 +1463,8 @@ function closeAll() {
 //  NOVO ORÇAMENTO — multi-slot
 // ══════════════════════════════════════════════════════════
 function openAddForm() {
+  // Formulário aberto do zero não é edição de um pedido colado do WhatsApp
+  if (typeof onColarNovoForm === 'function') onColarNovoForm();
   const addData = document.getElementById('add-data-pedido');
   if (addData) addData.value = todayStr();   // data de cadastro — editável
   document.getElementById('add-nome').value     = '';
@@ -2072,6 +2102,9 @@ async function saveNew(opts) {
     activeId = entry.ID;
     abrirFechamento();
   }
+  // Pedido que veio do "Colar do WhatsApp" e foi editado antes de salvar:
+  // marca como salvo lá e volta à lista dos demais pedidos lidos.
+  if (typeof onColarPedidoSalvo === 'function') onColarPedidoSalvo(fecharAgora);
 }
 
 // ══════════════════════════════════════════════════════════
@@ -2108,6 +2141,7 @@ function openAction(id) {
   if (_vVal) _vVal.textContent = _vNum ? fmtVal(_vNum) : '—';
 
   syncStatusSegUI(e.Status);
+  renderActRevisar(e);
 
   // Todas as seções começam recolhidas — a tela abre limpa, mostrando só
   // os títulos e o resumo de cada um.
@@ -2153,6 +2187,7 @@ async function applyStatusValue(newStatus) {
   if (newStatus === 'Orçamento Enviado' && !e.DataEnvio) e.DataEnvio = todayStr();
   if (newStatus === 'Fechado' && !e.DataFechamento)     e.DataFechamento = todayStr();
   // Seções que dependem do status (slots, Google Agenda, mensagem WhatsApp, botão Fechar)
+  renderActRevisar(e);
   renderActEditSlots(e);
   renderActSlots(e);
   renderActGcalSection(e);
@@ -2168,6 +2203,19 @@ async function applyStatusValue(newStatus) {
   if (!result.ok && result.error !== 'no-url') {
     toast('Sincronização do status falhou');
   }
+}
+
+// Faixa "Pedido lido do WhatsApp — confira" no painel de um pedido A revisar
+function renderActRevisar(e) {
+  const box = document.getElementById('act-revisar');
+  if (box) box.style.display = (e && e.Status === STATUS_REVISAR) ? '' : 'none';
+}
+
+// "Está tudo certo": confirma sem mexer em nada — o pedido vira Novo Pedido
+function confirmarRevisao() {
+  applyStatusValue('Novo Pedido');
+  syncStatusSegUI('Novo Pedido');
+  toast('Pedido confirmado');
 }
 
 // Reflete o status atual no segmented control + submotivos
@@ -2316,10 +2364,14 @@ async function saveAction() {
     e.Propostas = actPropostas;
   }
 
+  // Abrir e salvar um pedido A revisar = pedido conferido
+  const revisado = e.Status === STATUS_REVISAR;
+  if (revisado) e.Status = 'Novo Pedido';
+
   cacheEntries();
   closeAll();
   render();
-  toast('Alterações salvas');
+  toast(revisado ? 'Pedido revisado e salvo' : 'Alterações salvas');
 
   const fields = {
     Status:        e.Status,
@@ -3814,5 +3866,7 @@ function openFromUrl() {
     history.replaceState(null, '', location.pathname);
     openAddForm();
   }
-  syncAll().then(openFromUrl);
+  // ?colar=<texto>&acao=revisar|conferir — atalho "Compartilhar" do iPhone
+  // (scripts/colar-whatsapp.js). Depois do sync: precisa do catálogo de serviços.
+  syncAll().then(openFromUrl).then(() => { if (typeof colarFromUrl === 'function') colarFromUrl(); });
 })();

@@ -11,6 +11,8 @@ Módulo central do fluxo comercial: recebe pedido → negocia → fecha → sinc
 | `orcamentos_novo.html` | Arquivo ativo (HTML + CSS + JS inline via `<script src>`) |
 | `styles/orcamentos.css` | CSS do módulo |
 | `scripts/orcamentos.js` | Toda a lógica JS |
+| `scripts/colar-whatsapp.js` | "Colar do WhatsApp": conversa/print → orçamento via IA (carrega depois do `orcamentos.js`) |
+| `atalho-iphone.html` | Passo a passo dos atalhos do iPhone (compartilhar + lembrete) |
 
 > Não existe `index.html` próprio — há um redirect em `orcamentos/index.html` apontando para `orcamentos_novo.html`.
 
@@ -92,6 +94,50 @@ aberto vale o **valor enviado à cliente** digitado (é ele que vai para
 `ValorProp` ao salvar, e `recalcActEdit` o mantém sincronizado com o total dos
 serviços); num fechado vale `respTotal('act')`. Não trocar por `respTotal` nos
 dois casos — o resumo do repasse continua seguindo os serviços.
+
+---
+
+## Colar do WhatsApp (`scripts/colar-whatsapp.js`)
+
+A Carol cola a conversa (ou anexa prints) no `panel-colar` e a IA devolve os
+pedidos já no formato do orçamento.
+
+- **IA:** `claude-haiku-5-5`, chamada direta do browser, `effort: low`, com
+  **structured outputs** (`output_config.format` json_schema). O enum de
+  `servico` é montado do catálogo `services` → o nome volta sempre exato, e o
+  preço/duração vêm do catálogo, nunca da IA. Chave: `mk_claude_key` ou, se
+  vazia, `configuracoes.claude_api_key` (mesma do Financeiro).
+- **Três saídas por pedido:** *Salvar* (`Novo Pedido`), *A revisar*
+  (`STATUS_REVISAR`), *Editar* (abre o `panel-add` preenchido; os ganchos
+  `onColarNovoForm` / `onColarPedidoSalvo` em `openAddForm`/`saveNew` marcam o
+  pedido como salvo e voltam à lista dos demais). Sem serviço identificado,
+  *Salvar* fica desligado.
+- O Obs gravado leva observações da IA, "A conferir: …" e o **trecho original
+  da conversa** — dá para revisar sem voltar ao WhatsApp.
+- Falha da IA → botão *Guardar só o texto em A revisar* (não perde o pedido).
+
+### Status `A revisar`
+
+Pedido salvo sem conferência. **Conta como em aberto** (filtro Novos, Início,
+alertas, projeção do fiscal) e aparece em:
+- aviso laranja no topo da lista (`renderRevisarAviso`) + aba *A revisar*
+  (só visível quando há algum);
+- faixa no `panel-action` com **Está certo** (`confirmarRevisao` → `Novo Pedido`);
+  *Salvar alterações* num pedido A revisar também o promove;
+- sino global: regra `orc-revisar` em `shared/js/alerts.js` (importante no dia,
+  crítico a partir do dia seguinte); `orc-parado` ignora esse status;
+- card de Orçamentos do Início ("N pedidos para revisar").
+
+Ao criar outro lugar que liste status de orçamento, incluir `'A revisar'`.
+
+### Atalho do iPhone (deep link)
+
+`orcamentos_novo.html?colar=<texto>&acao=revisar|conferir` — `colarFromUrl()`
+roda depois do `syncAll` (precisa do catálogo). Limpa a URL **antes** de
+gravar (refresh não duplica) e ignora o mesmo texto em `acao=revisar` por
+10 min (`orca_colar_ultimo`). O lembrete diário do iPhone consulta
+`/rest/v1/orcamentos?status=eq.A%20revisar&select=cliente` com a anon key.
+Mudar o texto do status quebra esse atalho — está configurado no celular.
 
 ---
 

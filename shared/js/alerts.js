@@ -111,7 +111,24 @@
   var RULES = [];
   function registerRule(r){ if(r && r.id && typeof r.evaluate==='function') RULES.push(r); }
 
-  var ABERTO = { 'Novo Pedido':1, 'Orçamento Enviado':1 };
+  var ABERTO = { 'A revisar':1, 'Novo Pedido':1, 'Orçamento Enviado':1 };
+
+  // 0) Pedido do WhatsApp salvo sem conferência (orcamentos/scripts/colar-whatsapp.js)
+  //    Importante no dia; crítico a partir do dia seguinte — a cliente está esperando.
+  registerRule({ id:'orc-revisar', domain:'Orçamentos', evaluate:function(ctx){
+    var out=[];
+    (ctx.data.orcamentos||[]).forEach(function(o){
+      if(o.Status!=='A revisar') return;
+      var dias=daysSince(o.DataPedido || o.DataCriacao, ctx.today) || 0;
+      out.push({
+        key:'orc-revisar:'+o.ID, priority: dias>=1 ? 'critico' : 'importante',
+        title:'Pedido do WhatsApp para revisar',
+        desc:(o.Cliente||'(sem nome)')+(o.Servico?' · '+o.Servico:'')+(dias?' · recebido há '+dias+(dias===1?' dia':' dias'):' · hoje'),
+        href:'orcamentos/orcamentos_novo.html?openId='+encodeURIComponent(o.ID),
+      });
+    });
+    return out;
+  }});
 
   // 1) Orçamento: evento já passou e segue aberto → sugerir Perdido
   registerRule({ id:'orc-evento-passou', domain:'Orçamentos', evaluate:function(ctx){
@@ -139,7 +156,7 @@
   registerRule({ id:'orc-parado', domain:'Orçamentos', evaluate:function(ctx){
     var out=[];
     (ctx.data.orcamentos||[]).forEach(function(o){
-      if(!ABERTO[o.Status]) return;
+      if(!ABERTO[o.Status] || o.Status==='A revisar') return;            // A revisar: regra 0
       var dev=parseDate(o.DataEvento); if(dev && dev < ctx.today) return; // é da regra 1
       var ref = (o.Status==='Orçamento Enviado' && o.DataEnvio) ? o.DataEnvio : (o.DataPedido || o.DataCriacao);
       var dias=daysSince(ref, ctx.today);
