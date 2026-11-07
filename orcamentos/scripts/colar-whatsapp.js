@@ -403,6 +403,12 @@ function colarEditar(i) {
   } else {
     applyCacheada(addSlots, !!p.cacheada, renderAddSlots);
   }
+
+  // Local e endereço que a cliente informou na conversa
+  const local = pedidoLocal(p, rows);
+  resetEndereco('add', local === 'domicilio' ? (p.endereco || '').trim() : '');
+  addLocalManual = !!local;
+  syncAddLocalUI(local || 'studio');
 }
 
 // Ganchos chamados por orcamentos.js

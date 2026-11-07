@@ -173,7 +173,13 @@ existe para status `Fechado`.
   - **Domicílio** → editável, com o endereço da cliente, rótulo "Endereço da
     cliente". **Nunca obrigatório** — `confirmarFechamento()` não bloqueia por
     endereço vazio; a cliente pode informar depois.
-- `enderecoCliente = { act, fech }` guarda o que foi digitado para domicílio, para
+- **No cadastro (`panel-add`) também há Local + endereço** (`setAddLocal`,
+  `syncAddLocalUI`, `autoDetectAddLocal`, botões `data-addlocal`), opcional.
+  `saveNew()` grava `LocalTipo`/`EnderecoEvento` com o que está lá, então o
+  endereço da cliente chega preenchido no fechamento. Sem escolha manual
+  (`addLocalManual`) e sem pista no serviço, `LocalTipo` continua `''`.
+  `colarEditar` preenche com o local/endereço lidos da conversa.
+- `enderecoCliente = { act, fech, add }` guarda o que foi digitado para domicílio, para
   alternar Studio ↔ Domicílio não apagar nada. `resetEndereco(prefix, salvo)`
   zera o campo ao trocar de orçamento — sem isso o endereço da cliente anterior
   seria capturado como se fosse desta.

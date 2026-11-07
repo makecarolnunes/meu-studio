@@ -249,6 +249,20 @@
       <div class="chk-hint">Sugere 3h de duração no atendimento (editável) e destaca o alerta no Google Agenda.</div>
     </div>
 
+    <!-- Local + endereço — opcional; se a cliente fechar, já chega preenchido no fechamento -->
+    <div class="form-group">
+      <label class="form-label">Local</label>
+      <div class="toggle-row">
+        <button type="button" class="toggle-btn on" data-addlocal="studio"    onclick="setAddLocal(this)">Studio</button>
+        <button type="button" class="toggle-btn"    data-addlocal="domicilio" onclick="setAddLocal(this)">Domicílio</button>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label" id="add-addr-lbl" for="add-addr">Endereço do studio</label>
+      <input class="form-input" id="add-addr" type="text" placeholder="Rua, número, complemento, bairro" autocomplete="off">
+      <div class="chk-hint" id="add-addr-hint">Endereço fixo do studio — preenchido sozinho.</div>
+    </div>
+
     <div class="form-row">
       <div class="form-group">
         <label class="form-label">Valor total (R$)</label>

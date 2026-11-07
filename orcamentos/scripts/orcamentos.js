@@ -98,6 +98,8 @@ let addSlots          = [];
 let fechSlots         = [];
 let fechLocal         = 'studio';
 let actLocal          = 'studio';   // local do atendimento no painel do orçamento
+let addLocal          = 'studio';   // local no cadastro (Novo Orçamento)
+let addLocalManual    = false;      // Carol escolheu o local à mão no cadastro
 let fechSinalRecebido = true;
 let fechSinalManual   = false;
 let fechPropostas     = [];
@@ -1485,6 +1487,10 @@ function openAddForm() {
   slotCheckExcludeId = null;   // orçamento novo: confere contra todos os existentes
   addSlots = [];
   addAddSlot();
+  // Local começa pelo serviço da primeira linha (ou Studio); endereço em branco
+  addLocalManual = false;
+  resetEndereco('add', '');
+  syncAddLocalUI(localDoServico(addSlots[0] && addSlots[0].servico) || 'studio');
   openPanel('panel-add');
 }
 
@@ -1533,12 +1539,13 @@ function toggleActEquipeInput(checked, focar) {
 // em Domicílio ele volta a ser editável com o endereço da cliente. O que a
 // cliente informou fica guardado aqui, então alternar Studio ↔ Domicílio não
 // apaga o que já foi digitado.
-const enderecoCliente = { act: '', fech: '' };
+const enderecoCliente = { act: '', fech: '', add: '' };
 
 function pintarEndereco(prefix) {
   const inp = document.getElementById(prefix + '-addr');
   if (!inp) return;
-  const studio = (prefix === 'act' ? actLocal : fechLocal) !== 'domicilio';
+  const local = prefix === 'act' ? actLocal : (prefix === 'add' ? addLocal : fechLocal);
+  const studio = local !== 'domicilio';
   const atual = inp.value.trim();
   if (atual && atual !== END_STUDIO) enderecoCliente[prefix] = atual;
 
@@ -1640,6 +1647,30 @@ function syncActLocalUI(tipo) {
 function autoDetectActLocal(servName) {
   const sugerido = localDoServico(servName);
   if (sugerido && sugerido !== actLocal) syncActLocalUI(sugerido);
+}
+
+// ── Local do atendimento no cadastro (Novo Orçamento) ──
+// Opcional: dá para já deixar o endereço da cliente anotado, e se ela fechar
+// ele chega preenchido no "Fechar e agendar".
+function setAddLocal(btn) {
+  addLocalManual = true;
+  syncAddLocalUI(btn.dataset.addlocal);
+  if (addLocal === 'domicilio') {
+    const inp = document.getElementById('add-addr');
+    if (inp && !inp.value) inp.focus();
+  }
+}
+
+function syncAddLocalUI(tipo) {
+  addLocal = tipo === 'domicilio' ? 'domicilio' : 'studio';
+  document.querySelectorAll('[data-addlocal]').forEach(b =>
+    b.classList.toggle('on', b.dataset.addlocal === addLocal));
+  pintarEndereco('add');
+}
+
+function autoDetectAddLocal(servName) {
+  const sugerido = localDoServico(servName);
+  if (sugerido && sugerido !== addLocal) syncAddLocalUI(sugerido);
 }
 
 // ── Slots: total de ocorrências de uma linha = valorUnit × qtd ──
@@ -1934,6 +1965,7 @@ function renderAddSlots() {
 }
 
 function syncAddSlot(id, campo, valor) {
+  if (campo === 'servico') autoDetectAddLocal(valor);
   syncSlotField(addSlots, id, campo, valor, renderAddSlots, recalcAddTotal);
 }
 
@@ -2052,13 +2084,18 @@ async function saveNew(opts) {
 
   const dataPedido = (document.getElementById('add-data-pedido') || {}).value || todayStr();
 
-  // Local deduzido do serviço já no cadastro — o card nasce com a etiqueta certa
-  // e o endereço do studio vem preenchido, sem precisar abrir o orçamento.
+  // Local: o que foi escolhido no cadastro (à mão, ou acertado pelo serviço).
+  // Sem escolha e sem pista no serviço (ex.: Noiva), fica em branco como antes.
   let localNovo = '';
   for (const s of slotsValidos) {
     localNovo = localDoServico(s.servico);
     if (localNovo) break;
   }
+  if (addLocalManual || localNovo || addLocal === 'domicilio') localNovo = addLocal;
+  const enderecoNovo = localNovo === 'studio' ? END_STUDIO
+    : (localNovo === 'domicilio'
+        ? ((document.getElementById('add-addr') || {}).value || '').trim()
+        : '');
 
   const entry = {
     ID:           String(Date.now()),
@@ -2080,7 +2117,7 @@ async function saveNew(opts) {
     DataEvento:   dataEvento,
     DataCriacao:  todayStr(),
     LocalTipo:      localNovo,
-    EnderecoEvento: localNovo === 'studio' ? END_STUDIO : '',
+    EnderecoEvento: enderecoNovo,
   };
 
   entries.unshift(entry);
