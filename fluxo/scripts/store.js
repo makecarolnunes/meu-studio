@@ -159,6 +159,13 @@ function stAtualizarCfg(cfg) {
     if (!cfg.estorno) cfg.estorno = JSON.parse(JSON.stringify(FX_MODELO.config.estorno));
     cfg.versao = 5; mudou = true;
   }
+  if (cfg.versao < 6) {
+    // Inter: "Aplicacao: CDB Porq Obj…" / "Resgate…" = caixinha da própria conta
+    const pt = cfg.palavrasTransferencia = cfg.palavrasTransferencia || {};
+    const atual = pt.caixinha || '';
+    pt.caixinha = atual ? atual + (/porq/.test(atual) ? '' : '|\\bporq\\b|\\bcdb\\b') : FX_MODELO.config.palavrasTransferencia.caixinha;
+    cfg.versao = 6; mudou = true;
+  }
   return mudou;
 }
 

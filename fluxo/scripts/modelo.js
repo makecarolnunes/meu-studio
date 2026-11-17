@@ -16,7 +16,7 @@ const FX_MODELO = {
 
   // ── Configuração (vai para configuracoes.chave = 'fluxo_config') ──
   config: {
-    versao: 5,
+    versao: 6,
     // Pix que sai e volta (corrida não aceita, compra cancelada): os dois se anulam
     estorno: { dias: 3, palavras: 'estorno|estornad|devolu|devolvid|reembols|cancelad|cancelament|reversao|revertid',
                apps: 'uber|99|99app|99pop|cabify|indrive|in drive|ifood|rappi' },
@@ -106,7 +106,7 @@ const FX_MODELO = {
     },
     // Linhas de extrato que são movimentação interna (não gasto)
     palavrasTransferencia: {
-      caixinha: 'porquinho|caixinha|cofrinho|aplicacao|resgate|poupanca|meu porquinho|guardar',
+      caixinha: 'porquinho|\\bporq\\b|caixinha|cofrinho|aplicacao|resgate|\\bcdb\\b|poupanca|meu porquinho|guardar',
       fatura: 'pagamento fatura|pgto fatura|pag fatura|fatura cartao|pagamento cartao|pagto cartao',
     },
     diaCriarProximoMes: 20,       // a partir deste dia o plano do mês seguinte é criado sozinho

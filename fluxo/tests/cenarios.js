@@ -367,7 +367,7 @@ const ctxM = (mes, hoje) => run(`stCtx(${JSON.stringify(mes)}, ${JSON.stringify(
   igual('PJ tem Deslocamento, Reposição, DAS', ['Deslocamento', 'Reposição', 'Investimentos', 'DAS'].every(c => catPJ.includes(c)), true);
   const cfgV1 = { versao: 1, categorias: { PJ: [{ nome: 'Assistente', grupo: 'Operação' }, { nome: 'Uniforme', grupo: 'Minhas' }], PF: [] } };
   run('stAtualizarCfg')(cfgV1);
-  igual('config antiga atualizada mantendo a categoria criada por você', [cfgV1.versao, cfgV1.categorias.PJ.some(c => c.nome === 'Assistente'), cfgV1.categorias.PJ.some(c => c.nome === 'Uniforme')], [5, false, true]);
+  igual('config antiga atualizada mantendo a categoria criada por você', [cfgV1.versao, cfgV1.categorias.PJ.some(c => c.nome === 'Assistente'), cfgV1.categorias.PJ.some(c => c.nome === 'Uniforme')], [6, false, true]);
   const gastosPJantes = FX.resumo('PJ', ctxM('2027-01', '2027-01-31')).gastos;
   const gastosPFantes = FX.resumo('PF', ctxM('2027-01', '2027-01-31')).gastos;
   const pjAntesP = saldo(pjC, '2027-01-31');
@@ -472,6 +472,25 @@ const ctxM = (mes, hoje) => run(`stCtx(${JSON.stringify(mes)}, ${JSON.stringify(
   await AC.aplicarExtrato(pjC.id, p20);
   igual('escolher um já recebido só concilia (data do banco, sem receita nova)',
     [DBT.entries.length - nE20, DBT.entries.find(e => e.id === 'bia2').dataPag, run('stMovs()').find(m => m.id === 'bia2').conciliado], [0, '2027-02-20', true]);
+
+  titulo('21. Aplicação/resgate em caixinha do Inter = movimentação interna');
+  const g21 = FX.resumo('PJ', ctxM('2027-02', '2027-02-28')).gastos;
+  const pj21 = saldo(pjC, '2027-02-28');
+  let p21 = AC.prepararExtrato(pjC.id, [
+    { data: '2027-02-16', descricao: 'Aplicacao: "CDB Porq Obj BANCO INTER S A"', valor: -400 },
+    { data: '2027-02-17', descricao: 'Aplicacao: "CDB Porq Obj BANCO INTER S A"', valor: -123.45 },
+    { data: '2027-02-18', descricao: 'Resgate: "CDB Porq Obj BANCO INTER S A"', valor: 50 },
+  ]);
+  igual('valor de aporte previsto (Reposição 400) → caixinha Reposição', [p21[0].decisao, nomeC(p21[0].destinoId), p21[0].auto], ['transferencia', 'Reposição', 'plano']);
+  igual('sem aporte correspondente → Reserva não distribuída (nova)', [p21[1].decisao, p21[1].destinoId, p21[1].interno], ['transferencia', '__reserva__', true]);
+  igual('resgate → transferência interna', [p21[2].decisao, p21[2].interno], ['transferencia', true]);
+  await AC.aplicarExtrato(pjC.id, p21);
+  const res21 = ST.contas.find(c => c.entidade === 'PJ' && c.finalidade === 'reserva');
+  igual('Reserva Inter criada uma vez só', ST.contas.filter(c => c.entidade === 'PJ' && c.finalidade === 'reserva').length, 1);
+  igual('reserva = 123,45 aplicado − 50 resgatado', saldo(res21, '2027-02-28'), 73.45);
+  igual('não virou gasto', FX.resumo('PJ', ctxM('2027-02', '2027-02-28')).gastos, g21);
+  igual('conta corrente acompanha o banco (−400 −123,45 +50)', FX.r2(saldo(pjC, '2027-02-28') - pj21), -473.45);
+  igual('aporte de Reposição de fevereiro feito', FX.itensDoMes(ST.itens, '2027-02', run('stMovs()'), '2027-02-20', ST.cfg).find(i => i.entidade === 'PJ' && i.descricao === 'Reposição')._status, 'feito');
 
   titulo('Rastreabilidade');
   igual('toda escrita gerou log', ST.log.length > 30, true);

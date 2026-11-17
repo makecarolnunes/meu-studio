@@ -565,10 +565,13 @@ const AC = (function () {
         if (c) { Object.assign(p, { decisao: 'transferencia', destinoId: c.id, auto: 'palavra' }); return; }
       }
       if (tipoInt === 'caixinha') {
-        const cxs = ST.contas.filter(c => c.entidade === ent && c.tipo === 'caixinha' && c.ativa !== false);
+        // Aplicação/resgate em caixinha do próprio banco: movimentação interna
+        // (nunca gasto/receita). Caixinha pelo nome; senão a Reserva não distribuída.
+        const cxs = ST.contas.filter(c => c.entidade === ent && c.tipo === 'caixinha' && c.ativa !== false && c.finalidade !== 'reserva');
         const d = FX.semAcento(l.descricao);
-        const cx = cxs.find(c => d.includes(FX.semAcento(c.nome).split(' ')[0])) || null;
-        Object.assign(p, { decisao: 'transferencia', destinoId: cx ? cx.id : '', auto: 'palavra' });
+        const cx = cxs.find(c => { const w = FX.semAcento(c.nome).split(' ')[0]; return w.length >= 4 && d.includes(w); }) || null;
+        const res = _reservaDe(ent);
+        Object.assign(p, { decisao: 'transferencia', destinoId: cx ? cx.id : (res ? res.id : RESERVA_NOVA), interno: true, auto: 'palavra' });
         return;
       }
       const cat = FX.sugerirCategoria(l.descricao, ent, cfg);
@@ -577,6 +580,25 @@ const AC = (function () {
         if (debito) p.caixinhaId = (FX.caixinhaDaCategoria(ST.contas, ent, cat, cfg) || {}).id || '';
       }
     });
+  }
+
+  // Caixinha "Reserva Inter (não distribuída)": recebe aplicações no banco que
+  // não correspondem a nenhum aporte do plano. Criada na primeira vez que precisar.
+  const RESERVA_NOVA = '__reserva__';
+  function _reservaDe(ent) {
+    return ST.contas.find(c => c.entidade === ent && c.tipo === 'caixinha' && c.finalidade === 'reserva' && c.ativa !== false) || null;
+  }
+  async function _garantirReserva(ent) {
+    const r = _reservaDe(ent);
+    if (r) return r;
+    const corr = FX.contaPadrao(ST.contas, ent, 'corrente');
+    const nova = await stSalvar('fin_contas', { id: stId('ct'), entidade: ent, tipo: 'caixinha', nome: 'Reserva Inter (não distribuída)',
+      banco: corr ? corr.banco : '', finalidade: 'reserva', contaPaiId: corr ? corr.id : null, saldoInicial: null, dataSaldoInicial: null,
+      padrao: false, ativa: true, ordem: 99, obs: 'Aplicações no banco que não são aporte de nenhuma caixinha do plano' }, 'criar-reserva');
+    // começa zerada na véspera do fluxo (só recebe o que vier dos extratos)
+    const cfg = ST.cfg || FX_MODELO.config;
+    if (cfg.inicioFluxo) await conciliar(nova.id, { data: FX.addDias(cfg.inicioFluxo, -1), saldoBanco: '0', obs: 'Criada automaticamente pelo extrato' });
+    return stConta(nova.id);
   }
 
   function _paraMimMesma(desc, cfg) {
@@ -656,6 +678,7 @@ const AC = (function () {
       }
       if (p.decisao === 'transferencia') {
         if (!p.destinoId) continue;
+        if (p.destinoId === RESERVA_NOVA) p.destinoId = (await _garantirReserva(ent)).id;
         const credito = l.valor > 0;
         await transferir({ valor, data: l.data, origemId: credito ? p.destinoId : contaId,
           destinoId: credito ? contaId : p.destinoId, descricao: l.descricao, conciliado: true, extratoRef: ref, origem: 'importacao',
@@ -778,7 +801,7 @@ const AC = (function () {
     await stRemover('fin_transferencias', id);
   }
 
-  return { receberCliente, itensProlaboreDoMes, garantirMeses, executarComoPlanejado, atualizarSaldoDivida, incluirDividaNoPlano, tirarDividaDoPlano,
+  return { RESERVA_NOVA: '__reserva__', receberCliente, itensProlaboreDoMes, garantirMeses, executarComoPlanejado, atualizarSaldoDivida, incluirDividaNoPlano, tirarDividaDoPlano,
     configurarInicial, criarMes, salvarItem, removerItem, dispensarItem, retomarItem, reprogramarItem,
     fecharMes, reabrirMes, transferir, executarAporte, pagarFatura, registrarGasto, pagarItem, pagarProlabore,
     registrarEntradaPF, confirmarRecebimento, conciliar, prepararExtrato, aplicarExtrato,
