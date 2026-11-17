@@ -200,14 +200,14 @@ const FX_MODELO = {
     { entidade: 'PF', tipo: 'pagamento', dia: 10, descricao: 'Academia e Jiu', valor: 380, caixinha: 'pf_fixas', categoria: 'Academia e Jiu' },
     { entidade: 'PF', tipo: 'pagamento', dia: 10, descricao: 'Assinaturas',    valor: 100, caixinha: 'pf_fixas', categoria: 'Assinaturas' },
     { entidade: 'PF', tipo: 'pagamento', dia: 10, descricao: 'Médico',         valor: 300, caixinha: 'pf_fixas', categoria: 'Médico' },
-    // Faxineira (Fotografia: vencimento "1 e 15" — ajuste se forem 2 pagamentos)
+    // Faxineira: 1 × R$ 250 na segunda quinzena (confirmado pela Carol)
     { entidade: 'PF', tipo: 'pagamento', dia: 15, descricao: 'Faxineira',      valor: 250, caixinha: 'pf_faxineira', categoria: 'Faxineira' },
     // Dívida prevista (Fotografia D13/E13)
     { entidade: 'PF', tipo: 'pagamento', dia: 15, descricao: 'Pole Dance — parcela', valor: 361, caixinha: 'pf_dividas', categoria: 'Dívidas', divida: 'pole', mesFim: '2026-12' },
     // Consultoria financeira: 5 parcelas de R$ 350 pagas pela caixinha Sazonais.
     // mesInicio = 1º mês do fluxo (ajustável: se já pagou parcelas, recue o início).
     { entidade: 'PF', tipo: 'pagamento', dia: 15, descricao: 'Consultoria financeira', valor: 350, caixinha: 'pf_sazonais',
-      categoria: 'Consultoria financeira', parcelas: 5, mesInicio: '@inicio', mesFim: '@inicio+4' },
+      categoria: 'Consultoria financeira', parcelas: 5, mesInicio: '@inicio-1', mesFim: '@inicio+3' },   // 1/5 foi em out/26 (antes do fluxo)
 
     // PJ › semana 1 (L6..L9)
     { entidade: 'PJ', tipo: 'pagamento', dia: 1,  descricao: 'Curso (mensalidade)', valor: 97, categoria: 'Cursos' },

@@ -86,7 +86,7 @@ const AC = (function () {
   function _mesToken(v, base) {
     if (!v) return null;
     if (v === '@inicio') return base;
-    const m = /^@inicio\+(\d+)$/.exec(v);
+    const m = /^@inicio([+-]\d+)$/.exec(v);
     return m ? FX.addMes(base, Number(m[1])) : v;
   }
 

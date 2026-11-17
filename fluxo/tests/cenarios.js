@@ -226,14 +226,14 @@ const ctxM = (mes, hoje) => run(`stCtx(${JSON.stringify(mes)}, ${JSON.stringify(
   igual('Gás pendente reprogramado p/ janeiro (avulso)', ST.itens.filter(i => i.mes === '2027-01' && /Gás \(reprogramado/.test(i.descricao)).length, 1);
   igual('Gás de dezembro não aparece mais como pendente', FX.itensDoMes(ST.itens, DEZ, run('stMovs()'), '2027-01-02', ST.cfg).find(i => i.descricao === 'Gás')._status, 'reprogramado');
 
-  titulo('11. Consultoria: 5 parcelas de R$ 350 pela caixinha Sazonais');
+  titulo('11. Consultoria: 5 parcelas de R$ 350 pela caixinha Sazonais (1/5 foi no mês antes do fluxo)');
   const consDez = ST.itens.find(i => i.mes === DEZ && i.descricao === 'Consultoria financeira');
-  igual('dezembro = parcela 1/5', FX.nomeItem(consDez), 'Consultoria financeira (1/5)');
+  igual('1º mês do fluxo = parcela 2/5 (a 1/5 foi antes)', FX.nomeItem(consDez), 'Consultoria financeira (2/5)');
   igual('paga pela caixinha Sazonais', nomeC(consDez.caixinhaId), 'Sazonais');
-  igual('janeiro = parcela 2/5', FX.nomeItem(ST.itens.find(i => i.mes === '2027-01' && i.descricao === 'Consultoria financeira')), 'Consultoria financeira (2/5)');
+  igual('janeiro = parcela 3/5', FX.nomeItem(ST.itens.find(i => i.mes === '2027-01' && i.descricao === 'Consultoria financeira')), 'Consultoria financeira (3/5)');
   const modelo = ST.itens.filter(i => i.mes === 'modelo');
-  igual('abril/27 ainda tem parcela (5/5)', FX.copiarItens(modelo, '2027-04', 'x', () => 'y').some(i => i.descricao === 'Consultoria financeira'), true);
-  igual('maio/27 não tem mais parcela', FX.copiarItens(modelo, '2027-05', 'x', () => 'y').some(i => i.descricao === 'Consultoria financeira'), false);
+  igual('março/27 ainda tem parcela (5/5)', FX.copiarItens(modelo, '2027-03', 'x', () => 'y').some(i => i.descricao === 'Consultoria financeira'), true);
+  igual('abril/27 não tem mais parcela', FX.copiarItens(modelo, '2027-04', 'x', () => 'y').some(i => i.descricao === 'Consultoria financeira'), false);
   igual('Pole Dance some do plano depois de dez/26', ST.itens.filter(i => i.mes === '2027-01' && i.dividaId).length, 0);
   igual('não entra na distribuição do pró-labore (é paga pela reserva)',
     FX.distribuicoesPF(FX.itensDoMes(ST.itens, DEZ, run('stMovs()'), '2026-12-31', ST.cfg), run('stMovs()'))[1].planejado, 2556);
@@ -241,7 +241,7 @@ const ctxM = (mes, hoje) => run(`stCtx(${JSON.stringify(mes)}, ${JSON.stringify(
   titulo('12. Automático: plano do mês, fechamento e vínculos');
   let auto = await AC.garantirMeses('2027-01-21');
   igual('dia 21: cria fevereiro sozinho', auto.filter(f => f.acao === 'criado').map(f => f.mes), ['2027-02']);
-  igual('fevereiro veio do modelo (consultoria 3/5)', FX.nomeItem(ST.itens.find(i => i.mes === '2027-02' && i.descricao === 'Consultoria financeira')), 'Consultoria financeira (3/5)');
+  igual('fevereiro veio do modelo (consultoria 4/5)', FX.nomeItem(ST.itens.find(i => i.mes === '2027-02' && i.descricao === 'Consultoria financeira')), 'Consultoria financeira (4/5)');
   auto = await AC.garantirMeses('2027-03-02');
   igual('março criado, janeiro fechado sozinho', [auto.filter(f => f.acao === 'criado').map(f => f.mes).join(), run('stPlano("2027-01").status')], ['2027-03', 'fechado']);
   igual('dezembro reaberto à mão não fecha sozinho', run('stPlano("2026-12").status'), 'aberto');
