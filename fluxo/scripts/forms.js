@@ -2,10 +2,25 @@
 // fluxo/scripts/forms.js — formulários (folha inferior) e handlers
 // ════════════════════════════════════════════════════════════
 
-function go(tab) { UI.tab = tab; if (tab !== 'plano') UI.modelo = false; if (tab !== 'ajustes') UI.extrato = null; uiPersist(); render(); window.scrollTo(0, 0); }
+function go(tab) {
+  tab = TAB_ALIAS[tab] || tab;
+  if (tab !== 'plano') UI.modelo = false;
+  if (tab !== 'conciliar') UI.extrato = null;
+  UI.tab = tab; uiPersist(); render(); window.scrollTo(0, 0);
+}
 function setEnt(e) { UI.ent = e; uiPersist(); render(); }
 function chMes(d) { UI.mes = FX.addMes(UI.mes, d); UI.modelo = false; render(); }
-function toggleAberto(id) { UI.aberto[id] = !(UI.aberto[id] !== false && (UI.aberto[id] || ['semanada', 'fixas'].includes((stConta(id) || {}).finalidade))); render(); }
+function toggleAberto(id) {
+  const padrao = (stConta(id) || {}).finalidade === 'semanada';
+  UI.aberto[id] = !(UI.aberto[id] != null ? UI.aberto[id] : padrao); render();
+}
+// Abre a tela Caixinhas já rolada até a caixinha (e com o detalhe aberto)
+function abrirCaixinha(id) {
+  const c = stConta(id);
+  if (c && c.entidade !== UI.ent) UI.ent = c.entidade;
+  UI.aberto[id] = true; go('caixinhas');
+  setTimeout(() => { const el = document.getElementById('cx-' + id); if (el && el.scrollIntoView) el.scrollIntoView({ block: 'start' }); }, 30);
+}
 
 function dataPadrao(dataItem) {
   const hoje = stHoje();
@@ -56,7 +71,7 @@ function formExecutar(itemId) {
     corpo = campo('Entra em', `<select class="fi" id="ex-conta">${optContas(i.entidade, ['corrente', 'especie'], i.contaId)}</select>`) +
       campo('Categoria', `<select class="fi" id="ex-cat">${(ST.cfg || FX_MODELO.config).categorias.receitasPF.map(c => `<option>${c}</option>`).join('')}</select>`);
   }
-  abrirModal(`<h2>${ACAO_LABEL[i.tipo]} · ${esc(FX.nomeItem(i))}</h2>
+  abrirModal(`<h2>${i.tipo === 'prolabore' ? 'Registrar pró-labore' : ACAO_LABEL[i.tipo]} · ${esc(FX.nomeItem(i))}</h2>
     <div class="muted sm">Previsto ${brl(i.valor)} para ${dm(i._data)}${i._realizado ? ` · já feito ${brl(i._realizado)}` : ''}</div>
     <div class="two">${campo('Valor real', inValor('ex-valor', falta))}${campo('Data', inData('ex-data', dataPadrao(i._data)))}</div>
     ${corpo}
@@ -142,14 +157,35 @@ function acSalvarItem(id, mes) {
 function acRemoverItem(id) { if (confirm('Excluir este item do plano?')) executar(() => AC.removerItem(id), 'Item excluído'); }
 
 // ── NOVO GASTO / ENTRADA / TRANSFERÊNCIA / FATURA ────────
+
 function menuNovo() {
-  abrirModal(`<h2>Registrar</h2><div class="menu">
-    <button onclick="formGasto('${UI.ent}')"><b>Gasto</b><span>Despesa real (Pix, débito, cartão, dinheiro)</span></button>
-    ${UI.ent === 'PF' ? `<button onclick="formEntradaPF()"><b>Entrada PF</b><span>Dinheiro que entrou na conta pessoal</span></button>` : `<button onclick="window.location.href='../financeiro/?tela=nova'"><b>Receita de cliente</b><span>Pelo Financeiro (mantém a integração com Orçamentos)</span></button>`}
-    <button onclick="formTransferencia('${UI.ent}')"><b>Transferência</b><span>Aporte, resgate ou entre contas — não é gasto</span></button>
+  const ent = UI.ent;
+  if (ent === 'PF' && !ST.pfLiberado) return abrirLoginPF();
+  const ctx = stCtx(UI.mes);
+  const pro = FX.itensDoMes(ST.itens, UI.mes, ctx.movs, ctx.hoje, ctx.cfg).find(i => i.tipo === 'prolabore' && FX.PENDENTE(i._status));
+  abrirModal(`<h2>Registrar · ${ent === 'PF' ? 'Pessoal' : 'Empresa'}</h2><div class="menu">
+    <button onclick="formGasto('${ent}')"><b>Gasto</b><span>Despesa real (Pix, débito, cartão, dinheiro)</span></button>
+    <button onclick="formReservar('${ent}')"><b>Reservar em caixinha</b><span>Transferir para semanada, despesas fixas… — não é gasto</span></button>
+    ${ent === 'PF' ? `<button onclick="formEntradaPF()"><b>Entrada</b><span>Dinheiro que entrou na conta pessoal</span></button>`
+      : `<button onclick="window.location.href='../financeiro/?tela=nova'"><b>Receita de cliente</b><span>Pelo Financeiro (mantém a integração com Orçamentos)</span></button>`}
+    <button onclick="${pro ? `formExecutar('${pro.id}')` : 'formProlaboreAvulso()'}"><b>Pró-labore</b><span>${pro ? `${esc(FX.nomeItem(pro))} — falta ${brl(pro._falta)}` : 'Fora do plano: saída PJ + entrada PF vinculadas'}</span></button>
+    <button onclick="formTransferencia('${ent}')"><b>Transferência entre contas</b><span>Resgate, conta → conta — não é gasto</span></button>
     <button onclick="formFatura()"><b>Pagar fatura do cartão</b><span>Quita compras já registradas, sem duplicar</span></button>
-    ${UI.ent === 'PJ' ? `<button onclick="formProlaboreAvulso()"><b>Pró-labore fora do plano</b><span>Saída PJ + entrada PF vinculadas</span></button>` : ''}
+    <button onclick="fecharModal();formExtrato()"><b>Importar extrato</b><span>Confere com o que já foi registrado</span></button>
   </div><button class="btn ghost" onclick="fecharModal()">Cancelar</button>`);
+}
+
+// Reservar: escolhe a caixinha; se houver reserva planejada pendente, registra nela (fica ligada ao plano)
+function formReservar(ent) {
+  ent = ent || UI.ent;
+  const P = FX.painelMes(ent, stCtx(UI.mes));
+  const pend = cxId => P.acoes.find(a => a.tipo === 'item' && a.item.tipo === 'aporte' && a.item.caixinhaId === cxId);
+  abrirModal(`<h2>Reservar em caixinha</h2>
+    <div class="nota">Transferência da conta para a caixinha: o dinheiro continua seu, separado para o que foi planejado.</div>
+    <div class="menu">${P.caixinhas.filter(c => c.caixinha.finalidade !== 'reserva').map(c => { const it = pend(c.caixinha.id);
+      return `<button onclick="${it ? `formExecutar('${it.item.id}')` : `formTransferencia('${ent}', null, '${c.caixinha.id}')`}">
+        <b>${esc(c.caixinha.nome)}</b><span class="${c.falta > 0.01 ? 't-alerta' : ''}">${c.meta > 0 ? (c.falta > 0.01 ? `faltam ${brl(c.falta)} de ${brl(c.meta)}` : `✓ ${brl(c.meta)} reservados`) : 'sem meta neste mês'}</span></button>`; }).join('')}</div>
+    <button class="btn ghost" onclick="fecharModal()">Cancelar</button>`);
 }
 
 function formGasto(ent, caixinhaId) {
@@ -197,9 +233,19 @@ function acGasto(ent) {
   const it = itemId ? stItem(itemId) : null;
   if ($v('g-pess') === true) return executar(() => AC.registrarGasto({ entidade: 'PJ', pessoal: true, valor: $v('g-valor'),
     data: $v('g-data'), descricao: $v('g-desc'), categoria: $v('g-cat'), contaId: $v('g-conta') }), 'Gasto pessoal registrado');
-  executar(() => AC.registrarGasto({ entidade: ent, valor: $v('g-valor'), data: $v('g-data'), descricao: $v('g-desc'),
+  const data = $v('g-data');
+  executar(() => AC.registrarGasto({ entidade: ent, valor: $v('g-valor'), data, descricao: $v('g-desc'),
     categoria: $v('g-cat'), caixinhaId: $v('g-cx') || (it && it.caixinhaId) || null, contaId: $v('g-conta'),
-    resgatar: $v('g-resgatar') === true, planoItemId: itemId || null, dividaId: it ? it.dividaId : null }), 'Gasto registrado');
+    resgatar: $v('g-resgatar') === true, planoItemId: itemId || null, dividaId: it ? it.dividaId : null }))
+    .then(r => { if (r !== undefined) toast(resumoGastoSemana(ent, data)); });
+}
+// Depois de um gasto: como ficou a semanada daquela semana
+function resumoGastoSemana(ent, data) {
+  const s = FX.semanadas(ent, stCtx(FX.mesDe(data)));
+  const w = s && s.linhas.find(l => data >= l.semana.ini && data <= l.semana.fim);
+  if (!w) return 'Gasto registrado';
+  return w.estourou ? `Gasto registrado · semanada ${brl(w.acima)} acima do orçamento`
+    : `Gasto registrado · ainda pode gastar ${brl(w.podeGastar)} nesta semana`;
 }
 
 function formEntradaPF() {
@@ -367,7 +413,7 @@ async function acLerExtrato() {
     if (!r.transacoes.length) return toast('Nenhuma transação encontrada.', true);
     UI.extrato = { contaId, propostas: AC.prepararExtrato(contaId, r.transacoes),
       info: `${r.banco} · ${dm(r.periodoIni)} a ${dm(r.periodoFim)} · ${r.transacoes.length} linhas` };
-    fecharModal(); UI.tab = 'ajustes'; render();
+    fecharModal(); UI.tab = 'conciliar'; uiPersist(); render(); window.scrollTo(0, 0);
   } catch (e) { toast(e.message || 'Erro ao ler o arquivo', true); }
 }
 // Busca na lista de recebimentos sem redesenhar a tela (mantém o foco no campo)

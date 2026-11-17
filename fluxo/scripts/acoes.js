@@ -715,8 +715,22 @@ const AC = (function () {
         res.criados++;
       }
     }
+    await _lembrarIgnoradas(contaId, propostas);
     await _aprender(ent, propostas);
     return res;
+  }
+
+  // Linhas que a Carol mandou ignorar não voltam como "novas" ao importar
+  // de novo o mesmo período (extrato parcial → completo).
+  async function _lembrarIgnoradas(contaId, propostas) {
+    const novas = propostas.filter(p => p.decisao === 'ignorar' && p.acao !== 'duplicada' && p.linha && p.linha.ref)
+      .map(p => FX.hashRef(p.linha.ref));
+    if (!novas.length) return;
+    const cfg = JSON.parse(JSON.stringify(ST.cfg || FX_MODELO.config));
+    cfg.extratoIgnorados = cfg.extratoIgnorados || {};
+    const atual = cfg.extratoIgnorados[contaId] || [];
+    cfg.extratoIgnorados[contaId] = novas.filter(h => !atual.includes(h)).concat(atual).slice(0, 3000);
+    await stSalvarCfg(cfg);
   }
 
   // ── CADASTROS ────────────────────────────────────────────

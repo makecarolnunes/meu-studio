@@ -9,46 +9,8 @@
 const fs = require('fs'), path = require('path'), vm = require('vm');
 const raiz = path.join(__dirname, '..', 'scripts');
 
-// ── Supabase falso ────────────────────────────────────────
-function criarDB() {
-  const T = { entries: [], saidas: [], entradas_pessoal: [], saidas_pessoal: [], configuracoes: {} };
-  const clone = o => JSON.parse(JSON.stringify(o));
-  const up = (arr, o) => { const i = arr.findIndex(x => String(x.id) === String(o.id)); if (i >= 0) arr[i] = Object.assign({}, arr[i], clone(o)); else arr.push(clone(o)); };
-  const fluxo = {};
-  const trigger = s => {    // réplica de sync_saida_pessoal()
-    const pess = String(s.natureza || '').toUpperCase() === 'PESSOAL';
-    T.entradas_pessoal = T.entradas_pessoal.filter(e => e.saidaOrigemId !== s.id || pess);
-    if (!pess) return;
-    if (/transfer/i.test(s.forma || '') && s.transferenciaParaMim) {
-      up(T.entradas_pessoal, { id: 'sync_' + s.id, data: s.dataPag, descricao: s.obs, valor: Number(s.valor),
-        categoria: s.tipo === 'Pró-labore' ? 'Pró-labore' : 'Transferência', forma: s.forma, origem: 'sincronizado', saidaOrigemId: s.id });
-    } else {
-      const ex = T.saidas_pessoal.find(x => x.id === 'sync_' + s.id);   // ON CONFLICT não mexe na categoria
-      up(T.saidas_pessoal, { id: 'sync_' + s.id, data: s.dataPag, descricao: s.obs, valor: Number(s.valor),
-        categoria: ex ? ex.categoria : 'Outros', forma: s.forma, origem: 'sincronizado', saidaOrigemId: s.id });
-    }
-  };
-  return {
-    T,
-    entries: { list: async () => clone(T.entries), upsert: async e => up(T.entries, e),
-               update: async (id, f) => up(T.entries, Object.assign({ id }, f)) },
-    saidas: { list: async () => clone(T.saidas), upsert: async s => { up(T.saidas, s); trigger(s); },
-              update: async (id, f) => { up(T.saidas, Object.assign({ id }, f)); trigger(T.saidas.find(x => x.id === id)); } },
-    pessoal: {
-      entradas: { list: async () => clone(T.entradas_pessoal), upsert: async e => up(T.entradas_pessoal, e),
-                  delete: async id => { T.entradas_pessoal = T.entradas_pessoal.filter(x => x.id !== id); } },
-      saidas: { list: async () => clone(T.saidas_pessoal), upsert: async e => up(T.saidas_pessoal, e),
-                delete: async id => { T.saidas_pessoal = T.saidas_pessoal.filter(x => x.id !== id); } },
-    },
-    fluxo: {
-      list: async t => clone(fluxo[t] || []),
-      upsert: async (t, o) => { fluxo[t] = fluxo[t] || []; up(fluxo[t], o); },
-      upsertMany: async (t, arr) => { fluxo[t] = fluxo[t] || []; arr.forEach(o => up(fluxo[t], o)); },
-      remove: async (t, id) => { fluxo[t] = (fluxo[t] || []).filter(x => x.id !== id); },
-    },
-    config: { get: async k => T.configuracoes[k] || null, set: async (k, v) => { T.configuracoes[k] = v; } },
-  };
-}
+// Supabase falso em memória (compartilhado com o teste no navegador)
+const { criarDB } = require("./fake-db.js");
 
 const store = {};
 const ctx = vm.createContext({
@@ -492,6 +454,93 @@ const ctxM = (mes, hoje) => run(`stCtx(${JSON.stringify(mes)}, ${JSON.stringify(
   igual('conta corrente acompanha o banco (−400 −123,45 +50)', FX.r2(saldo(pjC, '2027-02-28') - pj21), -473.45);
   igual('aporte de Reposição de fevereiro feito', FX.itensDoMes(ST.itens, '2027-02', run('stMovs()'), '2027-02-20', ST.cfg).find(i => i.entidade === 'PJ' && i.descricao === 'Reposição')._status, 'feito');
 
+  // ══ Experiência do mês (validação da reorganização) ══════════
+  const ABR = '2027-04';
+  await AC.criarMes(ABR, 'modelo');
+  const cA = h => ctxM(ABR, h);
+  const semPF = conta('PF', 'caixinha', 'semanada'), fixasPF = conta('PF', 'caixinha', 'fixas'), faxPF = conta('PF', 'caixinha', 'faxineira');
+  const itensA = h => FX.itensDoMes(ST.itens, ABR, run('stMovs()'), h, ST.cfg);
+
+  titulo('V1. Mês sem nenhum extrato: o plano já mostra o mês inteiro');
+  let PA = FX.painelMes('PF', cA('2027-04-02'));
+  const recebPrev = itensA('2027-04-02').filter(i => i.tipo === 'prolabore' || (i.tipo === 'receita' && i.entidade === 'PF')).reduce((t, i) => t + i.valor, 0);
+  igual('receber: previsto (pró-labore 01 + 15) e nada recebido', [PA.receber.previsto, PA.receber.recebido, PA.receber.falta], [recebPrev, 0, recebPrev]);
+  igual('receber previsto = 2.000 + 2.755 da planilha', PA.receber.previsto, 4755);
+  const metaFixas = PA.caixinhas.find(c => c.caixinha.id === fixasPF.id).meta;
+  igual('reservar: metas por caixinha, nada transferido', [PA.reservar.meta > 0, PA.reservar.transferido, metaFixas > 0], [true, 0, true]);
+  igual('semana em foco: S1, orçamento da semanada', [PA.semana.semana.n, PA.semana.orcamento, PA.semana.podeGastar, PA.semana.faltaReservar], [1, 350, 350, 350]);
+  igual('próximas ações já trazem o pró-labore do dia 01', PA.acoes.some(a => a.tipo === 'item' && a.item.tipo === 'prolabore' && a.grupo === 'atrasado'), true);
+  igual('compromissos próximos (resto do mês) aparecem', PA.acoes.some(a => a.grupo === 'mes'), true);
+  igual('nada marcado como feito pela data (nem no fim do mês)', itensA('2027-04-30').filter(i => i._status === 'feito').length, 0);
+
+  titulo('V2. Gasto registrado à mão atualiza a semanada na hora');
+  await AC.registrarGasto({ entidade: 'PF', valor: '120', data: '2027-04-03', descricao: 'Mercado do bairro', categoria: 'Mercado', contaId: pfC.id });
+  PA = FX.painelMes('PF', cA('2027-04-03'));
+  igual('semanada: gasto 120 → pode gastar 230', [PA.semana.gasto, PA.semana.podeGastar, PA.semana.estourou], [120, 230, false]);
+  igual('reservado ≠ gasto: gastou sem reservar ainda', [PA.semana.reservado, PA.semana.gastoSemReserva, PA.semana.faltaReservar], [0, 120, 350]);
+
+  titulo('V3. Reserva parcial em caixinha atualiza o que falta');
+  const itFix = itensA('2027-04-05').find(i => i.tipo === 'aporte' && i.caixinhaId === fixasPF.id);
+  await AC.executarAporte(itFix.id, { valor: '900', data: '2027-04-05', origemId: pfC.id });
+  PA = FX.painelMes('PF', cA('2027-04-05'));
+  let mF = PA.caixinhas.find(c => c.caixinha.id === fixasPF.id);
+  igual('despesas fixas: transferido 900, falta = meta − 900', [mF.transferido, mF.falta], [900, FX.r2(metaFixas - 900)]);
+  igual('a ação de reservar continua, só com o que falta', PA.acoes.find(a => a.tipo === 'item' && a.item.id === itFix.id).valor, FX.r2(metaFixas - 900));
+  // exemplo da Carol: planejou X, transferiu uma parte, gastou um pouco
+  const metaFax = PA.caixinhas.find(c => c.caixinha.id === faxPF.id).meta;
+  await AC.transferir({ valor: '100', data: '2027-04-06', origemId: pfC.id, destinoId: faxPF.id });
+  await AC.registrarGasto({ entidade: 'PF', valor: '40', data: '2027-04-06', descricao: 'Produtos de limpeza', categoria: 'Faxineira', contaId: faxPF.id });
+  const mX = FX.metasCaixinhas('PF', cA('2027-04-06')).find(c => c.caixinha.id === faxPF.id);
+  igual('faxineira: meta · transferido · falta · usado · disponível do mês', [mX.meta, mX.transferido, mX.falta, mX.usado, mX.disponivelMes],
+    [metaFax, 100, FX.r2(metaFax - 100), 40, 60]);
+
+  titulo('V6. Semanada acima do orçamento');
+  await AC.registrarGasto({ entidade: 'PF', valor: '300', data: '2027-04-07', descricao: 'Mercado', categoria: 'Mercado', contaId: pfC.id });
+  PA = FX.painelMes('PF', cA('2027-04-07'));
+  igual('semana 1: 420 gastos de 350 → 70 acima', [PA.semana.gasto, PA.semana.acima, PA.semana.podeGastar, PA.semana.estourou], [420, 70, -70, true]);
+  igual('primeira das próximas ações: "passou do orçamento"', [PA.acoes[0].tipo, PA.acoes[0].grupo, PA.acoes[0].valor], ['semanada', 'atencao', 70]);
+
+  titulo('V4. Extrato parcial não apaga as previsões futuras');
+  const futuros = h => itensA(h).filter(i => i._data > '2027-04-10' && FX.PENDENTE(i._status)).map(i => i.id).sort();
+  const fut0 = futuros('2027-04-10');
+  const exParcial = [
+    { data: '2027-04-03', descricao: 'Compra no debito MERCADO DO BAIRRO', valor: -120 },
+    { data: '2027-04-05', descricao: 'Pix enviado: Carol Despesas fixas', valor: -900 },
+    { data: '2027-04-08', descricao: 'Padaria Pao Quente', valor: -15 },
+    { data: '2027-04-09', descricao: 'Tarifa avulsa', valor: -2 },
+  ];
+  let pxa = AC.prepararExtrato(pfC.id, exParcial);
+  igual('o que já foi registrado à mão é só conferido', [pxa[0].acao, pxa[1].acao], ['conciliar', 'conciliar']);
+  igual('linhas novas ficam para decidir', [pxa[2].acao, pxa[3].acao], ['novo', 'novo']);
+  pxa[3].decisao = 'ignorar';
+  const nPF = DBT.saidas_pessoal.length, nTr = (run('ST').transferencias || []).length;
+  await AC.aplicarExtrato(pfC.id, pxa);
+  igual('extrato parcial: 1 gasto novo, nenhuma transferência a mais', [DBT.saidas_pessoal.length - nPF, run('ST').transferencias.length - nTr], [1, 0]);
+  igual('previsões depois do dia 10 continuam pendentes', futuros('2027-04-10'), fut0);
+  igual('itens futuros não viraram "feito"', itensA('2027-04-10').filter(i => i._data > '2027-04-10' && i._status === 'feito').length, 0);
+
+  titulo('V5. Importar de novo o mesmo período não duplica nada');
+  const exCompleto = exParcial.concat([{ data: '2027-04-20', descricao: 'Farmacia Saude', valor: -30 }]);
+  pxa = AC.prepararExtrato(pfC.id, exCompleto);
+  igual('as 4 linhas do extrato parcial vêm como "já importadas"', pxa.slice(0, 4).map(p => p.acao), ['duplicada', 'duplicada', 'duplicada', 'duplicada']);
+  igual('a linha que você mandou ignorar não volta', pxa[3].ignoradaAntes, true);
+  igual('só a linha nova do resto do mês fica para decidir', pxa[4].acao, 'novo');
+  const nPF2 = DBT.saidas_pessoal.length, nTr2 = run('ST').transferencias.length, nE2 = DBT.entradas_pessoal.length;
+  await AC.aplicarExtrato(pfC.id, pxa);
+  igual('aplicar: só 1 gasto novo (nenhuma duplicata)', [DBT.saidas_pessoal.length - nPF2, run('ST').transferencias.length - nTr2, DBT.entradas_pessoal.length - nE2], [1, 0, 0]);
+  pxa = AC.prepararExtrato(pfC.id, exCompleto);
+  igual('terceira importação igual: tudo já importado', pxa.every(p => p.acao === 'duplicada'), true);
+
+  titulo('V7. Pró-labore pendente');
+  const pro1A = itensA('2027-04-02').find(i => i.tipo === 'prolabore' && i.dia === 1);
+  await AC.pagarProlabore(pro1A.id, { valor: 1200, data: '2027-04-01' });
+  const PJA = FX.painelMes('PJ', cA('2027-04-07'));
+  const proPrev = itensA('2027-04-07').filter(i => i.tipo === 'prolabore').reduce((t, i) => t + i.valor, 0);
+  igual('PJ: pró-labore pago 1.200 · falta o resto', [PJA.prolabore.pago, PJA.prolabore.falta], [1200, FX.r2(proPrev - 1200)]);
+  PA = FX.painelMes('PF', cA('2027-04-07'));
+  igual('PF: recebido 1.200 · falta o resto', [PA.receber.recebido, PA.receber.falta], [1200, FX.r2(recebPrev - 1200)]);
+  igual('ação do pró-labore do dia 01 mostra só os 800 que faltam', PA.acoes.find(a => a.tipo === 'item' && a.item.id === pro1A.id).valor, 800);
+
   titulo('Rastreabilidade');
   igual('toda escrita gerou log', ST.log.length > 30, true);
 
@@ -500,7 +549,7 @@ const ctxM = (mes, hoje) => run(`stCtx(${JSON.stringify(mes)}, ${JSON.stringify(
   const el = id => els[id] || (els[id] = { id, innerHTML: '', textContent: '', value: '', checked: false, style: {}, files: [],
     classList: { add() {}, remove() {}, toggle() {} }, focus() {} });
   ctx.document = { getElementById: el, querySelectorAll: () => [], querySelector: () => null,
-    body: { classList: { add() {}, remove() {} } }, addEventListener() {} };
+    body: { classList: { add() {}, remove() {}, toggle() {} }, dataset: {} }, addEventListener() {} };
   ctx.window = { scrollTo() {}, location: {} }; ctx.setTimeout = () => 0; ctx.clearTimeout = () => {};
   ctx.confirm = () => false; ctx.prompt = () => null; ctx.location = { search: '' }; ctx.URLSearchParams = URLSearchParams;
   ['extrato-parser.js', 'ui.js', 'telas.js', 'forms.js'].forEach(f =>
@@ -508,7 +557,7 @@ const ctxM = (mes, hoje) => run(`stCtx(${JSON.stringify(mes)}, ${JSON.stringify(
   let erros = 0;
   const tenta = (nome, code) => { try { run(code); } catch (e) { erros++; console.log(`   ✗ ${nome}: ${e.stack.split('\n').slice(0, 3).join(' | ')}`); } };
   for (const mes of ['2026-12', '2027-01', '2026-11']) for (const ent of ['PF', 'PJ'])
-    for (const tab of ['mes', 'plano', 'movs', 'caixinhas', 'pendencias', 'analises', 'ajustes', 'dividas'])
+    for (const tab of ['inicio', 'plano', 'caixinhas', 'movs', 'conciliar', 'mais', 'dividas', 'analises', 'ajustes', 'mes', 'pendencias'])
       tenta(`${tab}/${ent}/${mes}`, `UI.mes='${mes}';UI.ent='${ent}';UI.tab='${tab}';UI.modelo=false;UI.aberto={};render();`);
   tenta('modelo', `UI.tab='plano';UI.modelo=true;render();UI.modelo=false`);
   tenta('ajustes abertos', `UI.tab='ajustes';UI.aberto={contas:true,dividas:true};render()`);
@@ -524,21 +573,48 @@ const ctxM = (mes, hoje) => run(`stCtx(${JSON.stringify(mes)}, ${JSON.stringify(
    'formConta(null)', 'formConta(ST.contas[0].id)', 'formDivida(null)', 'formDivida(ST.dividas[0].id)', 'abrirLoginPF()',
    "formConciliar(ST.contas[0].id)", "formConciliar(ST.contas.find(c=>c.tipo==='cartao').id)"].forEach(c => tenta(c, c));
   for (const m of run('stMovs()').slice(0, 40)) tenta('formMov ' + m.key, `formMov(${JSON.stringify(m.key)})`);
-  tenta('extrato review', `UI.extrato={contaId:ST.contas[0].id,info:'x',propostas:AC.prepararExtrato(ST.contas[0].id,[{data:'2026-12-20',descricao:'Mercado X',valor:-42.5},{data:'2026-12-21',descricao:'Pix',valor:10}])};UI.extrato.propostas[0].decisao='transferencia';UI.tab='ajustes';render();UI.extrato=null`);
+  tenta('extrato review', `UI.extrato={contaId:ST.contas[0].id,info:'x',propostas:AC.prepararExtrato(ST.contas[0].id,[{data:'2026-12-20',descricao:'Mercado X',valor:-42.5},{data:'2026-12-21',descricao:'Pix',valor:10}])};UI.extrato.propostas[0].decisao='transferencia';UI.tab='conciliar';render();UI.extrato=null`);
   tenta('setup vazio', `const c=ST.contas;ST.contas=[];render();ST.contas=c`);
   tenta('migração ausente', `ST.migracaoOk=false;render();ST.migracaoOk=true`);
-  tenta('PF bloqueada', `ST.pfLiberado=false;run=0;stInvalidar();['mes','plano','movs','caixinhas','pendencias','analises'].forEach(t=>{UI.tab=t;UI.ent='PF';render()});ST.pfLiberado=true;stInvalidar()`);
+  tenta('PF bloqueada', `ST.pfLiberado=false;run=0;stInvalidar();['inicio','plano','movs','caixinhas','conciliar','analises'].forEach(t=>{UI.tab=t;UI.ent='PF';render()});ST.pfLiberado=true;stInvalidar()`);
   igual('erros de renderização', erros, 0);
-  run(`UI.tab='pendencias';UI.mes='2027-01';render()`);
-  igual('dívidas fora do plano não viram pendência do mês', el('view').innerHTML.includes('Empréstimo pessoal Itaú'), false);
+  for (const t of ['inicio', 'conciliar']) {
+    run(`UI.tab='${t}';UI.mes='2027-01';UI.ent='PF';render()`);
+    igual(`dívidas fora do plano não viram pendência (${t})`, el('view').innerHTML.includes('Empréstimo pessoal Itaú'), false);
+  }
   tenta('tela dívidas com simulação', `UI.tab='dividas';UI.sim={orc:'6000',est:'juros',ini:'2027-03',quais:'todas'};render()`);
   igual('simulação aparece na tela', el('view').innerHTML.includes('Quita tudo em'), true);
   ['formSaldoDivida(ST.dividas[1].id)','formIncluirDivida(ST.dividas[1].id)','formDivida(ST.dividas.find(d=>d.situacao==="no_plano").id)'].forEach(c=>tenta(c,c));
   igual('erros de renderização (dívidas)', erros, 0);
-  run(`UI.tab='mes';UI.mes='2026-12';UI.ent='PF';render()`);
+  run(`UI.tab='inicio';UI.mes='2026-12';UI.ent='PF';render()`);
   igual('HTML do mês gerado', el('view').innerHTML.length > 500, true);
   if (process.env.HTML) console.log(el('view').innerHTML.replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').slice(0, 2500));
   igual('texto do usuário escapado', run(`esc('<img onerror=x>')`), '&lt;img onerror=x&gt;');
+
+  titulo('Telas dos cenários (o que aparece para a Carol)');
+  const ver = (code) => { run(code); return el('view').innerHTML.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' '); };
+  run(`var _hojeReal = stHoje; stHoje = () => '2027-04-07'`);   // "hoje" = dia do cenário
+  const w1 = FX.painelMes('PF', ctxM('2027-04', '2027-04-07')).semana;
+  let txt = ver(`UI.tab='inicio';UI.ent='PF';UI.mes='2027-04';UI.aberto={};render()`);
+  if (process.env.TXT) console.log(txt.slice(0, 2500));
+  igual('Hoje: semanada desta semana acima do orçamento, em destaque', txt.includes(`Semanada · esta semana`) && txt.includes(`${run(`brl(${w1.acima})`)} acima do orçamento`), true);
+  igual('Hoje: "Próximas ações" com o que passou do orçamento', txt.includes('Próximas ações') && txt.includes('Passou do orçamento'), true);
+  igual('Hoje: receber / distribuir / gastar', ['Receber', 'Distribuir', 'Gastar'].every(k => txt.includes(k)), true);
+  igual('Hoje: pró-labore com o que falta', /faltam R\$ 3\.555,00/.test(txt), true);
+  txt = ver(`UI.tab='caixinhas';render()`);
+  igual('Caixinhas: meta, transferido, falta, usado e disponível', ['Meta', 'Transferido', 'Falta', 'Usado', 'disponível do mês'].every(k => txt.includes(k)), true);
+  igual('Caixinhas: semanada mostra a semana atual com o orçamento', txt.includes(`gasto ${run(`brlc(${w1.gasto})`)} de R$ 350`) && txt.includes('esta semana'), true);
+  txt = ver(`UI.tab='inicio';UI.ent='PJ';render()`);
+  igual('Hoje PJ: pró-labore para a conta pessoal com o que falta', /Pró-labore · para a sua conta pessoal[^]*faltam R\$ 3\.555,00/.test(txt), true);
+  txt = ver(`UI.tab='plano';UI.ent='PF';UI.mes='2028-01';render()`);
+  igual('mês sem plano: oferece criar a partir do modelo', txt.includes('Criar a partir do modelo'), true);
+  txt = ver(`UI.tab='conciliar';UI.ent='PF';UI.mes='2027-04';render()`);
+  igual('Conferir com o banco: importar extrato + contas', txt.includes('Importar extrato') && txt.includes('Conferir saldo'), true);
+  run(`UI.extrato={contaId:'${pfC.id}',info:'x',propostas:AC.prepararExtrato('${pfC.id}',[{data:'2027-04-08',descricao:'Padaria Pao Quente',valor:-15},{data:'2027-04-25',descricao:'Loja X',valor:-50}])}`);
+  txt = ver(`UI.tab='conciliar';render()`);
+  igual('revisão do extrato separa já importados e o que precisa de você', txt.includes('Já importados antes') && txt.includes('Precisa de você'), true);
+  run(`UI.extrato=null; stHoje = _hojeReal`);
+  igual('erros de renderização (cenários)', erros, 0);
 
   console.log(`\n${falhas ? '✗' : '✓'} ${ok} verificações ok, ${falhas} falha(s)`);
   process.exit(falhas ? 1 : 0);

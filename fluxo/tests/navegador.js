@@ -1,0 +1,166 @@
+// ════════════════════════════════════════════════════════════
+// fluxo/tests/navegador.js — teste no navegador de verdade (Chrome headless)
+// Uso:  node fluxo/tests/navegador.js [pasta-para-as-fotos]
+//
+// Banco FALSO (fake-db.js) — nada vai para o Supabase. Valida:
+//   • celular em pé (390×844): barra inferior, botão +, toque em todas as
+//     seções e sub-seções, PF/PJ, mês, sem rolagem horizontal, nada coberto
+//   • computador (1366×800): menu lateral esquerdo, todas as opções clicadas
+//   • registrar um gasto pelo formulário e ver a semanada mudar na hora
+// Cada clique é um clique REAL na coordenada do botão (pega botão coberto
+// por outro elemento ou escondido).
+// ════════════════════════════════════════════════════════════
+const fs = require('fs'), path = require('path'), os = require('os');
+const { abrir, espera } = require('./cdp.js');
+
+const SAIDA = process.argv[2] || path.join(os.tmpdir(), 'fluxo-telas');
+fs.mkdirSync(SAIDA, { recursive: true });
+let ok = 0, falhas = 0;
+const check = (nome, cond, info) => {
+  if (cond) { ok++; console.log(`   ✓ ${nome}`); }
+  else { falhas++; console.log(`   ✗ ${nome}${info ? ' — ' + info : ''}`); }
+};
+const titulo = t => console.log('\n■ ' + t);
+
+(async () => {
+  const b = await abrir();
+  const semOverflow = async () => b.js('document.documentElement.scrollWidth <= innerWidth + 1');
+  const visivel = sel => b.js(`(() => { const e = document.querySelector(${JSON.stringify(sel)}); if (!e) return false;
+    const s = getComputedStyle(e); const r = e.getBoundingClientRect(); return s.display !== 'none' && s.visibility !== 'hidden' && r.width > 0 && r.height > 0; })()`);
+  const tocar = async (sel, cel) => { const r = await b.clicar(sel, cel); await espera(80); return r; };
+  const telaOk = async (nome, cel, tabEsperada) => {
+    const tab = await b.js('UI.tab');
+    const conteudo = await b.js(`document.getElementById('view').innerText.trim().length`);
+    check(`${nome}: abre (${tabEsperada})`, tab === tabEsperada && conteudo > 20, `tab=${tab} conteúdo=${conteudo}`);
+    check(`${nome}: sem rolagem horizontal`, await semOverflow(), await b.js('document.documentElement.scrollWidth + "px"'));
+  };
+  try {
+    titulo('Preparando dados (banco falso, mês atual)');
+    await b.tela(390, 844, true);
+    await b.ir('/fluxo/');
+    for (let i = 0; i < 40 && !(await b.js('ST.carregado')); i++) await espera(100);
+    await b.js(`(async () => {
+      const mes = stHoje().slice(0, 7);
+      await AC.configurarInicial(mes); await AC.garantirMeses();
+      for (const c of ST.contas.filter(c => c.tipo !== 'antiga'))
+        await AC.conciliar(c.id, { data: FX.addDias(mes + '-01', -1), saldoBanco: c.tipo === 'corrente' ? '2500' : '0' });
+      UI.ent = 'PF'; UI.tab = 'inicio'; render();
+    })()`);
+    check('estrutura criada', (await b.js('ST.contas.length')) > 10);
+
+    // ── CELULAR ───────────────────────────────────────────
+    titulo('Celular em pé (390×844)');
+    check('barra inferior visível', await visivel('#tabs'));
+    check('botão + visível', await visivel('.fab'));
+    check('menu lateral escondido', !(await visivel('#lateral')));
+    const alturaTab = await b.js(`Math.round(document.querySelector('#tabs button').getBoundingClientRect().height)`);
+    check('botões da barra com área de toque ≥ 44px', alturaTab >= 44, alturaTab + 'px');
+    await b.foto(path.join(SAIDA, 'celular-hoje.png'));
+    await b.foto(path.join(SAIDA, 'celular-hoje-inteira.png'), true);
+    for (const [id, nome] of [['plano', 'Plano'], ['caixinhas', 'Caixinhas'], ['movs', 'Movimentos'], ['mais', 'Mais'], ['inicio', 'Hoje']]) {
+      const r = await tocar(`#tabs button[data-tab="${id}"]`, true);
+      check(`toque em "${nome}"`, r.ok, r.motivo);
+      await telaOk(nome, true, id);
+      await b.foto(path.join(SAIDA, `celular-${id}.png`), true);
+    }
+    // sub-seções
+    await tocar('#tabs button[data-tab="movs"]', true);
+    let r = await tocar('.seg.sub button:nth-child(2)', true);
+    check('Movimentos › "Conferir com o banco" por toque', r.ok, r.motivo);
+    await telaOk('Conferir com o banco', true, 'conciliar');
+    check('barra inferior marca "Movimentos" na tela Conferir', await b.js(`document.querySelector('#tabs button[data-tab="movs"]').classList.contains('on')`));
+    await b.foto(path.join(SAIDA, 'celular-conciliar.png'), true);
+    for (const [k, alvo] of [[1, 'conciliar'], [2, 'dividas'], [3, 'analises'], [4, 'plano']]) {
+      await tocar('#tabs button[data-tab="mais"]', true);
+      r = await tocar(`#view .card.lista .aj:nth-child(${k})`, true);
+      check(`Mais › item ${k} por toque`, r.ok, r.motivo);
+      await telaOk(`Mais › ${alvo}`, true, alvo);
+      await b.foto(path.join(SAIDA, `celular-mais-${k}-${alvo}.png`), true);
+    }
+    await b.js('UI.modelo=false;render()');
+    // PF / PJ e mês
+    await tocar('#tabs button[data-tab="inicio"]', true);
+    r = await tocar('#seg-ent button:nth-child(2)', true);
+    check('trocar para PJ por toque', r.ok && (await b.js('UI.ent')) === 'PJ', r.motivo);
+    await telaOk('Hoje PJ', true, 'inicio');
+    await b.foto(path.join(SAIDA, 'celular-hoje-pj.png'), true);
+    await tocar('#seg-ent button:nth-child(1)', true);
+    check('voltar para PF por toque', (await b.js('UI.ent')) === 'PF');
+    const mes0 = await b.js('UI.mes');
+    await tocar('.mes-nav button:last-child', true);
+    check('próximo mês por toque', (await b.js('UI.mes')) !== mes0);
+    await tocar('.mes-nav button:first-child', true);
+    check('mês anterior por toque', (await b.js('UI.mes')) === mes0);
+    // botão + e uma ação das próximas ações
+    r = await tocar('.fab', true);
+    check('botão + abre "Registrar"', r.ok && (await b.js(`document.getElementById('modal').classList.contains('on') && document.getElementById('modal-box').innerText.includes('Registrar')`)), r.motivo);
+    await b.foto(path.join(SAIDA, 'celular-registrar.png'));
+    r = await tocar('#modal-box .btn.ghost', true);
+    check('Cancelar fecha o modal', !(await b.js(`document.getElementById('modal').classList.contains('on')`)), r.motivo);
+    r = await tocar('.ac .btn.mini', true);
+    check('botão de uma próxima ação abre o registro', r.ok && (await b.js(`document.getElementById('modal').classList.contains('on')`)), r.motivo);
+    await tocar('#modal-box .btn.ghost', true);
+    // ver mais / recolher
+    const temMais = await b.js(`!!document.querySelector('.mais-l')`);
+    if (temMais) {
+      const antes = await b.js(`document.querySelectorAll('.ac').length`);
+      await tocar('.mais-l', true);
+      check('"Ver mais" mostra os outros itens', (await b.js(`document.querySelectorAll('.ac').length`)) > antes);
+    }
+
+    titulo('Cenário: registrar um gasto e ver a semanada mudar na hora');
+    await b.js(`UI.aberto={};go('inicio')`);
+    const antes = await b.js(`(() => { const w = painel().semana; return { gasto: w.gasto, pode: w.podeGastar, orc: w.orcamento }; })()`);
+    r = await tocar('.hero .acoes2 .btn:first-child', true);
+    check('"+ Gasto" no cartão da semanada abre o formulário', r.ok && (await b.js(`!!document.getElementById('g-valor')`)), r.motivo);
+    const valor = Math.round(antes.pode + 70);   // passa 70 do orçamento
+    await b.js(`document.getElementById('g-valor').value = '${valor}'; document.getElementById('g-desc').value = 'Mercado da semana'; document.getElementById('g-cat').value = 'Mercado'; gAtualiza();`);
+    r = await tocar('#modal-box .btn:not(.ghost):not(.sec)', true);
+    await espera(300);
+    const depois = await b.js(`(() => { const w = painel().semana; return { gasto: w.gasto, acima: w.acima }; })()`);
+    check('semanada atualizada na hora', Math.abs(depois.gasto - antes.gasto - valor) < 0.01, JSON.stringify({ antes, depois, valor }));
+    check('cartão mostra "acima do orçamento"', await b.js(`document.querySelector('.hero').innerText.includes('acima')`));
+    check('aviso confirma como ficou a semana', await b.js(`document.getElementById('toast').innerText.includes('acima do orçamento')`),
+      await b.js(`document.getElementById('toast').innerText`));
+    await b.foto(path.join(SAIDA, 'celular-semanada-estourou.png'));
+
+    titulo('Tablet / celular deitado (800×600)');
+    await b.tela(800, 600, true);
+    for (const id of ['inicio', 'caixinhas', 'plano', 'conciliar']) { await b.js(`go('${id}')`); check(`${id}: sem rolagem horizontal`, await semOverflow()); }
+
+    // ── COMPUTADOR ────────────────────────────────────────
+    titulo('Computador (1366×800): menu lateral esquerdo');
+    await b.tela(1366, 800, false);
+    await b.js(`go('inicio')`);
+    check('menu lateral visível', await visivel('#lateral'));
+    check('barra inferior escondida', !(await visivel('#tabs')));
+    check('botão + flutuante escondido', !(await visivel('.fab')));
+    const ids = await b.js(`[...document.querySelectorAll('#lateral .lat-nav button[data-tab]')].map(x => x.dataset.tab)`);
+    check('menu lateral tem todas as seções', ['inicio', 'plano', 'caixinhas', 'movs', 'conciliar', 'dividas', 'analises', 'ajustes'].every(i => ids.includes(i)), ids.join(','));
+    for (const id of ids) {
+      r = await tocar(`#lateral button[data-tab="${id}"]`, false);
+      check(`clique em "${id}"`, r.ok, r.motivo);
+      await telaOk(id, false, id);
+      check(`"${id}" marcado como atual no menu`, await b.js(`document.querySelector('#lateral button[data-tab="${id}"]').classList.contains('on')`));
+      await b.foto(path.join(SAIDA, `desktop-${id}.png`), true);
+    }
+    r = await tocar('#lateral .lat-novo', false);
+    check('"+ Registrar" abre o menu de registro', r.ok && (await b.js(`document.getElementById('modal').classList.contains('on')`)), r.motivo);
+    await tocar('#modal-box .btn.ghost', false);
+    r = await tocar('#mk-sb-fab', false);
+    check('menu geral do Meu Studio (☰) abre por cima', r.ok && (await b.js(`document.getElementById('mk-sidebar').classList.contains('mk-on')`)), r.motivo);
+    await b.js('mkSidebarClose()');
+    await b.js(`go('inicio')`);
+    await espera(450);   // animação do menu geral fechando
+    await b.foto(path.join(SAIDA, 'desktop-inicio.png'));
+
+    titulo('Erros de JavaScript');
+    check('nenhum erro no console', b.erros.length === 0, b.erros.slice(0, 3).join(' | '));
+  } catch (e) {
+    falhas++; console.log('   ✗ falhou: ' + (e.stack || e));
+  } finally {
+    await b.fechar();
+  }
+  console.log(`\n${falhas ? '✗' : '✓'} ${ok} verificações ok, ${falhas} falha(s) · fotos em ${SAIDA}`);
+  process.exit(falhas ? 1 : 0);
+})();

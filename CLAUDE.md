@@ -163,7 +163,8 @@ Níveis disponíveis: `'admin'` (acesso total) · `'view'` (reservado para uso f
 - Pró-labore = saída PJ `tipo 'Pró-labore'` natureza PESSOAL + entrada PF `sync_<id>` (mesmo id do trigger).
 - Saldo só a partir da conciliação (saldo real informado). Nunca semear saldo.
 - `/pessoal/` redireciona para `/fluxo/?ent=PF` (mesmas tabelas e login).
-- Testes: `node fluxo/tests/cenarios.js`.
+- Telas: Hoje · Plano · Caixinhas · Movimentos/Conferir · Mais — menu lateral no computador, barra inferior no celular (`NAV` em `fluxo/scripts/ui.js`).
+- Testes: `node fluxo/tests/cenarios.js` e `node fluxo/tests/navegador.js` (Chrome headless, banco falso).
 
 ### Orçamentos × Financeiro
 - Ao fechar orçamento: `finEntryCreate(entry)` cria entradas direto no Supabase `entries`

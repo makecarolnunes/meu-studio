@@ -37,8 +37,8 @@ function boot() {
     (hub.nivel === 'admin' && localStorage.getItem('mk_fluxo_pf_bloqueado') !== '1');
   const qs = new URLSearchParams(location.search);
   if (qs.get('ent') === 'PF' || qs.get('ent') === 'PJ') UI.ent = qs.get('ent');
-  if (qs.get('tab')) UI.tab = qs.get('tab');
-  if (UI.ent === 'PF' && !ST.pfLiberado && UI.tab !== 'mes') UI.ent = 'PJ';
+  if (qs.get('tab')) UI.tab = TAB_ALIAS[qs.get('tab')] || qs.get('tab');
+  if (UI.ent === 'PF' && !ST.pfLiberado && UI.tab !== 'inicio') UI.ent = 'PJ';
   stCarregarCache();
   render();
   document.getElementById('loading').style.display = 'none';

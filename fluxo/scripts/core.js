@@ -413,10 +413,15 @@ const FX = (function () {
       const gasto = r2(gastosW.reduce((t, m) => t + m.valor, 0));
       let atend = null;
       if (atendimentos) atend = Object.keys(atendimentos).filter(dentro).reduce((t, d) => t + atendimentos[d], 0);
+      // Orçamento da semana = o planejado (sem plano, vale o que foi reservado).
+      // "Reservado" e "gasto" ficam separados: dá para gastar antes de reservar.
+      const orcamento = previsto > EPS ? previsto : reservado;
       return {
         semana: w, previsto, reservado, gasto, porCategoria, gastos: gastosW,
         saldo: r2(reservado - gasto), diferenca: r2(previsto - gasto),
-        estourou: gasto > (reservado || previsto) + EPS,
+        orcamento, podeGastar: r2(orcamento - gasto), acima: r2(Math.max(0, gasto - orcamento)),
+        faltaReservar: r2(Math.max(0, previsto - reservado)), gastoSemReserva: r2(Math.max(0, gasto - reservado)),
+        estourou: gasto > orcamento + EPS,
         atendimentos: atend, custoPorAtendimento: atend ? r2(gasto / atend) : null,
         passada: w.fim < hoje, atual: hoje >= w.ini && hoje <= w.fim,
       };
@@ -480,6 +485,128 @@ const FX = (function () {
              pagoPosRef, parcelasRestantesEst: parcelasRest, emAbertoEstimado: emAbertoEst };
   }
 
+  // ── PAINEL DO MÊS (Planejar → Distribuir → Gastar → Acompanhar) ──
+  // Tudo sai do PLANO + do que foi registrado. Não depende de extrato.
+
+  // Semana em foco: a atual; mês passado → a última; mês futuro → a primeira
+  function semanaFoco(sem, mes, hoje) {
+    if (!sem || !sem.linhas.length) return null;
+    return sem.linhas.find(l => l.atual) || (mes < mesDe(hoje) ? sem.linhas[sem.linhas.length - 1] : sem.linhas[0]);
+  }
+
+  // Números de cada caixinha no mês, sem misturar:
+  //   meta (aportes planejados) · transferido · falta transferir · usado ·
+  //   disponível do mês = transferido − usado (sem saldo de meses anteriores)
+  function metasCaixinhas(entidade, ctx) {
+    return ctx.contas.filter(c => c.entidade === entidade && c.tipo === 'caixinha' && c.ativa !== false).map(cx => {
+      const c = caixinha(cx, ctx);
+      const teto = Math.max(c.aportePrevisto, c.usoPrevisto, c.aportado) + Math.max(0, c.saldoInicio);
+      return {
+        caixinha: cx, meta: c.aportePrevisto, transferido: c.aportado, falta: c.aporteFalta,
+        usado: c.usado, usoPrevisto: c.usoPrevisto, disponivelMes: r2(c.aportado - c.usado),
+        estourou: c.usado > teto + EPS, acima: r2(Math.max(0, c.usado - teto)),
+        saldoAtual: c.saldoAtual, saldoInicio: c.saldoInicio, conferido: c.conferido,
+        itensAporte: c.itensAporte, composicao: c.composicao, usos: c.usos,
+      };
+    });
+  }
+
+  function painelMes(entidade, ctx) {
+    const { movs, itens, mes, hoje, cfg } = ctx;
+    const todos = itensDoMes(itens, mes, movs, hoje, cfg);
+    const vivo = i => !['dispensado', 'reprogramado'].includes(i._status);
+    const soma = (arr, f) => r2(arr.reduce((t, x) => t + f(x), 0));
+    const res = resumo(entidade, ctx);
+    const out = { entidade, mes, resumo: res };
+
+    // 1. Receber
+    if (entidade === 'PF') {
+      const its = todos.filter(i => vivo(i) && (i.tipo === 'prolabore' || (i.tipo === 'receita' && i.entidade === 'PF'))).map(i => {
+        const rec = r2(i.tipo === 'prolabore' ? recebidoPF(i, movs) : i._realizado);
+        return { item: i, previsto: num(i.valor), recebido: rec, falta: r2(Math.max(0, num(i.valor) - rec)) };
+      });
+      const recebido = soma(its, x => Math.min(x.recebido, x.previsto));
+      out.receber = { previsto: soma(its, x => x.previsto), recebido, itens: its,
+        foraDoPlano: r2(Math.max(0, res.entrou - soma(its, x => x.recebido))) };
+    } else {
+      const rm = receitaMaquiagem(ctx);
+      out.receber = { previsto: r2(rm.caixa.recebido + rm.caixa.aReceber + rm.caixa.atrasado), recebido: rm.caixa.recebido,
+        vencido: rm.caixa.atrasado, itens: [] };
+      const pro = todos.filter(i => vivo(i) && i.tipo === 'prolabore');
+      const pago = soma(pro, i => Math.min(num(i.valor), i._realizado));
+      out.prolabore = { previsto: soma(pro, i => num(i.valor)), pago, itens: pro };
+      out.prolabore.falta = r2(Math.max(0, out.prolabore.previsto - pago));
+    }
+    out.receber.falta = r2(Math.max(0, out.receber.previsto - out.receber.recebido));
+
+    // 2. Distribuir (reservar nas caixinhas)
+    const cxs = metasCaixinhas(entidade, ctx);
+    const comMeta = cxs.filter(c => c.meta > EPS);
+    out.caixinhas = cxs;
+    out.reservar = { meta: soma(comMeta, c => c.meta), transferido: soma(comMeta, c => Math.min(c.transferido, c.meta)),
+      falta: soma(comMeta, c => c.falta), caixinhas: comMeta };
+
+    // 3. Gastar
+    const fora = movs.filter(m => m.entidade === entidade && m.classe === 'despesa' && m.realizado &&
+      !m.caixinhaId && !m.planoItemId && mesDe(m.competencia || m.data) === mes);
+    out.gastar = { planejado: res.previstoGastar, gasto: res.gastos, foraDoPlano: soma(fora, m => m.valor), foraLista: fora };
+
+    // 4. Semanada da semana em foco
+    out.semanadas = semanadas(entidade, ctx);
+    out.semana = semanaFoco(out.semanadas, mes, hoje);
+
+    // 5. Próximas ações
+    out.acoes = proximasAcoes(entidade, ctx, { itens: todos, cxs, sem: out.semana });
+    return out;
+  }
+
+  // Próximas ações, da mais urgente para a menos urgente. Nada vira "feito"
+  // pela data: cada ação abre o registro do que aconteceu de verdade.
+  //   grupo: atencao (passou do orçamento) · atrasado · hoje · semana · mes · conferir
+  //   nivel: erro (vermelho) · alerta (âmbar) · neutro
+  function proximasAcoes(entidade, ctx, pre) {
+    const { movs, mes, hoje, cfg } = ctx;
+    pre = pre || {};
+    const todos = pre.itens || itensDoMes(ctx.itens, mes, movs, hoje, cfg);
+    const sem = pre.sem !== undefined ? pre.sem : semanaFoco(semanadas(entidade, ctx), mes, hoje);
+    const out = [];
+    if (sem && sem.atual && sem.estourou)
+      out.push({ tipo: 'semanada', grupo: 'atencao', nivel: 'erro', semana: sem, valor: sem.acima });
+    (pre.cxs || metasCaixinhas(entidade, ctx)).filter(c => c.estourou && c.caixinha.finalidade !== 'semanada')
+      .forEach(c => out.push({ tipo: 'caixinha', grupo: 'atencao', nivel: 'erro', caixinha: c.caixinha, metas: c, valor: c.acima }));
+
+    const wHoje = semanas(mes, cfg).find(w => hoje >= w.ini && hoje <= w.fim);
+    todos.filter(i => PENDENTE(i._status) && (i.entidade === entidade || (entidade === 'PF' && i.tipo === 'prolabore'))).forEach(i => {
+      const grupo = i._data < hoje ? 'atrasado' : i._data === hoje ? 'hoje' : (wHoje && i._data <= wHoje.fim) ? 'semana' : 'mes';
+      const nivel = grupo === 'atrasado' ? (i.tipo === 'pagamento' ? 'erro' : 'alerta') : grupo === 'hoje' ? 'alerta' : 'neutro';
+      out.push({ tipo: 'item', grupo, nivel, item: i, data: i._data, valor: i._falta });
+    });
+
+    if (entidade === 'PJ') {
+      const venc = movs.filter(m => m.tabela === 'entries' && !m.realizado && m.data && m.data < hoje && mesDe(m.data) <= mes)
+        .sort((a, b) => a.data.localeCompare(b.data));
+      if (venc.length) out.push({ tipo: 'clientes', grupo: 'atrasado', nivel: 'alerta', qtd: venc.length, lista: venc,
+        data: venc[0].data, valor: r2(venc.reduce((t, m) => t + m.valor, 0)) });
+    }
+    const naoConf = ctx.contas.filter(c => c.entidade === entidade && c.ativa !== false && c.tipo !== 'antiga' &&
+      (c.saldoInicial == null || c.saldoInicial === '' || !c.dataSaldoInicial));
+    if (naoConf.length) out.push({ tipo: 'conferir', grupo: 'conferir', nivel: 'neutro', qtd: naoConf.length, contas: naoConf });
+    const semCx = movs.filter(m => m.entidade === entidade && m.classe === 'despesa' && m.realizado && !m.caixinhaId &&
+      !m.planoItemId && !m.semCaixinha && mesDe(m.data) === mes);
+    if (semCx.length) out.push({ tipo: 'classificar', grupo: 'conferir', nivel: 'neutro', qtd: semCx.length, movs: semCx,
+      valor: r2(semCx.reduce((t, m) => t + m.valor, 0)) });
+    const ordem = { atencao: 0, atrasado: 1, hoje: 2, semana: 3, mes: 4, conferir: 5 };
+    return out.sort((a, b) => ordem[a.grupo] - ordem[b.grupo] || String(a.data || '').localeCompare(String(b.data || '')));
+  }
+
+  // Resumo curto e estável de uma linha de extrato (para lembrar as ignoradas)
+  function hashRef(ref) {
+    let h = 5381;
+    const s = String(ref || '');
+    for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0;
+    return (h >>> 0).toString(36) + s.length.toString(36);
+  }
+
   // ── CONCILIAÇÃO DE EXTRATO ──────────────────────────────
   // Para cada linha do extrato (valor com sinal), procura o lançamento
   // equivalente já registrado na mesma conta. Encontrou → concilia (não
@@ -489,10 +616,13 @@ const FX = (function () {
     const tol = (cfg && cfg.toleranciaDias != null) ? cfg.toleranciaDias : 5;
     const usados = new Set();
     const refs = new Set(movs.map(m => m.extratoRef).filter(Boolean));
+    // linhas que a Carol mandou ignorar numa importação anterior (por conta)
+    const ign = new Set(((cfg && cfg.extratoIgnorados) || {})[contaId] || []);
     return linhas.map(l => {
       const valor = r2(Math.abs(l.valor));
       const credito = l.valor > 0;
       if (l.ref && refs.has(l.ref)) return { linha: l, acao: 'duplicada', match: null };
+      if (l.ref && ign.has(hashRef(l.ref))) return { linha: l, acao: 'duplicada', match: null, ignoradaAntes: true };
       const cands = movs.filter(m => {
         if (usados.has(m.key) || m.conciliado) return false;
         if (Math.abs(m.valor - valor) > 0.009) return false;
@@ -800,6 +930,7 @@ const FX = (function () {
     semanas, semanaDe, contaPadrao, caixinhaPorFinalidade, normalizar, efeito, saldoConta,
     realizadoDoItem, statusItem, PENDENTE, itensDoMes, recebidoPF, consomeConta, distribuicoesPF,
     resumo, caixinha, composicao, semanadas, atendimentosPorData, receitaMaquiagem, divida,
+    semanaFoco, metasCaixinhas, painelMes, proximasAcoes, hashRef,
     casarExtrato, refExtrato, analiseMes, historico, copiarItens, checarPlano,
     vigente, difMeses, nomeItem, semAcento, grupoDaCategoria, finalidadeDaCategoria, caixinhaDaCategoria,
     itemCompativel, automatizar, chaveExtrato, paresEstorno, tokensNome, candidatosRecebimento, sugerirCategoria, tipoInterno, regraAprendida,

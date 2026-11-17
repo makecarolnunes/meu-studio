@@ -15,8 +15,24 @@ extrato-parser.js ppParseArquivo() — OFX/CSV (veio do /pessoal/)
 ui.js · telas.js · forms.js · main.js
 ```
 
-Testes: `node fluxo/tests/cenarios.js` (Supabase falso em memória + smoke da UI).
-**Rodar sempre depois de mexer em core/store/acoes/telas/forms.**
+Testes (banco falso em memória, `tests/fake-db.js` — nada vai para o Supabase):
+- `node fluxo/tests/cenarios.js` — regras + cenários V1–V7 da experiência + render de todas as telas.
+- `node fluxo/tests/navegador.js [pasta-fotos]` — Chrome headless de verdade (`tests/cdp.js`): celular 390×844 e computador 1366×800, clique real em todas as seções, rolagem horizontal, erros de JS, fluxo de registrar gasto. Tira fotos das telas.
+**Rodar os dois depois de mexer em core/store/acoes/ui/telas/forms/css.**
+
+## Telas (sequência Planejar → Distribuir → Gastar → Acompanhar → Conciliar)
+
+`NAV` em `ui.js` gera o menu lateral (computador ≥ 960px) e a barra inferior (celular, 5 botões: Hoje · Plano · Caixinhas · Movimentos · Mais). PF/PJ fica no cabeçalho e vale para todas as telas.
+
+| Tela (`UI.tab`) | Mostra |
+|---|---|
+| `inicio` (Hoje) | semanada da semana (quanto ainda pode gastar) · Próximas ações · Como está o mês (receber, distribuir, gastar) · Dinheiro agora |
+| `plano` | planejado do mês; PF por recebimento (pró-labore 01/15), PJ por semana; modelo |
+| `caixinhas` | meta · transferido · falta · usado · disponível do mês (= transferido − usado) por caixinha; semanada semana a semana |
+| `movs` / `conciliar` | lançamentos / conferir com o banco (extrato, saldos, gastos sem caixinha, recebimentos vencidos) |
+| `mais`, `dividas`, `analises`, `ajustes` | — |
+
+Nomes antigos (`mes`, `pendencias`) viram `inicio` via `TAB_ALIAS`. Os números das telas vêm de `FX.painelMes` (puro, testado); as telas só formatam.
 
 ## Modelo de dados (`sql/fluxo-financeiro.sql`)
 
@@ -57,6 +73,10 @@ se a migration não estiver aplicada, o Financeiro e os Orçamentos quebrariam.
 20. **Saiu e voltou (estorno):** `FX.paresEstorno` casa, só entre linhas novas do mesmo extrato, saída + entrada de mesmo valor em até `cfg.estorno.dias` com palavra de estorno na entrada ou mesmo app/pessoa nas duas (`cfg.estorno.palavras/apps`). Ambas viram `acao:'estorno'` + decisão ignorar (editável). Nada é gravado.
 21. **Pagamento de cliente no extrato:** crédito PJ sem casamento exato → `FX.candidatosRecebimento` (TODOS os `entries` não conciliados — previstos e recebidos —, ordenados por nome parecido, valor igual, data; busca por nome na tela). Sugere sozinho só com sinal forte (nome, valor igual em 90 dias ou pagador aprendido). `AC.receberCliente`: igual confirma; parcial confirma o pago e cria Previsto com o resto (soma do contrato preservada); maior confirma com o valor do extrato; já recebido só concilia (acerta a data do banco, valor diferente fica anotado). Pagador com nome diferente da cliente vira regra `decisao:'cliente'`.
 22. **Aplicação/resgate em caixinha do banco** (`palavrasTransferencia.caixinha`, ex. "Aplicacao: CDB Porq Obj"): sempre transferência interna (nunca gasto/receita), para o saldo da corrente seguir o banco. Destino: aporte já registrado (concilia) > aporte previsto de mesmo valor > caixinha pelo nome > `Reserva Inter (não distribuída)` (`finalidade:'reserva'`, criada sozinha, abertura 0 na véspera do fluxo).
+
+23. **Painel do mês** (`FX.painelMes`): funciona só com plano + registros, sem extrato. Semanada: `orcamento` = previsto da semana (sem plano, o reservado); reservado e gasto separados (`faltaReservar`, `gastoSemReserva`); `estourou` = gasto > orçamento. Caixinha: `disponivelMes` = transferido − usado no mês, sem saldo anterior.
+24. **Próximas ações** (`FX.proximasAcoes`): atenção (passou do orçamento) > atrasado > hoje > semana > mês > conferir. Vermelho só para orçamento estourado e conta a pagar vencida; reserva/pró-labore atrasados são âmbar. Cada ação abre o registro — nunca marca feito sozinha.
+25. **Extrato ignorado não volta:** linhas com decisão `ignorar` ficam em `cfg.extratoIgnorados[contaId]` (hash `FX.hashRef`, até 3000 por conta) e reaparecem como `duplicada` (`ignoradaAntes`) ao importar o mesmo período de novo.
 
 ## Auth
 
