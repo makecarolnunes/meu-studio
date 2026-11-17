@@ -161,6 +161,7 @@ function formGasto(ent, caixinhaId) {
   abrirModal(`<h2>Gasto ${ent}</h2>
     <div class="two">${campo('Valor', inValor('g-valor', ''))}${campo('Data', inData('g-data'))}</div>
     ${campo('Descrição', `<input class="fi" id="g-desc" placeholder="Ex.: Uber para atendimento">`)}
+    ${ent === 'PJ' ? `<label class="chk"><input type="checkbox" id="g-pess" onchange="gPessoal()"> Gasto pessoal pago com dinheiro da PJ (escolher categoria pessoal)</label>` : ''}
     ${campo('Categoria', `<select class="fi" id="g-cat" onchange="gAtualiza()">${optCategorias(ent, cx && cx.finalidade === 'semanada' ? (ent === 'PJ' ? 'Deslocamento' : 'Mercado') : '')}</select>`)}
     ${campo('De qual reserva (caixinha)', `<select class="fi" id="g-cx" onchange="gAtualiza()"><option value="">Automática pela categoria</option><option value="-">Nenhuma — fora do plano</option>${optContas(ent, ['caixinha'], caixinhaId)}</select>`)}
     <div class="muted sm" id="g-cx-auto"></div>
@@ -169,6 +170,12 @@ function formGasto(ent, caixinhaId) {
     ${pend.length ? campo('É um item do plano?', `<select class="fi" id="g-item"><option value="">Automático (pela categoria)</option><option value="-">Não</option>${pend.map(i => `<option value="${i.id}">${dm(i._data)} · ${esc(FX.nomeItem(i))} (${brl(i._falta)})</option>`).join('')}</select>`) : ''}
     ${rodape(`acGasto('${ent}')`, 'Registrar gasto')}`);
   window._gEnt = ent;
+  gAtualiza();
+}
+function gPessoal() {
+  const pess = $v('g-pess') === true;
+  document.getElementById('g-cat').innerHTML = pess ? optCategorias('PF', '') : optCategorias('PJ', '');
+  ['g-cx', 'g-item'].forEach(id => { const el = document.getElementById(id); if (el) el.closest ? (el.disabled = pess) : 0; });
   gAtualiza();
 }
 function gAtualiza() {
@@ -188,6 +195,8 @@ function gAtualiza() {
 function acGasto(ent) {
   const itemId = $v('g-item');
   const it = itemId ? stItem(itemId) : null;
+  if ($v('g-pess') === true) return executar(() => AC.registrarGasto({ entidade: 'PJ', pessoal: true, valor: $v('g-valor'),
+    data: $v('g-data'), descricao: $v('g-desc'), categoria: $v('g-cat'), contaId: $v('g-conta') }), 'Gasto pessoal registrado');
   executar(() => AC.registrarGasto({ entidade: ent, valor: $v('g-valor'), data: $v('g-data'), descricao: $v('g-desc'),
     categoria: $v('g-cat'), caixinhaId: $v('g-cx') || (it && it.caixinhaId) || null, contaId: $v('g-conta'),
     resgatar: $v('g-resgatar') === true, planoItemId: itemId || null, dividaId: it ? it.dividaId : null }), 'Gasto registrado');
@@ -361,7 +370,12 @@ async function acLerExtrato() {
     fecharModal(); UI.tab = 'ajustes'; render();
   } catch (e) { toast(e.message || 'Erro ao ler o arquivo', true); }
 }
-function exDecisao(k, v) { UI.extrato.propostas[k].decisao = v; render(); }
+function exDecisao(k, v) {
+  const p = UI.extrato.propostas[k], ent = stConta(UI.extrato.contaId).entidade;
+  const de = v === 'pessoal' ? 'PF' : ent;
+  if (p.categoria && !categorias(de).some(c => c.nome === p.categoria)) p.categoria = '';
+  p.decisao = v; render();
+}
 function acAplicarExtrato() {
   const x = UI.extrato;
   const semDestino = x.propostas.filter(p => p.decisao === 'transferencia' && !p.destinoId).length;

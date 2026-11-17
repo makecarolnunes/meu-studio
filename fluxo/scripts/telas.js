@@ -524,7 +524,8 @@ function telaExtrato() {
   const x = UI.extrato, conta = stConta(x.contaId);
   const cont = k => x.propostas.filter(p => p.acao === k).length;
   const cats = categorias(conta.entidade);
-  const opcoesDecisao = p => [['conciliar', 'Já lançado — conciliar', !!p.match], ['prolabore', 'Pró-labore do plano (PJ → PF)', p.decisao === 'prolabore'], ['gasto', 'Novo gasto', p.linha.valor < 0],
+  const opcoesDecisao = p => [['conciliar', 'Já lançado — conciliar', !!p.match], ['prolabore', 'Pró-labore do plano (PJ → PF)', p.decisao === 'prolabore'], ['gasto', conta.entidade === 'PJ' ? 'Gasto da empresa' : 'Novo gasto', p.linha.valor < 0],
+    ['pessoal', 'Gasto pessoal pago pela PJ', conta.entidade === 'PJ' && p.linha.valor < 0],
     ['receita', 'Nova entrada', p.linha.valor > 0], ['transferencia', 'Transferência interna', true], ['ignorar', 'Ignorar', true]]
     .filter(o => o[2]).map(([v, l]) => `<option value="${v}" ${p.decisao === v ? 'selected' : ''}>${l}</option>`).join('');
   return `<div class="row"><button class="lnk" onclick="UI.extrato=null;render()">‹ Cancelar</button><b>${esc(conta.nome)}</b></div>
@@ -535,6 +536,8 @@ function telaExtrato() {
       ${p.auto ? `<div class="muted sm">${autoTag({ regra: 'aprendido', plano: 'do plano', palavra: 'pela descrição' }[p.auto])} ${p.planoItemId && stItem(p.planoItemId) ? esc(FX.nomeItem(stItem(p.planoItemId))) : ''}</div>` : ''}
       ${p.acao === 'duplicada' ? '<div class="muted sm">Já importado antes.</div>' : `
       <select class="fi sm" onchange="exDecisao(${k}, this.value)">${opcoesDecisao(p)}</select>
+      ${p.decisao === 'pessoal' ? `<select class="fi sm" onchange="UI.extrato.propostas[${k}].categoria=this.value"><option value="">Categoria pessoal…</option>${optCategorias('PF', p.categoria)}</select>
+        <div class="muted sm">Sai da conta PJ, não conta como despesa da empresa e entra no seu pessoal.</div>` : ''}
       ${p.decisao === 'gasto' || p.decisao === 'receita' ? `<select class="fi sm" onchange="UI.extrato.propostas[${k}].categoria=this.value">
         ${p.decisao === 'receita' && conta.entidade === 'PF' ? (ST.cfg || FX_MODELO.config).categorias.receitasPF.map(c => `<option ${p.categoria === c ? 'selected' : ''}>${c}</option>`).join('')
           : p.decisao === 'receita' ? '<option>Extrato</option>' : `<option value="">Categoria…</option>${optCategorias(conta.entidade, p.categoria)}`}</select>` : ''}

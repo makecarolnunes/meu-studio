@@ -22,6 +22,10 @@ function criarDB() {
     if (/transfer/i.test(s.forma || '') && s.transferenciaParaMim) {
       up(T.entradas_pessoal, { id: 'sync_' + s.id, data: s.dataPag, descricao: s.obs, valor: Number(s.valor),
         categoria: s.tipo === 'Pró-labore' ? 'Pró-labore' : 'Transferência', forma: s.forma, origem: 'sincronizado', saidaOrigemId: s.id });
+    } else {
+      const ex = T.saidas_pessoal.find(x => x.id === 'sync_' + s.id);   // ON CONFLICT não mexe na categoria
+      up(T.saidas_pessoal, { id: 'sync_' + s.id, data: s.dataPag, descricao: s.obs, valor: Number(s.valor),
+        categoria: ex ? ex.categoria : 'Outros', forma: s.forma, origem: 'sincronizado', saidaOrigemId: s.id });
     }
   };
   return {
@@ -356,6 +360,29 @@ const ctxM = (mes, hoje) => run(`stCtx(${JSON.stringify(mes)}, ${JSON.stringify(
   const sim = FX.simularDividas(rd.fora.map(x => x.divida), 3000, 'juros', '2027-03');
   igual('simulação quita tudo com R$ 3.000/mês', sim.insuficiente, false);
   igual('maior juros primeiro: parcelamento de fatura antes do Nubank', sim.lista.find(x => /fatura PF/.test(x.divida.nome)).quitaEm <= sim.lista.find(x => /Nubank/.test(x.divida.nome)).quitaEm, true);
+
+  titulo('15. Categorias por conta + gasto pessoal pago pela PJ');
+  const catPJ = ST.cfg.categorias.PJ.map(c => c.nome);
+  igual('PJ só com RAIO X PJ', catPJ.includes('Assistente') || catPJ.includes('Mercado'), false);
+  igual('PJ tem Deslocamento, Reposição, DAS', ['Deslocamento', 'Reposição/Investimento de material', 'DAS'].every(c => catPJ.includes(c)), true);
+  const cfgV1 = { versao: 1, categorias: { PJ: [{ nome: 'Assistente', grupo: 'Operação' }, { nome: 'Uniforme', grupo: 'Minhas' }], PF: [] } };
+  run('stAtualizarCfg')(cfgV1);
+  igual('config antiga atualizada mantendo a categoria criada por você', [cfgV1.versao, cfgV1.categorias.PJ.some(c => c.nome === 'Assistente'), cfgV1.categorias.PJ.some(c => c.nome === 'Uniforme')], [2, false, true]);
+  const gastosPJantes = FX.resumo('PJ', ctxM('2027-01', '2027-01-31')).gastos;
+  const gastosPFantes = FX.resumo('PF', ctxM('2027-01', '2027-01-31')).gastos;
+  const pjAntesP = saldo(pjC, '2027-01-31');
+  let pp = AC.prepararExtrato(pjC.id, [{ data: '2027-01-20', descricao: 'COMPRA SUPERMERCADO DIA', valor: -132.40 }]);
+  pp[0].decisao = 'pessoal'; pp[0].categoria = 'Mercado';
+  await AC.aplicarExtrato(pjC.id, pp);
+  const sp = DBT.saidas.find(s => s.obs === 'COMPRA SUPERMERCADO DIA');
+  igual('saída PJ natureza Pessoal', [sp.natureza, sp.tipo], ['PESSOAL', 'Pessoal']);
+  igual('virou gasto PF na categoria Mercado (1 só)', DBT.saidas_pessoal.filter(x => x.saidaOrigemId === sp.id).map(x => x.categoria), ['Mercado']);
+  igual('não conta como despesa da empresa', FX.resumo('PJ', ctxM('2027-01', '2027-01-31')).gastos, gastosPJantes);
+  igual('conta como gasto pessoal', FX.r2(FX.resumo('PF', ctxM('2027-01', '2027-01-31')).gastos - gastosPFantes), 132.4);
+  igual('saiu da conta PJ', FX.r2(pjAntesP - saldo(pjC, '2027-01-31')), 132.4);
+  igual('não mexe na conta PF', run('stMovs()').find(m => m.tabela === 'saidas_pessoal' && m.saidaOrigemId === sp.id).afetaSaldo, false);
+  pp = AC.prepararExtrato(pjC.id, [{ data: '2027-02-03', descricao: 'COMPRA SUPERMERCADO DIA', valor: -98 }]);
+  igual('próxima vez já vem como pessoal/Mercado (regra aprendida)', [pp[0].decisao, pp[0].categoria], ['pessoal', 'Mercado']);
 
   titulo('Rastreabilidade');
   igual('toda escrita gerou log', ST.log.length > 30, true);

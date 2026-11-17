@@ -296,6 +296,7 @@ const AC = (function () {
     const valor = _valor(d.valor), data = _data(d.data);
     const conta = d.contaId ? stConta(d.contaId) : _corrente(ent);
     if (!conta || conta.entidade !== ent) throw _erro('Conta inválida para ' + ent + '.');
+    if (d.pessoal && ent === 'PJ') return _gastoPessoalNaPJ(d, valor, data, conta);
     // caixinha: escolhida > conta-caixinha > item do plano > dedução pela categoria. '-' = nenhuma.
     const cfg = ST.cfg || FX_MODELO.config;
     let planoItemId = d.planoItemId && d.planoItemId !== '-' ? d.planoItemId : null;
@@ -335,6 +336,25 @@ const AC = (function () {
         descricao: `Resgate p/ ${desc}`, vinculoId: `${tabela}:${regId}`, origem: 'sistema' });
     }
     return { tabela, id: regId, resgate, caixinhaId, planoItemId };
+  }
+
+  // Gasto PESSOAL pago com dinheiro da PJ: sai da conta PJ (saída natureza
+  // PESSOAL, não é despesa da empresa) e vira gasto PF na categoria PF
+  // escolhida (o trigger cria a saída PF 'sync_<id>'; aqui só garante a categoria).
+  async function _gastoPessoalNaPJ(d, valor, data, conta) {
+    const id = String(Date.now()) + Math.floor(Math.random() * 1000);
+    const desc = String(d.descricao || '').trim() || d.categoria || 'Gasto pessoal';
+    await stSalvarSaidaPJ({ id, dataPag: data, dataCaixa: data, tipo: 'Pessoal', valor: String(valor),
+      forma: _formaDaConta(conta, d.forma), status: 'Pago', obs: desc, recorrencia: 'unica', grupoId: null,
+      natureza: 'PESSOAL', transferenciaParaMim: false, createdAt: new Date().toISOString() });
+    await stSalvarMeta('saidas', id, { contaId: conta.id, caixinhaId: '-', planoItemId: '-',
+      conciliado: !!d.conciliado, extratoRef: d.extratoRef || null });
+    if (ST.pfLiberado) {
+      await stSalvarPF('saida', { id: 'sync_' + id, usuarioId: null, data, descricao: desc, valor,
+        categoria: d.categoria || 'Outros', forma: _formaDaConta(conta, d.forma), origem: 'sincronizado',
+        saidaOrigemId: id, createdAt: new Date().toISOString() });
+    }
+    return { tabela: 'saidas', id, pessoal: true };
   }
 
   async function pagarItem(itemId, d) {
@@ -501,7 +521,7 @@ const AC = (function () {
     cfg.regrasExtrato = cfg.regrasExtrato || { PF: [], PJ: [] };
     const lista = cfg.regrasExtrato[ent] = cfg.regrasExtrato[ent] || [];
     let mudou = false;
-    props.filter(p => p.acao === 'novo' && ['gasto', 'receita', 'transferencia'].includes(p.decisao) && !p.planoItemId).forEach(p => {
+    props.filter(p => p.acao === 'novo' && ['gasto', 'receita', 'transferencia', 'pessoal'].includes(p.decisao) && !p.planoItemId).forEach(p => {
       const chave = FX.chaveExtrato(p.linha.descricao);
       if (!chave || chave.length < 3) return;
       if (p.decisao !== 'transferencia' && !p.categoria) return;
@@ -549,6 +569,11 @@ const AC = (function () {
           destinoId: credito ? contaId : p.destinoId, descricao: l.descricao, conciliado: true, extratoRef: ref, origem: 'importacao',
           planoItemId: p.planoItemId || null });
         res.transferencias++; continue;
+      }
+      if (p.decisao === 'pessoal' && ent === 'PJ') {
+        await registrarGasto({ entidade: 'PJ', pessoal: true, valor, data: l.data, contaId, categoria: p.categoria || 'Outros',
+          descricao: l.descricao, conciliado: true, extratoRef: ref });
+        res.criados++; continue;
       }
       if (p.decisao === 'gasto') {
         await registrarGasto({ entidade: ent, valor, data: l.data, contaId, caixinhaId: p.caixinhaId || null, planoItemId: p.planoItemId || null,

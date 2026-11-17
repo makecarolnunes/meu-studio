@@ -16,7 +16,7 @@ const FX_MODELO = {
 
   // ── Configuração (vai para configuracoes.chave = 'fluxo_config') ──
   config: {
-    versao: 1,
+    versao: 2,
     // Acompanhamento mensal: S1 01–08 · S2 09–15 · S3 16–22 · S4 23–fim do mês
     semanas: [
       { n: 1, ini: 1,  fim: 8  },
@@ -47,7 +47,9 @@ const FX_MODELO = {
         { nome: 'Compras', grupo: 'Outras' }, { nome: 'Contas', grupo: 'Outras' },
         { nome: 'Outros', grupo: 'Outras' },
       ],
-      // RAIO X - PJ + tipos já usados no Financeiro (SAIDA_TIPOS_PROF)
+      // Só o RAIO X - PJ (nomes = tipos de saída do Financeiro). Tipos antigos
+      // do Financeiro (Assistente, Modelos…) continuam válidos nos dados, só
+      // não aparecem nas listas do fluxo.
       PJ: [
         { nome: 'Deslocamento', grupo: 'Semanada' },
         { nome: 'Alimentação trabalho', grupo: 'Semanada' },
@@ -57,9 +59,7 @@ const FX_MODELO = {
         { nome: 'Assinaturas', grupo: 'Assinaturas' },
         { nome: 'DAS', grupo: 'MEI' },
         { nome: 'Dívidas', grupo: 'Dívidas' },
-        { nome: 'Assistente', grupo: 'Operação' }, { nome: 'Modelos', grupo: 'Operação' },
-        { nome: 'Marketing', grupo: 'Operação' }, { nome: 'Equipe', grupo: 'Operação' },
-        { nome: 'Outro', grupo: 'Operação' },
+        { nome: 'Outro', grupo: 'Outras' },
       ],
       receitasPF: ['Pró-labore', 'Transferência', 'Salário/Renda', 'Reembolso', 'Presente', 'Investimentos', 'Outros'],
     },

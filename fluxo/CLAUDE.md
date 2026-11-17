@@ -50,6 +50,8 @@ se a migration não estiver aplicada, o Financeiro e os Orçamentos quebrariam.
 13. **Automático ao abrir:** `AC.garantirMeses()` cria o mês atual (e o seguinte a partir de `cfg.diaCriarProximoMes`) e fecha meses antigos (`cfg.fecharMesesAposMeses`; `reaberto` impede refechar).
 14. **Dívidas:** `situacao` fora_do_plano | no_plano | quitada. Fora do plano não gera pendência do mês. `AC.incluirDividaNoPlano` cria aporte + pagamento no modelo com vigência e insere nos meses abertos; histórico em `fin_divida_saldos`.
 15. **Extrato:** `_sugerir` (regra aprendida > item do plano de mesmo valor > palavras de caixinha/fatura > categoria por palavras). `_aprender` grava em `cfg.regrasExtrato`.
+16. **Categorias por entidade:** listas do fluxo vêm de `cfg.categorias[PF|PJ]`. PJ = só RAIO X PJ (tipos antigos do Financeiro continuam válidos nos dados, só não aparecem). Config salva sobe de versão em `stAtualizarCfg` (preserva categorias criadas pela Carol).
+17. **Gasto pessoal pago pela PJ:** `registrarGasto({pessoal:true})` / decisão `pessoal` no extrato → saída PJ natureza PESSOAL tipo 'Pessoal' (classe retirada, não é despesa da empresa) + saída PF `sync_<id>` com a categoria PF escolhida (o trigger não sobrescreve a categoria).
 
 ## Auth
 

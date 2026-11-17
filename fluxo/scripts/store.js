@@ -116,11 +116,27 @@ async function stCarregar() {
   try {
     const raw = await DB.config.get('fluxo_config');
     ST.cfg = raw ? JSON.parse(raw) : null;
+    if (ST.cfg && ST.migracaoOk && stAtualizarCfg(ST.cfg)) await DB.config.set('fluxo_config', JSON.stringify(ST.cfg));
   } catch (_) { /* sem config ainda */ }
 
   ST.carregado = true;
   stInvalidar();
   stSalvarCache();
+}
+
+// Atualizações de versão da config salva. Retorna true se mudou.
+const CAT_PJ_V1 = ['Deslocamento', 'Alimentação trabalho', 'Reposição/Investimento de material', 'Cursos', 'Equipamentos',
+  'Assinaturas', 'DAS', 'Dívidas', 'Assistente', 'Modelos', 'Marketing', 'Equipe', 'Outro'];
+function stAtualizarCfg(cfg) {
+  let mudou = false;
+  if ((cfg.versao || 1) < 2) {
+    // PJ: só RAIO X PJ; categorias que VOCÊ acrescentou continuam
+    const suas = ((cfg.categorias && cfg.categorias.PJ) || []).filter(c => !CAT_PJ_V1.includes(c.nome));
+    cfg.categorias = cfg.categorias || {};
+    cfg.categorias.PJ = FX_MODELO.config.categorias.PJ.concat(suas);
+    cfg.versao = 2; mudou = true;
+  }
+  return mudou;
 }
 
 // ── GRAVAÇÃO (fluxo) ─────────────────────────────────────
