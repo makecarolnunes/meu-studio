@@ -16,7 +16,9 @@ const FX_MODELO = {
 
   // ── Configuração (vai para configuracoes.chave = 'fluxo_config') ──
   config: {
-    versao: 2,
+    versao: 3,
+    // Seus nomes como aparecem no extrato: Pix PJ → você = pró-labore
+    nomesProprios: ['caroline nunes', 'carol nunes', 'caroline dos santos nunes'],
     // Acompanhamento mensal: S1 01–08 · S2 09–15 · S3 16–22 · S4 23–fim do mês
     semanas: [
       { n: 1, ini: 1,  fim: 8  },

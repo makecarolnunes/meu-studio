@@ -387,6 +387,10 @@ const AC = (function () {
         createdAt: new Date().toISOString() });
       if (d.contaPFId) await stSalvarMeta('entradas_pessoal', 'sync_' + id, { contaId: d.contaPFId });
     }
+    if (!it) {
+      // fora do plano: marca explicitamente para a automação não ligar a outro item
+      await stSalvarMeta('saidas', id, { contaId: contaPJ.id, planoItemId: '-' });
+    }
     return { saidaId: id, entradaPFId: 'sync_' + id };
   }
 
@@ -473,6 +477,10 @@ const AC = (function () {
     props.filter(p => p.acao === 'novo').forEach(p => {
       const l = p.linha, v = Math.abs(l.valor), debito = l.valor < 0;
       const rg = FX.regraAprendida(l.descricao, ent, cfg);
+      if (_paraMimMesma(l.descricao, cfg) && ((ent === 'PJ' && debito) || (ent === 'PF' && !debito))) {
+        Object.assign(p, { decisao: 'prolabore', planoItemId: _itemProlabore(l.data, v, reservado) || '', auto: 'palavra' });
+        return;
+      }
       if (rg) {
         Object.assign(p, { decisao: rg.decisao, categoria: rg.categoria || '', caixinhaId: rg.caixinhaId || '', destinoId: rg.destinoId || '', auto: 'regra' });
         if (rg.decisao === 'transferencia' && !p.destinoId) p.decisao = debito ? 'gasto' : 'receita';
@@ -516,6 +524,24 @@ const AC = (function () {
     });
   }
 
+  function _paraMimMesma(desc, cfg) {
+    const d = FX.semAcento(desc);
+    return ((cfg && cfg.nomesProprios) || []).some(n => n && d.includes(FX.semAcento(n)));
+  }
+  // Pró-labore pago "solto": vai completando o item do plano do mês que ainda
+  // tem saldo (o mais antigo primeiro). Mês já completo → fora do plano.
+  function _itemProlabore(data, valor, reservado) {
+    const cfg = ST.cfg || FX_MODELO.config;
+    const its = FX.itensDoMes(ST.itens, FX.mesDe(data), stMovs(), stHoje(), cfg)
+      .filter(i => i.tipo === 'prolabore' && FX.PENDENTE(i._status) && i._falta > FX.EPS && !(reservado && reservado.has(i.id)))
+      .sort((a, b) => a._data.localeCompare(b._data));
+    return its.length ? its[0].id : null;
+  }
+  function itensProlaboreDoMes(mes) {
+    const cfg = ST.cfg || FX_MODELO.config;
+    return FX.itensDoMes(ST.itens, mes, stMovs(), stHoje(), cfg).filter(i => i.tipo === 'prolabore');
+  }
+
   async function _aprender(ent, props) {
     const cfg = JSON.parse(JSON.stringify(ST.cfg || FX_MODELO.config));
     cfg.regrasExtrato = cfg.regrasExtrato || { PF: [], PJ: [] };
@@ -555,9 +581,10 @@ const AC = (function () {
         }
         res.conciliados++; continue;
       }
-      if (p.decisao === 'prolabore' && p.planoItemId) {
-        const it = stItem(p.planoItemId);
-        const r = await pagarProlabore(it.id, { valor, data: l.data });
+      if (p.decisao === 'prolabore') {
+        const it = p.planoItemId ? stItem(p.planoItemId) : null;   // sem item = pró-labore fora do plano
+        const r = await pagarProlabore(it ? it.id : null, { valor, data: l.data, contaId: ent === 'PJ' ? contaId : undefined,
+          contaPFId: ent === 'PF' ? contaId : undefined });
         if (ent === 'PJ') await stSalvarMeta('saidas', r.saidaId, { contaId, conciliado: true, extratoRef: ref });
         else if (ST.pfLiberado) await stSalvarMeta('entradas_pessoal', r.entradaPFId, { contaId, conciliado: true, extratoRef: ref });
         res.criados++; continue;
@@ -682,7 +709,7 @@ const AC = (function () {
     await stRemover('fin_transferencias', id);
   }
 
-  return { garantirMeses, executarComoPlanejado, atualizarSaldoDivida, incluirDividaNoPlano, tirarDividaDoPlano,
+  return { itensProlaboreDoMes, garantirMeses, executarComoPlanejado, atualizarSaldoDivida, incluirDividaNoPlano, tirarDividaDoPlano,
     configurarInicial, criarMes, salvarItem, removerItem, dispensarItem, retomarItem, reprogramarItem,
     fecharMes, reabrirMes, transferir, executarAporte, pagarFatura, registrarGasto, pagarItem, pagarProlabore,
     registrarEntradaPF, confirmarRecebimento, conciliar, prepararExtrato, aplicarExtrato,

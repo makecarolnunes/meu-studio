@@ -136,6 +136,10 @@ function stAtualizarCfg(cfg) {
     cfg.categorias.PJ = FX_MODELO.config.categorias.PJ.concat(suas);
     cfg.versao = 2; mudou = true;
   }
+  if (cfg.versao < 3) {
+    if (!cfg.nomesProprios) cfg.nomesProprios = FX_MODELO.config.nomesProprios.slice();
+    cfg.versao = 3; mudou = true;
+  }
   return mudou;
 }
 

@@ -323,7 +323,7 @@ const ctxM = (mes, hoje) => run(`stCtx(${JSON.stringify(mes)}, ${JSON.stringify(
   ];
   let px = AC.prepararExtrato(pfC.id, linhas);
   igual('Enel → Luz (pela descrição) + caixinha Despesas fixas', [px[0].decisao, px[0].categoria, nomeC(px[0].caixinhaId), px[0].auto], ['gasto', 'Luz', 'Despesas fixas', 'palavra']);
-  igual('crédito de 2.755 → pró-labore do plano', [px[1].decisao, px[1].auto], ['prolabore', 'plano']);
+  igual('crédito de 2.755 "CAROL NUNES" → pró-labore (pelo nome) ligado à parcela do dia 15', [px[1].decisao, px[1].auto, (ST.itens.find(i => i.id === px[1].planoItemId) || {}).dia], ['prolabore', 'palavra', 15]);
   igual('porquinho 350 → aporte da semanada S3', [px[2].decisao, nomeC(px[2].destinoId), px[2].auto], ['transferencia', 'Semanada', 'plano']);
   igual('Petz → Gatos → Semanada', [px[3].categoria, nomeC(px[3].caixinhaId)], ['Gatos', 'Semanada']);
   const nSaidasPJ = DBT.saidas.length;
@@ -367,7 +367,7 @@ const ctxM = (mes, hoje) => run(`stCtx(${JSON.stringify(mes)}, ${JSON.stringify(
   igual('PJ tem Deslocamento, Reposição, DAS', ['Deslocamento', 'Reposição/Investimento de material', 'DAS'].every(c => catPJ.includes(c)), true);
   const cfgV1 = { versao: 1, categorias: { PJ: [{ nome: 'Assistente', grupo: 'Operação' }, { nome: 'Uniforme', grupo: 'Minhas' }], PF: [] } };
   run('stAtualizarCfg')(cfgV1);
-  igual('config antiga atualizada mantendo a categoria criada por você', [cfgV1.versao, cfgV1.categorias.PJ.some(c => c.nome === 'Assistente'), cfgV1.categorias.PJ.some(c => c.nome === 'Uniforme')], [2, false, true]);
+  igual('config antiga atualizada mantendo a categoria criada por você', [cfgV1.versao, cfgV1.categorias.PJ.some(c => c.nome === 'Assistente'), cfgV1.categorias.PJ.some(c => c.nome === 'Uniforme')], [3, false, true]);
   const gastosPJantes = FX.resumo('PJ', ctxM('2027-01', '2027-01-31')).gastos;
   const gastosPFantes = FX.resumo('PF', ctxM('2027-01', '2027-01-31')).gastos;
   const pjAntesP = saldo(pjC, '2027-01-31');
@@ -383,6 +383,24 @@ const ctxM = (mes, hoje) => run(`stCtx(${JSON.stringify(mes)}, ${JSON.stringify(
   igual('não mexe na conta PF', run('stMovs()').find(m => m.tabela === 'saidas_pessoal' && m.saidaOrigemId === sp.id).afetaSaldo, false);
   pp = AC.prepararExtrato(pjC.id, [{ data: '2027-02-03', descricao: 'COMPRA SUPERMERCADO DIA', valor: -98 }]);
   igual('próxima vez já vem como pessoal/Mercado (regra aprendida)', [pp[0].decisao, pp[0].categoria], ['pessoal', 'Mercado']);
+
+  titulo('16. Pix da PJ para mim = pró-labore (pago solto)');
+  run('stAtualizarCfg')(ST.cfg);
+  const pixMim = d => [{ data: d, descricao: 'Pix enviado: "00019 569248515 CAROLINE NUNES"', valor: -250 }];
+  let pm = AC.prepararExtrato(pjC.id, pixMim('2027-02-05'));
+  const proFev1 = ST.itens.find(i => i.mes === '2027-02' && i.tipo === 'prolabore' && i.dia === 1);
+  igual('reconhecido como pró-labore (não semanada)', [pm[0].decisao, pm[0].planoItemId], ['prolabore', proFev1.id]);
+  await AC.aplicarExtrato(pjC.id, pm);
+  let imF = FX.itensDoMes(ST.itens, '2027-02', run('stMovs()'), '2027-02-06', ST.cfg);
+  igual('soma na parcela do dia 01 (parcial)', [imF.find(i => i.id === proFev1.id)._realizado, imF.find(i => i.id === proFev1.id)._status], [250, 'parcial-atrasado']);
+  igual('entrou na PF como pró-labore', DBT.entradas_pessoal.filter(e => e.categoria === 'Pró-labore' && e.data === '2027-02-05').length, 1);
+  igual('semanada S3 PJ de fevereiro continua pendente', imF.find(i => i.entidade === 'PJ' && i.descricao === 'Semanada — semana 3')._realizado, 0);
+  pm = AC.prepararExtrato(pjC.id, pixMim('2027-01-28'));
+  igual('mês já completo → pró-labore fora do plano', [pm[0].decisao, pm[0].planoItemId], ['prolabore', '']);
+  await AC.aplicarExtrato(pjC.id, pm);
+  const extra = DBT.saidas.find(s => s.tipo === 'Pró-labore' && s.dataPag === '2027-01-28');
+  igual('extra não é ligado a nenhum item', run('stMovs()').find(m => m.id === extra.id).planoItemId, null);
+  igual('extra não é despesa da empresa', run('stMovs()').find(m => m.id === extra.id).classe, 'prolabore');
 
   titulo('Rastreabilidade');
   igual('toda escrita gerou log', ST.log.length > 30, true);

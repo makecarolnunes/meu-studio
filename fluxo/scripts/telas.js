@@ -524,7 +524,7 @@ function telaExtrato() {
   const x = UI.extrato, conta = stConta(x.contaId);
   const cont = k => x.propostas.filter(p => p.acao === k).length;
   const cats = categorias(conta.entidade);
-  const opcoesDecisao = p => [['conciliar', 'Já lançado — conciliar', !!p.match], ['prolabore', 'Pró-labore do plano (PJ → PF)', p.decisao === 'prolabore'], ['gasto', conta.entidade === 'PJ' ? 'Gasto da empresa' : 'Novo gasto', p.linha.valor < 0],
+  const opcoesDecisao = p => [['conciliar', 'Já lançado — conciliar', !!p.match], ['prolabore', 'Pró-labore (PJ → PF)', (conta.entidade === 'PJ' && p.linha.valor < 0) || (conta.entidade === 'PF' && p.linha.valor > 0)], ['gasto', conta.entidade === 'PJ' ? 'Gasto da empresa' : 'Novo gasto', p.linha.valor < 0],
     ['pessoal', 'Gasto pessoal pago pela PJ', conta.entidade === 'PJ' && p.linha.valor < 0],
     ['receita', 'Nova entrada', p.linha.valor > 0], ['transferencia', 'Transferência interna', true], ['ignorar', 'Ignorar', true]]
     .filter(o => o[2]).map(([v, l]) => `<option value="${v}" ${p.decisao === v ? 'selected' : ''}>${l}</option>`).join('');
@@ -536,6 +536,10 @@ function telaExtrato() {
       ${p.auto ? `<div class="muted sm">${autoTag({ regra: 'aprendido', plano: 'do plano', palavra: 'pela descrição' }[p.auto])} ${p.planoItemId && stItem(p.planoItemId) ? esc(FX.nomeItem(stItem(p.planoItemId))) : ''}</div>` : ''}
       ${p.acao === 'duplicada' ? '<div class="muted sm">Já importado antes.</div>' : `
       <select class="fi sm" onchange="exDecisao(${k}, this.value)">${opcoesDecisao(p)}</select>
+      ${p.decisao === 'prolabore' ? `<select class="fi sm" onchange="UI.extrato.propostas[${k}].planoItemId=this.value">
+          ${AC.itensProlaboreDoMes(FX.mesDe(p.linha.data)).map(i => `<option value="${i.id}" ${p.planoItemId === i.id ? 'selected' : ''}>Conta para: ${esc(FX.nomeItem(i))} — falta ${brl(i._falta)}</option>`).join('')}
+          <option value="" ${!p.planoItemId ? 'selected' : ''}>Fora do plano (pró-labore extra)</option></select>
+        <div class="muted sm">Sai da PJ e entra na sua conta pessoal. Não é despesa da empresa. Pagamentos soltos vão somando na parcela até completar.</div>` : ''}
       ${p.decisao === 'pessoal' ? `<select class="fi sm" onchange="UI.extrato.propostas[${k}].categoria=this.value"><option value="">Categoria pessoal…</option>${optCategorias('PF', p.categoria)}</select>
         <div class="muted sm">Sai da conta PJ, não conta como despesa da empresa e entra no seu pessoal.</div>` : ''}
       ${p.decisao === 'gasto' || p.decisao === 'receita' ? `<select class="fi sm" onchange="UI.extrato.propostas[${k}].categoria=this.value">

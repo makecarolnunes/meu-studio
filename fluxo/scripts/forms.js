@@ -374,6 +374,11 @@ function exDecisao(k, v) {
   const p = UI.extrato.propostas[k], ent = stConta(UI.extrato.contaId).entidade;
   const de = v === 'pessoal' ? 'PF' : ent;
   if (p.categoria && !categorias(de).some(c => c.nome === p.categoria)) p.categoria = '';
+  if (v === 'prolabore' && !p.planoItemId) {
+    const it = AC.itensProlaboreDoMes(FX.mesDe(p.linha.data)).find(i => FX.PENDENTE(i._status) && i._falta > FX.EPS);
+    p.planoItemId = it ? it.id : '';
+  }
+  if (v !== 'prolabore' && p.planoItemId && (stItem(p.planoItemId) || {}).tipo === 'prolabore') p.planoItemId = '';
   p.decisao = v; render();
 }
 function acAplicarExtrato() {
@@ -466,6 +471,7 @@ function formConfig() {
     <label class="fl">Semanas (dia inicial e final; a última vai até o fim do mês)</label>
     ${cfg.semanas.map((s, k) => `<div class="two"><input class="fi" type="number" id="sw-i${k}" value="${s.ini}" min="1" max="31"><input class="fi" type="number" id="sw-f${k}" value="${s.fim}" min="1" max="31"></div>`).join('')}
     ${campo('Tolerância de datas ao conciliar extrato (dias)', `<input class="fi" type="number" id="cf-tol" value="${cfg.toleranciaDias}">`)}
+    ${campo('Seus nomes no extrato (um por linha) — Pix da PJ para você vira pró-labore', `<textarea class="fi" id="cf-nomes" rows="3">${esc((cfg.nomesProprios || []).join('\n'))}</textarea>`)}
     ${campo('Categorias PF (uma por linha: Nome | Grupo)', `<textarea class="fi" id="cf-pf" rows="6">${esc(cats('PF'))}</textarea>`)}
     ${campo('Categorias PJ (uma por linha: Nome | Grupo)', `<textarea class="fi" id="cf-pj" rows="6">${esc(cats('PJ'))}</textarea>`)}
     ${campo('Sazonais (uma por linha: Nome | valor anual)', `<textarea class="fi" id="cf-saz" rows="5">${esc((cfg.sazonais || []).map(s => `${s.nome} | ${valIn(s.anual)}`).join('\n'))}</textarea>`)}
@@ -475,6 +481,7 @@ function acSalvarConfig() {
   const cfg = JSON.parse(JSON.stringify(ST.cfg || FX_MODELO.config));
   cfg.semanas = cfg.semanas.map((s, k) => ({ n: s.n, ini: Number($v('sw-i' + k)), fim: Number($v('sw-f' + k)) }));
   cfg.toleranciaDias = Number($v('cf-tol')) || 0;
+  cfg.nomesProprios = $v('cf-nomes').split('\n').map(x => x.trim()).filter(Boolean);
   const linhas = id => $v(id).split('\n').map(l => l.split('|').map(x => x.trim())).filter(p => p[0]);
   cfg.categorias.PF = linhas('cf-pf').map(p => ({ nome: p[0], grupo: p[1] || 'Outras' }));
   cfg.categorias.PJ = linhas('cf-pj').map(p => ({ nome: p[0], grupo: p[1] || 'Outras' }));
