@@ -617,6 +617,8 @@ const FX = (function () {
   // Escolha explícita da Carol (inclusive "nenhum") sempre vence.
   function automatizar(movs, itens, contas, cfg) {
     const inicio = (cfg && cfg.inicioFluxo) || '';
+    const alias = (cfg && cfg.aliasCategorias) || {};
+    movs.forEach(m => { const a = (alias[m.entidade] || {})[m.categoria]; if (a) { m.categoriaOriginal = m.categoria; m.categoria = a; } });
     const porId = {};
     itens.forEach(i => { porId[i.id] = i; });
     const usado = {};

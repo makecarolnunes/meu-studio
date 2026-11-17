@@ -51,15 +51,15 @@ Base: `Planejamento Financeiro_Carol Nunes.xlsx` (9 abas) × sistema Meu Studio 
 | Dívida (Pole Dance) | Dívidas | Dívidas |
 | Categorias do Pessoal antigo (Moradia, Saúde, Lazer, …) | mantidas (grupo Outras) — dados antigos continuam válidos | — |
 
-**PJ (RAIO X - PJ)** — reaproveita os tipos que o Financeiro já usa (`SAIDA_TIPOS_PROF`):
+**PJ (RAIO X - PJ)** — tipos de saída do Financeiro (`SAIDA_TIPOS_PROF`). Em 17/11 “Reposição/Investimento de material” virou **Reposição** e “Equipamentos” virou **Investimentos** (lançamentos antigos ficam com o nome antigo e são lidos como os novos):
 
 | Planilha | Tipo de saída no Financeiro | Caixinha |
 |---|---|---|
 | Deslocamento (600) | Deslocamento | Semanada |
 | Alimentação (400) | Alimentação trabalho | Semanada |
-| Reposição (400) | Reposição/Investimento de material | Reposição |
+| Reposição (400) | Reposição (só produtos/materiais do kit) | Reposição |
 | Curso (97) | Cursos | — (pagamento direto) |
-| Curso e aperfeiçoamento (125) + Investimentos (416,67) | Cursos / Equipamentos | Cursos e investimentos |
+| Curso e aperfeiçoamento (125) + Investimentos (416,67) | Cursos / Investimentos (custos indiretos) | Cursos e investimentos |
 | Canva + Claude/ChatGPT | Assinaturas | Assinaturas no cartão |
 | Guia MEI (81) | DAS | MEI |
 | Pró-labore (2.000 + 2.755) | Pró-labore (natureza Pessoal) | — (sai da conta PJ, entra na PF) |

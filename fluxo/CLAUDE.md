@@ -53,6 +53,7 @@ se a migration não estiver aplicada, o Financeiro e os Orçamentos quebrariam.
 16. **Categorias por entidade:** listas do fluxo vêm de `cfg.categorias[PF|PJ]`. PJ = só RAIO X PJ (tipos antigos do Financeiro continuam válidos nos dados, só não aparecem). Config salva sobe de versão em `stAtualizarCfg` (preserva categorias criadas pela Carol).
 17. **Gasto pessoal pago pela PJ:** `registrarGasto({pessoal:true})` / decisão `pessoal` no extrato → saída PJ natureza PESSOAL tipo 'Pessoal' (classe retirada, não é despesa da empresa) + saída PF `sync_<id>` com a categoria PF escolhida (o trigger não sobrescreve a categoria).
 18. **Pix PJ → Carol = pró-labore:** descrição com um dos `cfg.nomesProprios` (débito PJ / crédito PF) vira decisão `prolabore`; soma no item de pró-labore pendente mais antigo do mês (parcial até completar) ou fica fora do plano (`plano_item_id = '-'`).
+19. **Reposição ≠ Investimentos:** Reposição → caixinha Reposição; Investimentos e Cursos → caixinha Cursos e investimentos. Nomes antigos do Financeiro são lidos via `cfg.aliasCategorias` (em `FX.automatizar`), sem alterar o registro.
 
 ## Auth
 

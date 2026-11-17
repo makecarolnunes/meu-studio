@@ -16,7 +16,7 @@ const FX_MODELO = {
 
   // ── Configuração (vai para configuracoes.chave = 'fluxo_config') ──
   config: {
-    versao: 3,
+    versao: 4,
     // Seus nomes como aparecem no extrato: Pix PJ → você = pró-labore
     nomesProprios: ['caroline nunes', 'carol nunes', 'caroline dos santos nunes'],
     // Acompanhamento mensal: S1 01–08 · S2 09–15 · S3 16–22 · S4 23–fim do mês
@@ -55,9 +55,9 @@ const FX_MODELO = {
       PJ: [
         { nome: 'Deslocamento', grupo: 'Semanada' },
         { nome: 'Alimentação trabalho', grupo: 'Semanada' },
-        { nome: 'Reposição/Investimento de material', grupo: 'Reposição' },
-        { nome: 'Cursos', grupo: 'Cursos e investimentos' },
-        { nome: 'Equipamentos', grupo: 'Cursos e investimentos' },
+        { nome: 'Reposição', grupo: 'Reposição' },                  // produtos e materiais do kit
+        { nome: 'Cursos', grupo: 'Cursos e investimentos' },        // curso e aperfeiçoamento
+        { nome: 'Investimentos', grupo: 'Cursos e investimentos' }, // equipamentos e estrutura
         { nome: 'Assinaturas', grupo: 'Assinaturas' },
         { nome: 'DAS', grupo: 'MEI' },
         { nome: 'Dívidas', grupo: 'Dívidas' },
@@ -72,7 +72,10 @@ const FX_MODELO = {
       PJ: { 'Semanada': 'semanada', 'Reposição': 'reposicao', 'Cursos e investimentos': 'cursos',
             'Assinaturas': 'cartao', 'MEI': 'mei', 'Dívidas': 'dividas' },
     },
-    caixinhaPorCategoria: { PF: { 'Faxineira': 'faxineira' }, PJ: { 'Cursos': 'cursos' } },
+    caixinhaPorCategoria: { PF: { 'Faxineira': 'faxineira' }, PJ: { 'Cursos': 'cursos', 'Investimentos': 'cursos' } },
+    // Nomes antigos (dados já lançados) → categoria atual, só para cálculo
+    aliasCategorias: { PJ: { 'Reposição/Investimento de material': 'Reposição', 'Reposição de Material': 'Reposição',
+      'Equipamentos': 'Investimentos', 'Investimento Material': 'Investimentos', 'Investimento Produto': 'Investimentos', 'Curso': 'Cursos' } },
     // Categoria sugerida pela descrição do extrato (regex sem acento, minúsculas)
     palavrasCategoria: {
       PF: [
@@ -94,7 +97,7 @@ const FX_MODELO = {
         ['ifood|restaur|lanch|padaria|cafe|burger|almoco', 'Alimentação trabalho'],
         ['canva|openai|chatgpt|anthropic|claude|adobe|capcut|google storage|notion', 'Assinaturas'],
         ['das|simples nacional|receita federal|pgmei', 'DAS'],
-        ['sephora|mac cosmetics|beleza na web|epoca|makeup|maquiagem|dermage|kryolan|vult|ruby rose|lojas rede', 'Reposição/Investimento de material'],
+        ['sephora|mac cosmetics|beleza na web|epoca|makeup|maquiagem|dermage|kryolan|vult|ruby rose|lojas rede', 'Reposição'],
         ['hotmart|kiwify|eduzz|curso|workshop|masterclass', 'Cursos'],
       ],
     },

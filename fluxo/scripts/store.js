@@ -136,10 +136,25 @@ function stAtualizarCfg(cfg) {
     cfg.categorias.PJ = FX_MODELO.config.categorias.PJ.concat(suas);
     cfg.versao = 2; mudou = true;
   }
+  if (cfg.versao < 4) {
+    // Reposição ≠ Investimentos (investimento vai com cursos)
+    const ren = { 'Reposição/Investimento de material': 'Reposição', 'Equipamentos': 'Investimentos' };
+    const r = n => ren[n] || n;
+    if (cfg.categorias && cfg.categorias.PJ) {
+      cfg.categorias.PJ = cfg.categorias.PJ.map(c => Object.assign({}, c, { nome: r(c.nome),
+        grupo: c.nome === 'Equipamentos' ? 'Cursos e investimentos' : c.grupo }));
+    }
+    if (cfg.palavrasCategoria && cfg.palavrasCategoria.PJ) cfg.palavrasCategoria.PJ = cfg.palavrasCategoria.PJ.map(par => [par[0], r(par[1])]);
+    ((cfg.regrasExtrato || {}).PJ || []).forEach(rg => { rg.categoria = r(rg.categoria); });
+    cfg.caixinhaPorCategoria = cfg.caixinhaPorCategoria || {};
+    cfg.caixinhaPorCategoria.PJ = Object.assign({}, cfg.caixinhaPorCategoria.PJ, { 'Investimentos': 'cursos' });
+    cfg.aliasCategorias = Object.assign({}, FX_MODELO.config.aliasCategorias, cfg.aliasCategorias || {});
+  }
   if (cfg.versao < 3) {
     if (!cfg.nomesProprios) cfg.nomesProprios = FX_MODELO.config.nomesProprios.slice();
     cfg.versao = 3; mudou = true;
   }
+  if (cfg.versao < 4) { cfg.versao = 4; mudou = true; }
   return mudou;
 }
 

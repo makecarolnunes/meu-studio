@@ -12,10 +12,10 @@ const SAIDA_TIPOS_PROF = [
   'Assistente',
   'Cursos',
   'DAS',
-  'Reposição/Investimento de material',
+  'Reposição',            // produtos e materiais do kit (caixinha Reposição)
   'Deslocamento',
   'Alimentação trabalho',
-  'Equipamentos',
+  'Investimentos',        // equipamentos/estrutura (caixinha Cursos e investimentos)
   'Modelos',
   'Assinaturas',
   'Marketing',
@@ -122,7 +122,7 @@ function initF()  {
            forma: 'PIX', status: 'Realizado', origem: 'Produção Social', obs: '', equipe: '' };
 }
 function initFs() {
-    Fs = { dataPag: today(), valor: '', tipo: 'Reposição/Investimento de material',
+    Fs = { dataPag: today(), valor: '', tipo: 'Reposição',
            status: 'Pago', forma: 'PIX', obs: '', recorrencia: 'unica', meses: 2,
            natureza: 'PROFISSIONAL', transferenciaParaMim: false };
 }

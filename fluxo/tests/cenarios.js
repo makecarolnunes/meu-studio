@@ -364,10 +364,10 @@ const ctxM = (mes, hoje) => run(`stCtx(${JSON.stringify(mes)}, ${JSON.stringify(
   titulo('15. Categorias por conta + gasto pessoal pago pela PJ');
   const catPJ = ST.cfg.categorias.PJ.map(c => c.nome);
   igual('PJ só com RAIO X PJ', catPJ.includes('Assistente') || catPJ.includes('Mercado'), false);
-  igual('PJ tem Deslocamento, Reposição, DAS', ['Deslocamento', 'Reposição/Investimento de material', 'DAS'].every(c => catPJ.includes(c)), true);
+  igual('PJ tem Deslocamento, Reposição, DAS', ['Deslocamento', 'Reposição', 'Investimentos', 'DAS'].every(c => catPJ.includes(c)), true);
   const cfgV1 = { versao: 1, categorias: { PJ: [{ nome: 'Assistente', grupo: 'Operação' }, { nome: 'Uniforme', grupo: 'Minhas' }], PF: [] } };
   run('stAtualizarCfg')(cfgV1);
-  igual('config antiga atualizada mantendo a categoria criada por você', [cfgV1.versao, cfgV1.categorias.PJ.some(c => c.nome === 'Assistente'), cfgV1.categorias.PJ.some(c => c.nome === 'Uniforme')], [3, false, true]);
+  igual('config antiga atualizada mantendo a categoria criada por você', [cfgV1.versao, cfgV1.categorias.PJ.some(c => c.nome === 'Assistente'), cfgV1.categorias.PJ.some(c => c.nome === 'Uniforme')], [4, false, true]);
   const gastosPJantes = FX.resumo('PJ', ctxM('2027-01', '2027-01-31')).gastos;
   const gastosPFantes = FX.resumo('PF', ctxM('2027-01', '2027-01-31')).gastos;
   const pjAntesP = saldo(pjC, '2027-01-31');
@@ -401,6 +401,22 @@ const ctxM = (mes, hoje) => run(`stCtx(${JSON.stringify(mes)}, ${JSON.stringify(
   const extra = DBT.saidas.find(s => s.tipo === 'Pró-labore' && s.dataPag === '2027-01-28');
   igual('extra não é ligado a nenhum item', run('stMovs()').find(m => m.id === extra.id).planoItemId, null);
   igual('extra não é despesa da empresa', run('stMovs()').find(m => m.id === extra.id).classe, 'prolabore');
+
+  titulo('17. Reposição ≠ Investimentos');
+  const cats17 = ST.cfg.categorias.PJ.map(c => c.nome);
+  igual('sem a categoria combinada antiga', cats17.includes('Reposição/Investimento de material') || cats17.includes('Equipamentos'), false);
+  igual('Reposição → caixinha Reposição', nomeC((FX.caixinhaDaCategoria(ST.contas, 'PJ', 'Reposição', ST.cfg) || {}).id), 'Reposição');
+  igual('Investimentos → caixinha Cursos e investimentos', nomeC((FX.caixinhaDaCategoria(ST.contas, 'PJ', 'Investimentos', ST.cfg) || {}).id), 'Cursos e investimentos');
+  const cfgV3 = { versao: 3, categorias: { PJ: [{ nome: 'Reposição/Investimento de material', grupo: 'Reposição' }, { nome: 'Equipamentos', grupo: 'Cursos e investimentos' }] },
+    palavrasCategoria: { PJ: [['sephora', 'Reposição/Investimento de material']] }, regrasExtrato: { PJ: [{ chave: 'x', categoria: 'Equipamentos' }] } };
+  run('stAtualizarCfg')(cfgV3);
+  igual('config salva renomeada (categorias, palavras, regras)', [cfgV3.categorias.PJ.map(c => c.nome), cfgV3.palavrasCategoria.PJ[0][1], cfgV3.regrasExtrato.PJ[0].categoria],
+    [['Reposição', 'Investimentos'], 'Reposição', 'Investimentos']);
+  DBT.saidas.push({ id: 'velha-rep', dataPag: '2027-01-21', tipo: 'Reposição/Investimento de material', valor: '120', forma: 'PIX', status: 'Pago', natureza: 'PROFISSIONAL' });
+  ST.saidas = await run('DB').saidas.list(); run('stInvalidar()');
+  const mv = run('stMovs()').find(m => m.id === 'velha-rep');
+  igual('lançamento antigo conta como Reposição (sem alterar o registro)', [mv.categoria, nomeC(mv.caixinhaId), DBT.saidas.find(s => s.id === 'velha-rep').tipo],
+    ['Reposição', 'Reposição', 'Reposição/Investimento de material']);
 
   titulo('Rastreabilidade');
   igual('toda escrita gerou log', ST.log.length > 30, true);

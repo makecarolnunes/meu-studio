@@ -347,7 +347,8 @@ function saidaStyle(t) {
         'DAS':                               {bg:'#fce4ec',col:'#880e4f',ico:SVG.bank},
         'Cursos':                            {bg:'#e3f2fd',col:'#0d47a1',ico:SVG.book},
         'Assistente':                        {bg:'#f3e5f5',col:'#6a1b9a',ico:SVG.userSingle},
-        'Reposição/Investimento de material':{bg:'#fff8e1',col:'#f57f17',ico:SVG.bag},
+        'Reposição':                         {bg:'#fff8e1',col:'#f57f17',ico:SVG.bag},
+        'Investimentos':                     {bg:'#e0f2f1',col:'#00695c',ico:SVG.camera},
         'Deslocamento':                      {bg:'#e8eaf6',col:'#283593',ico:SVG.truck},
         'Alimentação trabalho':              {bg:'#fff3e0',col:'#e65100',ico:SVG.coffee},
         'Equipamentos':                      {bg:'#e0f2f1',col:'#00695c',ico:SVG.camera},
@@ -360,6 +361,7 @@ function saidaStyle(t) {
         // Pró-labore lançado pelo fluxo (/fluxo/): saída PJ → entrada PF vinculada
         'Pró-labore':                        {bg:'#efebe9',col:'#5d4037',ico:SVG.userSingle},
         // Tipos legados (retrocompatibilidade)
+        'Reposição/Investimento de material':{bg:'#fff8e1',col:'#f57f17',ico:SVG.bag},   // até 11/2026
         'Curso':                             {bg:'#e3f2fd',col:'#0d47a1',ico:SVG.book},
         'Seguro de Celular':                 {bg:'#e8eaf6',col:'#283593',ico:SVG.phone},
         'Reposição de Material':             {bg:'#fff8e1',col:'#f57f17',ico:SVG.bag},
