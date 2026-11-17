@@ -25,6 +25,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 |--------|---------------------|---------|
 | **Início / Login** | `/` | Auth Supabase + estático |
 | **Financeiro** | `/financeiro/` | Supabase `entries`, `noivas`, `saidas` |
+| **Meu dinheiro** (planejamento PF + PJ) | `/fluxo/` | `fin_*` + lê `entries`/`saidas`/`entradas_pessoal`/`saidas_pessoal` — ver `fluxo/CLAUDE.md` |
 | **Orçamentos** | `/orcamentos/` | Supabase `orcamentos` + Storage `comprovantes` |
 | **Conteúdo** (Quadro Kanban) | `/conteudo/` | Supabase `conteudo_ideas` |
 | **Outros módulos** | `/modulos/` | Lista das rotas fora do menu |
@@ -35,7 +36,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Menu principal enxuto, definido **só** em `shared/js/sidebar.js` (`GROUPS`) — o Hub
 também usa essa sidebar:
-- **Operação:** Orçamentos, Financeiro
+- **Operação:** Orçamentos, Financeiro, Meu dinheiro (`/fluxo/`)
 - **Conteúdo:** Lista de Conteúdos, Instagram
 - **Organização:** Anotações
 
@@ -97,6 +98,8 @@ Lê credenciais de `window.ENV` (definido em `config.js`).
 | `saidas` | `id, data_pag, tipo, valor, forma, status` | Despesas |
 | `orcamentos` | `id, cliente, status, valor_prop, comprovantes (JSONB), equipe, responsavel, repasse, cacheada` | — |
 | `profissionais` | `id, nome, repasse_padrao, ativo` | Minha equipe — quem pode executar um atendimento |
+| `entradas_pessoal` / `saidas_pessoal` | `id, data, valor, categoria, origem, saida_origem_id` | Financeiro PF (login próprio `usuarios_pessoal`). Trigger `sync_saida_pessoal`: saída PJ pessoal → PF (pró-labore) |
+| `fin_contas`, `fin_transferencias`, `fin_planos`, `fin_plano_itens`, `fin_mov_meta`, `fin_dividas`, `fin_conciliacoes`, `fin_log` | — | Fluxo PF + PJ (`sql/fluxo-financeiro.sql`). Ver `fluxo/CLAUDE.md` |
 | **Storage** | bucket `comprovantes` | Público; path: `{orca_id}/{cat}_{ts}.ext` |
 
 RLS ativo em todas as tabelas. `usuarios` não tem política para `anon` — acesso exclusivo via função `SECURITY DEFINER`.
@@ -153,6 +156,14 @@ Níveis disponíveis: `'admin'` (acesso total) · `'view'` (reservado para uso f
 ### Sincronização Financeiro
 - `sbCall({action, table, data|id|field})` — wrapper Supabase
 - `action:'save'` → upsert · `action:'delete'` → delete · `action:'update'` → update parcial
+
+### Fluxo financeiro PF + PJ (`/fluxo/`)
+- Plano (previsto) em `fin_plano_itens`; realizado = movimentações reais ligadas ao item. Nunca "feito" só por data.
+- Aporte/resgate/fatura = `fin_transferencias` — **não é despesa**. Compra no cartão = despesa; fatura = transferência.
+- Pró-labore = saída PJ `tipo 'Pró-labore'` natureza PESSOAL + entrada PF `sync_<id>` (mesmo id do trigger).
+- Saldo só a partir da conciliação (saldo real informado). Nunca semear saldo.
+- `/pessoal/` redireciona para `/fluxo/?ent=PF` (mesmas tabelas e login).
+- Testes: `node fluxo/tests/cenarios.js`.
 
 ### Orçamentos × Financeiro
 - Ao fechar orçamento: `finEntryCreate(entry)` cria entradas direto no Supabase `entries`

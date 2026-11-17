@@ -1,5 +1,5 @@
 // ════════════════════════════════════════════════════════════
-// pessoal/scripts/parser.js — extrato OFX + CSV → transações
+// fluxo/scripts/extrato-parser.js — extrato OFX + CSV → transações (veio do antigo /pessoal/)
 // Saída: { transacoes:[{data,descricao,valor,tipoMov}], banco, periodoIni, periodoFim }
 // (reaproveita a lógica do módulo fiscal da empresa)
 // ════════════════════════════════════════════════════════════

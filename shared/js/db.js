@@ -1173,6 +1173,42 @@ window.DB = {
   },
 
   // ──────────────────────────────────────────────────────────────
+  //  FLUXO — contas, caixinhas, planejamento, transferências,
+  //  dívidas, conciliação e auditoria (PF + PJ). sql/fluxo-financeiro.sql
+  //  CRUD genérico camelCase ↔ snake_case, só para tabelas fin_*.
+  //  NÃO toca nos mapeadores de entries/saidas (Financeiro/Orçamentos).
+  // ──────────────────────────────────────────────────────────────
+  fluxo: {
+    TABELAS: ['fin_contas', 'fin_transferencias', 'fin_planos', 'fin_plano_itens',
+              'fin_dividas', 'fin_conciliacoes', 'fin_mov_meta', 'fin_log'],
+    async list(tabela) {
+      _guard(); _fluxoTabela(tabela);
+      const { data, error } = await _sb.from(tabela).select('*');
+      if (error) throw error;
+      return (data || []).map(_fluxoFromDb);
+    },
+    async upsert(tabela, obj) {
+      _guard(); _fluxoTabela(tabela);
+      const row = _fluxoToDb(obj);
+      const { error } = await _sb.from(tabela).upsert(row, { onConflict: 'id' });
+      if (error) throw error;
+      return row.id;
+    },
+    async upsertMany(tabela, arr) {
+      _guard(); _fluxoTabela(tabela);
+      if (!arr || !arr.length) return 0;
+      const { error } = await _sb.from(tabela).upsert(arr.map(_fluxoToDb), { onConflict: 'id' });
+      if (error) throw error;
+      return arr.length;
+    },
+    async remove(tabela, id) {
+      _guard(); _fluxoTabela(tabela);
+      const { error } = await _sb.from(tabela).delete().eq('id', String(id));
+      if (error) throw error;
+    },
+  },
+
+  // ──────────────────────────────────────────────────────────────
   //  PESSOAL — sistema financeiro pessoal (isolado da empresa)
   //  Auth própria (usuarios_pessoal). Tabelas entradas_pessoal /
   //  saidas_pessoal. Sincronização empresa->pessoal via trigger.
@@ -1511,6 +1547,37 @@ function _pessToDb(e) {
     origem:          e.origem || 'manual',
     saida_origem_id: e.saidaOrigemId || null,
   };
+}
+
+// ── Mapeadores genéricos do fluxo (fin_*) ─────────────────────────
+function _fluxoTabela(t) {
+  if (!/^fin_[a-z_]+$/.test(String(t))) throw new Error('Tabela fora do fluxo: ' + t);
+}
+function _fluxoToDb(o) {
+  const row = {};
+  Object.keys(o || {}).forEach(k => {
+    if (k.charAt(0) === '_') return;                       // campos derivados (só memória)
+    const col = k.replace(/[A-Z]/g, c => '_' + c.toLowerCase());
+    let v = o[k];
+    if (v === undefined) return;
+    // datas vazias → null (Postgres rejeita '' em DATE)
+    if (v === '' && (/^data(_|$)/.test(col) || /_data$/.test(col))) v = null;
+    row[col] = v;
+  });
+  if (row.id != null) row.id = String(row.id);
+  return row;
+}
+function _fluxoFromDb(r) {
+  const o = {};
+  Object.keys(r || {}).forEach(col => {
+    const k = col.replace(/_([a-z])/g, (_, c) => c.toUpperCase());
+    let v = r[col];
+    // NUMERIC pode vir como string em alguns drivers
+    if (typeof v === 'string' && /^(valor|saldo|diferenca|taxa|total)/i.test(k) && v !== '' && !isNaN(Number(v))) v = Number(v);
+    o[k] = v;
+  });
+  if (o.id != null) o.id = String(o.id);
+  return o;
 }
 
 // ── Mapeadores fiscal_documentos ──────────────────────────────────

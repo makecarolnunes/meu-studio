@@ -357,6 +357,8 @@ function saidaStyle(t) {
         'Equipe':                            {bg:'#fbe9e7',col:'#bf360c',ico:SVG.users},
         'Outro':                             {bg:'#f5f5f5',col:'#424242',ico:SVG.tag},
         'Pessoal':                           {bg:'#efebe9',col:'#5d4037',ico:SVG.tag},
+        // Pró-labore lançado pelo fluxo (/fluxo/): saída PJ → entrada PF vinculada
+        'Pró-labore':                        {bg:'#efebe9',col:'#5d4037',ico:SVG.userSingle},
         // Tipos legados (retrocompatibilidade)
         'Curso':                             {bg:'#e3f2fd',col:'#0d47a1',ico:SVG.book},
         'Seguro de Celular':                 {bg:'#e8eaf6',col:'#283593',ico:SVG.phone},

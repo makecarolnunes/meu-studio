@@ -34,6 +34,8 @@
   else {
     var _mapa = [
       ['financeiro',  '/financeiro'],
+      ['fluxo',       '/fluxo'],
+      ['fluxo',       '/pessoal'],
       ['orcamentos',  '/orcamentos'],
       ['clientes',    '/clientes'],
       ['conteudo',    '/conteudo'],
@@ -57,6 +59,7 @@
   }
   var IC = {
     home: _svg('<path d="M3 10l9-7 9 7v10a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1z"/>'),
+    cal:  _svg('<rect x="3" y="4" width="18" height="17" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/>'),
     fin:  _svg('<line x1="12" y1="2" x2="12" y2="22"/><path d="M17 6H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>'),
     doc:  _svg('<path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z"/><polyline points="14 3 14 8 19 8"/>'),
     cam:  _svg('<rect x="3" y="4" width="7" height="16" rx="1.5"/><rect x="14" y="4" width="7" height="10" rx="1.5"/>'),
@@ -76,6 +79,7 @@
       items: [
         { id: 'orcamentos', label: 'Orçamentos', path: 'orcamentos/orcamentos_novo.html', icon: IC.doc },
         { id: 'financeiro', label: 'Financeiro', path: 'financeiro/',                     icon: IC.fin },
+        { id: 'fluxo',      label: 'Meu dinheiro', path: 'fluxo/',                        icon: IC.cal },
       ]
     },
     {
