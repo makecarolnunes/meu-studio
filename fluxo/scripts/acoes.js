@@ -424,8 +424,18 @@ const AC = (function () {
   async function receberCliente(entryId, d) {
     const e = ST.entries.find(x => String(x.id) === String(entryId));
     if (!e) throw _erro('Recebimento não encontrado.');
-    if (e.status === 'Realizado') throw _erro('Este recebimento já está confirmado.');
     const pago = _valor(d.valor), previsto = r2(num(e.valor)), data = _data(d.data);
+    if (e.status === 'Realizado') {
+      // já estava como recebido: só concilia e acerta a data com a do banco.
+      // Valor diferente fica anotado para conferir no Financeiro (não muda receita).
+      const campos = {};
+      if (e.dataPag !== data) campos.dataPag = data;
+      if (Math.abs(pago - previsto) > FX.EPS)
+        campos.obs = [e.obs, `Extrato: R$ ${pago.toFixed(2)} em ${data.slice(8, 10)}/${data.slice(5, 7)} (lançado R$ ${previsto.toFixed(2)}) — conferir`].filter(Boolean).join(' · ');
+      if (Object.keys(campos).length) await stAtualizarEntry(e.id, campos);
+      await stSalvarMeta('entries', e.id, { contaId: d.contaId || null, conciliado: true, extratoRef: d.extratoRef || null });
+      return e;
+    }
     if (pago < previsto - FX.EPS) {
       const resto = r2(previsto - pago);
       await stAtualizarEntry(e.id, { status: 'Realizado', dataPag: data, valor: pago.toFixed(2),
@@ -516,8 +526,8 @@ const AC = (function () {
       if (ent === 'PJ' && !debito) {
         const cands = FX.candidatosRecebimento(l, stMovs(), rg && rg.decisao === 'cliente' ? rg.cliente : null)
           .filter(c => !reservado.has(c.mov.key));
-        p.candidatos = cands.slice(0, 40).map(c => ({ id: c.mov.id, cliente: c.mov.cliente, tipo: c.mov.tipoEntrada,
-          data: c.mov.data, valor: c.mov.valor }));
+        p.candidatos = cands.map(c => ({ id: c.mov.id, cliente: c.mov.cliente, tipo: c.mov.tipoEntrada,
+          data: c.mov.data, valor: c.mov.valor, recebido: !!c.mov.realizado }));
         const melhor = cands[0];
         if (melhor && melhor.forte) {
           reservado.add(melhor.mov.key);

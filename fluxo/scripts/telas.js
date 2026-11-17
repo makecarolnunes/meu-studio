@@ -526,7 +526,7 @@ function telaExtrato() {
   const cats = categorias(conta.entidade);
   const opcoesDecisao = p => [['conciliar', 'Já lançado — conciliar', !!p.match], ['prolabore', 'Pró-labore (PJ → PF)', (conta.entidade === 'PJ' && p.linha.valor < 0) || (conta.entidade === 'PF' && p.linha.valor > 0)], ['gasto', conta.entidade === 'PJ' ? 'Gasto da empresa' : 'Novo gasto', p.linha.valor < 0],
     ['pessoal', 'Gasto pessoal pago pela PJ', conta.entidade === 'PJ' && p.linha.valor < 0],
-    ['cliente', 'Pagamento de cliente (já previsto)', conta.entidade === 'PJ' && p.linha.valor > 0 && (p.candidatos || []).length],
+    ['cliente', 'Pagamento de cliente (já lançado)', conta.entidade === 'PJ' && p.linha.valor > 0 && (p.candidatos || []).length],
     ['receita', conta.entidade === 'PJ' ? 'Nova receita (não estava prevista)' : 'Nova entrada', p.linha.valor > 0], ['transferencia', 'Transferência interna', true], ['ignorar', 'Ignorar', true]]
     .filter(o => o[2]).map(([v, l]) => `<option value="${v}" ${p.decisao === v ? 'selected' : ''}>${l}</option>`).join('');
   return `<div class="row"><button class="lnk" onclick="UI.extrato=null;render()">‹ Cancelar</button><b>${esc(conta.nome)}</b></div>
@@ -541,9 +541,10 @@ function telaExtrato() {
       ${p.decisao === 'cliente' ? (() => {
         const c = (p.candidatos || []).find(x => String(x.id) === String(p.entryId));
         const dif = c ? FX.r2(Math.abs(p.linha.valor) - c.valor) : 0;
-        return `<select class="fi sm" onchange="UI.extrato.propostas[${k}].entryId=this.value;render()">
-          ${(p.candidatos || []).map(x => `<option value="${esc(x.id)}" ${String(x.id) === String(p.entryId) ? 'selected' : ''}>${esc(x.cliente)} · ${esc(x.tipo)} · ${dm(x.data)} · ${brl(x.valor)}</option>`).join('')}</select>
-        <div class="muted sm">${!c ? '' : Math.abs(dif) < 0.01 ? 'Confirma este recebimento (previsto → realizado), sem criar receita nova.'
+        return `<input class="fi sm" placeholder="Buscar cliente…" value="${esc(p.busca || '')}" oninput="exBuscaCliente(${k}, this.value)">
+        <select class="fi sm" id="ex-cli-${k}" onchange="UI.extrato.propostas[${k}].entryId=this.value;render()">${opcoesCliente(p)}</select>
+        <div class="muted sm">${!c ? '' : c.recebido ? `Já estava como recebido no Financeiro: só será conciliado${Math.abs(dif) >= 0.01 ? ` (valor diferente do lançado, ${brl(c.valor)} — fica anotado para conferir)` : ''}.`
+          : Math.abs(dif) < 0.01 ? 'Confirma este recebimento (previsto → realizado), sem criar receita nova.'
           : dif < 0 ? `Pagamento parcial: ${brl(Math.abs(p.linha.valor))} fica como recebido e ${brl(-dif)} continua previsto.`
           : `Recebeu ${brl(dif)} a mais que o previsto: o recebimento é confirmado com o valor do extrato.`}
           ${p.auto === 'regra' ? ' Pagador reconhecido de antes.' : ''}</div>`; })() : ''}
@@ -561,6 +562,18 @@ function telaExtrato() {
     </div>`).join('')}
     <button class="btn" onclick="acAplicarExtrato()">Aplicar</button>
     <div class="muted sm center">O que você decidir aqui vira regra: na próxima importação essas descrições já vêm preenchidas.</div>`;
+}
+
+// Opções do seletor de recebimentos: filtra pela busca; sem busca mostra os 80 mais prováveis
+function opcoesCliente(p) {
+  const termos = FX.tokensNome(p.busca || '');
+  let lista = (p.candidatos || []);
+  if (termos.length) lista = lista.filter(x => { const n = FX.tokensNome(x.cliente).join(' '); return termos.every(t => n.includes(t)); });
+  const sel = lista.find(x => String(x.id) === String(p.entryId)) || (p.candidatos || []).find(x => String(x.id) === String(p.entryId));
+  const vis = lista.slice(0, termos.length ? 200 : 80);
+  if (sel && !vis.includes(sel)) vis.unshift(sel);
+  return vis.map(x => `<option value="${esc(x.id)}" ${String(x.id) === String(p.entryId) ? 'selected' : ''}>${esc(x.cliente)} · ${esc(x.tipo)} · ${dm(x.data)}/${String(x.data).slice(2, 4)} · ${brl(x.valor)} · ${x.recebido ? 'recebido' : 'previsto'}</option>`).join('')
+    || '<option value="">Nenhum recebimento com esse nome</option>';
 }
 
 // ── DÍVIDAS ──────────────────────────────────────────────

@@ -460,6 +460,19 @@ const ctxM = (mes, hoje) => run(`stCtx(${JSON.stringify(mes)}, ${JSON.stringify(
   p19 = AC.prepararExtrato(pjC.id, [{ data: '2027-03-05', descricao: 'Pix recebido: "Cp :11122233-MARIA SOUZA"', valor: 300 }]);
   igual('próximo Pix da Maria já vem ligado à Ana (pagador aprendido)', [p19[0].decisao, p19[0].entryId === restoAna[0].id, p19[0].auto], ['cliente', true, 'regra']);
 
+  titulo('20. Lista com todos os recebimentos (também os já recebidos)');
+  DBT.entries.push({ id: 'bia2', dataPag: '2027-02-02', dataServ: '2027-02-02', cliente: 'Beatriz Gomes', tipo: 'Pagamento', valor: '480', status: 'Realizado', origem: 'Produção Social' });
+  ST.entries = await run('DB').entries.list(); run('stInvalidar()');
+  let p20 = AC.prepararExtrato(pjC.id, [{ data: '2027-02-20', descricao: 'Pix recebido: "Cp :555-FULANO DE TAL"', valor: 480 }]);
+  const c20 = p20[0].candidatos || [];
+  igual('lista traz previstos e recebidos', [c20.some(c => c.id === 'bia2' && c.recebido), c20.some(c => !c.recebido)], [true, true]);
+  igual('já conciliados não aparecem (evita contar 2x)', c20.some(c => c.id === 'o1r'), false);
+  p20[0].decisao = 'cliente'; p20[0].entryId = 'bia2';
+  const nE20 = DBT.entries.length;
+  await AC.aplicarExtrato(pjC.id, p20);
+  igual('escolher um já recebido só concilia (data do banco, sem receita nova)',
+    [DBT.entries.length - nE20, DBT.entries.find(e => e.id === 'bia2').dataPag, run('stMovs()').find(m => m.id === 'bia2').conciliado], [0, '2027-02-20', true]);
+
   titulo('Rastreabilidade');
   igual('toda escrita gerou log', ST.log.length > 30, true);
 

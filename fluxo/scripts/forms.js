@@ -370,6 +370,15 @@ async function acLerExtrato() {
     fecharModal(); UI.tab = 'ajustes'; render();
   } catch (e) { toast(e.message || 'Erro ao ler o arquivo', true); }
 }
+// Busca na lista de recebimentos sem redesenhar a tela (mantém o foco no campo)
+function exBuscaCliente(k, txt) {
+  const p = UI.extrato.propostas[k];
+  p.busca = txt;
+  const sel = document.getElementById('ex-cli-' + k);
+  if (!sel) return;
+  sel.innerHTML = opcoesCliente(p);
+  if (sel.value && sel.value !== String(p.entryId)) p.entryId = sel.value;
+}
 function exDecisao(k, v) {
   const p = UI.extrato.propostas[k], ent = stConta(UI.extrato.contaId).entidade;
   const de = v === 'pessoal' ? 'PF' : ent;

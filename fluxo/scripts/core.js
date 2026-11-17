@@ -705,12 +705,14 @@ const FX = (function () {
   function tokensNome(t) {
     return semAcento(t).replace(/[^a-z ]/g, ' ').split(/\s+/).filter(w => w.length >= 3 && !NAO_NOME.has(w));
   }
-  // Recebimentos de cliente ainda "Previsto" que podem ser esta entrada do
-  // extrato. Pontua: nome parecido, valor igual, data perto. Melhor primeiro.
+  // Recebimentos de cliente que podem ser esta entrada do extrato: TODOS
+  // (previstos e já marcados como recebidos), menos os já conciliados com
+  // outra linha de extrato. Pontua: nome parecido, valor igual, data perto,
+  // previsto antes de recebido. Melhor primeiro.
   function candidatosRecebimento(linha, movs, clienteRegra) {
     const tl = new Set(tokensNome(linha.descricao));
     const v = Math.abs(linha.valor);
-    return movs.filter(m => m.tabela === 'entries' && !m.realizado && !m.conciliado)
+    return movs.filter(m => m.tabela === 'entries' && !m.conciliado)
       .map(m => {
         const tn = tokensNome(m.cliente || m.descricao);
         const comum = tn.filter(w => tl.has(w)).length;
@@ -718,9 +720,11 @@ const FX = (function () {
         const igual = Math.abs(m.valor - v) < 0.01;
         const dias = Math.abs(difDias(m.data || linha.data, linha.data));
         return { mov: m, comum, regra, igual, dias,
-                 nota: (regra ? 1000 : 0) + comum * 100 + (igual ? 60 : 0) - Math.min(dias, 120) / 4 };
+                 nota: (regra ? 1000 : 0) + comum * 100 + (igual ? 60 : 0) + (m.realizado ? 0 : 30) - Math.min(dias, 365) / 4 };
       })
-      .map(c => Object.assign(c, { forte: c.regra || c.comum > 0 || (c.igual && c.dias <= 90) }))
+      // sugestão automática: previsto com sinal forte; já recebido só se nome E valor batem
+      .map(c => Object.assign(c, { forte: c.mov.realizado ? (c.comum > 0 && c.igual)
+        : (c.regra || c.comum > 0 || (c.igual && c.dias <= 90)) }))
       .sort((a, b) => b.nota - a.nota);
   }
 
