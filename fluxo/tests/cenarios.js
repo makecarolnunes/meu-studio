@@ -367,7 +367,7 @@ const ctxM = (mes, hoje) => run(`stCtx(${JSON.stringify(mes)}, ${JSON.stringify(
   igual('PJ tem Deslocamento, Reposição, DAS', ['Deslocamento', 'Reposição', 'Investimentos', 'DAS'].every(c => catPJ.includes(c)), true);
   const cfgV1 = { versao: 1, categorias: { PJ: [{ nome: 'Assistente', grupo: 'Operação' }, { nome: 'Uniforme', grupo: 'Minhas' }], PF: [] } };
   run('stAtualizarCfg')(cfgV1);
-  igual('config antiga atualizada mantendo a categoria criada por você', [cfgV1.versao, cfgV1.categorias.PJ.some(c => c.nome === 'Assistente'), cfgV1.categorias.PJ.some(c => c.nome === 'Uniforme')], [4, false, true]);
+  igual('config antiga atualizada mantendo a categoria criada por você', [cfgV1.versao, cfgV1.categorias.PJ.some(c => c.nome === 'Assistente'), cfgV1.categorias.PJ.some(c => c.nome === 'Uniforme')], [5, false, true]);
   const gastosPJantes = FX.resumo('PJ', ctxM('2027-01', '2027-01-31')).gastos;
   const gastosPFantes = FX.resumo('PF', ctxM('2027-01', '2027-01-31')).gastos;
   const pjAntesP = saldo(pjC, '2027-01-31');
@@ -417,6 +417,25 @@ const ctxM = (mes, hoje) => run(`stCtx(${JSON.stringify(mes)}, ${JSON.stringify(
   const mv = run('stMovs()').find(m => m.id === 'velha-rep');
   igual('lançamento antigo conta como Reposição (sem alterar o registro)', [mv.categoria, nomeC(mv.caixinhaId), DBT.saidas.find(s => s.id === 'velha-rep').tipo],
     ['Reposição', 'Reposição', 'Reposição/Investimento de material']);
+
+  titulo('18. Pix devolvido (corrida não aceita) é ignorado sozinho');
+  const ex18 = [
+    { data: '2027-02-10', descricao: 'Pix enviado: UBER DO BRASIL', valor: -23.90 },
+    { data: '2027-02-10', descricao: 'Pix recebido: UBER DO BRASIL', valor: 23.90 },
+    { data: '2027-02-11', descricao: 'Pix enviado: 99 TECNOLOGIA', valor: -18.50 },
+    { data: '2027-02-12', descricao: 'Devolução Pix', valor: 18.50 },
+    { data: '2027-02-12', descricao: 'Pix enviado: UBER DO BRASIL', valor: -31.00 },
+    { data: '2027-02-20', descricao: 'Pix recebido: UBER DO BRASIL', valor: 31.00 },
+    { data: '2027-02-13', descricao: 'Pix enviado: UBER DO BRASIL', valor: -27.40 },
+  ];
+  const p18 = AC.prepararExtrato(pjC.id, ex18);
+  igual('mesmo app, mesmo dia, mesmo valor → ignorados', [p18[0].acao, p18[0].decisao, p18[1].acao, p18[1].decisao], ['estorno', 'ignorar', 'estorno', 'ignorar']);
+  igual('"Devolução Pix" no dia seguinte → ignorados', [p18[2].acao, p18[3].acao], ['estorno', 'estorno']);
+  igual('devolução 8 dias depois não é casada (fora do prazo)', [p18[4].acao, p18[5].acao], ['novo', 'novo']);
+  igual('corrida normal continua como gasto de Deslocamento', [p18[6].acao, p18[6].decisao, p18[6].categoria], ['novo', 'gasto', 'Deslocamento']);
+  const nS18 = DBT.saidas.length, nE18 = DBT.entries.length;
+  await AC.aplicarExtrato(pjC.id, p18.filter(p => p.acao === 'estorno'));
+  igual('nada gravado para os pares devolvidos', [DBT.saidas.length - nS18, DBT.entries.length - nE18], [0, 0]);
 
   titulo('Rastreabilidade');
   igual('toda escrita gerou log', ST.log.length > 30, true);

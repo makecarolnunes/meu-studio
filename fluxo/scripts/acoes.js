@@ -461,6 +461,13 @@ const AC = (function () {
     const props = FX.casarExtrato(linhas, contaId, stMovs().filter(m => m.entidade === conta.entidade), cfg)
       .map(p => Object.assign(p, { decisao: p.acao === 'conciliar' ? 'conciliar' : p.acao === 'duplicada' ? 'ignorar' :
         (p.linha.valor < 0 ? 'gasto' : 'receita'), categoria: '', destinoId: '', caixinhaId: '', planoItemId: '', auto: '' }));
+    // Saiu e voltou o mesmo valor (ex.: Pix da corrida devolvido) → ignora os dois
+    const novas = props.map((p, i) => i).filter(i => props[i].acao === 'novo');
+    FX.paresEstorno(novas.map(i => props[i].linha), cfg).forEach(([a, b]) => {
+      const pa = props[novas[a]], pb = props[novas[b]];
+      [pa, pb].forEach((p, k) => Object.assign(p, { acao: 'estorno', decisao: 'ignorar',
+        par: k === 0 ? pb.linha : pa.linha }));
+    });
     _sugerir(conta, props, cfg);
     return props;
   }

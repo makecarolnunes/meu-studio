@@ -668,6 +668,37 @@ const FX = (function () {
     try { if (pt.caixinha && new RegExp(pt.caixinha).test(d)) return 'caixinha'; } catch (_) {}
     return null;
   }
+  // Pares "saiu e voltou" no mesmo extrato: mesmo valor, a entrada até N dias
+  // depois da saída e (palavra de estorno na entrada OU mesmo app/pessoa nas
+  // duas linhas). Devolve [[iSaida, iEntrada], …]. Cada linha entra em 1 par.
+  function paresEstorno(linhas, cfg) {
+    const e = (cfg && cfg.estorno) || {};
+    const dias = e.dias != null ? e.dias : 3;
+    const reEst = e.palavras ? new RegExp(e.palavras) : null;
+    const reApp = e.apps ? new RegExp('\\b(' + e.apps + ')\\b') : null;
+    const usados = new Set(), pares = [];
+    const idx = linhas.map((l, i) => i).sort((a, b) => String(linhas[a].data).localeCompare(String(linhas[b].data)));
+    idx.forEach(i => {
+      const s = linhas[i];
+      if (usados.has(i) || !(s.valor < 0)) return;
+      const ds = semAcento(s.descricao), ks = chaveExtrato(s.descricao);
+      const appS = reApp && (ds.match(reApp) || [])[1];
+      const j = idx.find(j => {
+        const c = linhas[j];
+        if (j === i || usados.has(j) || !(c.valor > 0) || Math.abs(Math.abs(s.valor) - c.valor) > 0.009) return false;
+        const dd = difDias(c.data, s.data);
+        if (dd < 0 || dd > dias) return false;
+        const dc = semAcento(c.descricao);
+        if (reEst && reEst.test(dc)) return true;
+        if (appS && (dc.match(reApp) || [])[1] === appS) return true;
+        const kc = chaveExtrato(c.descricao);
+        return ks.length >= 4 && kc === ks;
+      });
+      if (j != null && j !== undefined) { usados.add(i); usados.add(j); pares.push([i, j]); }
+    });
+    return pares;
+  }
+
   function regraAprendida(desc, ent, cfg) {
     const k = chaveExtrato(desc);
     if (!k) return null;
@@ -742,7 +773,7 @@ const FX = (function () {
     resumo, caixinha, composicao, semanadas, atendimentosPorData, receitaMaquiagem, divida,
     casarExtrato, refExtrato, analiseMes, historico, copiarItens, checarPlano,
     vigente, difMeses, nomeItem, semAcento, grupoDaCategoria, finalidadeDaCategoria, caixinhaDaCategoria,
-    itemCompativel, automatizar, chaveExtrato, sugerirCategoria, tipoInterno, regraAprendida,
+    itemCompativel, automatizar, chaveExtrato, paresEstorno, sugerirCategoria, tipoInterno, regraAprendida,
     resumoDividas, simularDividas,
   };
 })();

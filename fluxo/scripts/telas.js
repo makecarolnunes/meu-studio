@@ -529,11 +529,12 @@ function telaExtrato() {
     ['receita', 'Nova entrada', p.linha.valor > 0], ['transferencia', 'Transferência interna', true], ['ignorar', 'Ignorar', true]]
     .filter(o => o[2]).map(([v, l]) => `<option value="${v}" ${p.decisao === v ? 'selected' : ''}>${l}</option>`).join('');
   return `<div class="row"><button class="lnk" onclick="UI.extrato=null;render()">‹ Cancelar</button><b>${esc(conta.nome)}</b></div>
-    <div class="card sm">${esc(x.info || '')}<br><b>${cont('conciliar')}</b> já lançados (serão só conciliados) · <b>${cont('novo')}</b> novos · <b>${cont('duplicada')}</b> já importados</div>
+    <div class="card sm">${esc(x.info || '')}<br><b>${cont('conciliar')}</b> já lançados (serão só conciliados) · <b>${cont('novo')}</b> novos · <b>${cont('duplicada')}</b> já importados${cont('estorno') ? ` · <b>${cont('estorno')}</b> devolvidos (ignorados)` : ''}</div>
     ${x.propostas.map((p, k) => `<div class="card ex ${p.acao}">
       <div class="row"><span>${dm(p.linha.data)} · ${esc(p.linha.descricao || '(sem descrição)')}</span><b class="${p.linha.valor > 0 ? 'pos' : 'neg'}">${brl(p.linha.valor, true)}</b></div>
       ${p.match ? `<div class="muted sm">≈ ${esc(p.match.descricao || p.match.categoria)} · ${dm(p.match.data)}${p.viraRealizado ? ' · <b>previsto → será confirmado</b>' : ''}</div>` : ''}
       ${p.auto ? `<div class="muted sm">${autoTag({ regra: 'aprendido', plano: 'do plano', palavra: 'pela descrição' }[p.auto])} ${p.planoItemId && stItem(p.planoItemId) ? esc(FX.nomeItem(stItem(p.planoItemId))) : ''}</div>` : ''}
+      ${p.acao === 'estorno' ? `<div class="muted sm">${autoTag('devolvido')} ${p.linha.valor < 0 ? 'Voltou' : 'Devolução do Pix de'} ${brl(Math.abs(p.par.valor))} em ${dm(p.par.data)} — os dois se anulam e serão ignorados.</div>` : ''}
       ${p.acao === 'duplicada' ? '<div class="muted sm">Já importado antes.</div>' : `
       <select class="fi sm" onchange="exDecisao(${k}, this.value)">${opcoesDecisao(p)}</select>
       ${p.decisao === 'prolabore' ? `<select class="fi sm" onchange="UI.extrato.propostas[${k}].planoItemId=this.value">

@@ -155,6 +155,10 @@ function stAtualizarCfg(cfg) {
     cfg.versao = 3; mudou = true;
   }
   if (cfg.versao < 4) { cfg.versao = 4; mudou = true; }
+  if (cfg.versao < 5) {
+    if (!cfg.estorno) cfg.estorno = JSON.parse(JSON.stringify(FX_MODELO.config.estorno));
+    cfg.versao = 5; mudou = true;
+  }
   return mudou;
 }
 

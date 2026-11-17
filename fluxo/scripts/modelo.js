@@ -16,7 +16,10 @@ const FX_MODELO = {
 
   // ── Configuração (vai para configuracoes.chave = 'fluxo_config') ──
   config: {
-    versao: 4,
+    versao: 5,
+    // Pix que sai e volta (corrida não aceita, compra cancelada): os dois se anulam
+    estorno: { dias: 3, palavras: 'estorno|estornad|devolu|devolvid|reembols|cancelad|cancelament|reversao|revertid',
+               apps: 'uber|99|99app|99pop|cabify|indrive|in drive|ifood|rappi' },
     // Seus nomes como aparecem no extrato: Pix PJ → você = pró-labore
     nomesProprios: ['caroline nunes', 'carol nunes', 'caroline dos santos nunes'],
     // Acompanhamento mensal: S1 01–08 · S2 09–15 · S3 16–22 · S4 23–fim do mês
