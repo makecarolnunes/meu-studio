@@ -53,6 +53,10 @@ se a migration não estiver aplicada, o Financeiro e os Orçamentos quebrariam.
 
 ## Auth
 
-Hub (`mk_session`) libera o módulo e a PJ. PF exige o login pessoal antigo
-(`mk_session_pessoal`, RPC `autenticar_pessoal`) — `ST.pfLiberado`.
-Com PF bloqueada, `stMovs()` não inclui nada da PF.
+Hub (`mk_session`) libera o módulo e a PJ. **PF:** usuário com `nivel = admin` no Hub
+(a Carol) entra direto; demais usuários precisam do login pessoal antigo
+(`mk_session_pessoal`, RPC `autenticar_pessoal`). "Sair do pessoal" grava
+`mk_fluxo_pf_bloqueado` para esconder a PF naquele aparelho. Com PF bloqueada,
+`stMovs()` não inclui nada da PF.
+
+Modal não fecha ao tocar fora (só Cancelar/Fechar ou Esc) — toda folha precisa ter botão de fechar.

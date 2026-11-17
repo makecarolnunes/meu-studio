@@ -31,7 +31,10 @@ function boot() {
   const hub = sessaoValida('mk_session');
   if (!hub) { window.location.href = '../'; return; }
   ST.usuario = hub.usuario || '';
-  ST.pfLiberado = !!sessaoValida('mk_session_pessoal');
+  // PF: admin do Início entra direto (a menos que tenha bloqueado neste aparelho);
+  // demais usuários precisam do login pessoal.
+  ST.pfLiberado = !!sessaoValida('mk_session_pessoal') ||
+    (hub.nivel === 'admin' && localStorage.getItem('mk_fluxo_pf_bloqueado') !== '1');
   const qs = new URLSearchParams(location.search);
   if (qs.get('ent') === 'PF' || qs.get('ent') === 'PJ') UI.ent = qs.get('ent');
   if (qs.get('tab')) UI.tab = qs.get('tab');
@@ -43,3 +46,4 @@ function boot() {
 }
 
 document.addEventListener('DOMContentLoaded', boot);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') fecharModal(); });

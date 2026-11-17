@@ -473,11 +473,23 @@ async function verLog() {
     const regs = (await DB.fluxo.list('fin_log')).sort((a, b) => String(b.em).localeCompare(String(a.em))).slice(0, 80);
     document.getElementById('modal-box').innerHTML = `<h2>Histórico de alterações</h2>${regs.map(r => `<div class="kv sm"><span>${esc(String(r.em).slice(0, 16).replace('T', ' '))} · ${esc(r.acao)}</span><b>${esc(r.tabela)}</b></div>`).join('') || vazio('Nada ainda.')}
       <button class="btn ghost" onclick="fecharModal()">Fechar</button>`;
-  } catch (e) { toast('Não foi possível carregar o histórico', true); }
+  } catch (e) { fecharModal(); toast('Não foi possível carregar o histórico', true); }
 }
 
-// ── LOGIN PESSOAL (mesmo usuário do antigo /pessoal/) ─────
-function abrirLoginPF() {
+// ── LOGIN PESSOAL ─────────────────────────────────────────
+// Admin do Início (a Carol) entra direto, sem segunda senha. Outros
+// usuários usam o login pessoal antigo (usuarios_pessoal).
+function hubAdmin() {
+  try { const s = JSON.parse(localStorage.getItem('mk_session') || 'null'); return !!(s && s.nivel === 'admin' && Date.now() < s.expires); }
+  catch (_) { return false; }
+}
+async function abrirLoginPF() {
+  if (hubAdmin()) {
+    localStorage.removeItem('mk_fluxo_pf_bloqueado');
+    ST.pfLiberado = true; fecharModal(); toast('Pessoal liberado');
+    await recarregar();
+    return;
+  }
   abrirModal(`<h2>Financeiro pessoal</h2><p class="muted sm">Acesso privado — mesmo usuário do antigo módulo Pessoal.</p>
     ${campo('Usuário', `<input class="fi" id="lp-user" autocomplete="username" autocapitalize="off" autofocus>`)}
     ${campo('Senha', `<input class="fi" type="password" id="lp-pass" autocomplete="current-password" onkeydown="if(event.key==='Enter')acLoginPF()">`)}
@@ -500,6 +512,7 @@ async function acLoginPF() {
 }
 function sairPF() {
   localStorage.removeItem('mk_session_pessoal');
+  localStorage.setItem('mk_fluxo_pf_bloqueado', '1');   // admin: esconde a PF neste aparelho até "Entrar no pessoal"
   ST.pfLiberado = false; ST.entradasPF = []; ST.saidasPF = []; stInvalidar();
   UI.ent = 'PJ'; render(); toast('Pessoal bloqueado neste aparelho');
 }
