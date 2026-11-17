@@ -341,11 +341,12 @@ function acConciliar(contaId, ajustar) {
 }
 
 // ── EXTRATO ──────────────────────────────────────────────
-function formExtrato() {
+function formExtrato(contaId) {
   const ents = ST.pfLiberado ? ['PF', 'PJ'] : ['PJ'];
+  const sel = contaId || (FX.contaPadrao(ST.contas, UI.ent, 'corrente') || {}).id;
   abrirModal(`<h2>Importar extrato</h2>
     <div class="nota">O que já foi lançado (pelo fluxo, pelo Financeiro ou pelos Orçamentos) é só <b>conciliado</b>. Recebimento de cliente “Previsto” que aparece no extrato vira “Realizado” — sem criar outra receita. Linhas já importadas são ignoradas.</div>
-    ${campo('Conta do extrato', `<select class="fi" id="x-conta">${ents.map(e => `<optgroup label="${e}">${optContas(e, ['corrente', 'cartao', 'caixinha'])}</optgroup>`).join('')}</select>`)}
+    ${campo('Conta do extrato', `<select class="fi" id="x-conta">${ents.map(e => `<optgroup label="${e}">${optContas(e, ['corrente', 'cartao', 'caixinha'], sel)}</optgroup>`).join('')}</select>`)}
     ${campo('Arquivo OFX ou CSV', `<input class="fi" type="file" id="x-arq" accept=".ofx,.csv,.txt">`)}
     ${rodape('acLerExtrato()', 'Ler extrato')}`);
 }

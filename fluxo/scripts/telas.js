@@ -116,7 +116,7 @@ function telaMes() {
   h += `<div class="acoes-rapidas">
     <button class="btn sec" onclick="formGasto()">+ Gasto</button>
     <button class="btn sec" onclick="formTransferencia()">↔ Transferir</button>
-    <button class="btn sec" onclick="go('ajustes');setTimeout(formExtrato,50)">⇪ Extrato</button></div>`;
+    <button class="btn sec" onclick="formExtrato()">⇪ Extrato</button></div>`;
   return h;
 }
 
@@ -262,6 +262,7 @@ function telaMovs() {
   h += `<div class="card"><div class="grid3"><div><span>Entrou</span><b class="pos">${brl(ent$)}</b></div>
     <div><span>Saiu</span><b class="neg">${brl(sai$)}</b></div><div><span>Transferências</span><b>${brl(tr$)}</b></div></div>
     <div class="muted sm">Transferências entre conta e caixinhas não contam como gasto.</div></div>
+    <button class="btn sec" style="margin:0 0 10px" onclick="formExtrato()">⇪ Importar extrato do banco (OFX/CSV)</button>
     <div class="chips">${[['todos', 'Todos'], ['entradas', 'Entradas'], ['saidas', 'Saídas'], ['transf', 'Transferências'],
       ['pendente', 'Previstos'], ['naoconc', 'Não conciliados']].map(([k, l]) =>
       `<button class="${f === k ? 'on' : ''}" onclick="UI.movFiltro='${k}';render()">${l}</button>`).join('')}</div>
@@ -306,12 +307,13 @@ function telaCaixinhas() {
 
   // contas (corrente, espécie, cartões) + conciliação
   h += `<div class="sec-t">Contas</div><div class="card lista">${r.saldos.filter(s => s.conta.tipo !== 'caixinha').map(s => `
-    <div class="ct">
+    <div class="ct conta">
       <div class="it-m"><div class="it-t">${esc(s.conta.nome)}</div>
         <div class="it-s">${s.conferido ? `conferido a partir de ${dm(s.desde)}` : `<span class="neg">saldo real não informado</span> — mostrando só movimentos desde ${dm(s.desde) || 'o início'}`}</div></div>
       <div class="it-v ${s.saldo < 0 ? 'neg' : ''}">${brl(s.saldo)}${s.conta.tipo === 'cartao' && s.saldo < 0 ? '<small>fatura aberta</small>' : ''}</div>
       <div class="ct-b">${s.conta.tipo === 'cartao' && s.saldo < 0 ? `<button class="btn mini" onclick="formFatura('${s.conta.id}')">Pagar</button>` : ''}
-        <button class="btn mini sec" onclick="formConciliar('${s.conta.id}')">Conciliar</button></div>
+        <button class="btn mini sec" onclick="formConciliar('${s.conta.id}')">Conciliar</button>
+        ${s.conta.tipo !== 'especie' ? `<button class="btn mini sec" onclick="formExtrato('${s.conta.id}')">Importar extrato</button>` : ''}</div>
     </div>`).join('')}</div>`;
 
   const cxs = contasDe(ent, ['caixinha']);
