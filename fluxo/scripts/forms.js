@@ -379,6 +379,7 @@ function exDecisao(k, v) {
     p.planoItemId = it ? it.id : '';
   }
   if (v !== 'prolabore' && p.planoItemId && (stItem(p.planoItemId) || {}).tipo === 'prolabore') p.planoItemId = '';
+  if (v === 'cliente' && !p.entryId && (p.candidatos || []).length) p.entryId = p.candidatos[0].id;
   p.decisao = v; render();
 }
 function acAplicarExtrato() {

@@ -437,6 +437,29 @@ const ctxM = (mes, hoje) => run(`stCtx(${JSON.stringify(mes)}, ${JSON.stringify(
   await AC.aplicarExtrato(pjC.id, p18.filter(p => p.acao === 'estorno'));
   igual('nada gravado para os pares devolvidos', [DBT.saidas.length - nS18, DBT.entries.length - nE18], [0, 0]);
 
+  titulo('19. Pagamento de cliente com data/nome diferente do previsto');
+  DBT.entries.push({ id: 'suz', dataPag: '2027-02-28', dataServ: '2027-02-28', cliente: 'Suzana Figueiredo', tipo: 'Pagamento', valor: '405', status: 'Previsto', origem: 'Produção Social', auto: true });
+  DBT.entries.push({ id: 'ana', dataPag: '2027-03-10', dataServ: '2027-03-10', cliente: 'Ana Paula Lima', tipo: 'Pagamento', valor: '600', status: 'Previsto', origem: 'Noiva' });
+  ST.entries = await run('DB').entries.list(); run('stInvalidar()');
+  const nEnt19 = DBT.entries.length;
+  let p19 = AC.prepararExtrato(pjC.id, [
+    { data: '2027-02-14', descricao: 'Pix recebido: "Cp :90400888-SUZANA RODRIGUES FIGUEIREDO"', valor: 405 },
+    { data: '2027-02-15', descricao: 'Pix recebido: "Cp :11122233-MARIA SOUZA"', valor: 300 },
+  ]);
+  igual('Suzana: 14 dias antes, achada pelo nome', [p19[0].decisao, p19[0].entryId, p19[0].auto], ['cliente', 'suz', 'nome']);
+  igual('Maria (mãe) não é reconhecida sozinha, mas a lista oferece o previsto da Ana', [p19[1].decisao, (p19[1].candidatos || []).some(c => c.id === 'ana')], ['receita', true]);
+  p19[1].decisao = 'cliente'; p19[1].entryId = 'ana';
+  await AC.aplicarExtrato(pjC.id, p19);
+  const suz = DBT.entries.find(e => e.id === 'suz');
+  igual('Suzana confirmada na data do Pix, sem receita nova', [suz.status, suz.dataPag], ['Realizado', '2027-02-14']);
+  const ana = DBT.entries.find(e => e.id === 'ana');
+  const restoAna = DBT.entries.filter(e => e.cliente === 'Ana Paula Lima' && e.status === 'Previsto');
+  igual('Ana: parcial — 300 recebido, 300 continua previsto', [ana.status, ana.valor, restoAna.map(e => e.valor)], ['Realizado', '300.00', ['300.00']]);
+  igual('soma do contrato da Ana preservada (600)', DBT.entries.filter(e => e.cliente === 'Ana Paula Lima').reduce((t, e) => t + Number(e.valor), 0), 600);
+  igual('só 1 lançamento novo (o restante da Ana)', DBT.entries.length - nEnt19, 1);
+  p19 = AC.prepararExtrato(pjC.id, [{ data: '2027-03-05', descricao: 'Pix recebido: "Cp :11122233-MARIA SOUZA"', valor: 300 }]);
+  igual('próximo Pix da Maria já vem ligado à Ana (pagador aprendido)', [p19[0].decisao, p19[0].entryId === restoAna[0].id, p19[0].auto], ['cliente', true, 'regra']);
+
   titulo('Rastreabilidade');
   igual('toda escrita gerou log', ST.log.length > 30, true);
 

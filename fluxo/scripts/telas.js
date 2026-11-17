@@ -526,17 +526,27 @@ function telaExtrato() {
   const cats = categorias(conta.entidade);
   const opcoesDecisao = p => [['conciliar', 'Já lançado — conciliar', !!p.match], ['prolabore', 'Pró-labore (PJ → PF)', (conta.entidade === 'PJ' && p.linha.valor < 0) || (conta.entidade === 'PF' && p.linha.valor > 0)], ['gasto', conta.entidade === 'PJ' ? 'Gasto da empresa' : 'Novo gasto', p.linha.valor < 0],
     ['pessoal', 'Gasto pessoal pago pela PJ', conta.entidade === 'PJ' && p.linha.valor < 0],
-    ['receita', 'Nova entrada', p.linha.valor > 0], ['transferencia', 'Transferência interna', true], ['ignorar', 'Ignorar', true]]
+    ['cliente', 'Pagamento de cliente (já previsto)', conta.entidade === 'PJ' && p.linha.valor > 0 && (p.candidatos || []).length],
+    ['receita', conta.entidade === 'PJ' ? 'Nova receita (não estava prevista)' : 'Nova entrada', p.linha.valor > 0], ['transferencia', 'Transferência interna', true], ['ignorar', 'Ignorar', true]]
     .filter(o => o[2]).map(([v, l]) => `<option value="${v}" ${p.decisao === v ? 'selected' : ''}>${l}</option>`).join('');
   return `<div class="row"><button class="lnk" onclick="UI.extrato=null;render()">‹ Cancelar</button><b>${esc(conta.nome)}</b></div>
     <div class="card sm">${esc(x.info || '')}<br><b>${cont('conciliar')}</b> já lançados (serão só conciliados) · <b>${cont('novo')}</b> novos · <b>${cont('duplicada')}</b> já importados${cont('estorno') ? ` · <b>${cont('estorno')}</b> devolvidos (ignorados)` : ''}</div>
     ${x.propostas.map((p, k) => `<div class="card ex ${p.acao}">
       <div class="row"><span>${dm(p.linha.data)} · ${esc(p.linha.descricao || '(sem descrição)')}</span><b class="${p.linha.valor > 0 ? 'pos' : 'neg'}">${brl(p.linha.valor, true)}</b></div>
       ${p.match ? `<div class="muted sm">≈ ${esc(p.match.descricao || p.match.categoria)} · ${dm(p.match.data)}${p.viraRealizado ? ' · <b>previsto → será confirmado</b>' : ''}</div>` : ''}
-      ${p.auto ? `<div class="muted sm">${autoTag({ regra: 'aprendido', plano: 'do plano', palavra: 'pela descrição' }[p.auto])} ${p.planoItemId && stItem(p.planoItemId) ? esc(FX.nomeItem(stItem(p.planoItemId))) : ''}</div>` : ''}
+      ${p.auto ? `<div class="muted sm">${autoTag({ regra: 'aprendido', plano: 'do plano', palavra: 'pela descrição', nome: 'pelo nome', valor: 'pelo valor' }[p.auto])} ${p.planoItemId && stItem(p.planoItemId) ? esc(FX.nomeItem(stItem(p.planoItemId))) : ''}</div>` : ''}
       ${p.acao === 'estorno' ? `<div class="muted sm">${autoTag('devolvido')} ${p.linha.valor < 0 ? 'Voltou' : 'Devolução do Pix de'} ${brl(Math.abs(p.par.valor))} em ${dm(p.par.data)} — os dois se anulam e serão ignorados.</div>` : ''}
       ${p.acao === 'duplicada' ? '<div class="muted sm">Já importado antes.</div>' : `
       <select class="fi sm" onchange="exDecisao(${k}, this.value)">${opcoesDecisao(p)}</select>
+      ${p.decisao === 'cliente' ? (() => {
+        const c = (p.candidatos || []).find(x => String(x.id) === String(p.entryId));
+        const dif = c ? FX.r2(Math.abs(p.linha.valor) - c.valor) : 0;
+        return `<select class="fi sm" onchange="UI.extrato.propostas[${k}].entryId=this.value;render()">
+          ${(p.candidatos || []).map(x => `<option value="${esc(x.id)}" ${String(x.id) === String(p.entryId) ? 'selected' : ''}>${esc(x.cliente)} · ${esc(x.tipo)} · ${dm(x.data)} · ${brl(x.valor)}</option>`).join('')}</select>
+        <div class="muted sm">${!c ? '' : Math.abs(dif) < 0.01 ? 'Confirma este recebimento (previsto → realizado), sem criar receita nova.'
+          : dif < 0 ? `Pagamento parcial: ${brl(Math.abs(p.linha.valor))} fica como recebido e ${brl(-dif)} continua previsto.`
+          : `Recebeu ${brl(dif)} a mais que o previsto: o recebimento é confirmado com o valor do extrato.`}
+          ${p.auto === 'regra' ? ' Pagador reconhecido de antes.' : ''}</div>`; })() : ''}
       ${p.decisao === 'prolabore' ? `<select class="fi sm" onchange="UI.extrato.propostas[${k}].planoItemId=this.value">
           ${AC.itensProlaboreDoMes(FX.mesDe(p.linha.data)).map(i => `<option value="${i.id}" ${p.planoItemId === i.id ? 'selected' : ''}>Conta para: ${esc(FX.nomeItem(i))} — falta ${brl(i._falta)}</option>`).join('')}
           <option value="" ${!p.planoItemId ? 'selected' : ''}>Fora do plano (pró-labore extra)</option></select>

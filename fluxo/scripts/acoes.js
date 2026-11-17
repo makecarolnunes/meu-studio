@@ -418,6 +418,31 @@ const AC = (function () {
     return e;
   }
 
+  // Recebimento de cliente identificado no extrato (valor pode diferir):
+  //  igual  → confirma; parcial → confirma o que entrou e o resto segue Previsto
+  //  (mesma cliente/data, soma do contrato preservada); maior → confirma com o valor recebido.
+  async function receberCliente(entryId, d) {
+    const e = ST.entries.find(x => String(x.id) === String(entryId));
+    if (!e) throw _erro('Recebimento não encontrado.');
+    if (e.status === 'Realizado') throw _erro('Este recebimento já está confirmado.');
+    const pago = _valor(d.valor), previsto = r2(num(e.valor)), data = _data(d.data);
+    if (pago < previsto - FX.EPS) {
+      const resto = r2(previsto - pago);
+      await stAtualizarEntry(e.id, { status: 'Realizado', dataPag: data, valor: pago.toFixed(2),
+        obs: [e.obs, `Pago parcial: R$ ${pago.toFixed(2)} de R$ ${previsto.toFixed(2)}`].filter(Boolean).join(' · ') });
+      await stCriarEntry(Object.assign({}, e, { id: String(Date.now()) + Math.floor(Math.random() * 1000),
+        valor: resto.toFixed(2), status: 'Previsto', valorTotal: '', createdAt: new Date().toISOString(),
+        obs: `Restante após pagamento parcial de R$ ${pago.toFixed(2)} em ${data.slice(8, 10)}/${data.slice(5, 7)}` }));
+    } else if (pago > previsto + FX.EPS) {
+      await stAtualizarEntry(e.id, { status: 'Realizado', dataPag: data, valor: pago.toFixed(2),
+        obs: [e.obs, `Recebido R$ ${pago.toFixed(2)} (previsto R$ ${previsto.toFixed(2)})`].filter(Boolean).join(' · ') });
+    } else {
+      await stAtualizarEntry(e.id, { status: 'Realizado', dataPag: data });
+    }
+    await stSalvarMeta('entries', e.id, { contaId: d.contaId || null, conciliado: !!d.conciliado, extratoRef: d.extratoRef || null });
+    return e;
+  }
+
   // ── CONCILIAÇÃO ──────────────────────────────────────────
   // 1ª vez numa conta: define o saldo de abertura (saldo real informado).
   // Depois: compara e, se você pedir, lança um AJUSTE explícito (fica
@@ -483,11 +508,24 @@ const AC = (function () {
     const tol = cfg.toleranciaDias != null ? cfg.toleranciaDias : 5;
     props.filter(p => p.acao === 'novo').forEach(p => {
       const l = p.linha, v = Math.abs(l.valor), debito = l.valor < 0;
-      const rg = FX.regraAprendida(l.descricao, ent, cfg);
+      let rg = FX.regraAprendida(l.descricao, ent, cfg);
       if (_paraMimMesma(l.descricao, cfg) && ((ent === 'PJ' && debito) || (ent === 'PF' && !debito))) {
         Object.assign(p, { decisao: 'prolabore', planoItemId: _itemProlabore(l.data, v, reservado) || '', auto: 'palavra' });
         return;
       }
+      if (ent === 'PJ' && !debito) {
+        const cands = FX.candidatosRecebimento(l, stMovs(), rg && rg.decisao === 'cliente' ? rg.cliente : null)
+          .filter(c => !reservado.has(c.mov.key));
+        p.candidatos = cands.slice(0, 40).map(c => ({ id: c.mov.id, cliente: c.mov.cliente, tipo: c.mov.tipoEntrada,
+          data: c.mov.data, valor: c.mov.valor }));
+        const melhor = cands[0];
+        if (melhor && melhor.forte) {
+          reservado.add(melhor.mov.key);
+          Object.assign(p, { decisao: 'cliente', entryId: melhor.mov.id, auto: melhor.regra ? 'regra' : melhor.comum ? 'nome' : 'valor' });
+          return;
+        }
+      }
+      if (rg && rg.decisao === 'cliente') rg = null;
       if (rg) {
         Object.assign(p, { decisao: rg.decisao, categoria: rg.categoria || '', caixinhaId: rg.caixinhaId || '', destinoId: rg.destinoId || '', auto: 'regra' });
         if (rg.decisao === 'transferencia' && !p.destinoId) p.decisao = debito ? 'gasto' : 'receita';
@@ -554,11 +592,21 @@ const AC = (function () {
     cfg.regrasExtrato = cfg.regrasExtrato || { PF: [], PJ: [] };
     const lista = cfg.regrasExtrato[ent] = cfg.regrasExtrato[ent] || [];
     let mudou = false;
-    props.filter(p => p.acao === 'novo' && ['gasto', 'receita', 'transferencia', 'pessoal'].includes(p.decisao) && !p.planoItemId).forEach(p => {
+    props.filter(p => p.acao === 'novo' && ['gasto', 'receita', 'transferencia', 'pessoal', 'cliente'].includes(p.decisao) && !p.planoItemId).forEach(p => {
       const chave = FX.chaveExtrato(p.linha.descricao);
       if (!chave || chave.length < 3) return;
-      if (p.decisao !== 'transferencia' && !p.categoria) return;
-      const regra = { chave, decisao: p.decisao, categoria: p.categoria || '', caixinhaId: p.caixinhaId || '', destinoId: p.destinoId || '' };
+      let regra;
+      if (p.decisao === 'cliente') {
+        const e = ST.entries.find(x => String(x.id) === String(p.entryId));
+        if (!e || !e.cliente) return;
+        // só vale aprender quando o nome do Pix NÃO é o da cliente (mãe, noivo, empresa…)
+        const comum = FX.tokensNome(e.cliente).filter(w => FX.tokensNome(p.linha.descricao).includes(w)).length;
+        if (comum > 0) return;
+        regra = { chave, decisao: 'cliente', cliente: e.cliente };
+      } else {
+        if (p.decisao !== 'transferencia' && !p.categoria) return;
+        regra = { chave, decisao: p.decisao, categoria: p.categoria || '', caixinhaId: p.caixinhaId || '', destinoId: p.destinoId || '' };
+      }
       const i = lista.findIndex(r => r.chave === chave);
       if (i >= 0) { if (JSON.stringify(lista[i]) === JSON.stringify(regra)) return; lista[i] = regra; } else lista.unshift(regra);
       mudou = true;
@@ -614,6 +662,10 @@ const AC = (function () {
           categoria: p.categoria || (ent === 'PF' ? 'Outros' : 'Outro'), descricao: l.descricao,
           conciliado: true, extratoRef: ref, origem: 'importacao', resgatar: false });
         res.criados++; continue;
+      }
+      if (p.decisao === 'cliente' && p.entryId) {
+        await receberCliente(p.entryId, { valor, data: l.data, contaId, extratoRef: ref, conciliado: true });
+        res.confirmados++; res.conciliados++; continue;
       }
       if (p.decisao === 'receita') {
         if (ent === 'PF') {
@@ -716,7 +768,7 @@ const AC = (function () {
     await stRemover('fin_transferencias', id);
   }
 
-  return { itensProlaboreDoMes, garantirMeses, executarComoPlanejado, atualizarSaldoDivida, incluirDividaNoPlano, tirarDividaDoPlano,
+  return { receberCliente, itensProlaboreDoMes, garantirMeses, executarComoPlanejado, atualizarSaldoDivida, incluirDividaNoPlano, tirarDividaDoPlano,
     configurarInicial, criarMes, salvarItem, removerItem, dispensarItem, retomarItem, reprogramarItem,
     fecharMes, reabrirMes, transferir, executarAporte, pagarFatura, registrarGasto, pagarItem, pagarProlabore,
     registrarEntradaPF, confirmarRecebimento, conciliar, prepararExtrato, aplicarExtrato,

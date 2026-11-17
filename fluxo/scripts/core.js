@@ -699,6 +699,31 @@ const FX = (function () {
     return pares;
   }
 
+  // Palavras de nome (3+ letras), sem termos de banco
+  const NAO_NOME = new Set(['pix', 'recebido', 'recebida', 'enviado', 'transferencia', 'ted', 'doc', 'ltda', 'mei', 'eireli',
+    'dos', 'das', 'para', 'com', 'cpf', 'cnpj', 'conta', 'pagamento', 'credito', 'deposito']);
+  function tokensNome(t) {
+    return semAcento(t).replace(/[^a-z ]/g, ' ').split(/\s+/).filter(w => w.length >= 3 && !NAO_NOME.has(w));
+  }
+  // Recebimentos de cliente ainda "Previsto" que podem ser esta entrada do
+  // extrato. Pontua: nome parecido, valor igual, data perto. Melhor primeiro.
+  function candidatosRecebimento(linha, movs, clienteRegra) {
+    const tl = new Set(tokensNome(linha.descricao));
+    const v = Math.abs(linha.valor);
+    return movs.filter(m => m.tabela === 'entries' && !m.realizado && !m.conciliado)
+      .map(m => {
+        const tn = tokensNome(m.cliente || m.descricao);
+        const comum = tn.filter(w => tl.has(w)).length;
+        const regra = clienteRegra && semAcento(m.cliente) === semAcento(clienteRegra);
+        const igual = Math.abs(m.valor - v) < 0.01;
+        const dias = Math.abs(difDias(m.data || linha.data, linha.data));
+        return { mov: m, comum, regra, igual, dias,
+                 nota: (regra ? 1000 : 0) + comum * 100 + (igual ? 60 : 0) - Math.min(dias, 120) / 4 };
+      })
+      .map(c => Object.assign(c, { forte: c.regra || c.comum > 0 || (c.igual && c.dias <= 90) }))
+      .sort((a, b) => b.nota - a.nota);
+  }
+
   function regraAprendida(desc, ent, cfg) {
     const k = chaveExtrato(desc);
     if (!k) return null;
@@ -773,7 +798,7 @@ const FX = (function () {
     resumo, caixinha, composicao, semanadas, atendimentosPorData, receitaMaquiagem, divida,
     casarExtrato, refExtrato, analiseMes, historico, copiarItens, checarPlano,
     vigente, difMeses, nomeItem, semAcento, grupoDaCategoria, finalidadeDaCategoria, caixinhaDaCategoria,
-    itemCompativel, automatizar, chaveExtrato, paresEstorno, sugerirCategoria, tipoInterno, regraAprendida,
+    itemCompativel, automatizar, chaveExtrato, paresEstorno, tokensNome, candidatosRecebimento, sugerirCategoria, tipoInterno, regraAprendida,
     resumoDividas, simularDividas,
   };
 })();

@@ -55,6 +55,7 @@ se a migration não estiver aplicada, o Financeiro e os Orçamentos quebrariam.
 18. **Pix PJ → Carol = pró-labore:** descrição com um dos `cfg.nomesProprios` (débito PJ / crédito PF) vira decisão `prolabore`; soma no item de pró-labore pendente mais antigo do mês (parcial até completar) ou fica fora do plano (`plano_item_id = '-'`).
 19. **Reposição ≠ Investimentos:** Reposição → caixinha Reposição; Investimentos e Cursos → caixinha Cursos e investimentos. Nomes antigos do Financeiro são lidos via `cfg.aliasCategorias` (em `FX.automatizar`), sem alterar o registro.
 20. **Saiu e voltou (estorno):** `FX.paresEstorno` casa, só entre linhas novas do mesmo extrato, saída + entrada de mesmo valor em até `cfg.estorno.dias` com palavra de estorno na entrada ou mesmo app/pessoa nas duas (`cfg.estorno.palavras/apps`). Ambas viram `acao:'estorno'` + decisão ignorar (editável). Nada é gravado.
+21. **Pagamento de cliente no extrato:** crédito PJ sem casamento exato → `FX.candidatosRecebimento` (todos os `entries` Previsto, ordenados por nome parecido, valor igual, data). Sugere sozinho só com sinal forte (nome, valor igual em 90 dias ou pagador aprendido). `AC.receberCliente`: igual confirma; parcial confirma o pago e cria Previsto com o resto (soma do contrato preservada); maior confirma com o valor do extrato. Pagador com nome diferente da cliente vira regra `decisao:'cliente'`.
 
 ## Auth
 
