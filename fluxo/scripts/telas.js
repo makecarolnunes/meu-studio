@@ -328,10 +328,10 @@ function telaCaixinhas() {
   const cxs = P.caixinhas.slice().sort((a, b) => (a.caixinha.finalidade === 'semanada' ? -1 : 0) - (b.caixinha.finalidade === 'semanada' ? -1 : 0)
     || (a.caixinha.finalidade === 'reserva' ? 1 : 0) - (b.caixinha.finalidade === 'reserva' ? 1 : 0) || b.meta - a.meta);
   const usado = cxs.reduce((t, c) => t + c.usado, 0);
-  let h = titulo('Caixinhas', 'Meta = quanto planejou reservar no mês. Transferido = quanto já reservou. Falta = meta − transferido. Usado = gastos pagos com a caixinha.\n\nDisponível do mês = transferido − usado neste mês, sem contar o que sobrou de meses anteriores.');
+  let h = titulo('Caixinhas', 'Meta = quanto separar no mês. Guardado = quanto já separou. Falta guardar = meta − guardado.\n\nUsado = gastos pagos com o dinheiro da caixinha. Saldo hoje = o que tem nela agora, com o que sobrou de meses anteriores.');
   h += `<div class="card"><div class="grid4">
       <div><span>Meta do mês</span><b>${brlc(P.reservar.meta)}</b></div>
-      <div><span>Transferido</span><b>${brlc(P.reservar.transferido)}</b></div>
+      <div><span>Guardado</span><b>${brlc(P.reservar.transferido)}</b></div>
       <div><span>Falta</span><b class="${P.reservar.falta > 0.01 ? 't-alerta' : 't-ok'}">${P.reservar.falta > 0.01 ? brlc(P.reservar.falta) : '✓'}</b></div>
       <div><span>Usado</span><b>${brlc(usado)}</b></div></div>
     ${barra(P.reservar.transferido, P.reservar.meta, P.reservar.falta > 0.01 ? 'andamento' : 'ok')}</div>`;
@@ -348,13 +348,15 @@ function cartaoCaixinha(c, P) {
   return `<section class="card cx ${c.estourou ? 'cx-erro' : ''} ${ano ? 'cx-anual' : ''}" id="cx-${cx.id}">
     <div class="cx-h" onclick="toggleAberto('${cx.id}')">
       <div><h3>${esc(cx.nome)}${info(FINALIDADE_LABEL[cx.finalidade] ? 'Para ' + FINALIDADE_LABEL[cx.finalidade] + '.' : '')}</h3></div>
-      <div class="r"><div class="cx-v ${c.disponivelMes < 0 ? 'neg' : ''}">${brl(c.disponivelMes)}</div><div class="muted xs">disponível do mês</div></div>
+      <div class="r">${c.falta > 0.01 ? `<div class="cx-v t-alerta">${brl(c.falta)}</div><div class="muted xs">falta guardar</div>`
+        : c.meta > 0 ? `<div class="cx-v t-ok">✓ ${brl(c.transferido)}</div><div class="muted xs">guardado no mês</div>`
+        : `<div class="cx-v">${brl(c.saldoAtual)}</div><div class="muted xs">saldo hoje</div>`}</div>
     </div>
     <div class="grid4 cx-n">
       <div><span>${ano ? 'Meta do mês' : 'Meta'}</span><b>${brlc(c.meta)}</b></div>
-      <div><span>Transferido</span><b>${brlc(c.transferido)}</b></div>
-      <div><span>Falta</span><b class="${c.falta > 0.01 ? 't-alerta' : c.meta > 0 ? 't-ok' : ''}">${c.falta > 0.01 ? brlc(c.falta) : c.meta > 0 ? '✓' : '—'}</b></div>
+      <div><span>Guardado</span><b>${brlc(c.transferido)}</b></div>
       <div><span>Usado</span><b class="t-${ano ? 'neutro' : nivelUso}">${brlc(c.usado)}</b></div>
+      <div><span>Saldo hoje${c.conferido ? '' : ' <i class="t-alerta" title="não conferido com o banco">*</i>'}</span><b>${brlc(c.saldoAtual)}</b></div>
     </div>
     ${c.meta > 0 ? barra(c.transferido, c.meta, c.falta > 0.01 ? 'andamento' : 'ok') : ''}
     ${c.estourou && !ano ? `<div class="t-erro sm">Usou ${brl(c.acima)} além do planejado para esta caixinha.</div>` : ''}
@@ -366,7 +368,6 @@ function cartaoCaixinha(c, P) {
       <button class="btn mini sec" onclick="formGasto('${cx.entidade}', '${cx.id}')">+ Gasto</button>
       <button class="btn mini sec" onclick="toggleAberto('${cx.id}')">${aberto ? 'Menos' : 'Detalhes'}</button>
     </div>
-    <div class="muted xs cx-saldo">Saldo hoje <b>${brl(c.saldoAtual)}</b>${c.conferido ? '' : ' · <span class="t-alerta">não conferido</span>'}${info('Saldo da caixinha hoje, contando o que sobrou de meses anteriores.')}</div>
   </section>`;
 }
 // Caixinha anual (Sazonais, Cursos e investimentos): o ano ao lado do mês.

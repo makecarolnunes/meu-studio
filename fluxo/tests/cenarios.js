@@ -610,7 +610,7 @@ const ctxM = (mes, hoje) => run(`stCtx(${JSON.stringify(mes)}, ${JSON.stringify(
   igual('Hoje: receber / distribuir / gastar', ['Receber', 'Distribuir', 'Gastar'].every(k => txt.includes(k)), true);
   igual('Hoje: pró-labore com o que falta', /faltam R\$ 3\.555,00/.test(txt), true);
   txt = ver(`UI.tab='caixinhas';render()`);
-  igual('Caixinhas: meta, transferido, falta, usado e disponível', ['Meta', 'Transferido', 'Falta', 'Usado', 'disponível do mês'].every(k => txt.includes(k)), true);
+  igual('Caixinhas: meta, guardado, usado, saldo e o que falta guardar', ['Meta', 'Guardado', 'Usado', 'Saldo hoje', 'falta guardar'].every(k => txt.includes(k)) && !txt.includes('disponível do mês'), true);
   igual('Caixinhas: semanada mostra a semana atual com o orçamento', txt.includes(`gasto ${run(`brlc(${w1.gasto})`)} de R$ 350`) && txt.includes('esta semana'), true);
   txt = ver(`UI.tab='inicio';UI.ent='PJ';render()`);
   igual('Hoje PJ: pró-labore para a conta pessoal com o que falta', /Pró-labore · para a sua conta pessoal[^]*faltam R\$ 3\.555,00/.test(txt), true);

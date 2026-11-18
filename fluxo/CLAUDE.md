@@ -28,7 +28,7 @@ Testes (banco falso em memória, `tests/fake-db.js` — nada vai para o Supabase
 |---|---|
 | `inicio` (Hoje) | semanada da semana (quanto ainda pode gastar) · Próximas ações · Como está o mês (receber, distribuir, gastar) · Dinheiro agora |
 | `plano` | planejado do mês; PF por recebimento (pró-labore 01/15), PJ por semana; modelo |
-| `caixinhas` | meta · transferido · falta · usado · disponível do mês (= transferido − usado) por caixinha; semanada semana a semana |
+| `caixinhas` | destaque = **falta guardar no mês** (ou ✓ guardado no mês; sem meta, saldo hoje); grade meta · guardado · usado · saldo hoje; semanada semana a semana. Não mostrar "disponível do mês" (guardado − usado): confundia a Carol (2026-11-18) |
 | (caixinha anual) | Sazonais e Cursos e investimentos: bloco **No ano** (meta do ano, guardado, usado, ritmo, quanto por mês para fechar o ano) + mês a mês nos Detalhes. `Ajustar meta` → `formMetaAnual` |
 | `movs` / `conciliar` | lançamentos / conferir com o banco (extrato, saldos, gastos sem caixinha, recebimentos vencidos) |
 | `mais`, `dividas`, `analises`, `ajustes` | — |
