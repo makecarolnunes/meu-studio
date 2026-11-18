@@ -722,7 +722,8 @@ function telaAjustes(dentroDoMais) {
     ${itemMenu('Contas e caixinhas', 'Inter PF/PJ, caixinhas, cartões, contas antigas', "UI.aberto.contas=!UI.aberto.contas;render()")}
     ${UI.aberto.contas ? listaContas() : ''}
     ${!dentroDoMais ? itemMenu('Modelo do planejamento', 'Base para criar os próximos meses', "UI.modelo=true;go('plano')") : ''}
-    ${itemMenu('Semanas, categorias e sazonais', 'Datas das semanas, listas de categorias, orçamento anual das sazonais', 'formConfig()')}
+    ${itemMenu('Categorias', 'Criar e organizar as categorias de saídas', 'formCategorias()')}
+    ${itemMenu('Semanas e sazonais', 'Datas das semanas, orçamento anual das sazonais', 'formConfig()')}
     ${itemMenu('Histórico de alterações', 'Tudo o que foi gravado pelo fluxo', 'verLog()')}
     ${ST.pfLiberado ? itemMenu('Sair do pessoal', 'Esconde a PF neste aparelho', 'sairPF()') : itemMenu('Entrar no pessoal', 'Libera a PF', 'abrirLoginPF()')}
   </div>`;

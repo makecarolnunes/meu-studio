@@ -328,7 +328,9 @@ const AC = (function () {
       tabela = 'saidas';
     }
     await stSalvarMeta(tabela, regId, { contaId: conta.id, caixinhaId: caixinhaId || (d.caixinhaId === '-' ? '-' : null),
-      planoItemId: planoItemId || (d.planoItemId === '-' ? '-' : null),
+      // item escolhido pela categoria não é gravado: a ligação automática
+      // (autoVinculo) refaz e não fecha a conta antes da hora
+      planoItemId: d.planoItemId || null,
       dividaId, conciliado: !!d.conciliado, extratoRef: d.extratoRef || null });
     let resgate = null;
     if (caixinhaId && caixinhaId !== conta.id && conta.tipo !== 'cartao' && d.resgatar !== false) {
@@ -360,10 +362,32 @@ const AC = (function () {
   async function pagarItem(itemId, d) {
     const it = stItem(itemId);
     if (!it || it.tipo !== 'pagamento') throw _erro('Item de pagamento não encontrado.');
-    return registrarGasto({ entidade: it.entidade, valor: d.valor, data: d.data,
+    // a conta fecha com o valor pago; d.resto = ainda vai pagar a diferença → vira outra conta no mês
+    const falta = r2(num(it.valor) - FX.realizadoDoItem(it, stMovs()).valor);
+    const r = await registrarGasto({ entidade: it.entidade, valor: d.valor, data: d.data,
       contaId: d.contaId || it.contaId || null, caixinhaId: it.caixinhaId || null,
       categoria: it.categoria || it.descricao, descricao: d.descricao || it.descricao,
       planoItemId: it.id, dividaId: it.dividaId || null, resgatar: d.resgatar, forma: d.forma });
+    const resto = r2(falta - _valor(d.valor));
+    if (d.resto && resto > FX.EPS && it.mes !== 'modelo') {
+      await salvarItem({ mes: it.mes, entidade: it.entidade, tipo: 'pagamento', dia: it.dia, avulso: true,
+        descricao: `${it.descricao.replace(/ \(resto\)$/, '')} (resto)`, valor: resto, contaId: it.contaId || null,
+        caixinhaId: it.caixinhaId || null, categoria: it.categoria || '', dividaId: it.dividaId || null });
+    }
+    return r;
+  }
+
+  // Conta fixa nova (ex.: categoria "Cuidados pessoais"): entra no modelo a
+  // partir deste mês e nos meses já criados que estão abertos.
+  async function criarContaFixa(d) {
+    const valor = _valor(d.valor), dia = Number(d.dia) || 10;
+    const mesAtual = FX.mesDe(stHoje());
+    const cx = FX.caixinhaDaCategoria(ST.contas, d.entidade, d.nome, ST.cfg || FX_MODELO.config);
+    const base = { entidade: d.entidade, tipo: 'pagamento', dia, descricao: d.nome, valor, categoria: d.nome, caixinhaId: cx ? cx.id : null };
+    const modelo = await salvarItem(Object.assign({ mes: 'modelo', mesInicio: mesAtual }, base));
+    for (const p of ST.planos.filter(p => p.mes !== 'modelo' && p.mes >= mesAtual && p.status !== 'fechado'))
+      await salvarItem(Object.assign({ mes: p.mes }, base));
+    return modelo;
   }
 
   // ── PRÓ-LABORE: saída PJ + entrada PF vinculadas ─────────
@@ -820,7 +844,7 @@ const AC = (function () {
     configurarInicial, criarMes, salvarItem, removerItem, dispensarItem, retomarItem, reprogramarItem,
     fecharMes, reabrirMes, transferir, executarAporte, pagarFatura, registrarGasto, pagarItem, pagarProlabore,
     registrarEntradaPF, confirmarRecebimento, conciliar, prepararExtrato, aplicarExtrato,
-    salvarConta, salvarDivida, salvarConfig, classificar, excluirTransferencia };
+    salvarConta, salvarDivida, salvarConfig, classificar, excluirTransferencia, criarContaFixa };
 })();
 
 if (typeof module !== 'undefined') module.exports = AC;

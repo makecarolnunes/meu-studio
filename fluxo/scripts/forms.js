@@ -61,8 +61,9 @@ function formExecutar(itemId) {
   } else if (i.tipo === 'pagamento') {
     const contaPadr = cx ? (FX.contaPadrao(ST.contas, i.entidade, 'corrente') || {}).id : (i.contaId || (FX.contaPadrao(ST.contas, i.entidade, 'corrente') || {}).id);
     corpo = campo('Pago com', `<select class="fi" id="ex-conta" onchange="exAtualizaResgate()">${optContas(i.entidade, ['corrente', 'caixinha', 'cartao', 'especie'], contaPadr)}</select>`) +
-      (cx ? `<label class="chk" id="ex-resg-wrap"><input type="checkbox" id="ex-resgatar" checked> Usar a reserva de <b>${esc(cx.nome)}</b>${info('Registra o resgate da caixinha para a conta.')}</label>` : '') +
-      `<div class="nota" id="ex-nota-cartao" style="display:none">No cartão: a despesa entra hoje e a reserva continua na caixinha até você pagar a fatura (Caixinhas › cartão › Pagar).</div>`;
+      (cx ? `<label class="chk" id="ex-resg-wrap"><input type="checkbox" id="ex-resgatar" ${FX.saldoConta(cx, stMovs(), stHoje(), ST.cfg || FX_MODELO.config).saldo > 0.01 ? 'checked' : ''}> Usar a reserva de <b>${esc(cx.nome)}</b>${info('Registra o resgate da caixinha para a conta.')}</label>` : '') +
+      `<div class="nota" id="ex-nota-cartao" style="display:none">No cartão: a despesa entra hoje e a reserva continua na caixinha até você pagar a fatura (Caixinhas › cartão › Pagar).</div>` +
+      `<label class="chk"><input type="checkbox" id="ex-resto"> Ainda vou pagar o resto${info('A conta fecha com o valor pago. Marcando, a diferença vira outra conta neste mês.')}</label>`;
   } else if (i.tipo === 'prolabore') {
     corpo = `<div class="nota">Cria a <b>saída PJ</b> (Inter PJ → sua conta pessoal) e a <b>entrada PF</b> vinculada. No Financeiro aparece como saída “Pró-labore” de natureza Pessoal.</div>` +
       campo('Sai da conta PJ', `<select class="fi" id="ex-conta">${optContas('PJ', ['corrente'], i.contaId)}</select>`) +
@@ -97,7 +98,7 @@ function acExecutar(id) {
   const d = { valor: $v('ex-valor'), data: $v('ex-data') };
   executar(async () => {
     if (i.tipo === 'aporte') return AC.executarAporte(id, Object.assign(d, { origemId: $v('ex-origem') }));
-    if (i.tipo === 'pagamento') return AC.pagarItem(id, Object.assign(d, { contaId: $v('ex-conta'), resgatar: document.getElementById('ex-resgatar') ? $v('ex-resgatar') : false }));
+    if (i.tipo === 'pagamento') return AC.pagarItem(id, Object.assign(d, { contaId: $v('ex-conta'), resgatar: document.getElementById('ex-resgatar') ? $v('ex-resgatar') : false, resto: $v('ex-resto') === true }));
     if (i.tipo === 'prolabore') return AC.pagarProlabore(id, Object.assign(d, { contaId: $v('ex-conta'), contaPFId: $v('ex-contapf') }));
     return AC.registrarEntradaPF(Object.assign(d, { contaId: $v('ex-conta'), categoria: $v('ex-cat'), descricao: i.descricao, planoItemId: id }));
   }, 'Registrado ✓');
@@ -546,16 +547,75 @@ function formIncluirDivida(id) {
     ${rodape(`executar(()=>AC.incluirDividaNoPlano('${id}',{valor:$v('id-valor'),dia:$v('id-dia'),mesInicio:$v('id-ini'),meses:$v('id-meses')}),'Dívida incluída no plano')`, 'Incluir no plano')}`);
 }
 
+// ── CATEGORIAS DE SAÍDAS ─────────────────────────────────
+// Lista por grupo; cada categoria pode ter caixinha (ou sair direto da conta).
+// Categoria nova do grupo Fixas pode já entrar no plano como conta do mês.
+function formCategorias(ent) {
+  ent = ent || UI.ent;
+  if (ent === 'PF' && !ST.pfLiberado) ent = 'PJ';
+  const cfg = ST.cfg || FX_MODELO.config, lista = categorias(ent);
+  const grupos = [...new Set(lista.map(c => c.grupo || 'Outras'))];
+  const cxNome = c => { const cx = FX.caixinhaDaCategoria(ST.contas, ent, c.nome, cfg); return cx ? cx.nome : 'direto da conta'; };
+  abrirModal(`<h2>Categorias</h2>
+    ${ST.pfLiberado ? `<div class="seg sub">${['PF', 'PJ'].map(e => `<button class="${e === ent ? 'on' : ''}" onclick="formCategorias('${e}')">${e}</button>`).join('')}</div>` : ''}
+    <button class="btn" onclick="formCategoria('${ent}')">+ Nova categoria</button>
+    ${grupos.map(g => `<div class="sub-t">${esc(g)}</div>${lista.map((c, k) => (c.grupo || 'Outras') !== g ? '' :
+      `<div class="mini-l lnk-l" onclick="formCategoria('${ent}', ${k})"><span>${esc(c.nome)}</span><span class="muted xs">${esc(cxNome(c))}</span><b>›</b></div>`).join('')}`).join('')}
+    <button class="btn ghost" onclick="fecharModal()">Fechar</button>`);
+}
+function formCategoria(ent, idx) {
+  const cfg = ST.cfg || FX_MODELO.config, lista = categorias(ent);
+  const c = idx != null ? lista[idx] : null;
+  const grupos = [...new Set(['Fixas', 'Variáveis', 'Sazonais', ...lista.map(x => x.grupo || 'Outras'), 'Outras'])];
+  const pc = c ? ((cfg.caixinhaPorCategoria || {})[ent] || {})[c.nome] : null;
+  const selCx = pc === '-' ? '-' : pc ? (FX.caixinhaPorFinalidade(ST.contas, ent, pc) || {}).id : '';
+  abrirModal(`<h2>${c ? esc(c.nome) : 'Nova categoria'}</h2>
+    ${c ? '' : campo('Nome', '<input class="fi" id="ct-nome" placeholder="ex.: Cuidados pessoais" autofocus>')}
+    ${campo('Grupo', `<select class="fi" id="ct-grupo" onchange="ctAtualiza()">${grupos.map(g => `<option ${g === (c ? c.grupo || 'Outras' : 'Fixas') ? 'selected' : ''}>${esc(g)}</option>`).join('')}</select>`)}
+    ${campo('Caixinha' + info('Pelo grupo: Fixas → Despesas fixas, e assim por diante. A saída também pode sair direto da conta.'),
+      `<select class="fi" id="ct-cx"><option value="">Pelo grupo</option>${optContas(ent, ['caixinha'], selCx)}<option value="-" ${selCx === '-' ? 'selected' : ''}>Nenhuma (direto da conta)</option></select>`)}
+    ${c ? '' : `<div id="ct-fixa"><div class="sub-t">Conta todo mês${info('Opcional. Entra no plano como conta fixa a partir deste mês. O valor é previsão: pagou outro valor, a conta fecha com o valor pago.')}</div>
+      <div class="two"><div>${campo('Valor previsto', `<div class="vwrap"><span>R$</span><input class="fi" id="ct-valor" inputmode="decimal" placeholder="0,00"></div>`)}</div><div>${campo('Dia', '<input class="fi" type="number" min="1" max="31" id="ct-dia" value="10">')}</div></div></div>`}
+    ${rodape(`acSalvarCategoria('${ent}', ${c ? idx : 'null'})`, 'Salvar', c ? `<button class="btn ghost neg" onclick="acRemoverCategoria('${ent}', ${idx})">Tirar da lista</button>` : '')}`);
+  ctAtualiza();
+}
+function ctAtualiza() {
+  const f = document.getElementById('ct-fixa');
+  if (f && f.style) f.style.display = $v('ct-grupo') === 'Fixas' ? '' : 'none';
+}
+function acSalvarCategoria(ent, idx) {
+  const cfg = JSON.parse(JSON.stringify(ST.cfg || FX_MODELO.config));
+  const lista = cfg.categorias[ent] = cfg.categorias[ent] || [];
+  const atual = idx != null ? lista[idx] : null;
+  const nome = atual ? atual.nome : String($v('ct-nome') || '').trim();
+  if (!nome) return toast('Dê um nome à categoria', true);
+  if (!atual && lista.some(c => FX.semAcento(c.nome) === FX.semAcento(nome))) return toast('Essa categoria já existe', true);
+  const grupo = $v('ct-grupo') || 'Outras', cxId = $v('ct-cx');
+  if (atual) atual.grupo = grupo; else lista.push({ nome, grupo });
+  cfg.caixinhaPorCategoria = cfg.caixinhaPorCategoria || {};
+  const pc = cfg.caixinhaPorCategoria[ent] = cfg.caixinhaPorCategoria[ent] || {};
+  if (cxId === '-') pc[nome] = '-'; else if (cxId) pc[nome] = stConta(cxId).finalidade; else delete pc[nome];
+  const valor = !atual && grupo === 'Fixas' ? FX.parseValor($v('ct-valor') || '') : 0;
+  executar(async () => {
+    await AC.salvarConfig(cfg);
+    if (valor > 0) await AC.criarContaFixa({ entidade: ent, nome, valor, dia: $v('ct-dia') });
+  }, valor > 0 ? 'Categoria criada e incluída no plano' : 'Categoria salva');
+}
+function acRemoverCategoria(ent, idx) {
+  const cfg = JSON.parse(JSON.stringify(ST.cfg || FX_MODELO.config));
+  const c = (cfg.categorias[ent] || [])[idx];
+  if (!c || !confirm(`Tirar "${c.nome}" da lista? Os lançamentos antigos continuam com ela.`)) return;
+  cfg.categorias[ent].splice(idx, 1);
+  executar(() => AC.salvarConfig(cfg), 'Categoria tirada da lista');
+}
+
 function formConfig() {
   const cfg = ST.cfg || FX_MODELO.config;
-  const cats = e => (cfg.categorias[e] || []).map(c => `${c.nome} | ${c.grupo || ''}`).join('\n');
-  abrirModal(`<h2>Semanas, categorias e sazonais</h2>
+  abrirModal(`<h2>Semanas e sazonais</h2>
     <label class="fl">Semanas (dia inicial e final; a última vai até o fim do mês)</label>
     ${cfg.semanas.map((s, k) => `<div class="two"><input class="fi" type="number" id="sw-i${k}" value="${s.ini}" min="1" max="31"><input class="fi" type="number" id="sw-f${k}" value="${s.fim}" min="1" max="31"></div>`).join('')}
     ${campo('Tolerância de datas ao conciliar extrato (dias)', `<input class="fi" type="number" id="cf-tol" value="${cfg.toleranciaDias}">`)}
     ${campo('Seus nomes no extrato (um por linha) — Pix da PJ para você vira pró-labore', `<textarea class="fi" id="cf-nomes" rows="3">${esc((cfg.nomesProprios || []).join('\n'))}</textarea>`)}
-    ${campo('Categorias PF (uma por linha: Nome | Grupo)', `<textarea class="fi" id="cf-pf" rows="6">${esc(cats('PF'))}</textarea>`)}
-    ${campo('Categorias PJ (uma por linha: Nome | Grupo)', `<textarea class="fi" id="cf-pj" rows="6">${esc(cats('PJ'))}</textarea>`)}
     ${campo('Sazonais (uma por linha: Nome | valor anual)', `<textarea class="fi" id="cf-saz" rows="5">${esc((cfg.sazonais || []).map(s => `${s.nome} | ${valIn(s.anual)}`).join('\n'))}</textarea>`)}
     ${rodape('acSalvarConfig()', 'Salvar')}`);
 }
@@ -565,8 +625,6 @@ function acSalvarConfig() {
   cfg.toleranciaDias = Number($v('cf-tol')) || 0;
   cfg.nomesProprios = $v('cf-nomes').split('\n').map(x => x.trim()).filter(Boolean);
   const linhas = id => $v(id).split('\n').map(l => l.split('|').map(x => x.trim())).filter(p => p[0]);
-  cfg.categorias.PF = linhas('cf-pf').map(p => ({ nome: p[0], grupo: p[1] || 'Outras' }));
-  cfg.categorias.PJ = linhas('cf-pj').map(p => ({ nome: p[0], grupo: p[1] || 'Outras' }));
   cfg.sazonais = linhas('cf-saz').map(p => ({ nome: p[0], anual: FX.parseValor(p[1] || '0') || 0 }));
   executar(() => AC.salvarConfig(cfg), 'Configurações salvas');
 }

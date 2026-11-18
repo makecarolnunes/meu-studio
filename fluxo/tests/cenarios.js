@@ -518,9 +518,12 @@ const ctxM = (mes, hoje) => run(`stCtx(${JSON.stringify(mes)}, ${JSON.stringify(
   igual('semanada gasta direto da conta: "Livre no mês" não cai duas vezes', FX.r2(FX.resumo('PF', cA('2027-04-06')).disponivel - livreSem), 0);
   const itParc = itensA('2027-04-06').find(i => i.tipo === 'pagamento' && i.caixinhaId === fixasPF.id && FX.PENDENTE(i._status) && i.valor > 50);
   await AC.pagarItem(itParc.id, { valor: '50', data: '2027-04-06', contaId: pfC.id, resgatar: false });
-  await AC.dispensarItem(itParc.id, 'pago R$ 50, o resto não neste mês');
   const stParc = itensA('2027-04-06').find(i => i.id === itParc.id);
-  igual('"só isso este mês": parcial fechado com o pago, sem pendência', [stParc._status, stParc._realizado, FX.painelMes('PF', cA('2027-04-06')).acoes.some(a => a.item && a.item.id === itParc.id)], ['dispensado', 50, false]);
+  igual('conta paga com valor diferente do previsto fecha com o valor real', [stParc._status, stParc._realizado, FX.painelMes('PF', cA('2027-04-06')).acoes.some(a => a.item && a.item.id === itParc.id)], ['feito', 50, false]);
+  const itR = itensA('2027-04-06').find(i => i.tipo === 'pagamento' && i.caixinhaId === fixasPF.id && FX.PENDENTE(i._status) && i.valor > 20);
+  await AC.pagarItem(itR.id, { valor: '20', data: '2027-04-06', contaId: pfC.id, resgatar: false, resto: true });
+  const resto = itensA('2027-04-06').find(i => i.descricao === itR.descricao + ' (resto)');
+  igual('"ainda falta o resto": fecha a conta e cria o resto pendente', [itensA('2027-04-06').find(i => i.id === itR.id)._status, resto && resto.valor, resto && FX.PENDENTE(resto._status)], ['feito', FX.r2(itR.valor - 20), true]);
 
   titulo('V6. Semanada acima do orçamento');
   await AC.registrarGasto({ entidade: 'PF', valor: '300', data: '2027-04-07', descricao: 'Mercado', categoria: 'Mercado', contaId: pfC.id });
@@ -582,6 +585,17 @@ const ctxM = (mes, hoje) => run(`stCtx(${JSON.stringify(mes)}, ${JSON.stringify(
   ctx.confirm = () => false; ctx.prompt = () => null; ctx.location = { search: '' }; ctx.URLSearchParams = URLSearchParams;
   ['extrato-parser.js', 'ui.js', 'telas.js', 'forms.js'].forEach(f =>
     vm.runInContext(fs.readFileSync(path.join(raiz, f), 'utf8'), ctx, { filename: f }));
+  titulo('Categorias: criar uma fixa nova (Cuidados pessoais)');
+  const cfgCat = JSON.parse(JSON.stringify(ST.cfg));
+  cfgCat.categorias.PF.push({ nome: 'Cuidados pessoais', grupo: 'Fixas' });
+  await AC.salvarConfig(cfgCat);
+  await AC.criarContaFixa({ entidade: 'PF', nome: 'Cuidados pessoais', valor: '120', dia: 12 });
+  const cpModelo = ST.itens.find(i => i.mes === 'modelo' && i.descricao === 'Cuidados pessoais');
+  igual('entra no modelo como conta da caixinha Despesas fixas', [cpModelo && cpModelo.tipo, cpModelo && cpModelo.valor, nomeC(cpModelo && cpModelo.caixinhaId)], ['pagamento', 120, 'Despesas fixas']);
+  igual('aparece na lista de categorias de saída', run("categorias('PF')").some(c => c.nome === 'Cuidados pessoais' && c.grupo === 'Fixas'), true);
+  const mesAberto = ST.planos.filter(p => p.mes !== 'modelo' && p.mes >= FX.mesDe(run('stHoje()')) && p.status !== 'fechado').map(p => p.mes)[0];
+  igual('e nos meses já criados (abertos)', !mesAberto || ST.itens.some(i => i.mes === mesAberto && i.descricao === 'Cuidados pessoais'), true);
+
   titulo("Pagar: ligar o que já foi pago");
   // pago por outro caminho (ex.: Pix pelo extrato): "Pagar" oferece ligar, sem criar outro
   const itTel = itensA('2027-04-06').find(i => i.tipo === 'pagamento' && i.caixinhaId === fixasPF.id && FX.PENDENTE(i._status) && i._realizado === 0);

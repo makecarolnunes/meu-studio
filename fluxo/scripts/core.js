@@ -229,14 +229,20 @@ const FX = (function () {
     const tipoNat = item.tipo === 'aporte' ? ['transferencia'] :
                     item.tipo === 'receita' ? ['entrada'] : ['saida'];
     const ligados = movs.filter(m => m.planoItemId === item.id && m.realizado && tipoNat.includes(m.natureza));
-    return { valor: r2(ligados.reduce((t, m) => t + m.valor, 0)), movs: ligados };
+    // explícito = ligado por você (Pagar, extrato, ligar), não pela categoria
+    const explicito = r2(ligados.filter(m => !m.autoVinculo).reduce((t, m) => t + m.valor, 0));
+    return { valor: r2(ligados.reduce((t, m) => t + m.valor, 0)), movs: ligados, explicito };
   }
 
-  function statusItem(item, real, hoje, mes) {
-    if (item.dispensado) return 'dispensado';
+  function statusItem(item, real, hoje, mes, explicito) {
+    // dispensado depois de pagar uma parte = fechado com o que foi pago
+    if (item.dispensado) return real > EPS ? 'feito' : 'dispensado';
     if (item.reprogramadoPara) return 'reprogramado';
     const valor = num(item.valor);
     if (valor <= EPS || real >= valor - EPS) return 'feito';
+    // Conta: o valor do plano é previsão. Pagou → fecha com o valor real
+    // (o "resto", se houver, vira outra conta — ver AC.pagarItem({ resto })).
+    if (item.tipo === 'pagamento' && (explicito == null ? real : explicito) > EPS) return 'feito';
     const data = dataDoDia(mes, item.dia);
     if (real > EPS) return data < hoje ? 'parcial-atrasado' : 'parcial';
     if (data < hoje) return 'atrasado';
@@ -249,7 +255,7 @@ const FX = (function () {
   function itensDoMes(itens, mes, movs, hoje, cfg) {
     return itens.filter(i => i.mes === mes).map(i => {
       const r = realizadoDoItem(i, movs);
-      const st = statusItem(i, r.valor, hoje, mes);
+      const st = statusItem(i, r.valor, hoje, mes, r.explicito);
       const data = dataDoDia(mes, i.dia);
       const vivo = PENDENTE(st);
       return Object.assign({}, i, {

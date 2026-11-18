@@ -104,7 +104,15 @@ const titulo = t => console.log('\n■ ' + t);
     await b.js(`document.getElementById('modal').dispatchEvent(new MouseEvent('click', { bubbles: true }))`);
     check('detalhe da semana não fecha ao tocar fora', await b.js(`document.getElementById('modal').classList.contains('on')`));
     await tocar('#modal-box .btn.ghost', true);
-    await b.js(`UI.aberto={};go('inicio')`);
+    // categorias: criar "Cuidados pessoais" (fixa) pela tela
+    await b.js(`UI.ent='PF';formCategorias('PF')`); await espera(80);
+    r = await tocar('#modal-box > .btn', true);
+    check('Categorias › "+ Nova categoria" abre o formulário', r.ok && (await b.js(`!!document.getElementById('ct-nome')`)), r.motivo);
+    await b.js(`document.getElementById('ct-nome').value='Cuidados pessoais';document.getElementById('ct-valor').value='120'`);
+    await tocar('#modal-box .btn:not(.ghost)', true); await espera(300);
+    check('categoria nova criada e conta fixa no plano', await b.js(`categorias('PF').some(c => c.nome === 'Cuidados pessoais') && ST.itens.some(i => i.mes === 'modelo' && i.descricao === 'Cuidados pessoais')`));
+    check('categorias: sem rolagem horizontal', await semOverflow());
+    await b.js(`fecharModal();UI.aberto={};go('inicio')`);
     // sub-seções
     await tocar('#tabs button[data-tab="movs"]', true);
     r = await tocar('.seg.sub button:nth-child(2)', true);

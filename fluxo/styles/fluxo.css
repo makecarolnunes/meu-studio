@@ -346,6 +346,7 @@ details.det .lista { padding: 0; }
 textarea.fi { resize: vertical; font-size: 15px; }
 .two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .two .fi { margin-top: 0; }
+.two:has(> .fl) { grid-auto-flow: column; grid-template-rows: auto auto; row-gap: 0; }   /* rótulo em cima do campo, 2 colunas */
 .vwrap { position: relative; }
 .vwrap span { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--text-subtle); font-size: .85rem; }
 .vwrap .fi { padding-left: 34px; }
