@@ -355,7 +355,7 @@ function cartaoCaixinha(c, P) {
     <div class="grid4 cx-n">
       <div><span>${ano ? 'Meta do mês' : 'Meta'}</span><b>${brlc(c.meta)}</b></div>
       <div><span>Guardado</span><b>${brlc(c.transferido)}</b></div>
-      <div><span>Usado</span><b class="t-${ano ? 'neutro' : nivelUso}">${brlc(c.usado)}</b></div>
+      <div><span>Usado</span><b class="${!ano && c.estourou ? 't-erro' : ''}">${brlc(c.usado)}</b></div>
       <div><span>Saldo hoje${c.conferido ? '' : ' <i class="t-alerta" title="não conferido com o banco">*</i>'}</span><b>${brlc(c.saldoAtual)}</b></div>
     </div>
     ${c.meta > 0 ? barra(c.transferido, c.meta, c.falta > 0.01 ? 'andamento' : 'ok') : ''}
