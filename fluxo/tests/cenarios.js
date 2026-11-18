@@ -649,11 +649,12 @@ const ctxM = (mes, hoje) => run(`stCtx(${JSON.stringify(mes)}, ${JSON.stringify(
   igual('ano começando em janeiro', [FX.cicloAno('2027-04', { anoCaixinhas: { mesInicio: 1 } }).inicio, FX.cicloAno('2026-12', { anoCaixinhas: { mesInicio: 1 } }).inicio], ['2027-01', '2026-01']);
   run(`stHoje = () => '2027-04-10'`);
   txt = ver(`UI.tab='caixinhas';UI.ent='PF';UI.mes='2027-04';UI.aberto={'${saz.id}':true};render()`);
-  igual('tela: Sazonais mostra meta do mês e o ano (meta, guardado, usado)', ['Meta do mês', 'No ano', 'Meta do ano', 'Guardado', 'R$ 14.950', 'Para fechar o ano', 'Mês a mês', 'Orçamento do ano por finalidade'].every(k => txt.includes(k)), true);
+  igual('tela: Sazonais mostra meta do mês e o ano (meta, guardado, usado)', ['Meta do mês', 'No ano', 'Meta do ano', 'Guardado', 'R$ 14.950', 'Pode usar', 'p/ fechar', 'Mês a mês', 'Orçamento do ano por finalidade'].every(k => txt.includes(k)), true);
+  igual('tela: sem frases longas (explicação no i)', !/Para fechar o ano|Ainda pode usar|Em média|sem contar o que sobrou/.test(txt) && el('view').innerHTML.includes('class="i-info"'), true);
   txt = ver(`UI.ent='PJ';UI.aberto={};render()`);
   igual('tela: Cursos e investimentos mostra a meta do ano 6.500', txt.includes('No ano') && txt.includes('R$ 6.500'), true);
   run(`formMetaAnual('${cur.id}')`);
-  igual('formulário "Ajustar meta" abre com o valor', el('modal-box').innerHTML.includes('Meta do ano') && el('modal-box').innerHTML.includes('id="ma-valor" inputmode="decimal" placeholder="0,00" value="6500"'), true);
+  igual('formulário "Ajustar meta" abre com o valor', el('modal-box').innerHTML.includes('Meta do ano') && el('modal-box').innerHTML.includes('value="6500"'), true);
   run(`stHoje = _hojeReal`);
   igual('erros de renderização (anual)', erros, 0);
 

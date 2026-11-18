@@ -38,32 +38,31 @@ function avisosGerais() {
   return h;
 }
 const pfTravada = () => UI.ent === 'PF' && !ST.pfLiberado;
-const titulo = (t, sub) => `<div class="tela-t"><h2>${t}</h2>${sub ? `<p>${sub}</p>` : ''}</div>`;
+const titulo = (t, sub) => `<div class="tela-t"><h2>${t}${info(sub)}</h2></div>`;
 
 // ── SETUP ────────────────────────────────────────────────
 function telaSetup() {
   const M = FX_MODELO;
   const n = e => M.contas.filter(c => c.entidade === e).length;
   return `<div class="card">
-    <h2>Configurar a estrutura inicial</h2>
-    <p class="muted">Vou criar a estrutura a partir da planilha da consultoria. Você pode editar tudo depois.</p>
+    <h2>Configurar a estrutura inicial${info('Vou criar a estrutura a partir da planilha da consultoria. Você pode editar tudo depois.')}</h2>
     <ul class="lista-setup">
       <li><b>${n('PF')}</b> contas e caixinhas PF (Inter PF, Semanada, Despesas fixas, Faxineira, Sazonais, Dívidas, cartão de apoio, Nubank/Itaú em desativação)</li>
       <li><b>${n('PJ')}</b> contas e caixinhas PJ (Inter PJ, Semanada, Assinaturas no cartão, Cursos e investimentos, Reposição, MEI, cartão, espécie)</li>
       <li><b>${M.itens.length}</b> itens no modelo de planejamento (pró-labore 01 e 15, semanadas, aportes e a composição das despesas fixas)</li>
       <li><b>${M.dividas.length}</b> dívidas da Tabulação, para você confirmar os saldos</li>
     </ul>
-    <p class="muted"><b>Nenhum saldo é criado.</b> Depois você informa o saldo real de cada conta em Conferir com o banco.</p>
+    <p><b>Nenhum saldo é criado.</b>${info('Depois você informa o saldo real de cada conta em Conferir com o banco.')}</p>
     <label class="fl">Primeiro mês do fluxo</label>
     <input class="fi" type="month" id="setup-mes" value="${UI.mes}">
-    <label class="chk"><input type="checkbox" id="setup-zeradas" checked> As caixinhas são novas e começam zeradas (se alguma já tiver dinheiro, desmarque e informe o saldo depois)</label>
+    <label class="chk"><input type="checkbox" id="setup-zeradas" checked> Caixinhas começam zeradas${info('Se alguma já tiver dinheiro, desmarque e informe o saldo depois.')}</label>
     <button class="btn" onclick="acSetup()">Criar estrutura</button>
   </div>`;
 }
 
 function cartaoPFBloqueado() {
   return `<div class="card pf-lock">
-    <div><b>Financeiro pessoal protegido</b><div class="muted">Entre com o seu usuário pessoal para ver a PF.</div></div>
+    <div><b>PF protegida</b>${info('Entre com o seu usuário pessoal para ver a PF.')}</div>
     <button class="btn sec" onclick="abrirLoginPF()">Entrar</button></div>`;
 }
 
@@ -72,7 +71,7 @@ function telaInicio() {
   if (pfTravada()) return cartaoPFBloqueado() + linkOutraEnt();
   const P = painel();
   let h = '';
-  if (!stPlano(UI.mes)) h += `<div class="aviso">${nomeMes(UI.mes)} ainda não tem planejamento. <button class="lnk" onclick="go('plano')">Criar agora</button></div>`;
+  if (!stPlano(UI.mes)) h += `<div class="aviso">Sem plano em ${nomeMes(UI.mes)}. <button class="lnk" onclick="go('plano')">Criar</button></div>`;
   return h + `<div class="cols">
     <div>${cartaoSemana(P)}${cartaoAcoes(P)}</div>
     <div>${cartaoComoEsta(P)}${cartaoDinheiro(P)}${linkOutraEnt()}</div>
@@ -85,9 +84,8 @@ function cartaoSemana(P) {
   if (!w) {
     const r = P.resumo;
     return `<section class="card hero">
-      <div class="eyebrow">Livre para gastar no mês</div>
-      <div class="hero-v ${r.disponivel < 0 ? 'neg' : ''}">${brl(r.disponivel)}</div>
-      <div class="hero-s">na conta, depois de tudo o que ainda falta pagar e reservar</div></section>`;
+      <div class="eyebrow">Livre para gastar no mês${info('O que fica na conta depois de tudo o que ainda falta pagar e reservar no mês.')}</div>
+      <div class="hero-v ${r.disponivel < 0 ? 'neg' : ''}">${brl(r.disponivel)}</div></section>`;
   }
   const passou = w.acima > FX.EPS;
   const nivel = passou ? 'erro' : (w.orcamento > 0 && w.gasto >= w.orcamento * 0.85 ? 'alerta' : 'ok');
@@ -102,7 +100,7 @@ function cartaoSemana(P) {
     <div class="row sm hero-l"><span>Gasto <b>${brl(w.gasto)}</b> de ${brl(w.orcamento)}</span>
       ${w.faltaReservar > FX.EPS ? `<span class="t-alerta">reservado ${brl(w.reservado)} · falta ${brl(w.faltaReservar)}</span>`
         : w.previsto > 0 ? '<span class="t-ok">✓ reservado</span>' : ''}</div>
-    ${w.gastoSemReserva > FX.EPS && w.faltaReservar > FX.EPS ? `<div class="nota-sm">Você já gastou ${brl(w.gastoSemReserva)} além do que está reservado. Reserve o que falta para a caixinha cobrir esses gastos.</div>` : ''}
+    ${w.gastoSemReserva > FX.EPS && w.faltaReservar > FX.EPS ? `<div class="nota-sm">Gasto sem reserva: <b>${brl(w.gastoSemReserva)}</b>${info('Você já gastou mais do que está reservado na caixinha. Reserve o que falta para ela cobrir esses gastos.')}</div>` : ''}
     <div class="acoes2"><button class="btn sec" onclick="formGasto('${UI.ent}','${cx.id}')">+ Gasto</button>
       ${itemRes ? `<button class="btn sec" onclick="formExecutar('${itemRes.item.id}')">Reservar ${brlc(itemRes.item._falta)}</button>`
         : `<button class="btn sec" onclick="abrirCaixinha('${cx.id}')">Ver semanas</button>`}</div>
@@ -115,7 +113,8 @@ const GRUPO_ACAO = { atencao: 'Passou do orçamento', atrasado: 'Ficou para trá
 const LIMITE_GRUPO = { atencao: 99, atrasado: 3, hoje: 99, semana: 4, mes: 3, conferir: 99 };
 function cartaoAcoes(P) {
   const lista = P.acoes;
-  if (!lista.length) return `<section class="card"><h3>Próximas ações</h3><div class="ok-linha">✓ Nada pendente em ${nomeMes(UI.mes)}.</div></section>`;
+  const iAc = info('Nada é marcado como feito pela data: cada botão registra o que aconteceu de verdade.');
+  if (!lista.length) return `<section class="card"><h3>Próximas ações${iAc}</h3><div class="ok-linha">✓ Nada pendente em ${nomeMes(UI.mes)}.</div></section>`;
   const grupos = {};
   lista.forEach(a => (grupos[a.grupo] = grupos[a.grupo] || []).push(a));
   let h = '';
@@ -133,8 +132,7 @@ function cartaoAcoes(P) {
     </div>`;
   });
   const agora = lista.filter(a => ['atencao', 'atrasado', 'hoje'].includes(a.grupo)).length;
-  return `<section class="card acoes"><div class="row"><h3>Próximas ações</h3>${agora ? `<span class="cnt alerta">${agora} para agora</span>` : ''}</div>${h}
-    <div class="muted xs">Nada é marcado como feito pela data: cada botão registra o que aconteceu de verdade.</div></section>`;
+  return `<section class="card acoes"><div class="row"><h3>Próximas ações${iAc}</h3>${agora ? `<span class="cnt alerta">${agora} para agora</span>` : ''}</div>${h}</section>`;
 }
 function linhaAcao(a) {
   if (a.tipo === 'item') {
@@ -175,7 +173,7 @@ function cartaoComoEsta(P) {
   h += progresso({ rotulo: pf ? 'Receber · pró-labore e entradas' : 'Receber · clientes', feito: P.receber.recebido, total: P.receber.previsto,
     modo: 'meta', verbo: 'recebido',
     extra: [pf && P.receber.foraDoPlano > FX.EPS ? `<span class="muted">+ ${brl(P.receber.foraDoPlano)} fora do plano</span>` : '',
-      !pf && P.receber.vencido > FX.EPS ? `<span class="t-alerta">${brl(P.receber.vencido)} com data vencida, ainda sem confirmar</span>` : ''].join(''),
+      !pf && P.receber.vencido > FX.EPS ? `<span class="t-alerta">${brl(P.receber.vencido)} vencido sem confirmar</span>` : ''].join(''),
     chave: 'pg-rec', rotDetalhe: 'Ver recebimentos',
     detalhe: pf && P.receber.itens.length ? P.receber.itens.map(x => miniLinha(FX.nomeItem(x.item) + ' · dia ' + dm(x.item._data),
       x.recebido, x.previsto, x.falta > FX.EPS ? `falta ${brl(x.falta)}` : '✓', x.falta > FX.EPS ? 'alerta' : 'ok')).join('') : '' });
@@ -188,7 +186,7 @@ function cartaoComoEsta(P) {
     detalhe: P.reservar.caixinhas.map(c => miniLinha(c.caixinha.nome, Math.min(c.transferido, c.meta), c.meta,
       c.falta > FX.EPS ? `falta ${brl(c.falta)}` : '✓', c.falta > FX.EPS ? 'alerta' : 'ok', `abrirCaixinha('${c.caixinha.id}')`)).join('') });
   h += progresso({ rotulo: 'Gastar · gastos do mês', feito: P.gastar.gasto, total: P.gastar.planejado, modo: 'limite', verbo: 'gasto',
-    extra: P.gastar.foraDoPlano > FX.EPS ? `<span class="muted">${brl(P.gastar.foraDoPlano)} fora das caixinhas e do plano</span>` : '' });
+    extra: P.gastar.foraDoPlano > FX.EPS ? `<span class="muted">${brl(P.gastar.foraDoPlano)} fora do plano${info('Gastos sem caixinha e sem item do plano.')}</span>` : '' });
   return h + `</section>`;
 }
 function miniLinha(rot, feito, total, st, nivel, acao) {
@@ -202,9 +200,8 @@ function cartaoDinheiro(P) {
     <div class="row"><h3>Dinheiro agora</h3>${nc ? `<button class="tag-btn alerta" onclick="go('conciliar')">${nc} sem saldo conferido ›</button>` : '<span class="t-ok sm">✓ saldos conferidos</span>'}</div>
     <div class="grid3"><div><span>Na conta</span><b>${brl(r.saldoBancario)}</b></div>
       <div><span>Nas caixinhas</span><b>${brl(r.reservado)}</b></div>
-      <div><span>Livre no mês</span><b class="${r.disponivel < 0 ? 'neg' : ''}">${brl(r.disponivel)}</b></div></div>
-    <div class="muted xs">Livre = na conta − o que ainda falta pagar e reservar neste mês${r.faturaACobrir > FX.EPS ? ' − fatura do cartão sem reserva' : ''}.</div>
-    ${r.disponivel < 0 ? `<div class="t-erro sm" style="margin-top:6px">A conta não cobre o resto do mês (faltam ${brl(-r.disponivel)}). Reprograme algum item no Plano.</div>` : ''}
+      <div><span>Livre no mês${info('Na conta − o que ainda falta pagar e reservar neste mês' + (r.faturaACobrir > FX.EPS ? ' − fatura do cartão sem reserva' : '') + '.')}</span><b class="${r.disponivel < 0 ? 'neg' : ''}">${brl(r.disponivel)}</b></div></div>
+    ${r.disponivel < 0 ? `<div class="t-erro sm" style="margin-top:6px">Faltam ${brl(-r.disponivel)} no mês${info('A conta não cobre o resto do mês. Reprograme algum item no Plano.')}</div>` : ''}
   </section>`;
 }
 function linkOutraEnt() {
@@ -236,8 +233,7 @@ function telaPlano() {
   let h = titulo('Plano do mês', 'O que você planejou receber, reservar e pagar. Cada item só fica ✓ quando você registra o que aconteceu.');
   if (!plano) {
     const temAnt = ST.itens.some(i => i.mes === FX.addMes(UI.mes, -1));
-    return h + `<div class="card"><h3>${nomeMes(UI.mes)} sem planejamento</h3>
-      <p class="muted">O mês é criado como cópia: alterar depois não muda outros meses nem o que já aconteceu.</p>
+    return h + `<div class="card"><h3>${nomeMes(UI.mes)} sem plano${info('O mês é criado como cópia: alterar depois não muda outros meses nem o que já aconteceu.')}</h3>
       <button class="btn" onclick="acCriarMes('modelo')">Criar a partir do modelo</button>
       ${temAnt ? `<button class="btn sec" onclick="acCriarMes('anterior')">Copiar de ${nomeMes(FX.addMes(UI.mes, -1))}</button>` : ''}
       <button class="lnk" onclick="UI.modelo=true;render()">Ver / editar o modelo</button></div>`;
@@ -282,7 +278,7 @@ function telaPlano() {
         ${aps.length && d.recebido > 0 ? `<div class="pad"><button class="btn sec" onclick="acComoPlanejado(${esc(JSON.stringify(aps.map(i => i.id)))})">Fiz as reservas como planejado (${brl(aps.reduce((t, i) => t + i._falta, 0))})</button></div>` : ''}
         <div class="dist-f">
           <div class="kv ${d.sobraPlanejada < 0 ? 'neg' : ''}"><span>Sobra planejada</span><b>${brl(d.sobraPlanejada)}</b></div>
-          ${d.recebido > 0 ? `<div class="kv"><span>Sobra real (recebido − distribuído)</span><b>${brl(d.sobraReal)}</b></div>` : ''}
+          ${d.recebido > 0 ? `<div class="kv"><span>Sobra real${info('Recebido − distribuído.')}</span><b>${brl(d.sobraReal)}</b></div>` : ''}
         </div></section>`;
     });
     const viaCx = im.filter(i => i.entidade === 'PF' && i.tipo === 'pagamento' && i.caixinhaId);
@@ -294,9 +290,9 @@ function telaPlano() {
     const r = P.resumo;
     h += `<div class="card">
       ${progresso({ rotulo: 'Clientes · recebido no mês', feito: P.receber.recebido, total: P.receber.previsto, modo: 'meta', verbo: 'recebido' })}
-      <div class="kv"><span>Ainda a distribuir no mês (pró-labore + reservas + pagamentos)</span><b>${brl(r.compromissosPlano)}</b></div>
+      <div class="kv"><span>A distribuir no mês${info('Pró-labore + reservas + pagamentos que ainda faltam.')}</span><b>${brl(r.compromissosPlano)}</b></div>
       <div class="kv ${r.saldoBancario < r.compromissosPlano ? 'neg' : ''}"><span>Na conta agora</span><b>${brl(r.saldoBancario)}</b></div>
-      ${r.saldoBancario < r.compromissosPlano ? `<div class="muted sm">A conta ainda não cobre todas as distribuições: distribua conforme os recebimentos entram, na ordem das datas.</div>` : ''}</div>`;
+      ${r.saldoBancario < r.compromissosPlano ? `<div class="t-alerta sm">Conta ainda não cobre tudo${info('Distribua conforme os recebimentos entram, na ordem das datas.')}</div>` : ''}</div>`;
     FX.semanas(UI.mes, ctx.cfg).forEach(w => {
       const its = im.filter(i => i._semana === w.n);
       if (!its.length) return;
@@ -316,7 +312,7 @@ function telaModelo() {
       <div class="it-m"><div class="it-t">${esc(FX.nomeItem(i))}</div><div class="it-s">${TIPO_LABEL[i.tipo]}${i.caixinhaId ? ' · ' + esc(nomeConta(i.caixinhaId)) : ''}${i.mesInicio || i.mesFim ? ' · ' + (i.mesInicio ? nomeMesC(i.mesInicio) : '…') + ' → ' + (i.mesFim ? nomeMesC(i.mesFim) : '…') : ''}</div></div>
       <div class="it-r"><b>${brl(i.valor)}</b></div></div>`).join('') || vazio('Sem itens')}</div>`;
   };
-  return `<div class="aviso">Você está editando o <b>modelo</b>. Ele só é usado ao criar meses novos — não altera meses já criados.</div>
+  return `<div class="aviso">Editando o <b>modelo</b>${info('Ele só é usado ao criar meses novos — não altera meses já criados.')}</div>
     <div class="toolbar"><button class="lnk" onclick="UI.modelo=false;render()">‹ Voltar ao mês</button><button class="lnk" onclick="formItem(null)">+ Item no modelo</button></div>
     ${bloco('PJ')}${ST.pfLiberado ? bloco('PF') : cartaoPFBloqueado()}`;
 }
@@ -331,14 +327,13 @@ function telaCaixinhas() {
   const cxs = P.caixinhas.slice().sort((a, b) => (a.caixinha.finalidade === 'semanada' ? -1 : 0) - (b.caixinha.finalidade === 'semanada' ? -1 : 0)
     || (a.caixinha.finalidade === 'reserva' ? 1 : 0) - (b.caixinha.finalidade === 'reserva' ? 1 : 0) || b.meta - a.meta);
   const usado = cxs.reduce((t, c) => t + c.usado, 0);
-  let h = titulo('Caixinhas', 'Quanto planejou reservar, quanto já transferiu, quanto falta e quanto já usou em cada uma.');
+  let h = titulo('Caixinhas', 'Meta = quanto planejou reservar no mês. Transferido = quanto já reservou. Falta = meta − transferido. Usado = gastos pagos com a caixinha.\n\nDisponível do mês = transferido − usado neste mês, sem contar o que sobrou de meses anteriores.');
   h += `<div class="card"><div class="grid4">
       <div><span>Meta do mês</span><b>${brlc(P.reservar.meta)}</b></div>
       <div><span>Transferido</span><b>${brlc(P.reservar.transferido)}</b></div>
       <div><span>Falta</span><b class="${P.reservar.falta > 0.01 ? 't-alerta' : 't-ok'}">${P.reservar.falta > 0.01 ? brlc(P.reservar.falta) : '✓'}</b></div>
       <div><span>Usado</span><b>${brlc(usado)}</b></div></div>
-    ${barra(P.reservar.transferido, P.reservar.meta, P.reservar.falta > 0.01 ? 'andamento' : 'ok')}
-    <div class="muted xs">“Disponível do mês” = transferido − usado neste mês, sem contar o que sobrou de meses anteriores.</div></div>`;
+    ${barra(P.reservar.transferido, P.reservar.meta, P.reservar.falta > 0.01 ? 'andamento' : 'ok')}</div>`;
   h += cxs.length ? `<div class="cx-grid">${cxs.map(c => cartaoCaixinha(c, P)).join('')}</div>` : vazio('Nenhuma caixinha cadastrada (Ajustes › Contas e caixinhas).');
   return h;
 }
@@ -351,7 +346,7 @@ function cartaoCaixinha(c, P) {
   const ano = c.anual;
   return `<section class="card cx ${c.estourou ? 'cx-erro' : ''} ${ano ? 'cx-anual' : ''}" id="cx-${cx.id}">
     <div class="cx-h" onclick="toggleAberto('${cx.id}')">
-      <div><h3>${esc(cx.nome)}</h3><div class="muted xs">${FINALIDADE_LABEL[cx.finalidade] || ''}</div></div>
+      <div><h3>${esc(cx.nome)}${info(FINALIDADE_LABEL[cx.finalidade] ? 'Para ' + FINALIDADE_LABEL[cx.finalidade] + '.' : '')}</h3></div>
       <div class="r"><div class="cx-v ${c.disponivelMes < 0 ? 'neg' : ''}">${brl(c.disponivelMes)}</div><div class="muted xs">disponível do mês</div></div>
     </div>
     <div class="grid4 cx-n">
@@ -370,34 +365,34 @@ function cartaoCaixinha(c, P) {
       <button class="btn mini sec" onclick="formGasto('${cx.entidade}', '${cx.id}')">+ Gasto</button>
       <button class="btn mini sec" onclick="toggleAberto('${cx.id}')">${aberto ? 'Menos' : 'Detalhes'}</button>
     </div>
-    <div class="muted xs cx-saldo">Saldo da caixinha hoje (com meses anteriores): <b>${brl(c.saldoAtual)}</b>${c.conferido ? '' : ' · não conferido'}</div>
+    <div class="muted xs cx-saldo">Saldo hoje <b>${brl(c.saldoAtual)}</b>${c.conferido ? '' : ' · <span class="t-alerta">não conferido</span>'}${info('Saldo da caixinha hoje, contando o que sobrou de meses anteriores.')}</div>
   </section>`;
 }
 // Caixinha anual (Sazonais, Cursos e investimentos): o ano ao lado do mês.
 // A meta mensal é só o ritmo; há meses de guardar/usar mais, menos ou nada.
 function blocoAno(a) {
   const cx = a.caixinha;
-  const ritmo = Math.abs(a.ritmo) < 1
-    ? (a.planejadoAteAgora > 0 ? `<div class="t-ok">Em dia com o que planejou guardar até hoje ✓</div>` : '')
-    : a.ritmo > 0 ? `<div><span class="t-ok">${brlc(a.ritmo)} adiantada</span> em relação ao que planejou guardar até hoje.</div>`
-    : `<div><span class="t-alerta">${brlc(-a.ritmo)} atrás</span> do que planejou guardar até hoje (${brlc(a.planejadoAteAgora)}).</div>`;
-  const fechar = a.faltaGuardar <= 0.01 ? `<div class="t-ok">Meta do ano já guardada ✓</div>`
-    : a.mesesRestantes ? `<div>Para fechar o ano: <b>${brlc(a.sugestaoMes)}/mês</b> ${a.mesesRestantes > 1 ? `nos próximos ${a.mesesRestantes} meses (contando este)` : 'neste último mês'}.</div>` : '';
-  const usar = a.estourou ? `<div class="t-erro">Usou ${brlc(-a.restaGastar)} além da meta do ano.</div>`
-    : `<div>Ainda pode usar <b>${brlc(a.restaGastar)}</b> até ${nomeMesC(a.ciclo.fim)}.</div>`;
+  const ritmo = Math.abs(a.ritmo) < 1 ? (a.planejadoAteAgora > 0 ? '<span class="pill ok">✓ em dia</span>' : '')
+    : a.ritmo > 0 ? `<span class="pill ok">${brlc(a.ritmo)} adiantada</span>`
+    : `<span class="pill alerta">${brlc(-a.ritmo)} atrás</span>`;
+  const fechar = a.faltaGuardar <= 0.01 ? '<span class="pill ok">✓ meta guardada</span>'
+    : a.mesesRestantes ? `<span class="pill">${brlc(a.sugestaoMes)}/mês p/ fechar</span>` : '';
+  const txt = 'O valor do mês é só o ritmo: tem mês de guardar ou usar mais, menos ou nada. O que vale é o ano.'
+    + '\n\nMédia: ' + brlc(a.mediaMes) + '/mês' + (Math.abs(a.somaMetas - a.metaAnual) >= 1 ? ' (o plano mês a mês soma ' + brlc(a.somaMetas) + ')' : '') + '.'
+    + '\nAdiantada / atrás: guardado × o que o plano previa até hoje (' + brlc(a.planejadoAteAgora) + ').'
+    + (a.mesesRestantes ? '\nPara fechar: quanto guardar por mês nos ' + a.mesesRestantes + ' meses que faltam (contando este).' : '')
+    + '\nPode usar: meta do ano − usado.';
   return `<div class="cx-ano" onclick="event.stopPropagation()">
-    <div class="cx-ano-h"><b>No ano</b><span class="muted xs">${nomeMesC(a.ciclo.inicio)} → ${nomeMesC(a.ciclo.fim)}</span>
+    <div class="cx-ano-h"><b>No ano</b><span class="muted xs">${nomeMesC(a.ciclo.inicio)} → ${nomeMesC(a.ciclo.fim)}</span>${info(txt)}
       <button class="lnk sm" onclick="formMetaAnual('${cx.id}')">Ajustar meta</button></div>
-    <div class="grid3">
+    <div class="grid4">
       <div><span>Meta do ano</span><b>${brlc(a.metaAnual)}</b></div>
       <div><span>Guardado</span><b>${brlc(a.guardado)}</b></div>
-      <div><span>Usado</span><b class="${a.estourou ? 't-erro' : ''}">${brlc(a.usado)}</b></div>
+      <div><span>Usado</span><b>${brlc(a.usado)}</b></div>
+      <div><span>Pode usar</span><b class="${a.estourou ? 't-erro' : ''}">${brlc(a.restaGastar)}</b></div>
     </div>
     ${barra(a.guardado, a.metaAnual, a.faltaGuardar <= 0.01 ? 'ok' : 'andamento')}
-    <div class="cx-ano-l">
-      <div class="muted">Em média ${brlc(a.mediaMes)} por mês${Math.abs(a.somaMetas - a.metaAnual) >= 1 ? ` · o plano mês a mês soma ${brlc(a.somaMetas)}` : ''}</div>
-      ${ritmo}${fechar}${usar}
-    </div>
+    ${ritmo || fechar ? `<div class="pills">${ritmo}${fechar}</div>` : ''}
   </div>`;
 }
 function detalheAno(a) {
@@ -409,8 +404,7 @@ function detalheAno(a) {
       <span><small>usado</small>${x.usado ? brlc(x.usado) : x.passado || x.atual ? brlc(0) : '—'}</span>
     </div>`).join('');
   const temModelo = a.meses.some(x => x.fonte === 'modelo');
-  let h = `<div class="sub-t">Mês a mês (${nomeMesC(a.ciclo.inicio)} → ${nomeMesC(a.ciclo.fim)})</div><div class="ano-lista">${linhas}</div>
-    ${temModelo ? '<div class="muted xs">* mês ainda não criado: meta vinda do modelo. Dá para mudar a meta de um mês no Plano daquele mês.</div>' : ''}`;
+  let h = `<div class="sub-t">Mês a mês${temModelo ? info('* = mês ainda não criado: meta vinda do modelo. Para mudar a meta de um mês, edite no Plano daquele mês.') : ''}</div><div class="ano-lista">${linhas}</div>`;
   if (a.categorias.length) {
     const comOrc = a.categorias.some(c => c.anual);
     h += `<div class="sub-t">${comOrc ? 'Orçamento do ano por finalidade' : 'Usado no ano por categoria'}</div>${a.categorias.map(c => {
@@ -482,8 +476,7 @@ function telaMovs() {
   const sai$ = real.filter(m => m.natureza === 'saida' && m.afetaSaldo).reduce((t, m) => t + m.valor, 0);
   const tr$ = real.filter(m => m.natureza === 'transferencia').reduce((t, m) => t + m.valor, 0);
   h += `<div class="card"><div class="grid3"><div><span>Entrou</span><b class="pos">${brl(ent$)}</b></div>
-    <div><span>Saiu</span><b>${brl(sai$)}</b></div><div><span>Entre contas</span><b class="muted">${brl(tr$)}</b></div></div>
-    <div class="muted xs">Aportes, resgates e fatura do cartão são transferências — não contam como gasto.</div></div>
+    <div><span>Saiu</span><b>${brl(sai$)}</b></div><div><span>Entre contas${info('Aportes, resgates e fatura do cartão são transferências — não contam como gasto.')}</span><b class="muted">${brl(tr$)}</b></div></div></div>
     <div class="chips">${[['todos', 'Todos'], ['saidas', 'Saídas'], ['entradas', 'Entradas'], ['transf', 'Transferências'],
       ['pendente', 'Previstos'], ['naoconc', 'Não conferidos']].map(([k, l]) =>
       `<button class="${f === k ? 'on' : ''}" onclick="UI.movFiltro='${k}';render()">${l}</button>`).join('')}</div>`;
@@ -524,10 +517,7 @@ function telaConciliar() {
   let h = segMovs();
   if (pfTravada()) return h + cartaoPFBloqueado();
   const ent = UI.ent, ctx = stCtx(UI.mes), P = painel();
-  h += `<section class="card passos">
-      <div class="passo"><b>1</b><span>Registre no dia a dia (ou não): o plano funciona sem extrato.</span></div>
-      <div class="passo"><b>2</b><span>Importe o extrato — parcial ou do mês inteiro. O que já foi registrado só é conferido, nada é duplicado.</span></div>
-      <div class="passo"><b>3</b><span>Confira o saldo de cada conta com o app do banco.</span></div>
+  h += `<section class="card passos"><h3>Extrato do banco${info('1. Registre no dia a dia (ou não): o plano funciona sem extrato.\n2. Importe o extrato — parcial ou do mês inteiro. O que já foi registrado só é conferido, nada é duplicado.\n3. Confira o saldo de cada conta com o app do banco.')}</h3>
       <button class="btn" onclick="formExtrato()">⇪ Importar extrato (OFX ou CSV)</button>
     </section>`;
 
@@ -542,13 +532,11 @@ function telaConciliar() {
 
   // Para organizar: o que o sistema não conseguiu decidir sozinho
   const semCx = (P.acoes.find(a => a.tipo === 'classificar') || {}).movs || [];
-  if (semCx.length) h += `<div class="sec-t">Gastos sem caixinha <span class="cnt">${semCx.length}</span></div>
-    <div class="muted sm sec-d">Toque para dizer de qual reserva saiu (ou deixe “fora do plano”).</div>
+  if (semCx.length) h += `<div class="sec-t">Gastos sem caixinha <span class="cnt">${semCx.length}</span>${info('Toque para dizer de qual reserva saiu (ou deixe “fora do plano”).')}</div>
     <div class="card lista">${semCx.slice(0, 40).map(linhaMov).join('')}</div>`;
   if (ent === 'PJ') {
     const venc = (P.acoes.find(a => a.tipo === 'clientes') || {}).lista || [];
-    if (venc.length) h += `<div class="sec-t">Recebimentos de clientes sem confirmar <span class="cnt">${venc.length}</span></div>
-      <div class="muted sm sec-d">A data passou e ainda estão como “Previsto”. Confirme só o que entrou de verdade (ou importe o extrato).</div>
+    if (venc.length) h += `<div class="sec-t">Clientes sem confirmar <span class="cnt">${venc.length}</span>${info('A data passou e ainda estão como “Previsto”. Confirme só o que entrou de verdade (ou importe o extrato).')}</div>
       <div class="card lista">${venc.slice(0, 30).map(m => `<div class="ct"><div class="it-m"><div class="it-t">${esc(m.cliente || m.descricao)}</div>
         <div class="it-s">${esc(m.tipoEntrada)} · venceu ${dm(m.data)}${m.dataServ ? ' · atendimento ' + dm(m.dataServ) : ''}</div></div>
         <div class="it-v">${brl(m.valor)}</div><button class="btn mini" onclick="formConfirmar('${m.id}')">Recebi</button></div>`).join('')}</div>`;
@@ -556,8 +544,8 @@ function telaConciliar() {
   const im = FX.itensDoMes(ST.itens, UI.mes, ctx.movs, ctx.hoje, ctx.cfg);
   const dvSemItem = ST.dividas.filter(d => d.entidade === ent && d.ativa !== false && d.situacao === 'no_plano' &&
     stPlano(UI.mes) && !im.some(i => i.dividaId === d.id) && !(d.parcelasRestantes === 0));
-  if (dvSemItem.length) h += `<div class="sec-t">Dívidas no plano sem parcela neste mês</div><div class="card lista">${dvSemItem.map(d =>
-    `<div class="ct" onclick="formDivida('${d.id}')"><div class="it-m"><div class="it-t">${esc(d.nome)}</div><div class="it-s">confira se terminou ou se a vigência precisa ser estendida</div></div></div>`).join('')}</div>`;
+  if (dvSemItem.length) h += `<div class="sec-t">Dívidas sem parcela no mês${info('Estão no plano, mas não têm parcela neste mês. Confira se terminou ou se a vigência precisa ser estendida.')}</div><div class="card lista">${dvSemItem.map(d =>
+    `<div class="ct" onclick="formDivida('${d.id}')"><div class="it-m"><div class="it-t">${esc(d.nome)}</div><div class="it-s">conferir vigência</div></div></div>`).join('')}</div>`;
   const naoConc = ctx.movs.filter(m => m.entidade === ent && FX.mesDe(m.data) === UI.mes && m.realizado && !m.conciliado && m.afetaSaldo).length;
   if (naoConc) h += `<button class="outra" onclick="UI.movFiltro='naoconc';go('movs')"><span>${naoConc} lançamento${naoConc > 1 ? 's' : ''} do mês ainda sem extrato</span><span class="muted">ver ›</span></button>`;
   return h;
@@ -601,31 +589,31 @@ function telaExtrato() {
       <div class="row ex-h"><span>${dm(p.linha.data)} · ${esc(p.linha.descricao || '(sem descrição)')}</span><b class="${p.linha.valor > 0 ? 'pos' : ''}">${brl(p.linha.valor, true)}</b></div>
       ${p.match ? `<div class="muted sm">≈ ${esc(p.match.descricao || p.match.categoria)} · ${dm(p.match.data)}${p.viraRealizado ? ' · <b>previsto → será confirmado</b>' : ''}</div>` : ''}
       ${p.auto ? `<div class="muted sm">${autoTag({ regra: 'aprendido', plano: 'do plano', palavra: 'pela descrição', nome: 'pelo nome', valor: 'pelo valor' }[p.auto])} ${p.planoItemId && stItem(p.planoItemId) ? esc(FX.nomeItem(stItem(p.planoItemId))) : ''}</div>` : ''}
-      ${p.acao === 'estorno' ? `<div class="muted sm">${autoTag('devolvido')} ${p.linha.valor < 0 ? 'Voltou' : 'Devolução do Pix de'} ${brl(Math.abs(p.par.valor))} em ${dm(p.par.data)} — os dois se anulam e serão ignorados.</div>` : ''}
-      ${p.acao === 'duplicada' ? `<div class="muted sm">${p.ignoradaAntes ? 'Você mandou ignorar numa importação anterior.' : 'Já importado antes.'}</div>` : `
+      ${p.acao === 'estorno' ? `<div class="muted sm">${autoTag('devolvido')} ${p.linha.valor < 0 ? 'voltou' : 'devolução de'} ${brl(Math.abs(p.par.valor))} em ${dm(p.par.data)}${info('Os dois se anulam e serão ignorados.')}</div>` : ''}
+      ${p.acao === 'duplicada' ? `<div class="muted sm">${p.ignoradaAntes ? 'ignorado antes' : 'já importado'}</div>` : `
       <select class="fi sm" onchange="exDecisao(${k}, this.value)">${opcoesDecisao(p)}</select>
       ${p.decisao === 'cliente' ? (() => {
         const c = (p.candidatos || []).find(y => String(y.id) === String(p.entryId));
         const dif = c ? FX.r2(Math.abs(p.linha.valor) - c.valor) : 0;
         return `<input class="fi sm" placeholder="Buscar cliente…" value="${esc(p.busca || '')}" oninput="exBuscaCliente(${k}, this.value)">
         <select class="fi sm" id="ex-cli-${k}" onchange="UI.extrato.propostas[${k}].entryId=this.value;render()">${opcoesCliente(p)}</select>
-        <div class="muted sm">${!c ? '' : c.recebido ? `Já estava como recebido no Financeiro: só será conferido${Math.abs(dif) >= 0.01 ? ` (valor diferente do lançado, ${brl(c.valor)} — fica anotado para conferir)` : ''}.`
-          : Math.abs(dif) < 0.01 ? 'Confirma este recebimento (previsto → realizado), sem criar receita nova.'
-          : dif < 0 ? `Pagamento parcial: ${brl(Math.abs(p.linha.valor))} fica como recebido e ${brl(-dif)} continua previsto.`
-          : `Recebeu ${brl(dif)} a mais que o previsto: o recebimento é confirmado com o valor do extrato.`}
-          ${p.auto === 'regra' ? ' Pagador reconhecido de antes.' : ''}</div>`; })() : ''}
+        <div class="muted sm">${!c ? '' : c.recebido ? `só conferir${Math.abs(dif) >= 0.01 ? ' · valor diferente' : ''}${info('Já estava como recebido no Financeiro: só será conferido.' + (Math.abs(dif) >= 0.01 ? ' Valor lançado: ' + brl(c.valor) + ' — fica anotado para conferir.' : ''))}`
+          : Math.abs(dif) < 0.01 ? `confirma recebimento${info('Previsto → realizado, sem criar receita nova.')}`
+          : dif < 0 ? `parcial · falta ${brl(-dif)}${info(brl(Math.abs(p.linha.valor)) + ' fica como recebido e ' + brl(-dif) + ' continua previsto.')}`
+          : `+${brl(dif)} a mais${info('O recebimento é confirmado com o valor do extrato.')}`}
+          ${p.auto === 'regra' ? ' · pagador conhecido' : ''}</div>`; })() : ''}
       ${p.decisao === 'prolabore' ? `<select class="fi sm" onchange="UI.extrato.propostas[${k}].planoItemId=this.value">
           ${AC.itensProlaboreDoMes(FX.mesDe(p.linha.data)).map(i => `<option value="${i.id}" ${p.planoItemId === i.id ? 'selected' : ''}>Conta para: ${esc(FX.nomeItem(i))} — falta ${brl(i._falta)}</option>`).join('')}
           <option value="" ${!p.planoItemId ? 'selected' : ''}>Fora do plano (pró-labore extra)</option></select>
-        <div class="muted sm">Sai da PJ e entra na sua conta pessoal. Não é despesa da empresa. Pagamentos soltos vão somando na parcela até completar.</div>` : ''}
+        <div class="muted sm">PJ → sua conta pessoal${info('Não é despesa da empresa. Pagamentos soltos vão somando na parcela até completar.')}</div>` : ''}
       ${p.decisao === 'pessoal' ? `<select class="fi sm" onchange="UI.extrato.propostas[${k}].categoria=this.value"><option value="">Categoria pessoal…</option>${optCategorias('PF', p.categoria)}</select>
-        <div class="muted sm">Sai da conta PJ, não conta como despesa da empresa e entra no seu pessoal.</div>` : ''}
+        <div class="muted sm">PJ → pessoal${info('Sai da conta PJ, não conta como despesa da empresa e entra no seu pessoal.')}</div>` : ''}
       ${p.decisao === 'gasto' || p.decisao === 'receita' ? `<select class="fi sm" onchange="UI.extrato.propostas[${k}].categoria=this.value">
         ${p.decisao === 'receita' && conta.entidade === 'PF' ? (ST.cfg || FX_MODELO.config).categorias.receitasPF.map(c => `<option ${p.categoria === c ? 'selected' : ''}>${c}</option>`).join('')
           : p.decisao === 'receita' ? '<option>Extrato</option>' : `<option value="">Categoria…</option>${optCategorias(conta.entidade, p.categoria)}`}</select>` : ''}
       ${p.decisao === 'gasto' ? `<select class="fi sm" onchange="UI.extrato.propostas[${k}].caixinhaId=this.value">${optContas(conta.entidade, ['caixinha'], p.caixinhaId, 'Sem caixinha (fora do plano)')}</select>` : ''}
       ${p.decisao === 'transferencia' ? `<select class="fi sm" onchange="UI.extrato.propostas[${k}].destinoId=this.value"><option value="">${p.linha.valor > 0 ? 'Veio de…' : 'Foi para…'}</option>${optContas(conta.entidade, ['caixinha', 'cartao', 'corrente', 'especie'], p.destinoId).replace(`value="${conta.id}"`, `value="${conta.id}" disabled`)}${!ST.contas.some(c => c.entidade === conta.entidade && c.finalidade === 'reserva') ? `<option value="${AC.RESERVA_NOVA}" ${p.destinoId === AC.RESERVA_NOVA ? 'selected' : ''}>Reserva Inter (não distribuída) — será criada</option>` : ''}</select>
-        ${p.interno ? `<div class="muted sm">Entre a conta e as caixinhas do banco: não é gasto nem receita (só mantém o saldo da conta igual ao do banco).</div>` : ''}` : ''}`}
+        ${p.interno ? `<div class="muted sm">movimento interno${info('Entre a conta e as caixinhas do banco: não é gasto nem receita (só mantém o saldo da conta igual ao do banco).')}</div>` : ''}` : ''}`}
     </div>`;
   let h = `<div class="toolbar"><button class="lnk" onclick="UI.extrato=null;render()">‹ Cancelar importação</button><b>${esc(conta.nome)}</b></div>
     <div class="card"><div class="muted sm">${esc(x.info || '')}</div>
@@ -637,11 +625,10 @@ function telaExtrato() {
     const recolhido = ['conciliar', 'estorno', 'duplicada'].includes(g);
     const corpo = idx.map(k => cartao(x.propostas[k], k)).join('');
     h += recolhido
-      ? `<details class="ex-g" ${UI.aberto['ex-' + g] ? 'open' : ''} ontoggle="UI.aberto['ex-${g}']=this.open"><summary class="sec-t">${t} <span class="cnt">${idx.length}</span><span class="muted sm">${d}</span></summary>${corpo}</details>`
-      : `<div class="sec-t">${t} <span class="cnt">${idx.length}</span></div><div class="muted sm sec-d">${d}</div>${corpo}`;
+      ? `<details class="ex-g" ${UI.aberto['ex-' + g] ? 'open' : ''} ontoggle="UI.aberto['ex-${g}']=this.open"><summary class="sec-t">${t} <span class="cnt">${idx.length}</span>${info(d)}</summary>${corpo}</details>`
+      : `<div class="sec-t">${t} <span class="cnt">${idx.length}</span>${info(d)}</div>${corpo}`;
   });
-  return h + `<div class="aplicar"><button class="btn" onclick="acAplicarExtrato()">Aplicar ${x.propostas.length} linhas</button>
-    <div class="muted xs center">O que você decidir vira regra: na próxima importação essas descrições já vêm preenchidas.</div></div>`;
+  return h + `<div class="aplicar"><div class="aplicar-l"><button class="btn" onclick="acAplicarExtrato()">Aplicar ${x.propostas.length} linhas</button>${info('O que você decidir vira regra: na próxima importação essas descrições já vêm preenchidas.')}</div></div>`;
 }
 
 // Opções do seletor de recebimentos: filtra pela busca; sem busca mostra os 80 mais prováveis
@@ -667,15 +654,15 @@ function telaMais() {
   </div>${telaAjustes(true)}`;
 }
 function telaAjustes(dentroDoMais) {
-  return (dentroDoMais ? '<div class="sec-t">Ajustes</div>' : titulo('Ajustes')) + `<div class="card lista">
+  const iAj = 'Modelo inicial: ' + FX_MODELO.fonte + '. Diagnóstico da planilha em fluxo/DIAGNOSTICO.md.';
+  return (dentroDoMais ? `<div class="sec-t">Ajustes${info(iAj)}</div>` : titulo('Ajustes', iAj)) + `<div class="card lista">
     ${itemMenu('Contas e caixinhas', 'Inter PF/PJ, caixinhas, cartões, contas antigas', "UI.aberto.contas=!UI.aberto.contas;render()")}
     ${UI.aberto.contas ? listaContas() : ''}
     ${!dentroDoMais ? itemMenu('Modelo do planejamento', 'Base para criar os próximos meses', "UI.modelo=true;go('plano')") : ''}
     ${itemMenu('Semanas, categorias e sazonais', 'Datas das semanas, listas de categorias, orçamento anual das sazonais', 'formConfig()')}
     ${itemMenu('Histórico de alterações', 'Tudo o que foi gravado pelo fluxo', 'verLog()')}
     ${ST.pfLiberado ? itemMenu('Sair do pessoal', 'Esconde a PF neste aparelho', 'sairPF()') : itemMenu('Entrar no pessoal', 'Libera a PF', 'abrirLoginPF()')}
-  </div>
-  <div class="muted xs" style="padding:0 6px">Fonte do modelo inicial: ${esc(FX_MODELO.fonte)}. Diagnóstico da planilha em <code>fluxo/DIAGNOSTICO.md</code>.</div>`;
+  </div>`;
 }
 function listaContas() {
   const ents = ST.pfLiberado ? ['PF', 'PJ'] : ['PJ'];
@@ -759,11 +746,10 @@ function telaDividas() {
   const r = FX.resumoDividas(ST.dividas, ctx.movs, ents);
   const atual = FX.mesDe(ctx.hoje);
   let h = titulo('Dívidas', 'As que estão no plano têm parcela no mês. As de fora ficam aqui até você decidir como pagar.');
-  h += `<div class="card"><div class="grid3"><div><span>Para quitar</span><b>${brl(r.quitacao)}</b></div>
+  h += `<div class="card"><div class="grid3"><div><span>Para quitar${info('Valores sem data são os da consultoria — atualize quando tiver o saldo do banco.')}</span><b>${brl(r.quitacao)}</b></div>
     <div><span>Parcelado em aberto</span><b>${brl(r.emAberto)}</b></div><div><span>Parcelas/mês</span><b>${brl(r.parcelasMes)}</b></div></div>
     <div class="kv sm"><span>No plano</span><b>${r.plano.length} · ${brl(r.parcelasNoPlano)}/mês</b></div>
-    <div class="kv sm"><span>Fora do plano (aguardando)</span><b>${r.fora.length} · ${brl(r.quitacaoFora)} para quitar</b></div>
-    <div class="muted sm">Valores sem data são os da consultoria — atualize quando tiver o saldo do banco.</div></div>`;
+    <div class="kv sm"><span>Fora do plano (aguardando)</span><b>${r.fora.length} · ${brl(r.quitacaoFora)} para quitar</b></div></div>`;
   if (!ST.pfLiberado) h += cartaoPFBloqueado();
   const linha = x => {
     const d = x.divida;
@@ -784,7 +770,7 @@ function telaDividas() {
   const sim = UI.sim || (UI.sim = { orc: '', est: 'juros', ini: FX.addMes(atual, 1), quais: 'fora' });
   const alvo = (sim.quais === 'todas' ? r.detalhes : r.fora).map(x => x.divida);
   const res = FX.parseValor(sim.orc) > 0 ? FX.simularDividas(alvo, FX.parseValor(sim.orc), sim.est, sim.ini) : null;
-  h += `<div class="sec-t">Planejar a quitação</div><div class="card sim">
+  h += `<div class="sec-t">Planejar a quitação${info('Estimativa a partir do valor para quitação e dos juros mensais informados. Para colocar no plano, abra a dívida › Incluir no plano.')}</div><div class="card sim">
     <div class="two"><div><label class="fl">Quanto dá para separar por mês</label><div class="vwrap"><span>R$</span><input class="fi" id="sim-orc" inputmode="decimal" value="${esc(sim.orc)}" onchange="UI.sim.orc=this.value;render()"></div></div>
       <div><label class="fl">A partir de</label><input class="fi" type="month" value="${sim.ini}" onchange="UI.sim.ini=this.value;render()"></div></div>
     <div class="two"><div><label class="fl">Prioridade</label><select class="fi" onchange="UI.sim.est=this.value;render()">
@@ -795,8 +781,7 @@ function telaDividas() {
       : `<div class="sim-res"><div class="kv"><span>Quita tudo em</span><b>${res.meses} meses (${nomeMes(res.mesFinal)})</b></div>
         <div class="kv sm"><span>Juros estimados no período</span><b>${brl(res.totalJuros)}</b></div>
         ${res.lista.slice().sort((a, b) => (a.quitaEm || '9').localeCompare(b.quitaEm || '9')).map(x => `<div class="mini-l"><span>${esc(x.divida.nome)}</span><span class="muted">juros ${brlc(x.juros)}</span><b>${x.quitaEm ? nomeMesC(x.quitaEm) : '—'}</b></div>`).join('')}
-        </div>`) : '<div class="muted sm" style="margin-top:8px">Informe um valor mensal para ver em quanto tempo quita cada dívida.</div>'}
-    <div class="muted sm" style="margin-top:8px">Estimativa: parte do valor para quitação e dos juros mensais informados. Para colocar no plano, abra a dívida › Incluir no plano.</div>
+        </div>`) : '<div class="muted sm" style="margin-top:8px">Informe quanto dá por mês.</div>'}
   </div>`;
 
   const quit = ST.dividas.filter(d => ents.includes(d.entidade) && (d.situacao === 'quitada' || d.ativa === false));

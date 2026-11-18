@@ -33,6 +33,8 @@ Testes (banco falso em memória, `tests/fake-db.js` — nada vai para o Supabase
 | `movs` / `conciliar` | lançamentos / conferir com o banco (extrato, saldos, gastos sem caixinha, recebimentos vencidos) |
 | `mais`, `dividas`, `analises`, `ajustes` | — |
 
+**Textos:** telas objetivas — número + rótulo curto + status (`.pill`). Nenhuma frase explicativa na tela: explicação vai no ícone **i** (`info(texto)` em `ui.js`, abre balão ao tocar/clicar; `\n` quebra linha). Nos formulários, `.nota` sem id e `p.muted` viram "i" no título automaticamente (`notasEmInfo`). Avisos de ação (erro/alerta) ficam visíveis, em uma linha curta.
+
 Nomes antigos (`mes`, `pendencias`) viram `inicio` via `TAB_ALIAS`. Os números das telas vêm de `FX.painelMes` (puro, testado); as telas só formatam.
 
 ## Modelo de dados (`sql/fluxo-financeiro.sql`)

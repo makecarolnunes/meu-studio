@@ -181,6 +181,7 @@ function vazio(txt) { return `<div class="vazio">${txt}</div>`; }
 // ── Modal (folha inferior no celular, janela no computador) ──
 function abrirModal(html) {
   document.getElementById('modal-box').innerHTML = html;
+  notasEmInfo(document.getElementById('modal-box'));
   document.getElementById('modal').classList.add('on');
   document.body.classList.add('modal-on');
   setTimeout(() => { const f = document.querySelector('#modal-box [autofocus]'); if (f) f.focus(); }, 60);
@@ -188,6 +189,55 @@ function abrirModal(html) {
 function fecharModal() { document.getElementById('modal').classList.remove('on'); document.body.classList.remove('modal-on'); }
 
 let _toastT;
+// ── "i" + balão de informação ────────────────────────────
+// Telas objetivas: número + rótulo curto. Toda explicação fica num "i"
+// que abre um balão (toque no celular, clique no computador).
+function info(texto) {
+  return texto ? `<button type="button" class="i-info" aria-label="Mais informações" data-info="${esc(texto)}" onclick="event.stopPropagation();abrirBalao(this)">i</button>` : '';
+}
+let _balaoDe = null;
+function abrirBalao(btn) {
+  let b = document.getElementById('balao');
+  if (!b || !b.getBoundingClientRect) {
+    b = document.createElement('div'); b.id = 'balao'; b.className = 'balao'; b.setAttribute('role', 'tooltip');
+    document.body.appendChild(b);
+  }
+  if (_balaoDe === btn && b.classList.contains('on')) return fecharBalao();
+  _balaoDe = btn;
+  b.textContent = btn.dataset.info;
+  const r = btn.getBoundingClientRect(), m = 12, w = Math.min(300, innerWidth - 2 * m);
+  b.style.width = w + 'px';
+  b.classList.add('on');
+  const left = Math.max(m, Math.min(r.left + r.width / 2 - w / 2, innerWidth - w - m));
+  const alt = b.offsetHeight;
+  const acima = r.bottom + 8 + alt > innerHeight - m && r.top - alt - 8 > m;
+  b.style.left = left + 'px';
+  b.style.top = (acima ? r.top - alt - 8 : r.bottom + 8) + 'px';
+  b.style.setProperty('--seta', (r.left + r.width / 2 - left) + 'px');
+  b.classList.toggle('acima', acima);
+}
+function fecharBalao() {
+  const b = document.getElementById('balao');
+  if (b && b.classList && b.classList.remove) b.classList.remove('on');
+  _balaoDe = null;
+}
+if (typeof window !== 'undefined' && window.addEventListener && typeof document !== 'undefined' && document.addEventListener) {
+  document.addEventListener('click', e => { if (_balaoDe && !(e.target.closest && e.target.closest('.i-info, .balao'))) fecharBalao(); }, true);
+  window.addEventListener('scroll', () => { if (_balaoDe) fecharBalao(); }, true);
+  window.addEventListener('resize', () => { if (_balaoDe) fecharBalao(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && _balaoDe) fecharBalao(); });
+}
+// Formulários: notas explicativas (.nota sem id, p.muted) viram um "i" no título
+function notasEmInfo(box) {
+  if (!box || !box.querySelectorAll) return;
+  const h2 = box.querySelector('h2');
+  const notas = Array.from(box.querySelectorAll('.nota:not([id]), p.muted'));
+  if (!h2 || !notas.length) return;
+  const txt = notas.map(n => n.textContent.replace(/\s+/g, ' ').trim()).filter(Boolean).join('\n\n');
+  notas.forEach(n => n.remove());
+  h2.insertAdjacentHTML('beforeend', info(txt));
+}
+
 function toast(msg, erro) {
   const t = document.getElementById('toast');
   t.textContent = msg; t.className = 'toast on' + (erro ? ' erro' : '');

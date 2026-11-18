@@ -76,9 +76,21 @@ const titulo = t => console.log('\n■ ' + t);
     check('Caixinhas com o ano: sem rolagem horizontal', await semOverflow());
     await b.js(`document.querySelector('.cx-anual').scrollIntoView()`);
     await b.foto(path.join(SAIDA, 'celular-caixinha-anual.png'), true);
-    let r = await tocar('.cx-anual .cx-ano-h .lnk', true);
+    // "i" + balão
+    let r = await tocar('.cx-anual .cx-ano-h .i-info', true);
+    const bal = await b.js(`(() => { const e = document.getElementById('balao'); if (!e) return null; const q = e.getBoundingClientRect();
+      return { on: e.classList.contains('on'), dentro: q.left >= 0 && q.right <= innerWidth && q.top >= 0 && q.bottom <= innerHeight, txt: e.innerText.length }; })()`);
+    check('toque no "i" abre o balão de informação dentro da tela', r.ok && bal && bal.on && bal.dentro && bal.txt > 40, JSON.stringify(bal) + ' ' + (r.motivo || ''));
+    await b.foto(path.join(SAIDA, 'celular-balao.png'));
+    await tocar('.tela-t h2', true);
+    check('tocar fora fecha o balão', !(await b.js(`document.getElementById('balao').classList.contains('on')`)));
+    check('bloco do ano sem frases longas', await b.js(`!/Para fechar o ano|Ainda pode usar|Em média/.test(document.querySelector('.cx-anual').innerText)`));
+    r = await tocar('.cx-anual .cx-ano-h .lnk', true);
     check('"Ajustar meta" abre o formulário da meta do ano', r.ok && (await b.js(`!!document.getElementById('ma-valor')`)), r.motivo);
     await b.foto(path.join(SAIDA, 'celular-meta-anual.png'));
+    r = await tocar('#modal-box h2 .i-info', true);
+    check('"i" funciona dentro do formulário (balão por cima)', r.ok && (await b.js(`document.getElementById('balao').classList.contains('on')`)), r.motivo);
+    await tocar('#modal-box .fl', true);
     await tocar('#modal-box .btn.ghost', true);
     await b.js(`UI.aberto={};go('inicio')`);
     // sub-seções

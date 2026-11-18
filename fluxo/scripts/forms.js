@@ -61,7 +61,7 @@ function formExecutar(itemId) {
   } else if (i.tipo === 'pagamento') {
     const contaPadr = cx ? (FX.contaPadrao(ST.contas, i.entidade, 'corrente') || {}).id : (i.contaId || (FX.contaPadrao(ST.contas, i.entidade, 'corrente') || {}).id);
     corpo = campo('Pago com', `<select class="fi" id="ex-conta" onchange="exAtualizaResgate()">${optContas(i.entidade, ['corrente', 'caixinha', 'cartao', 'especie'], contaPadr)}</select>`) +
-      (cx ? `<label class="chk" id="ex-resg-wrap"><input type="checkbox" id="ex-resgatar" checked> Usar o dinheiro reservado em <b>${esc(cx.nome)}</b> (registra o resgate da caixinha para a conta)</label>` : '') +
+      (cx ? `<label class="chk" id="ex-resg-wrap"><input type="checkbox" id="ex-resgatar" checked> Usar a reserva de <b>${esc(cx.nome)}</b>${info('Registra o resgate da caixinha para a conta.')}</label>` : '') +
       `<div class="nota" id="ex-nota-cartao" style="display:none">No cartão: a despesa entra hoje e a reserva continua na caixinha até você pagar a fatura (Caixinhas › cartão › Pagar).</div>`;
   } else if (i.tipo === 'prolabore') {
     corpo = `<div class="nota">Cria a <b>saída PJ</b> (Inter PJ → sua conta pessoal) e a <b>entrada PF</b> vinculada. No Financeiro aparece como saída “Pró-labore” de natureza Pessoal.</div>` +
@@ -197,7 +197,7 @@ function formGasto(ent, caixinhaId) {
   abrirModal(`<h2>Gasto ${ent}</h2>
     <div class="two">${campo('Valor', inValor('g-valor', ''))}${campo('Data', inData('g-data'))}</div>
     ${campo('Descrição', `<input class="fi" id="g-desc" placeholder="Ex.: Uber para atendimento">`)}
-    ${ent === 'PJ' ? `<label class="chk"><input type="checkbox" id="g-pess" onchange="gPessoal()"> Gasto pessoal pago com dinheiro da PJ (escolher categoria pessoal)</label>` : ''}
+    ${ent === 'PJ' ? `<label class="chk"><input type="checkbox" id="g-pess" onchange="gPessoal()"> Gasto pessoal pago pela PJ${info('Escolha uma categoria pessoal: não conta como despesa da empresa.')}</label>` : ''}
     ${campo('Categoria', `<select class="fi" id="g-cat" onchange="gAtualiza()">${optCategorias(ent, cx && cx.finalidade === 'semanada' ? (ent === 'PJ' ? 'Deslocamento' : 'Mercado') : '')}</select>`)}
     ${campo('De qual reserva (caixinha)', `<select class="fi" id="g-cx" onchange="gAtualiza()"><option value="">Automática pela categoria</option><option value="-">Nenhuma — fora do plano</option>${optContas(ent, ['caixinha'], caixinhaId)}</select>`)}
     <div class="muted sm" id="g-cx-auto"></div>
@@ -388,7 +388,7 @@ function ccAtualiza(contaId) {
   const banco = FX.parseValor($v('cc-saldo'));
   const dif = isNaN(banco) ? null : FX.r2(banco - s.saldo);
   document.getElementById('cc-cmp').innerHTML = `<div class="kv"><span>Saldo calculado pelo sistema</span><b>${brl(s.saldo)}</b></div>
-    ${s.conferido ? '' : '<div class="muted sm">Ainda sem saldo de abertura — calculado só com movimentos desde ' + (dm(s.desde) || 'o início') + '.</div>'}
+    ${s.conferido ? '' : '<div class="muted sm"><span class="t-alerta">Sem saldo de abertura</span>' + info('Calculado só com movimentos desde ' + (dm(s.desde) || 'o início') + '.') + '</div>'}
     ${dif == null ? '' : `<div class="kv ${Math.abs(dif) > 0.004 ? 'neg' : 'pos'}"><span>Diferença (banco − sistema)</span><b>${brl(dif)}</b></div>`}`;
 }
 function acConciliar(contaId, ajustar) {
@@ -456,7 +456,7 @@ function formConta(id) {
       ${campo('Finalidade (caixinha)', `<select class="fi" id="ct-fin">${['', 'semanada', 'fixas', 'faxineira', 'sazonais', 'dividas', 'cartao', 'cursos', 'reposicao', 'mei', 'outra'].map(f => `<option ${f === (c.finalidade || '') ? 'selected' : ''}>${f}</option>`).join('')}</select>`)}</div>
     <label class="chk"><input type="checkbox" id="ct-padrao" ${c.padrao ? 'checked' : ''}> Conta padrão deste tipo</label>
     <label class="chk"><input type="checkbox" id="ct-ativa" ${c.ativa !== false ? 'checked' : ''}> Ativa</label>
-    ${c.saldoInicial != null ? `<div class="muted sm">Saldo de abertura ${brl(c.saldoInicial)} em ${dm(c.dataSaldoInicial)} (alterável só pela conciliação).</div>` : ''}
+    ${c.saldoInicial != null ? `<div class="muted sm">Saldo de abertura ${brl(c.saldoInicial)} em ${dm(c.dataSaldoInicial)}${info('Só muda pela conciliação (Conferir saldo).')}</div>` : ''}
     ${rodape(`executar(()=>AC.salvarConta({id:${id ? `'${id}'` : 'undefined'},nome:$v('ct-nome'),entidade:$v('ct-ent'),tipo:$v('ct-tipo'),banco:$v('ct-banco'),finalidade:$v('ct-fin'),padrao:$v('ct-padrao'),ativa:$v('ct-ativa')}),'Conta salva')`, 'Salvar')}`);
 }
 
@@ -553,12 +553,11 @@ function formMetaAnual(id) {
   const semDef = JSON.parse(JSON.stringify(cfg)); if (semDef.metaAnual) delete semDef.metaAnual[id];
   const auto = FX.anoCaixinha(cx, Object.assign({}, stCtx(UI.mes), { cfg: semDef }));
   const ini = auto.ciclo.mesInicio;
-  abrirModal(`<h2>Meta do ano · ${esc(cx.nome)}</h2>
-    <div class="nota">O valor de cada mês é só o ritmo — tem mês de guardar ou usar mais, menos ou nada. Aqui fica o total que você quer para o ano inteiro.</div>
-    ${campo('Meta do ano', inValor('ma-valor', definida))}
-    <div class="muted xs">Em branco = automático: ${auto.fonteMeta === 'sazonais' ? 'soma do orçamento por finalidade' : 'soma das metas de cada mês'} (${brl(auto.metaAnual)}).</div>
-    ${campo('O ano das caixinhas começa em', `<select class="fi" id="ma-ini">${MESES.map((m, k) => `<option value="${k + 1}" ${k + 1 === ini ? 'selected' : ''}>${m}</option>`).join('')}</select>`)}
-    <div class="muted xs">Vale para todas as caixinhas com meta anual. Agora: ${nomeMesC(auto.ciclo.inicio)} → ${nomeMesC(auto.ciclo.fim)}.</div>
+  abrirModal(`<h2>Meta do ano · ${esc(cx.nome)}${info('O valor de cada mês é só o ritmo — tem mês de guardar ou usar mais, menos ou nada. Aqui fica o total que você quer para o ano inteiro.')}</h2>
+    ${campo('Meta do ano' + info('Em branco = automático: ' + (auto.fonteMeta === 'sazonais' ? 'soma do orçamento por finalidade' : 'soma das metas de cada mês') + ' (' + brl(auto.metaAnual) + ').'),
+      inValor('ma-valor', definida).replace('placeholder="0,00"', `placeholder="${valIn(auto.metaAnual)} (automático)"`))}
+    ${campo('O ano começa em' + info('Vale para todas as caixinhas com meta anual. Agora: ' + nomeMesC(auto.ciclo.inicio) + ' → ' + nomeMesC(auto.ciclo.fim) + '.'),
+      `<select class="fi" id="ma-ini">${MESES.map((m, k) => `<option value="${k + 1}" ${k + 1 === ini ? 'selected' : ''}>${m}</option>`).join('')}</select>`)}
     ${rodape(`acSalvarMetaAnual('${id}')`, 'Salvar')}`);
 }
 function acSalvarMetaAnual(id) {
