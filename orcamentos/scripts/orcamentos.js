@@ -1807,7 +1807,9 @@ function slotDateParts(s) {
   } else if (s) {
     y = s._y || ''; m = s._m || ''; d = s._d || '';
   }
-  if (!y) y = String(new Date().getFullYear());
+  // ano vazio ou absurdo (ex.: 0002, de digitação no calendário antigo) → ano atual
+  const cy = new Date().getFullYear();
+  if (!y || Number(y) < cy - 1 || Number(y) > cy + 5) y = String(cy);
   return { y, m, d };
 }
 function buildSlotDateSelects(s, syncFn) {
