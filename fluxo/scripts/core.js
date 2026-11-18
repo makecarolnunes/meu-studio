@@ -405,8 +405,9 @@ const FX = (function () {
       const previsto = r2(itensW.reduce((t, i) => t + num(i.valor), 0));
       // aporte ligado a item da semana conta para a semana do item;
       // aporte avulso conta pela data
-      const reservado = r2(movs.filter(m => m.natureza === 'transferencia' && m.destinoId === cx.id && m.realizado &&
-        (m.planoItemId ? idsW.has(m.planoItemId) : dentro(m.data))).reduce((t, m) => t + m.valor, 0));
+      const reservas = movs.filter(m => m.natureza === 'transferencia' && m.destinoId === cx.id && m.realizado &&
+        (m.planoItemId ? idsW.has(m.planoItemId) : dentro(m.data)));
+      const reservado = r2(reservas.reduce((t, m) => t + m.valor, 0));
       const gastosW = movs.filter(m => m.classe === 'despesa' && m.realizado && m.caixinhaId === cx.id && dentro(m.data));
       const porCategoria = {};
       gastosW.forEach(m => { porCategoria[m.categoria] = r2((porCategoria[m.categoria] || 0) + m.valor); });
@@ -417,7 +418,7 @@ const FX = (function () {
       // "Reservado" e "gasto" ficam separados: dá para gastar antes de reservar.
       const orcamento = previsto > EPS ? previsto : reservado;
       return {
-        semana: w, previsto, reservado, gasto, porCategoria, gastos: gastosW,
+        semana: w, previsto, reservado, gasto, porCategoria, gastos: gastosW, reservas,
         saldo: r2(reservado - gasto), diferenca: r2(previsto - gasto),
         orcamento, podeGastar: r2(orcamento - gasto), acima: r2(Math.max(0, gasto - orcamento)),
         faltaReservar: r2(Math.max(0, previsto - reservado)), gastoSemReserva: r2(Math.max(0, gasto - reservado)),

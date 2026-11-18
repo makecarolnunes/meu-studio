@@ -186,7 +186,7 @@ function abrirModal(html) {
   document.body.classList.add('modal-on');
   setTimeout(() => { const f = document.querySelector('#modal-box [autofocus]'); if (f) f.focus(); }, 60);
 }
-function fecharModal() { document.getElementById('modal').classList.remove('on'); document.body.classList.remove('modal-on'); }
+function fecharModal() { if (_balaoDe && _balaoDe.closest && _balaoDe.closest('#modal')) fecharBalao(); document.getElementById('modal').classList.remove('on'); document.body.classList.remove('modal-on'); }
 
 let _toastT;
 // ── "i" + balão de informação ────────────────────────────
@@ -204,10 +204,18 @@ function abrirBalao(btn) {
   }
   if (_balaoDe === btn && b.classList.contains('on')) return fecharBalao();
   _balaoDe = btn;
-  b.textContent = btn.dataset.info;
+  b.innerHTML = '<button type="button" class="balao-x" aria-label="Fechar" onclick="fecharBalao()">×</button><div class="balao-t"></div>';
+  b.querySelector('.balao-t').textContent = btn.dataset.info;
+  b.classList.add('on');
+  posicionarBalao();
+}
+// O balão fica aberto até tocar no ×, no mesmo "i" ou Esc (não fecha ao tocar fora).
+function posicionarBalao() {
+  const b = document.getElementById('balao'), btn = _balaoDe;
+  if (!b || !btn) return;
+  if (btn.isConnected === false) return fecharBalao();
   const r = btn.getBoundingClientRect(), m = 12, w = Math.min(300, innerWidth - 2 * m);
   b.style.width = w + 'px';
-  b.classList.add('on');
   const left = Math.max(m, Math.min(r.left + r.width / 2 - w / 2, innerWidth - w - m));
   const alt = b.offsetHeight;
   const acima = r.bottom + 8 + alt > innerHeight - m && r.top - alt - 8 > m;
@@ -222,9 +230,8 @@ function fecharBalao() {
   _balaoDe = null;
 }
 if (typeof window !== 'undefined' && window.addEventListener && typeof document !== 'undefined' && document.addEventListener) {
-  document.addEventListener('click', e => { if (_balaoDe && !(e.target.closest && e.target.closest('.i-info, .balao'))) fecharBalao(); }, true);
-  window.addEventListener('scroll', () => { if (_balaoDe) fecharBalao(); }, true);
-  window.addEventListener('resize', () => { if (_balaoDe) fecharBalao(); });
+  window.addEventListener('scroll', () => { if (_balaoDe) posicionarBalao(); }, true);
+  window.addEventListener('resize', () => { if (_balaoDe) posicionarBalao(); });
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && _balaoDe) fecharBalao(); });
 }
 // Formulários: notas explicativas (.nota sem id, p.muted) viram um "i" no título

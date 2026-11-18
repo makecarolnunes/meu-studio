@@ -18,6 +18,7 @@ function render() {
   UI.tab = TAB_ALIAS[UI.tab] || UI.tab;
   if (!TELAS[UI.tab]) UI.tab = 'inicio';
   UI._pn = {};
+  fecharBalao();
   document.body.dataset.tab = UI.tab;
   document.body.classList.toggle('revisando', !!(UI.tab === 'conciliar' && UI.extrato));
   renderNav();
@@ -422,15 +423,39 @@ function blocoSemanas(P, cx) {
   if (!s) return '';
   return `<div class="semanas">${s.linhas.map(l => {
     const nivel = l.estourou ? 'erro' : l.orcamento > 0 && l.gasto >= l.orcamento * 0.85 ? 'alerta' : l.gasto > 0 ? 'ok' : 'neutro';
-    const cats = Object.entries(l.porCategoria).map(([k, v]) => esc(k.replace(' trabalho', '')) + ' ' + brlc(v)).join(' · ');
-    return `<div class="sem ${l.atual ? 'atual' : ''} ${l.passada ? 'passada' : ''}">
+    return `<div class="sem ${l.atual ? 'atual' : ''} ${l.passada ? 'passada' : ''}" role="button" tabindex="0" aria-label="Detalhes da semana ${l.semana.n}"
+      onclick="detalheSemana('${cx.entidade}', ${l.semana.n})" onkeydown="if(event.key==='Enter')detalheSemana('${cx.entidade}', ${l.semana.n})">
       <div class="sem-h"><b>S${l.semana.n}</b><span class="muted">${l.semana.label}${l.atual ? ' · esta semana' : ''}</span>
         <span class="sem-st t-${nivel}">${l.estourou ? brlc(l.acima) + ' acima' : l.gasto > 0 || l.atual || l.passada ? 'sobra ' + brlc(l.podeGastar) : 'previsto'}</span></div>
       <div class="sem-v"><span>gasto <b>${brlc(l.gasto)}</b> de ${brlc(l.orcamento)}</span>
         <span class="${l.faltaReservar > 0.01 ? 't-alerta' : 'muted'}">reservado ${brlc(l.reservado)}${l.faltaReservar > 0.01 ? ` · falta ${brlc(l.faltaReservar)}` : ' ✓'}</span></div>
       ${barra(l.gasto, l.orcamento, nivel)}
-      ${cats || l.atendimentos ? `<div class="muted xs">${cats}${l.atendimentos ? ` · ${l.atendimentos} atend.${l.custoPorAtendimento ? ' · ' + brlc(l.custoPorAtendimento) + '/atend.' : ''}` : ''}</div>` : ''}
     </div>`; }).join('')}</div>`;
+}
+// Detalhes de uma semana (abre ao tocar na semana): categorias, atendimentos,
+// gastos e reservas. Folha comum: só fecha no botão ou Esc.
+function detalheSemana(ent, n) {
+  const s = FX.semanadas(ent, stCtx(UI.mes));
+  const l = s && s.linhas.find(x => x.semana.n === n);
+  if (!l) return;
+  const cx = s.caixinha;
+  const cats = Object.entries(l.porCategoria).sort((a, b) => b[1] - a[1]);
+  const lista = (arr, vazio, fn) => arr.length ? arr.map(fn).join('') : `<div class="muted sm">${vazio}</div>`;
+  const gastos = l.gastos.slice().sort((a, b) => (a.data < b.data ? -1 : 1));
+  abrirModal(`<h2>S${n} · ${l.semana.label}</h2>
+    <div class="grid4 sem-g">
+      <div><span>Orçamento</span><b>${brlc(l.orcamento)}</b></div>
+      <div><span>Gasto</span><b>${brlc(l.gasto)}</b></div>
+      <div><span>Reservado</span><b>${brlc(l.reservado)}</b></div>
+      <div><span>${l.estourou ? 'Acima' : 'Sobra'}</span><b class="t-${l.estourou ? 'erro' : 'ok'}">${brlc(l.estourou ? l.acima : l.podeGastar)}</b></div>
+    </div>
+    ${l.atendimentos ? `<div class="mini-l"><span>Atendimentos</span><span class="muted">${l.atendimentos}</span><b>${l.custoPorAtendimento ? brlc(l.custoPorAtendimento) + '/atend.' : ''}</b></div>` : ''}
+    <div class="sub-t">Por categoria</div>
+    ${lista(cats, 'Nenhum gasto nesta semana.', ([k, v]) => `<div class="mini-l"><span>${esc(k)}</span><span></span><b>${brlc(v)}</b></div>`)}
+    ${gastos.length ? `<div class="sub-t">Gastos</div>${gastos.map(m => `<div class="mini-l lnk-l" onclick="formMov('${esc(m.key)}')"><span>${dm(m.data)} · ${esc(m.descricao || m.categoria)}</span><span></span><b>${brlc(m.valor)}</b></div>`).join('')}` : ''}
+    <div class="sub-t">Reservas${info('Dinheiro transferido para a caixinha ' + cx.nome + ' para esta semana.')}</div>
+    ${lista(l.reservas, l.faltaReservar > 0.01 ? 'Falta reservar ' + brlc(l.faltaReservar) + '.' : 'Nenhuma reserva.', m => `<div class="mini-l lnk-l" onclick="formMov('${esc(m.key)}')"><span>${dm(m.data)} · ${esc(m.descricao || 'Reserva')}</span><span></span><b>${brlc(m.valor)}</b></div>`)}
+    <button class="btn ghost" onclick="fecharModal()">Fechar</button>`);
 }
 function detalheCaixinha(cx, c, ano) {
   const ctx = stCtx(UI.mes);
