@@ -78,7 +78,8 @@ function renderNav() {
     return `<button data-tab="${n.id}" class="${on ? 'on' : ''}" onclick="go('${n.id}')" ${on ? 'aria-current="page"' : ''}>${ICO[n.ico]}<span>${n.rot}</span>${badge(n.id)}</button>`;
   }).join('');
   const se = document.getElementById('seg-ent');
-  if (se) se.innerHTML = ['PF', 'PJ'].map(e => `<button class="${UI.ent === e ? 'on' : ''}" onclick="setEnt('${e}')" title="${e === 'PF' ? 'Pessoal' : 'Empresa'}">${e}</button>`).join('');
+  if (se) se.innerHTML = ['PF', 'PJ'].map(e => `<button class="${e.toLowerCase()} ${UI.ent === e ? 'on' : ''}" onclick="setEnt('${e}')" aria-pressed="${UI.ent === e}"><b>${e}</b><small>${e === 'PF' ? 'Pessoal' : 'Empresa'}</small></button>`).join('');
+  document.body.dataset.ent = UI.ent;
 }
 
 // Painel do mês da entidade (calculado uma vez por renderização)

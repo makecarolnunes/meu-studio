@@ -545,6 +545,31 @@ function acSalvarConfig() {
   executar(() => AC.salvarConfig(cfg), 'Configurações salvas');
 }
 
+// Caixinha anual: meta do ano (o valor do mês é só o ritmo) e mês em que o
+// "ano das caixinhas" começa.
+function formMetaAnual(id) {
+  const cx = stConta(id), cfg = ST.cfg || FX_MODELO.config;
+  const definida = cfg.metaAnual && cfg.metaAnual[id] > 0 ? cfg.metaAnual[id] : '';
+  const semDef = JSON.parse(JSON.stringify(cfg)); if (semDef.metaAnual) delete semDef.metaAnual[id];
+  const auto = FX.anoCaixinha(cx, Object.assign({}, stCtx(UI.mes), { cfg: semDef }));
+  const ini = auto.ciclo.mesInicio;
+  abrirModal(`<h2>Meta do ano · ${esc(cx.nome)}</h2>
+    <div class="nota">O valor de cada mês é só o ritmo — tem mês de guardar ou usar mais, menos ou nada. Aqui fica o total que você quer para o ano inteiro.</div>
+    ${campo('Meta do ano', inValor('ma-valor', definida))}
+    <div class="muted xs">Em branco = automático: ${auto.fonteMeta === 'sazonais' ? 'soma do orçamento por finalidade' : 'soma das metas de cada mês'} (${brl(auto.metaAnual)}).</div>
+    ${campo('O ano das caixinhas começa em', `<select class="fi" id="ma-ini">${MESES.map((m, k) => `<option value="${k + 1}" ${k + 1 === ini ? 'selected' : ''}>${m}</option>`).join('')}</select>`)}
+    <div class="muted xs">Vale para todas as caixinhas com meta anual. Agora: ${nomeMesC(auto.ciclo.inicio)} → ${nomeMesC(auto.ciclo.fim)}.</div>
+    ${rodape(`acSalvarMetaAnual('${id}')`, 'Salvar')}`);
+}
+function acSalvarMetaAnual(id) {
+  const cfg = JSON.parse(JSON.stringify(ST.cfg || FX_MODELO.config));
+  const v = FX.parseValor($v('ma-valor'));
+  cfg.metaAnual = cfg.metaAnual || {};
+  if (v > 0) cfg.metaAnual[id] = v; else delete cfg.metaAnual[id];
+  cfg.anoCaixinhas = { mesInicio: Number($v('ma-ini')) || 1 };
+  executar(() => AC.salvarConfig(cfg), 'Meta do ano salva');
+}
+
 async function verLog() {
   abrirModal('<h2>Histórico de alterações</h2><div class="muted">Carregando…</div>');
   try {

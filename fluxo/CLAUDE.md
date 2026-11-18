@@ -29,6 +29,7 @@ Testes (banco falso em memória, `tests/fake-db.js` — nada vai para o Supabase
 | `inicio` (Hoje) | semanada da semana (quanto ainda pode gastar) · Próximas ações · Como está o mês (receber, distribuir, gastar) · Dinheiro agora |
 | `plano` | planejado do mês; PF por recebimento (pró-labore 01/15), PJ por semana; modelo |
 | `caixinhas` | meta · transferido · falta · usado · disponível do mês (= transferido − usado) por caixinha; semanada semana a semana |
+| (caixinha anual) | Sazonais e Cursos e investimentos: bloco **No ano** (meta do ano, guardado, usado, ritmo, quanto por mês para fechar o ano) + mês a mês nos Detalhes. `Ajustar meta` → `formMetaAnual` |
 | `movs` / `conciliar` | lançamentos / conferir com o banco (extrato, saldos, gastos sem caixinha, recebimentos vencidos) |
 | `mais`, `dividas`, `analises`, `ajustes` | — |
 
@@ -77,6 +78,7 @@ se a migration não estiver aplicada, o Financeiro e os Orçamentos quebrariam.
 23. **Painel do mês** (`FX.painelMes`): funciona só com plano + registros, sem extrato. Semanada: `orcamento` = previsto da semana (sem plano, o reservado); reservado e gasto separados (`faltaReservar`, `gastoSemReserva`); `estourou` = gasto > orçamento. Caixinha: `disponivelMes` = transferido − usado no mês, sem saldo anterior.
 24. **Próximas ações** (`FX.proximasAcoes`): atenção (passou do orçamento) > atrasado > hoje > semana > mês > conferir. Vermelho só para orçamento estourado e conta a pagar vencida; reserva/pró-labore atrasados são âmbar. Cada ação abre o registro — nunca marca feito sozinha.
 25. **Extrato ignorado não volta:** linhas com decisão `ignorar` ficam em `cfg.extratoIgnorados[contaId]` (hash `FX.hashRef`, até 3000 por conta) e reaparecem como `duplicada` (`ignoradaAntes`) ao importar o mesmo período de novo.
+26. **Caixinha anual** (`FX.caixinhaAnual`: finalidade sazonais/cursos ou `cfg.metaAnual[id]` > 0; `0` desliga): meta do mês = ritmo; meta do ano = `cfg.metaAnual[id]` > soma de `cfg.sazonais` > soma das metas dos 12 meses (mês sem plano usa o modelo). Ano = 12 meses desde `cfg.anoCaixinhas.mesInicio` (padrão: mês de `inicioFluxo`). Ritmo só conta reservas cujo dia já passou. "Passou do orçamento" só quando o usado no ANO passa da meta do ano.
 
 ## Auth
 

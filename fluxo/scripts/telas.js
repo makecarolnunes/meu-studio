@@ -150,7 +150,8 @@ function linhaAcao(a) {
   if (a.tipo === 'semanada') return linhaA({ nivel: 'erro', titulo: `Semanada — semana ${a.semana.semana.n}`, valor: a.valor, valorTxt: '+' + brl(a.valor),
     sub: `gasto ${brl(a.semana.gasto)} de ${brl(a.semana.orcamento)}`, botao: 'Ver', acao: `abrirCaixinha('${painel().semanadas.caixinha.id}')` });
   if (a.tipo === 'caixinha') return linhaA({ nivel: 'erro', titulo: a.caixinha.nome, valor: a.valor, valorTxt: '+' + brl(a.valor),
-    sub: `usado ${brl(a.metas.usado)} · planejado ${brl(Math.max(a.metas.meta, a.metas.usoPrevisto))}`, botao: 'Ver', acao: `abrirCaixinha('${a.caixinha.id}')` });
+    sub: a.metas.anual ? `usado no ano ${brl(a.metas.anual.usado)} · meta do ano ${brl(a.metas.anual.metaAnual)}`
+      : `usado ${brl(a.metas.usado)} · planejado ${brl(Math.max(a.metas.meta, a.metas.usoPrevisto))}`, botao: 'Ver', acao: `abrirCaixinha('${a.caixinha.id}')` });
   if (a.tipo === 'clientes') return linhaA({ nivel: 'alerta', data: dm(a.data), titulo: `${a.qtd} recebimento${a.qtd > 1 ? 's' : ''} de cliente sem confirmar`,
     valor: a.valor, sub: 'a data passou e ainda está como previsto', botao: 'Conferir', acao: `go('conciliar')` });
   if (a.tipo === 'conferir') return linhaA({ nivel: 'neutro', titulo: `${a.qtd} conta${a.qtd > 1 ? 's' : ''} sem saldo conferido`,
@@ -347,21 +348,23 @@ function cartaoCaixinha(c, P) {
   const pend = P.acoes.filter(a => a.tipo === 'item' && a.item.tipo === 'aporte' && a.item.caixinhaId === cx.id);
   const reservar = pend.length ? `formExecutar('${pend[0].item.id}')` : `formTransferencia('${cx.entidade}', null, '${cx.id}')`;
   const nivelUso = c.estourou ? 'erro' : 'neutro';
-  return `<section class="card cx ${c.estourou ? 'cx-erro' : ''}" id="cx-${cx.id}">
+  const ano = c.anual;
+  return `<section class="card cx ${c.estourou ? 'cx-erro' : ''} ${ano ? 'cx-anual' : ''}" id="cx-${cx.id}">
     <div class="cx-h" onclick="toggleAberto('${cx.id}')">
       <div><h3>${esc(cx.nome)}</h3><div class="muted xs">${FINALIDADE_LABEL[cx.finalidade] || ''}</div></div>
       <div class="r"><div class="cx-v ${c.disponivelMes < 0 ? 'neg' : ''}">${brl(c.disponivelMes)}</div><div class="muted xs">disponível do mês</div></div>
     </div>
     <div class="grid4 cx-n">
-      <div><span>Meta</span><b>${brlc(c.meta)}</b></div>
+      <div><span>${ano ? 'Meta do mês' : 'Meta'}</span><b>${brlc(c.meta)}</b></div>
       <div><span>Transferido</span><b>${brlc(c.transferido)}</b></div>
       <div><span>Falta</span><b class="${c.falta > 0.01 ? 't-alerta' : c.meta > 0 ? 't-ok' : ''}">${c.falta > 0.01 ? brlc(c.falta) : c.meta > 0 ? '✓' : '—'}</b></div>
-      <div><span>Usado</span><b class="t-${nivelUso}">${brlc(c.usado)}</b></div>
+      <div><span>Usado</span><b class="t-${ano ? 'neutro' : nivelUso}">${brlc(c.usado)}</b></div>
     </div>
     ${c.meta > 0 ? barra(c.transferido, c.meta, c.falta > 0.01 ? 'andamento' : 'ok') : ''}
-    ${c.estourou ? `<div class="t-erro sm">Usou ${brl(c.acima)} além do planejado para esta caixinha.</div>` : ''}
+    ${c.estourou && !ano ? `<div class="t-erro sm">Usou ${brl(c.acima)} além do planejado para esta caixinha.</div>` : ''}
+    ${ano ? blocoAno(ano) : ''}
     ${sem ? blocoSemanas(P, cx) : ''}
-    ${aberto ? detalheCaixinha(cx, c) : ''}
+    ${aberto ? detalheCaixinha(cx, c, ano) : ''}
     <div class="cx-b">
       ${c.falta > 0.01 || !c.meta ? `<button class="btn mini" onclick="${reservar}">Reservar${c.falta > 0.01 ? ' ' + brlc(pend.length ? pend[0].item._falta : c.falta) : ''}</button>` : ''}
       <button class="btn mini sec" onclick="formGasto('${cx.entidade}', '${cx.id}')">+ Gasto</button>
@@ -370,6 +373,55 @@ function cartaoCaixinha(c, P) {
     <div class="muted xs cx-saldo">Saldo da caixinha hoje (com meses anteriores): <b>${brl(c.saldoAtual)}</b>${c.conferido ? '' : ' · não conferido'}</div>
   </section>`;
 }
+// Caixinha anual (Sazonais, Cursos e investimentos): o ano ao lado do mês.
+// A meta mensal é só o ritmo; há meses de guardar/usar mais, menos ou nada.
+function blocoAno(a) {
+  const cx = a.caixinha;
+  const ritmo = Math.abs(a.ritmo) < 1
+    ? (a.planejadoAteAgora > 0 ? `<div class="t-ok">Em dia com o que planejou guardar até hoje ✓</div>` : '')
+    : a.ritmo > 0 ? `<div><span class="t-ok">${brlc(a.ritmo)} adiantada</span> em relação ao que planejou guardar até hoje.</div>`
+    : `<div><span class="t-alerta">${brlc(-a.ritmo)} atrás</span> do que planejou guardar até hoje (${brlc(a.planejadoAteAgora)}).</div>`;
+  const fechar = a.faltaGuardar <= 0.01 ? `<div class="t-ok">Meta do ano já guardada ✓</div>`
+    : a.mesesRestantes ? `<div>Para fechar o ano: <b>${brlc(a.sugestaoMes)}/mês</b> ${a.mesesRestantes > 1 ? `nos próximos ${a.mesesRestantes} meses (contando este)` : 'neste último mês'}.</div>` : '';
+  const usar = a.estourou ? `<div class="t-erro">Usou ${brlc(-a.restaGastar)} além da meta do ano.</div>`
+    : `<div>Ainda pode usar <b>${brlc(a.restaGastar)}</b> até ${nomeMesC(a.ciclo.fim)}.</div>`;
+  return `<div class="cx-ano" onclick="event.stopPropagation()">
+    <div class="cx-ano-h"><b>No ano</b><span class="muted xs">${nomeMesC(a.ciclo.inicio)} → ${nomeMesC(a.ciclo.fim)}</span>
+      <button class="lnk sm" onclick="formMetaAnual('${cx.id}')">Ajustar meta</button></div>
+    <div class="grid3">
+      <div><span>Meta do ano</span><b>${brlc(a.metaAnual)}</b></div>
+      <div><span>Guardado</span><b>${brlc(a.guardado)}</b></div>
+      <div><span>Usado</span><b class="${a.estourou ? 't-erro' : ''}">${brlc(a.usado)}</b></div>
+    </div>
+    ${barra(a.guardado, a.metaAnual, a.faltaGuardar <= 0.01 ? 'ok' : 'andamento')}
+    <div class="cx-ano-l">
+      <div class="muted">Em média ${brlc(a.mediaMes)} por mês${Math.abs(a.somaMetas - a.metaAnual) >= 1 ? ` · o plano mês a mês soma ${brlc(a.somaMetas)}` : ''}</div>
+      ${ritmo}${fechar}${usar}
+    </div>
+  </div>`;
+}
+function detalheAno(a) {
+  const linhas = a.meses.filter(x => !x.antes).map(x => `
+    <div class="ano-m ${x.atual ? 'atual' : ''} ${x.passado ? 'passado' : ''}">
+      <span class="ano-mes">${nomeMesC(x.mes)}${x.atual ? ' ·' : ''}</span>
+      <span><small>meta</small>${x.meta ? brlc(x.meta) : '—'}${x.fonte === 'modelo' ? '<i>*</i>' : ''}</span>
+      <span><small>guardado</small>${x.transferido ? brlc(x.transferido) : x.passado || x.atual ? brlc(0) : '—'}</span>
+      <span><small>usado</small>${x.usado ? brlc(x.usado) : x.passado || x.atual ? brlc(0) : '—'}</span>
+    </div>`).join('');
+  const temModelo = a.meses.some(x => x.fonte === 'modelo');
+  let h = `<div class="sub-t">Mês a mês (${nomeMesC(a.ciclo.inicio)} → ${nomeMesC(a.ciclo.fim)})</div><div class="ano-lista">${linhas}</div>
+    ${temModelo ? '<div class="muted xs">* mês ainda não criado: meta vinda do modelo. Dá para mudar a meta de um mês no Plano daquele mês.</div>' : ''}`;
+  if (a.categorias.length) {
+    const comOrc = a.categorias.some(c => c.anual);
+    h += `<div class="sub-t">${comOrc ? 'Orçamento do ano por finalidade' : 'Usado no ano por categoria'}</div>${a.categorias.map(c => {
+      const nv = c.anual && c.usado > c.anual ? 'erro' : c.anual && c.usado >= c.anual * 0.85 ? 'alerta' : 'ok';
+      return `<div class="mini-l"><span>${esc(c.nome)}</span><span class="muted">${brlc(c.usado)}${c.anual ? ' / ' + brlc(c.anual) : ''}</span>
+        <b class="t-${nv}">${c.anual ? (c.usado > c.anual ? brlc(c.usado - c.anual) + ' acima' : 'resta ' + brlc(c.anual - c.usado)) : ''}</b></div>`; }).join('')}
+      ${a.caixinha.finalidade === 'sazonais' ? `<div class="cx-links"><button class="lnk sm" onclick="formConfig()">Editar orçamento por finalidade</button></div>` : ''}`;
+  }
+  return h;
+}
+
 // Semanada: semana a semana, com a atual em destaque
 function blocoSemanas(P, cx) {
   const s = cx.entidade === P.entidade ? P.semanadas : FX.semanadas(cx.entidade, stCtx(UI.mes));
@@ -386,7 +438,7 @@ function blocoSemanas(P, cx) {
       ${cats || l.atendimentos ? `<div class="muted xs">${cats}${l.atendimentos ? ` · ${l.atendimentos} atend.${l.custoPorAtendimento ? ' · ' + brlc(l.custoPorAtendimento) + '/atend.' : ''}` : ''}</div>` : ''}
     </div>`; }).join('')}</div>`;
 }
-function detalheCaixinha(cx, c) {
+function detalheCaixinha(cx, c, ano) {
   const ctx = stCtx(UI.mes);
   let h = '';
   const comp = FX.composicao(cx, ctx);
@@ -399,17 +451,7 @@ function detalheCaixinha(cx, c) {
         ${FX.PENDENTE(x.status) ? `<button class="btn mini" onclick="formExecutar('${x.item.id}')">Pagar</button>` : '<span class="mini-sp">✓</span>'}
       </div>`).join('')}</div>`;
   }
-  if (cx.finalidade === 'sazonais') {
-    const cfg = ctx.cfg, ano = UI.mes.slice(0, 4);
-    const gastosAno = ctx.movs.filter(m => m.caixinhaId === cx.id && m.classe === 'despesa' && m.realizado && String(m.competencia || m.data).startsWith(ano));
-    const porCat = {}; gastosAno.forEach(m => { porCat[m.categoria] = (porCat[m.categoria] || 0) + m.valor; });
-    const linhas = (cfg.sazonais || []).map(s => ({ nome: s.nome, anual: s.anual, gasto: porCat[s.nome] || 0 }));
-    Object.keys(porCat).filter(k => !linhas.some(l => l.nome === k)).forEach(k => linhas.push({ nome: k, anual: 0, gasto: porCat[k] }));
-    h += `<div class="sub-t">Orçamento do ano (${ano})</div>${linhas.map(l => {
-      const nv = l.anual && l.gasto > l.anual ? 'erro' : l.anual && l.gasto >= l.anual * 0.85 ? 'alerta' : 'ok';
-      return `<div class="mini-l"><span>${esc(l.nome)}</span><span class="muted">${brlc(l.gasto)} / ${l.anual ? brlc(l.anual) : '—'}</span>
-        <b class="t-${nv}">${l.anual ? (l.gasto > l.anual ? brlc(l.gasto - l.anual) + ' acima' : 'resta ' + brlc(l.anual - l.gasto)) : ''}</b></div>`; }).join('')}`;
-  }
+  if (ano) h += detalheAno(ano);
   if (c.usos.length && cx.finalidade !== 'semanada') {
     h += `<div class="sub-t">Usado neste mês</div>${c.usos.map(m => `<div class="mini-l" onclick="formMov('${esc(m.key)}')"><span>${dm(m.data)} · ${esc(m.descricao || m.categoria)}</span><span></span><b>${brl(m.valor)}</b></div>`).join('')}`;
   }

@@ -55,6 +55,10 @@ const titulo = t => console.log('\n■ ' + t);
     check('menu lateral escondido', !(await visivel('#lateral')));
     const alturaTab = await b.js(`Math.round(document.querySelector('#tabs button').getBoundingClientRect().height)`);
     check('botões da barra com área de toque ≥ 44px', alturaTab >= 44, alturaTab + 'px');
+    const pfpj = await b.js(`(() => { const s = document.getElementById('seg-ent').getBoundingClientRect(), m = document.querySelector('.mes-nav').getBoundingClientRect(),
+      bt = document.querySelector('#seg-ent button').getBoundingClientRect(); return { esq: s.left < 120 && (s.right <= m.left || s.bottom <= m.top), alt: Math.round(bt.height), dentro: s.right <= innerWidth && m.right <= innerWidth,
+      nome: document.getElementById('seg-ent').innerText.includes('Pessoal') }; })()`);
+    check('PF/PJ à esquerda, sem encostar no mês, com nome, botão ≥ 40px, tudo cabe na tela', pfpj.esq && pfpj.alt >= 40 && pfpj.dentro && pfpj.nome, JSON.stringify(pfpj));
     await b.foto(path.join(SAIDA, 'celular-hoje.png'));
     await b.foto(path.join(SAIDA, 'celular-hoje-inteira.png'), true);
     for (const [id, nome] of [['plano', 'Plano'], ['caixinhas', 'Caixinhas'], ['movs', 'Movimentos'], ['mais', 'Mais'], ['inicio', 'Hoje']]) {
@@ -63,9 +67,23 @@ const titulo = t => console.log('\n■ ' + t);
       await telaOk(nome, true, id);
       await b.foto(path.join(SAIDA, `celular-${id}.png`), true);
     }
+    // caixinha anual (Sazonais): mês + ano
+    await tocar('#tabs button[data-tab="caixinhas"]', true);
+    check('Sazonais mostra o bloco "No ano"', await b.js(`[...document.querySelectorAll('.cx-anual')].some(e => e.innerText.includes('Sazonais') && e.innerText.includes('No ano') && e.innerText.includes('Meta do mês'))`));
+    await b.js(`(() => { const c = [...document.querySelectorAll('.cx-anual')].find(e => e.innerText.includes('Sazonais')); toggleAberto(c.id.slice(3)); })()`);
+    await espera(80);
+    check('Detalhes de Sazonais: mês a mês do ano', await b.js(`document.querySelectorAll('.ano-m').length >= 12`));
+    check('Caixinhas com o ano: sem rolagem horizontal', await semOverflow());
+    await b.js(`document.querySelector('.cx-anual').scrollIntoView()`);
+    await b.foto(path.join(SAIDA, 'celular-caixinha-anual.png'), true);
+    let r = await tocar('.cx-anual .cx-ano-h .lnk', true);
+    check('"Ajustar meta" abre o formulário da meta do ano', r.ok && (await b.js(`!!document.getElementById('ma-valor')`)), r.motivo);
+    await b.foto(path.join(SAIDA, 'celular-meta-anual.png'));
+    await tocar('#modal-box .btn.ghost', true);
+    await b.js(`UI.aberto={};go('inicio')`);
     // sub-seções
     await tocar('#tabs button[data-tab="movs"]', true);
-    let r = await tocar('.seg.sub button:nth-child(2)', true);
+    r = await tocar('.seg.sub button:nth-child(2)', true);
     check('Movimentos › "Conferir com o banco" por toque', r.ok, r.motivo);
     await telaOk('Conferir com o banco', true, 'conciliar');
     check('barra inferior marca "Movimentos" na tela Conferir', await b.js(`document.querySelector('#tabs button[data-tab="movs"]').classList.contains('on')`));

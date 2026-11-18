@@ -501,14 +501,87 @@ const FX = (function () {
     return ctx.contas.filter(c => c.entidade === entidade && c.tipo === 'caixinha' && c.ativa !== false).map(cx => {
       const c = caixinha(cx, ctx);
       const teto = Math.max(c.aportePrevisto, c.usoPrevisto, c.aportado) + Math.max(0, c.saldoInicio);
+      // Caixinha anual: usar num mês mais do que guardou nele é normal —
+      // só passa do orçamento quando o usado no ano passa da meta do ano.
+      const ano = caixinhaAnual(cx, ctx.cfg) ? anoCaixinha(cx, ctx) : null;
       return {
         caixinha: cx, meta: c.aportePrevisto, transferido: c.aportado, falta: c.aporteFalta,
         usado: c.usado, usoPrevisto: c.usoPrevisto, disponivelMes: r2(c.aportado - c.usado),
-        estourou: c.usado > teto + EPS, acima: r2(Math.max(0, c.usado - teto)),
+        estourou: ano ? ano.estourou : c.usado > teto + EPS,
+        acima: ano ? r2(Math.max(0, ano.usado - ano.metaAnual)) : r2(Math.max(0, c.usado - teto)), anual: ano,
         saldoAtual: c.saldoAtual, saldoInicio: c.saldoInicio, conferido: c.conferido,
         itensAporte: c.itensAporte, composicao: c.composicao, usos: c.usos,
       };
     });
+  }
+
+  // ── CAIXINHAS ANUAIS (Sazonais, Cursos e investimentos) ──
+  // Meta pensada no ano e dividida por mês só para ter um ritmo: há meses
+  // em que se guarda/gasta mais, menos ou nada. Mostra os dois lados:
+  // o mês (meta do mês do plano) e o ano (meta anual, guardado, usado).
+  // Ano = 12 meses a partir de cfg.anoCaixinhas.mesInicio (padrão: mês em
+  // que o fluxo começou).
+  function cicloAno(mes, cfg) {
+    const padrao = cfg && cfg.inicioFluxo ? Number(cfg.inicioFluxo.slice(5, 7)) : 1;
+    const ini = Number(cfg && cfg.anoCaixinhas && cfg.anoCaixinhas.mesInicio) || padrao || 1;
+    const [y, m] = mes.split('-').map(Number);
+    const inicio = `${m >= ini ? y : y - 1}-${String(ini).padStart(2, '0')}`;
+    const meses = Array.from({ length: 12 }, (_, k) => addMes(inicio, k));
+    return { inicio, fim: meses[11], meses, mesInicio: ini };
+  }
+  function caixinhaAnual(cx, cfg) {
+    const ma = cfg && cfg.metaAnual && cfg.metaAnual[cx.id];
+    if (ma === 0) return false;                      // desligado de propósito
+    return ['sazonais', 'cursos'].includes(cx.finalidade) || num(ma) > EPS;
+  }
+  function anoCaixinha(cx, ctx) {
+    const { itens, movs, mes, cfg } = ctx;
+    const hoje = ctx.hoje || '9999-12-31';
+    const ciclo = cicloAno(mes, cfg);
+    const inicioFluxo = cfg && cfg.inicioFluxo ? mesDe(cfg.inicioFluxo) : '';
+    const comPlano = new Set(itens.filter(i => i.mes !== 'modelo').map(i => i.mes));
+    const aporte = i => i.tipo === 'aporte' && i.caixinhaId === cx.id && !i.dispensado && !i.reprogramadoPara;
+    const meses = ciclo.meses.map(mm => {
+      const antes = !!inicioFluxo && mm < inicioFluxo;
+      let its = [], fonte = 'plano';
+      if (antes) fonte = 'antes';
+      else if (comPlano.has(mm)) its = itens.filter(i => i.mes === mm && aporte(i));
+      else { fonte = 'modelo'; its = itens.filter(i => i.mes === 'modelo' && !i.avulso && vigente(i, mm) && aporte(i)); }
+      const meta = its.reduce((t, i) => t + num(i.valor), 0);
+      // só o que já tinha dia para acontecer (nada vira "atrasado" antes da data)
+      const metaVencida = its.filter(i => dataDoDia(mm, i.dia) <= hoje).reduce((t, i) => t + num(i.valor), 0);
+      const noMes = m => mesDe(m.data) === mm && m.realizado;
+      const transferido = movs.filter(m => noMes(m) && m.natureza === 'transferencia' && m.destinoId === cx.id).reduce((t, m) => t + m.valor, 0);
+      const doMes = movs.filter(m => mesDe(m.competencia || m.data) === mm && m.realizado && m.classe === 'despesa' && m.caixinhaId === cx.id);
+      return { mes: mm, meta: r2(meta), metaVencida: r2(metaVencida), fonte, antes, transferido: r2(transferido), usado: r2(doMes.reduce((t, m) => t + m.valor, 0)),
+        usos: doMes, atual: mm === mes, passado: mm < mes };
+    });
+    const soma = (arr, f) => r2(arr.reduce((t, x) => t + f(x), 0));
+    const somaMetas = soma(meses, x => x.meta);
+    const sazonais = cx.finalidade === 'sazonais' ? soma((cfg && cfg.sazonais) || [], s => num(s.anual)) : 0;
+    const definida = num(cfg && cfg.metaAnual && cfg.metaAnual[cx.id]);
+    const metaAnual = definida > EPS ? r2(definida) : sazonais > EPS ? sazonais : somaMetas;
+    const fonteMeta = definida > EPS ? 'definida' : sazonais > EPS ? 'sazonais' : 'meses';
+    const guardado = soma(meses, x => x.transferido);
+    const usado = soma(meses, x => x.usado);
+    const planejadoAteAgora = soma(meses, x => x.metaVencida);
+    const mesRef = mesDe(hoje) < ciclo.inicio ? ciclo.inicio : mesDe(hoje) > ciclo.fim ? ciclo.fim : mesDe(hoje);
+    const restantes = meses.filter(x => x.mes >= mesRef && !x.antes).length;
+    const faltaGuardar = r2(Math.max(0, metaAnual - guardado));
+    // por categoria (quanto já usou de cada finalidade no ano)
+    const porCat = {};
+    meses.forEach(x => x.usos.forEach(m => { porCat[m.categoria || 'Outros'] = r2((porCat[m.categoria || 'Outros'] || 0) + m.valor); }));
+    const orc = cx.finalidade === 'sazonais' ? ((cfg && cfg.sazonais) || []) : [];
+    const categorias = orc.map(s => ({ nome: s.nome, anual: num(s.anual), usado: porCat[s.nome] || 0 }))
+      .concat(Object.keys(porCat).filter(k => !orc.some(s => s.nome === k)).map(k => ({ nome: k, anual: 0, usado: porCat[k] })))
+      .map(c => Object.assign(c, { resta: r2(c.anual - c.usado) }));
+    return {
+      caixinha: cx, ciclo, meses, metaAnual, fonteMeta, somaMetas, guardado, usado,
+      faltaGuardar, restaGastar: r2(metaAnual - usado), estourou: usado > metaAnual + EPS && metaAnual > EPS,
+      planejadoAteAgora, ritmo: r2(guardado - planejadoAteAgora),   // + adiantada · − atrás (só datas que já passaram)
+      mesesRestantes: restantes, sugestaoMes: restantes ? r2(faltaGuardar / restantes) : 0,
+      mediaMes: r2(metaAnual / 12), categorias,
+    };
   }
 
   function painelMes(entidade, ctx) {
@@ -930,7 +1003,7 @@ const FX = (function () {
     semanas, semanaDe, contaPadrao, caixinhaPorFinalidade, normalizar, efeito, saldoConta,
     realizadoDoItem, statusItem, PENDENTE, itensDoMes, recebidoPF, consomeConta, distribuicoesPF,
     resumo, caixinha, composicao, semanadas, atendimentosPorData, receitaMaquiagem, divida,
-    semanaFoco, metasCaixinhas, painelMes, proximasAcoes, hashRef,
+    semanaFoco, metasCaixinhas, painelMes, proximasAcoes, hashRef, cicloAno, caixinhaAnual, anoCaixinha,
     casarExtrato, refExtrato, analiseMes, historico, copiarItens, checarPlano,
     vigente, difMeses, nomeItem, semAcento, grupoDaCategoria, finalidadeDaCategoria, caixinhaDaCategoria,
     itemCompativel, automatizar, chaveExtrato, paresEstorno, tokensNome, candidatosRecebimento, sugerirCategoria, tipoInterno, regraAprendida,
