@@ -327,44 +327,88 @@ function telaCaixinhas() {
   const P = painel();
   const cxs = P.caixinhas.slice().sort((a, b) => (a.caixinha.finalidade === 'semanada' ? -1 : 0) - (b.caixinha.finalidade === 'semanada' ? -1 : 0)
     || (a.caixinha.finalidade === 'reserva' ? 1 : 0) - (b.caixinha.finalidade === 'reserva' ? 1 : 0) || b.meta - a.meta);
-  const usado = cxs.reduce((t, c) => t + c.usado, 0);
-  let h = titulo('Caixinhas', 'Meta = quanto separar no mês. Guardado = quanto já separou. Falta guardar = meta − guardado.\n\nUsado = gastos pagos com o dinheiro da caixinha. Saldo hoje = o que tem nela agora, com o que sobrou de meses anteriores.');
-  h += `<div class="card"><div class="grid4">
-      <div><span>Meta do mês</span><b>${brlc(P.reservar.meta)}</b></div>
-      <div><span>Guardado</span><b>${brlc(P.reservar.transferido)}</b></div>
-      <div><span>Falta</span><b class="${P.reservar.falta > 0.01 ? 't-alerta' : 't-ok'}">${P.reservar.falta > 0.01 ? brlc(P.reservar.falta) : '✓'}</b></div>
-      <div><span>Usado</span><b>${brlc(usado)}</b></div></div>
-    ${barra(P.reservar.transferido, P.reservar.meta, P.reservar.falta > 0.01 ? 'andamento' : 'ok')}</div>`;
+  // Resumo só das caixinhas de guardar (semanada = gastar; fixas = pagar contas)
+  const g = cxs.filter(c => modoCaixinha(c.caixinha) === 'guardar' && c.meta > 0);
+  const meta = g.reduce((t, c) => t + c.meta, 0), guardado = g.reduce((t, c) => t + Math.min(c.transferido, c.meta), 0);
+  const falta = Math.max(0, meta - guardado);
+  let h = titulo('Caixinhas', 'Semanada: quanto ainda pode gastar na semana.\nDespesas fixas: quanto falta pagar das contas do mês (pode sair direto da conta).\nDemais: quanto falta guardar no mês.\n\nUsado = gastos pagos com o dinheiro da caixinha. Saldo hoje = o que tem nela agora.');
+  if (g.length) h += `<div class="card"><div class="grid3">
+      <div><span>Guardar no mês</span><b>${brlc(meta)}</b></div>
+      <div><span>Guardado</span><b>${brlc(guardado)}</b></div>
+      <div><span>Falta guardar</span><b class="${falta > 0.01 ? 't-alerta' : 't-ok'}">${falta > 0.01 ? brlc(falta) : '✓'}</b></div></div>
+    ${barra(guardado, meta, falta > 0.01 ? 'andamento' : 'ok')}</div>`;
   h += cxs.length ? `<div class="cx-grid">${cxs.map(c => cartaoCaixinha(c, P)).join('')}</div>` : vazio('Nenhuma caixinha cadastrada (Ajustes › Contas e caixinhas).');
   return h;
 }
+// Cada caixinha responde uma pergunta:
+//   semanada → quanto ainda posso gastar esta semana (não é para guardar)
+//   fixas    → quanto falta pagar das contas do mês (o dinheiro pode sair direto da conta)
+//   demais   → quanto falta guardar no mês
+function modoCaixinha(cx) {
+  return cx.finalidade === 'semanada' ? 'semana' : cx.finalidade === 'fixas' ? 'contas' : 'guardar';
+}
+const destaque = (valor, rotulo, cls) => `<div class="cx-v ${cls || ''}">${valor}</div><div class="muted xs">${rotulo}</div>`;
 function cartaoCaixinha(c, P) {
-  const cx = c.caixinha, sem = cx.finalidade === 'semanada';
+  const cx = c.caixinha, modo = modoCaixinha(cx), sem = modo === 'semana';
   const aberto = UI.aberto[cx.id] != null ? UI.aberto[cx.id] : sem;
-  const pend = P.acoes.filter(a => a.tipo === 'item' && a.item.tipo === 'aporte' && a.item.caixinhaId === cx.id);
-  const reservar = pend.length ? `formExecutar('${pend[0].item.id}')` : `formTransferencia('${cx.entidade}', null, '${cx.id}')`;
-  const nivelUso = c.estourou ? 'erro' : 'neutro';
   const ano = c.anual;
-  return `<section class="card cx ${c.estourou ? 'cx-erro' : ''} ${ano ? 'cx-anual' : ''}" id="cx-${cx.id}">
+  const saldoHoje = `<div><span>Saldo hoje${c.conferido ? '' : ' <i class="t-alerta" title="não conferido com o banco">*</i>'}</span><b>${brlc(c.saldoAtual)}</b></div>`;
+  let topo, corpo, botao = '', erro = false;
+  if (modo === 'semana') {
+    const S = cx.entidade === P.entidade ? P.semanadas : FX.semanadas(cx.entidade, stCtx(UI.mes));
+    const linhas = S ? S.linhas : [];
+    const orc = FX.r2(linhas.reduce((t, l) => t + l.orcamento, 0)), gasto = S ? S.gasto : c.usado;
+    const atual = linhas.find(l => l.atual);
+    erro = atual ? atual.estourou : gasto > orc + 0.01;
+    topo = atual ? (atual.estourou ? destaque(brl(atual.acima), 'acima esta semana', 't-erro') : destaque(brl(atual.podeGastar), 'pode gastar esta semana', 't-ok'))
+      : gasto > orc + 0.01 ? destaque(brl(gasto - orc), 'acima no mês', 't-erro') : destaque(brl(orc - gasto), 'sobrou no mês');
+    corpo = `<div class="grid3 cx-n">
+        <div><span>Orçamento</span><b>${brlc(orc)}</b></div>
+        <div><span>Gasto</span><b class="${gasto > orc + 0.01 ? 't-erro' : ''}">${brlc(gasto)}</b></div>
+        <div><span>${gasto > orc + 0.01 ? 'Acima' : 'Sobra'}</span><b>${brlc(Math.abs(orc - gasto))}</b></div></div>
+      ${orc > 0 ? barra(gasto, orc, gasto > orc + 0.01 ? 'erro' : gasto >= orc * 0.85 ? 'alerta' : 'ok') : ''}
+      ${blocoSemanas(P, cx)}`;
+  } else if (modo === 'contas') {
+    const comp = FX.composicao(cx, stCtx(UI.mes));
+    const total = FX.r2(comp.reduce((t, x) => t + x.previsto, 0));
+    const pendentes = comp.filter(x => FX.PENDENTE(x.status));
+    const falta = FX.r2(pendentes.reduce((t, x) => t + Math.max(0, x.previsto - x.pago), 0));
+    const pago = FX.r2(comp.reduce((t, x) => t + x.pago, 0));
+    const prox = pendentes.slice().sort((a, b) => (a.vencimento < b.vencimento ? -1 : 1))[0];
+    topo = falta > 0.01 ? destaque(brl(falta), 'falta pagar', 't-alerta') : total > 0 ? destaque('✓', 'contas do mês pagas', 't-ok') : destaque(brl(c.saldoAtual), 'saldo hoje');
+    corpo = `<div class="grid4 cx-n">
+        <div><span>Contas do mês</span><b>${brlc(total)}</b></div>
+        <div><span>Pago</span><b>${brlc(pago)}</b></div>
+        <div><span>Falta pagar</span><b class="${falta > 0.01 ? 't-alerta' : ''}">${falta > 0.01 ? brlc(falta) : '✓'}</b></div>
+        ${saldoHoje}</div>
+      ${total > 0 ? barra(pago, total, falta > 0.01 ? 'andamento' : 'ok') : ''}
+      ${prox ? `<div class="muted xs">Próxima: <b>${esc(prox.descricao)}</b> · ${dm(prox.vencimento)} · ${brlc(prox.previsto - prox.pago)}</div>` : ''}`;
+    if (prox) botao = `<button class="btn mini" onclick="formExecutar('${prox.item.id}')">Pagar ${esc(prox.descricao)}</button>`;
+  } else {
+    const pend = P.acoes.filter(a => a.tipo === 'item' && a.item.tipo === 'aporte' && a.item.caixinhaId === cx.id);
+    const reservar = pend.length ? `formExecutar('${pend[0].item.id}')` : `formTransferencia('${cx.entidade}', null, '${cx.id}')`;
+    erro = c.estourou;
+    topo = c.falta > 0.01 ? destaque(brl(c.falta), 'falta guardar', 't-alerta')
+      : c.meta > 0 ? destaque('✓ ' + brl(c.transferido), 'guardado no mês', 't-ok') : destaque(brl(c.saldoAtual), 'saldo hoje');
+    corpo = `<div class="grid4 cx-n">
+        <div><span>${ano ? 'Meta do mês' : 'Meta'}</span><b>${brlc(c.meta)}</b></div>
+        <div><span>Guardado</span><b>${brlc(c.transferido)}</b></div>
+        <div><span>Usado</span><b class="${!ano && c.estourou ? 't-erro' : ''}">${brlc(c.usado)}</b></div>
+        ${saldoHoje}</div>
+      ${c.meta > 0 ? barra(c.transferido, c.meta, c.falta > 0.01 ? 'andamento' : 'ok') : ''}
+      ${c.estourou && !ano ? `<div class="t-erro sm">Usou ${brl(c.acima)} além do planejado para esta caixinha.</div>` : ''}
+      ${ano ? blocoAno(ano) : ''}`;
+    if (c.falta > 0.01 || !c.meta) botao = `<button class="btn mini" onclick="${reservar}">Reservar${c.falta > 0.01 ? ' ' + brlc(pend.length ? pend[0].item._falta : c.falta) : ''}</button>`;
+  }
+  return `<section class="card cx ${erro ? 'cx-erro' : ''} ${ano ? 'cx-anual' : ''}" id="cx-${cx.id}">
     <div class="cx-h" onclick="toggleAberto('${cx.id}')">
       <div><h3>${esc(cx.nome)}${info(FINALIDADE_LABEL[cx.finalidade] ? 'Para ' + FINALIDADE_LABEL[cx.finalidade] + '.' : '')}</h3></div>
-      <div class="r">${c.falta > 0.01 ? `<div class="cx-v t-alerta">${brl(c.falta)}</div><div class="muted xs">falta guardar</div>`
-        : c.meta > 0 ? `<div class="cx-v t-ok">✓ ${brl(c.transferido)}</div><div class="muted xs">guardado no mês</div>`
-        : `<div class="cx-v">${brl(c.saldoAtual)}</div><div class="muted xs">saldo hoje</div>`}</div>
+      <div class="r">${topo}</div>
     </div>
-    <div class="grid4 cx-n">
-      <div><span>${ano ? 'Meta do mês' : 'Meta'}</span><b>${brlc(c.meta)}</b></div>
-      <div><span>Guardado</span><b>${brlc(c.transferido)}</b></div>
-      <div><span>Usado</span><b class="${!ano && c.estourou ? 't-erro' : ''}">${brlc(c.usado)}</b></div>
-      <div><span>Saldo hoje${c.conferido ? '' : ' <i class="t-alerta" title="não conferido com o banco">*</i>'}</span><b>${brlc(c.saldoAtual)}</b></div>
-    </div>
-    ${c.meta > 0 ? barra(c.transferido, c.meta, c.falta > 0.01 ? 'andamento' : 'ok') : ''}
-    ${c.estourou && !ano ? `<div class="t-erro sm">Usou ${brl(c.acima)} além do planejado para esta caixinha.</div>` : ''}
-    ${ano ? blocoAno(ano) : ''}
-    ${sem ? blocoSemanas(P, cx) : ''}
+    ${corpo}
     ${aberto ? detalheCaixinha(cx, c, ano) : ''}
     <div class="cx-b">
-      ${c.falta > 0.01 || !c.meta ? `<button class="btn mini" onclick="${reservar}">Reservar${c.falta > 0.01 ? ' ' + brlc(pend.length ? pend[0].item._falta : c.falta) : ''}</button>` : ''}
+      ${botao}
       <button class="btn mini sec" onclick="formGasto('${cx.entidade}', '${cx.id}')">+ Gasto</button>
       <button class="btn mini sec" onclick="toggleAberto('${cx.id}')">${aberto ? 'Menos' : 'Detalhes'}</button>
     </div>
@@ -428,8 +472,7 @@ function blocoSemanas(P, cx) {
       onclick="detalheSemana('${cx.entidade}', ${l.semana.n})" onkeydown="if(event.key==='Enter')detalheSemana('${cx.entidade}', ${l.semana.n})">
       <div class="sem-h"><b>S${l.semana.n}</b><span class="muted">${l.semana.label}${l.atual ? ' · esta semana' : ''}</span>
         <span class="sem-st t-${nivel}">${l.estourou ? brlc(l.acima) + ' acima' : l.gasto > 0 || l.atual || l.passada ? 'sobra ' + brlc(l.podeGastar) : 'previsto'}</span></div>
-      <div class="sem-v"><span>gasto <b>${brlc(l.gasto)}</b> de ${brlc(l.orcamento)}</span>
-        <span class="${l.faltaReservar > 0.01 ? 't-alerta' : 'muted'}">reservado ${brlc(l.reservado)}${l.faltaReservar > 0.01 ? ` · falta ${brlc(l.faltaReservar)}` : ' ✓'}</span></div>
+      <div class="sem-v"><span>gasto <b>${brlc(l.gasto)}</b> de ${brlc(l.orcamento)}</span></div>
       ${barra(l.gasto, l.orcamento, nivel)}
     </div>`; }).join('')}</div>`;
 }

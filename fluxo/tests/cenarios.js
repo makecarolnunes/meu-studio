@@ -611,6 +611,9 @@ const ctxM = (mes, hoje) => run(`stCtx(${JSON.stringify(mes)}, ${JSON.stringify(
   igual('Hoje: pró-labore com o que falta', /faltam R\$ 3\.555,00/.test(txt), true);
   txt = ver(`UI.tab='caixinhas';render()`);
   igual('Caixinhas: meta, guardado, usado, saldo e o que falta guardar', ['Meta', 'Guardado', 'Usado', 'Saldo hoje', 'falta guardar'].every(k => txt.includes(k)) && !txt.includes('disponível do mês'), true);
+  const cartao = fin => { const i = txt.indexOf(ST.contas.find(c => c.entidade === 'PF' && c.finalidade === fin).nome); const f = txt.indexOf('Detalhes', i); return txt.slice(i, f > i ? f : i + 200); };
+  igual('Semanada = quanto pode gastar (não "falta guardar", sem "reservado")', /pode gastar esta semana|acima esta semana/.test(cartao('semanada')) && !/falta guardar|reservado/.test(cartao('semanada')), true);
+  igual('Despesas fixas = quanto falta pagar das contas', /falta pagar|contas do mês pagas/.test(cartao('fixas')) && /Contas do mês/.test(cartao('fixas')) && !/falta guardar/.test(cartao('fixas')), true);
   igual('Caixinhas: semanada mostra a semana atual com o orçamento', txt.includes(`gasto ${run(`brlc(${w1.gasto})`)} de R$ 350`) && txt.includes('esta semana'), true);
   txt = ver(`UI.tab='inicio';UI.ent='PJ';render()`);
   igual('Hoje PJ: pró-labore para a conta pessoal com o que falta', /Pró-labore · para a sua conta pessoal[^]*faltam R\$ 3\.555,00/.test(txt), true);

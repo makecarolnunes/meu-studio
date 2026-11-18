@@ -242,7 +242,8 @@ body.modal-on .fab, body.revisando .fab { display: none; }
 /* ── Caixinhas ── */
 .cx-h { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; cursor: pointer; margin-bottom: 10px; }
 .cx-h h3 { margin: 0; }
-.cx-h .r { text-align: right; }
+.cx-h .r { text-align: right; flex: none; }
+.cx-h .r .cx-v { white-space: nowrap; }
 .cx-v { font-size: 1.4rem; font-weight: 750; letter-spacing: -.02em; line-height: 1.15; }
 .cx-n b { font-size: .95rem; }
 .cx-erro { border-color: var(--danger); }
