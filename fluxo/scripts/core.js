@@ -273,6 +273,23 @@ const FX = (function () {
   // Pagamento coberto por caixinha já foi reservado no aporte → não conta.
   const consomeConta = i => i.tipo === 'aporte' || i.tipo === 'prolabore' || (i.tipo === 'pagamento' && !i.caixinhaId);
 
+  // Cada caixinha tem um jeito de funcionar (Carol, 2026-11-18):
+  //   semana  → semanada: dinheiro para gastar na semana (não é para guardar)
+  //   contas  → despesas que se pagam todo mês; pode pagar direto da conta,
+  //             sem passar pela caixinha (que só acumula o que sobrar)
+  //   guardar → meta de guardar no mês (cursos, reposição, sazonais…)
+  // Só as de guardar têm "falta guardar" e lembrete de reserva.
+  const FINALIDADES_CONTAS = ['fixas', 'faxineira', 'cartao', 'mei', 'dividas'];
+  function modoCaixinha(cx) {
+    if (!cx) return 'guardar';
+    return cx.finalidade === 'semanada' ? 'semana' : FINALIDADES_CONTAS.includes(cx.finalidade) ? 'contas' : 'guardar';
+  }
+  // Aporte para caixinha que não é de guardar: opcional (não vira pendência)
+  function aporteOpcional(i, contas) {
+    if (!i || i.tipo !== 'aporte' || !i.caixinhaId) return false;
+    return modoCaixinha((contas || []).find(c => c.id === i.caixinhaId)) !== 'guardar';
+  }
+
   // Distribuição de cada recebimento da PF (pró-labore 01 e 15, ou outra
   // receita planejada): o que sai dele vai até o próximo recebimento.
   function distribuicoesPF(itensMes, movs) {
@@ -315,7 +332,22 @@ const FX = (function () {
 
     const im = itensDoMes(itens, mes, movs, hoje, cfg).filter(i => i.entidade === entidade);
     const pend = im.filter(i => PENDENTE(i._status));
-    const compromissosPlano = r2(pend.filter(consomeConta).reduce((t, i) => t + i._falta, 0));
+    // Aportes de semanada/contas não contam: o compromisso dessas caixinhas é
+    // o que ainda falta pagar/gastar, menos o que já está guardado nelas.
+    const compromissosItens = r2(pend.filter(i => consomeConta(i) && !aporteOpcional(i, contas)).reduce((t, i) => t + i._falta, 0));
+    const saldoCx = id => { const s = saldos.find(x => x.conta.id === id); return s ? Math.max(0, s.saldo) : 0; };
+    let compromissosCx = 0;
+    doEnt.filter(c => c.tipo === 'caixinha').forEach(c => {
+      const modo = modoCaixinha(c);
+      let falta = 0;
+      if (modo === 'contas') falta = pend.filter(i => i.tipo === 'pagamento' && i.caixinhaId === c.id).reduce((t, i) => t + i._falta, 0);
+      else if (modo === 'semana') {
+        const S = semanadas(entidade, ctx);
+        if (S && S.caixinha.id === c.id) falta = S.linhas.filter(l => !l.passada).reduce((t, l) => t + Math.max(0, l.orcamento - l.gasto), 0);
+      } else return;
+      compromissosCx += Math.max(0, falta - saldoCx(c.id));
+    });
+    const compromissosPlano = r2(compromissosItens + compromissosCx);
     // PJ: saídas "Previsto" do Financeiro no mês que não são item do plano
     const ligadas = new Set(im.map(i => i.id));
     const saidasPrevistas = entidade === 'PJ'
@@ -615,7 +647,7 @@ const FX = (function () {
 
     // 2. Distribuir (reservar nas caixinhas)
     const cxs = metasCaixinhas(entidade, ctx);
-    const comMeta = cxs.filter(c => c.meta > EPS);
+    const comMeta = cxs.filter(c => c.meta > EPS && modoCaixinha(c.caixinha) === 'guardar');
     out.caixinhas = cxs;
     out.reservar = { meta: soma(comMeta, c => c.meta), transferido: soma(comMeta, c => Math.min(c.transferido, c.meta)),
       falta: soma(comMeta, c => c.falta), caixinhas: comMeta };
@@ -646,11 +678,12 @@ const FX = (function () {
     const out = [];
     if (sem && sem.atual && sem.estourou)
       out.push({ tipo: 'semanada', grupo: 'atencao', nivel: 'erro', semana: sem, valor: sem.acima });
-    (pre.cxs || metasCaixinhas(entidade, ctx)).filter(c => c.estourou && c.caixinha.finalidade !== 'semanada')
+    (pre.cxs || metasCaixinhas(entidade, ctx)).filter(c => c.estourou && modoCaixinha(c.caixinha) === 'guardar')
       .forEach(c => out.push({ tipo: 'caixinha', grupo: 'atencao', nivel: 'erro', caixinha: c.caixinha, metas: c, valor: c.acima }));
 
     const wHoje = semanas(mes, cfg).find(w => hoje >= w.ini && hoje <= w.fim);
-    todos.filter(i => PENDENTE(i._status) && (i.entidade === entidade || (entidade === 'PF' && i.tipo === 'prolabore'))).forEach(i => {
+    todos.filter(i => PENDENTE(i._status) && (i.entidade === entidade || (entidade === 'PF' && i.tipo === 'prolabore'))
+      && !aporteOpcional(i, ctx.contas)).forEach(i => {
       const grupo = i._data < hoje ? 'atrasado' : i._data === hoje ? 'hoje' : (wHoje && i._data <= wHoje.fim) ? 'semana' : 'mes';
       const nivel = grupo === 'atrasado' ? (i.tipo === 'pagamento' ? 'erro' : 'alerta') : grupo === 'hoje' ? 'alerta' : 'neutro';
       out.push({ tipo: 'item', grupo, nivel, item: i, data: i._data, valor: i._falta });
@@ -1002,7 +1035,7 @@ const FX = (function () {
   return {
     EPS, r2, num, parseValor, diasNoMes, dataDoDia, mesDe, diaDe, addMes, addDias, difDias, ultimoDia,
     semanas, semanaDe, contaPadrao, caixinhaPorFinalidade, normalizar, efeito, saldoConta,
-    realizadoDoItem, statusItem, PENDENTE, itensDoMes, recebidoPF, consomeConta, distribuicoesPF,
+    realizadoDoItem, statusItem, PENDENTE, itensDoMes, recebidoPF, consomeConta, distribuicoesPF, modoCaixinha, aporteOpcional,
     resumo, caixinha, composicao, semanadas, atendimentosPorData, receitaMaquiagem, divida,
     semanaFoco, metasCaixinhas, painelMes, proximasAcoes, hashRef, cicloAno, caixinhaAnual, anoCaixinha,
     casarExtrato, refExtrato, analiseMes, historico, copiarItens, checarPlano,

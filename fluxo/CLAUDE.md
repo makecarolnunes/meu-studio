@@ -28,7 +28,7 @@ Testes (banco falso em memória, `tests/fake-db.js` — nada vai para o Supabase
 |---|---|
 | `inicio` (Hoje) | semanada da semana (quanto ainda pode gastar) · Próximas ações · Como está o mês (receber, distribuir, gastar) · Dinheiro agora |
 | `plano` | planejado do mês; PF por recebimento (pró-labore 01/15), PJ por semana; modelo |
-| `caixinhas` | cada caixinha responde uma pergunta (`modoCaixinha`): **semanada** → *pode gastar esta semana* (é dinheiro para usar, não para guardar; semanas sem "reservado", reservas só no detalhe da semana) · **fixas** → *falta pagar* das contas do mês (o dinheiro pode sair direto da conta; botão "Pagar" da próxima) · **demais** → *falta guardar* no mês (grade meta · guardado · usado · saldo hoje). O resumo do topo soma só as de guardar. Não mostrar "disponível do mês" (guardado − usado): confundia a Carol (2026-11-18) |
+| `caixinhas` | cada caixinha responde uma pergunta (`FX.modoCaixinha`): **semanada** → *pode gastar esta semana* (dinheiro para usar, não para guardar) · **contas** (fixas, faxineira, cartão, MEI, dívidas) → *falta pagar* (botão Pagar da próxima; parcial → "só isso este mês" dispensa o resto) · **guardar** (cursos, reposição, sazonais…) → *falta guardar*. Resumo do topo = só as de guardar. Sem "disponível do mês" nem "reservar" (palavra: **guardar**) |
 | (caixinha anual) | Sazonais e Cursos e investimentos: bloco **No ano** (meta do ano, guardado, usado, ritmo, quanto por mês para fechar o ano) + mês a mês nos Detalhes. `Ajustar meta` → `formMetaAnual` |
 | `movs` / `conciliar` | lançamentos / conferir com o banco (extrato, saldos, gastos sem caixinha, recebimentos vencidos) |
 | `mais`, `dividas`, `analises`, `ajustes` | — |
@@ -81,6 +81,7 @@ se a migration não estiver aplicada, o Financeiro e os Orçamentos quebrariam.
 24. **Próximas ações** (`FX.proximasAcoes`): atenção (passou do orçamento) > atrasado > hoje > semana > mês > conferir. Vermelho só para orçamento estourado e conta a pagar vencida; reserva/pró-labore atrasados são âmbar. Cada ação abre o registro — nunca marca feito sozinha.
 25. **Extrato ignorado não volta:** linhas com decisão `ignorar` ficam em `cfg.extratoIgnorados[contaId]` (hash `FX.hashRef`, até 3000 por conta) e reaparecem como `duplicada` (`ignoradaAntes`) ao importar o mesmo período de novo.
 26. **Caixinha anual** (`FX.caixinhaAnual`: finalidade sazonais/cursos ou `cfg.metaAnual[id]` > 0; `0` desliga): meta do mês = ritmo; meta do ano = `cfg.metaAnual[id]` > soma de `cfg.sazonais` > soma das metas dos 12 meses (mês sem plano usa o modelo). Ano = 12 meses desde `cfg.anoCaixinhas.mesInicio` (padrão: mês de `inicioFluxo`). Ritmo só conta reservas cujo dia já passou. "Passou do orçamento" só quando o usado no ANO passa da meta do ano.
+27. **Guardar é opcional em semanada e contas** (`FX.aporteOpcional`): aporte para essas caixinhas não vira ação nem entra em "Guardar nas caixinhas"; o dinheiro pode sair direto da conta. No "Livre no mês" (`resumo`), o compromisso delas é: contas = pagamentos pendentes − saldo da caixinha; semanada = o que ainda dá para gastar nas semanas que faltam − saldo da caixinha. Nunca somar o aporte e o pagamento (desconto em dobro).
 
 ## Auth
 

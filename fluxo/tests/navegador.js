@@ -99,7 +99,7 @@ const titulo = t => console.log('\n■ ' + t);
     check('semanas sem linha de categoria/atendimento no card', await b.js(`document.querySelectorAll('.sem').length > 0 && ![...document.querySelectorAll('.sem')].some(e => /atend\.|Deslocamento|Alimenta/.test(e.innerText))`));
     r = await tocar('.sem.atual', true);
     const det = await b.js(`(() => { const m = document.getElementById('modal-box'); return { on: document.getElementById('modal').classList.contains('on'), h: (m.querySelector('h2') || {}).innerText || '', txt: m.innerText }; })()`);
-    check('tocar na semana abre os detalhes', r.ok && det.on && /^S[0-9]/.test(det.h) && /Por categoria/i.test(det.txt) && /Reservas/i.test(det.txt), JSON.stringify(det).slice(0, 200));
+    check('tocar na semana abre os detalhes', r.ok && det.on && /^S[0-9]/.test(det.h) && /Por categoria/i.test(det.txt) && !/Reservad/i.test(det.txt), JSON.stringify(det).slice(0, 200));
     await b.foto(path.join(SAIDA, 'celular-semana.png'));
     await b.js(`document.getElementById('modal').dispatchEvent(new MouseEvent('click', { bubbles: true }))`);
     check('detalhe da semana não fecha ao tocar fora', await b.js(`document.getElementById('modal').classList.contains('on')`));

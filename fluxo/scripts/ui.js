@@ -120,8 +120,8 @@ function chip(status, tipo) {
   const leve = /atrasado/.test(status) && tipo && tipo !== 'pagamento';
   return `<span class="chip st-${status}${leve ? ' leve' : ''}">${ST_LABEL[status] || status}</span>`;
 }
-const TIPO_LABEL = { prolabore: 'Pró-labore', aporte: 'Reservar', pagamento: 'Pagar', receita: 'Receber' };
-const ACAO_LABEL = { prolabore: 'Pagar', aporte: 'Reservar', pagamento: 'Pagar', receita: 'Receber' };
+const TIPO_LABEL = { prolabore: 'Pró-labore', aporte: 'Guardar', pagamento: 'Pagar', receita: 'Receber' };
+const ACAO_LABEL = { prolabore: 'Pagar', aporte: 'Guardar', pagamento: 'Pagar', receita: 'Receber' };
 
 function nomeConta(id) { const c = stConta(id); return c ? c.nome : '—'; }
 function contasDe(ent, tipos) {

@@ -85,12 +85,11 @@ function cartaoSemana(P) {
   if (!w) {
     const r = P.resumo;
     return `<section class="card hero">
-      <div class="eyebrow">Livre para gastar no mês${info('O que fica na conta depois de tudo o que ainda falta pagar e reservar no mês.')}</div>
+      <div class="eyebrow">Livre para gastar no mês${info('O que fica na conta depois de tudo o que ainda falta pagar e guardar no mês.')}</div>
       <div class="hero-v ${r.disponivel < 0 ? 'neg' : ''}">${brl(r.disponivel)}</div></section>`;
   }
   const passou = w.acima > FX.EPS;
   const nivel = passou ? 'erro' : (w.orcamento > 0 && w.gasto >= w.orcamento * 0.85 ? 'alerta' : 'ok');
-  const itemRes = P.acoes.find(a => a.tipo === 'item' && a.item.tipo === 'aporte' && a.item.caixinhaId === cx.id && a.item._semana === w.semana.n);
   const quando = w.atual ? 'esta semana' : `semana ${w.semana.n}`;
   return `<section class="card hero hero-${nivel}">
     <div class="row"><div class="eyebrow">Semanada · ${quando} <span>${w.semana.label.replace(' a ', '–')}</span></div>
@@ -98,13 +97,9 @@ function cartaoSemana(P) {
     <div class="hero-v ${passou ? 'neg' : ''}">${passou ? brl(w.acima) : brl(w.podeGastar)}</div>
     <div class="hero-s">${passou ? `<b class="neg">acima</b> do orçamento da semana` : w.atual ? 'ainda pode gastar nesta semana' : 'disponível nesta semana'}</div>
     ${barra(w.gasto, w.orcamento, nivel)}
-    <div class="row sm hero-l"><span>Gasto <b>${brl(w.gasto)}</b> de ${brl(w.orcamento)}</span>
-      ${w.faltaReservar > FX.EPS ? `<span class="t-alerta">reservado ${brl(w.reservado)} · falta ${brl(w.faltaReservar)}</span>`
-        : w.previsto > 0 ? '<span class="t-ok">✓ reservado</span>' : ''}</div>
-    ${w.gastoSemReserva > FX.EPS && w.faltaReservar > FX.EPS ? `<div class="nota-sm">Gasto sem reserva: <b>${brl(w.gastoSemReserva)}</b>${info('Você já gastou mais do que está reservado na caixinha. Reserve o que falta para ela cobrir esses gastos.')}</div>` : ''}
+    <div class="row sm hero-l"><span>Gasto <b>${brl(w.gasto)}</b> de ${brl(w.orcamento)}</span></div>
     <div class="acoes2"><button class="btn sec" onclick="formGasto('${UI.ent}','${cx.id}')">+ Gasto</button>
-      ${itemRes ? `<button class="btn sec" onclick="formExecutar('${itemRes.item.id}')">Reservar ${brlc(itemRes.item._falta)}</button>`
-        : `<button class="btn sec" onclick="abrirCaixinha('${cx.id}')">Ver semanas</button>`}</div>
+      <button class="btn sec" onclick="abrirCaixinha('${cx.id}')">Ver semanas</button></div>
   </section>`;
 }
 
@@ -139,8 +134,8 @@ function linhaAcao(a) {
   if (a.tipo === 'item') {
     const i = a.item, cx = i.caixinhaId ? stConta(i.caixinhaId) : null;
     const pf = UI.ent === 'PF';
-    const verbo = { aporte: 'Reservar', pagamento: 'Pagar', prolabore: pf ? 'Recebi' : 'Transferir', receita: 'Recebi' }[i.tipo];
-    const sub = i.tipo === 'aporte' ? `reservar em ${cx ? cx.nome : 'caixinha'}`
+    const verbo = { aporte: 'Guardar', pagamento: 'Pagar', prolabore: pf ? 'Recebi' : 'Transferir', receita: 'Recebi' }[i.tipo];
+    const sub = i.tipo === 'aporte' ? `guardar em ${cx ? cx.nome : 'caixinha'}`
       : i.tipo === 'pagamento' ? (cx ? `pagar com a reserva de ${cx.nome}` : 'pagar direto da conta')
       : i.tipo === 'prolabore' ? (pf ? 'receber da empresa' : 'transferir para a sua conta pessoal') : 'receber';
     return linhaA({ nivel: a.nivel, data: dm(i._data), titulo: FX.nomeItem(i), valor: a.valor,
@@ -182,8 +177,8 @@ function cartaoComoEsta(P) {
     modo: 'meta', verbo: 'transferido', chave: 'pg-pro', rotDetalhe: 'Ver parcelas',
     detalhe: P.prolabore.itens.map(i => miniLinha(FX.nomeItem(i) + ' · dia ' + dm(i._data), Math.min(i._realizado, i.valor), i.valor,
       i._falta > FX.EPS ? `falta ${brl(i._falta)}` : '✓', i._falta > FX.EPS ? 'alerta' : 'ok')).join('') });
-  h += progresso({ rotulo: 'Distribuir · reservar nas caixinhas', feito: P.reservar.transferido, total: P.reservar.meta, modo: 'meta',
-    verbo: 'reservado', chave: 'pg-res', rotDetalhe: 'Ver por caixinha',
+  h += progresso({ rotulo: 'Guardar nas caixinhas', feito: P.reservar.transferido, total: P.reservar.meta, modo: 'meta',
+    verbo: 'guardado', chave: 'pg-res', rotDetalhe: 'Ver por caixinha',
     detalhe: P.reservar.caixinhas.map(c => miniLinha(c.caixinha.nome, Math.min(c.transferido, c.meta), c.meta,
       c.falta > FX.EPS ? `falta ${brl(c.falta)}` : '✓', c.falta > FX.EPS ? 'alerta' : 'ok', `abrirCaixinha('${c.caixinha.id}')`)).join('') });
   h += progresso({ rotulo: 'Gastar · gastos do mês', feito: P.gastar.gasto, total: P.gastar.planejado, modo: 'limite', verbo: 'gasto',
@@ -201,7 +196,7 @@ function cartaoDinheiro(P) {
     <div class="row"><h3>Dinheiro agora</h3>${nc ? `<button class="tag-btn alerta" onclick="go('conciliar')">${nc} sem saldo conferido ›</button>` : '<span class="t-ok sm">✓ saldos conferidos</span>'}</div>
     <div class="grid3"><div><span>Na conta</span><b>${brl(r.saldoBancario)}</b></div>
       <div><span>Nas caixinhas</span><b>${brl(r.reservado)}</b></div>
-      <div><span>Livre no mês${info('Na conta − o que ainda falta pagar e reservar neste mês' + (r.faturaACobrir > FX.EPS ? ' − fatura do cartão sem reserva' : '') + '.')}</span><b class="${r.disponivel < 0 ? 'neg' : ''}">${brl(r.disponivel)}</b></div></div>
+      <div><span>Livre no mês${info('Na conta − o que ainda falta pagar e guardar neste mês' + (r.faturaACobrir > FX.EPS ? ' − fatura do cartão sem reserva' : '') + '.')}</span><b class="${r.disponivel < 0 ? 'neg' : ''}">${brl(r.disponivel)}</b></div></div>
     ${r.disponivel < 0 ? `<div class="t-erro sm" style="margin-top:6px">Faltam ${brl(-r.disponivel)} no mês${info('A conta não cobre o resto do mês. Reprograme algum item no Plano.')}</div>` : ''}
   </section>`;
 }
@@ -231,7 +226,7 @@ function telaPlano() {
   if (UI.modelo) return telaModelo();
   const ent = UI.ent;
   const plano = stPlano(UI.mes);
-  let h = titulo('Plano do mês', 'O que você planejou receber, reservar e pagar. Cada item só fica ✓ quando você registra o que aconteceu.');
+  let h = titulo('Plano do mês', 'O que você planejou receber, guardar e pagar. Cada item só fica ✓ quando você registra o que aconteceu.');
   if (!plano) {
     const temAnt = ST.itens.some(i => i.mes === FX.addMes(UI.mes, -1));
     return h + `<div class="card"><h3>${nomeMes(UI.mes)} sem plano${info('O mês é criado como cópia: alterar depois não muda outros meses nem o que já aconteceu.')}</h3>
@@ -253,7 +248,7 @@ function telaPlano() {
 
   h += `<div class="card"><div class="grid3 plano-n">
       <div><span>${ent === 'PF' ? 'Receber' : 'Pró-labore'}</span><b>${brlc(rec.previsto)}</b><small class="${rec.recebido >= rec.previsto - 0.01 && rec.previsto ? 't-ok' : 'muted'}">${brlc(rec.recebido)} ${ent === 'PF' ? 'recebido' : 'pago'}</small></div>
-      <div><span>Reservar</span><b>${brlc(P.reservar.meta)}</b><small class="${P.reservar.falta > 0.01 ? 't-alerta' : 't-ok'}">${P.reservar.falta > 0.01 ? 'faltam ' + brlc(P.reservar.falta) : '✓ reservado'}</small></div>
+      <div><span>Guardar</span><b>${brlc(P.reservar.meta)}</b><small class="${P.reservar.falta > 0.01 ? 't-alerta' : 't-ok'}">${P.reservar.falta > 0.01 ? 'faltam ' + brlc(P.reservar.falta) : '✓ guardado'}</small></div>
       <div><span>Pagar</span><b>${brlc(totPag)}</b><small class="${totPag - feitoPag > 0.01 ? 'muted' : 't-ok'}">${brlc(feitoPag)} pago</small></div>
     </div></div>
     <div class="toolbar"><span class="muted sm">${fechado ? '🔒 Mês fechado' : 'Origem: ' + (plano.origem === 'modelo' ? 'modelo' : nomeMes(plano.origem || UI.mes))}</span>
@@ -344,9 +339,7 @@ function telaCaixinhas() {
 //   semanada → quanto ainda posso gastar esta semana (não é para guardar)
 //   fixas    → quanto falta pagar das contas do mês (o dinheiro pode sair direto da conta)
 //   demais   → quanto falta guardar no mês
-function modoCaixinha(cx) {
-  return cx.finalidade === 'semanada' ? 'semana' : cx.finalidade === 'fixas' ? 'contas' : 'guardar';
-}
+const modoCaixinha = cx => FX.modoCaixinha(cx);
 const destaque = (valor, rotulo, cls) => `<div class="cx-v ${cls || ''}">${valor}</div><div class="muted xs">${rotulo}</div>`;
 function cartaoCaixinha(c, P) {
   const cx = c.caixinha, modo = modoCaixinha(cx), sem = modo === 'semana';
@@ -369,11 +362,14 @@ function cartaoCaixinha(c, P) {
       ${orc > 0 ? barra(gasto, orc, gasto > orc + 0.01 ? 'erro' : gasto >= orc * 0.85 ? 'alerta' : 'ok') : ''}
       ${blocoSemanas(P, cx)}`;
   } else if (modo === 'contas') {
-    const comp = FX.composicao(cx, stCtx(UI.mes));
-    const total = FX.r2(comp.reduce((t, x) => t + x.previsto, 0));
+    // contas do mês: pago parcial com o resto dispensado vale o que foi pago;
+    // sem conta no plano (ex.: assinaturas no cartão), vale a meta × o usado
+    const comp = FX.composicao(cx, stCtx(UI.mes)).filter(x => x.status !== 'reprogramado');
     const pendentes = comp.filter(x => FX.PENDENTE(x.status));
-    const falta = FX.r2(pendentes.reduce((t, x) => t + Math.max(0, x.previsto - x.pago), 0));
-    const pago = FX.r2(comp.reduce((t, x) => t + x.pago, 0));
+    const semItens = !comp.length;
+    const total = FX.r2(semItens ? c.meta : comp.reduce((t, x) => t + (x.status === 'dispensado' ? x.pago : x.previsto), 0));
+    const pago = FX.r2(semItens ? c.usado : comp.reduce((t, x) => t + x.pago, 0));
+    const falta = FX.r2(semItens ? Math.max(0, total - pago) : pendentes.reduce((t, x) => t + Math.max(0, x.previsto - x.pago), 0));
     const prox = pendentes.slice().sort((a, b) => (a.vencimento < b.vencimento ? -1 : 1))[0];
     topo = falta > 0.01 ? destaque(brl(falta), 'falta pagar', 't-alerta') : total > 0 ? destaque('✓', 'contas do mês pagas', 't-ok') : destaque(brl(c.saldoAtual), 'saldo hoje');
     corpo = `<div class="grid4 cx-n">
@@ -398,7 +394,7 @@ function cartaoCaixinha(c, P) {
       ${c.meta > 0 ? barra(c.transferido, c.meta, c.falta > 0.01 ? 'andamento' : 'ok') : ''}
       ${c.estourou && !ano ? `<div class="t-erro sm">Usou ${brl(c.acima)} além do planejado para esta caixinha.</div>` : ''}
       ${ano ? blocoAno(ano) : ''}`;
-    if (c.falta > 0.01 || !c.meta) botao = `<button class="btn mini" onclick="${reservar}">Reservar${c.falta > 0.01 ? ' ' + brlc(pend.length ? pend[0].item._falta : c.falta) : ''}</button>`;
+    if (c.falta > 0.01 || !c.meta) botao = `<button class="btn mini" onclick="${reservar}">Guardar${c.falta > 0.01 ? ' ' + brlc(pend.length ? pend[0].item._falta : c.falta) : ''}</button>`;
   }
   return `<section class="card cx ${erro ? 'cx-erro' : ''} ${ano ? 'cx-anual' : ''}" id="cx-${cx.id}">
     <div class="cx-h" onclick="toggleAberto('${cx.id}')">
@@ -487,18 +483,16 @@ function detalheSemana(ent, n) {
   const lista = (arr, vazio, fn) => arr.length ? arr.map(fn).join('') : `<div class="muted sm">${vazio}</div>`;
   const gastos = l.gastos.slice().sort((a, b) => (a.data < b.data ? -1 : 1));
   abrirModal(`<h2>S${n} · ${l.semana.label}</h2>
-    <div class="grid4 sem-g">
+    <div class="grid3 sem-g">
       <div><span>Orçamento</span><b>${brlc(l.orcamento)}</b></div>
       <div><span>Gasto</span><b>${brlc(l.gasto)}</b></div>
-      <div><span>Reservado</span><b>${brlc(l.reservado)}</b></div>
       <div><span>${l.estourou ? 'Acima' : 'Sobra'}</span><b class="t-${l.estourou ? 'erro' : 'ok'}">${brlc(l.estourou ? l.acima : l.podeGastar)}</b></div>
     </div>
     ${l.atendimentos ? `<div class="mini-l"><span>Atendimentos</span><span class="muted">${l.atendimentos}</span><b>${l.custoPorAtendimento ? brlc(l.custoPorAtendimento) + '/atend.' : ''}</b></div>` : ''}
     <div class="sub-t">Por categoria</div>
     ${lista(cats, 'Nenhum gasto nesta semana.', ([k, v]) => `<div class="mini-l"><span>${esc(k)}</span><span></span><b>${brlc(v)}</b></div>`)}
     ${gastos.length ? `<div class="sub-t">Gastos</div>${gastos.map(m => `<div class="mini-l lnk-l" onclick="formMov('${esc(m.key)}')"><span>${dm(m.data)} · ${esc(m.descricao || m.categoria)}</span><span></span><b>${brlc(m.valor)}</b></div>`).join('')}` : ''}
-    <div class="sub-t">Reservas${info('Dinheiro transferido para a caixinha ' + cx.nome + ' para esta semana.')}</div>
-    ${lista(l.reservas, l.faltaReservar > 0.01 ? 'Falta reservar ' + brlc(l.faltaReservar) + '.' : 'Nenhuma reserva.', m => `<div class="mini-l lnk-l" onclick="formMov('${esc(m.key)}')"><span>${dm(m.data)} · ${esc(m.descricao || 'Reserva')}</span><span></span><b>${brlc(m.valor)}</b></div>`)}
+    ${l.reservas.length ? `<div class="sub-t">Na caixinha</div>${l.reservas.map(m => `<div class="mini-l lnk-l" onclick="formMov('${esc(m.key)}')"><span>${dm(m.data)} · ${esc(m.descricao || 'Transferência')}</span><span></span><b>${brlc(m.valor)}</b></div>`).join('')}` : ''}
     <button class="btn ghost" onclick="fecharModal()">Fechar</button>`);
 }
 function detalheCaixinha(cx, c, ano) {
@@ -506,10 +500,10 @@ function detalheCaixinha(cx, c, ano) {
   let h = '';
   const comp = FX.composicao(cx, ctx);
   if (comp.length) {
-    h += `<div class="sub-t">O que esta caixinha paga</div><div class="lista-c">${comp.map(x => `
+    h += `<div class="sub-t">Contas</div><div class="lista-c">${comp.map(x => `
       <div class="lc st-${x.status}">
         <div class="lc-m" onclick="formItem('${x.item.id}')"><div class="lc-t">${esc(x.descricao)}</div>
-          <div class="lc-s">vence ${dm(x.vencimento)}${x.pago ? ` · pago ${brlc(x.pago)} em ${dm(x.dataPagamento)}` : ''}${x.diferenca ? ` · <span class="${x.diferenca > 0 ? 't-erro' : 't-ok'}">${x.diferenca > 0 ? '+' : ''}${brlc(x.diferenca)}</span>` : ''}</div></div>
+          <div class="lc-s">vence ${dm(x.vencimento)}${x.pago ? ` · pago ${brlc(x.pago)} em ${dm(x.dataPagamento)}` : ''}${x.diferenca && x.status !== 'dispensado' && !FX.PENDENTE(x.status) ? ` · <span class="${x.diferenca > 0 ? 't-erro' : 't-ok'}">${x.diferenca > 0 ? '+' : ''}${brlc(x.diferenca)}</span>` : ''}${FX.PENDENTE(x.status) && x.pago > 0.01 ? ` · <button class="lnk xs" onclick="event.stopPropagation();acSoIsso('${x.item.id}')">só isso este mês</button>` : ''}</div></div>
         <div class="lc-v">${brlc(x.previsto)}${chip(x.status, 'pagamento')}</div>
         ${FX.PENDENTE(x.status) ? `<button class="btn mini" onclick="formExecutar('${x.item.id}')">Pagar</button>` : '<span class="mini-sp">✓</span>'}
       </div>`).join('')}</div>`;

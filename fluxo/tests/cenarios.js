@@ -493,7 +493,8 @@ const ctxM = (mes, hoje) => run(`stCtx(${JSON.stringify(mes)}, ${JSON.stringify(
   PA = FX.painelMes('PF', cA('2027-04-05'));
   let mF = PA.caixinhas.find(c => c.caixinha.id === fixasPF.id);
   igual('despesas fixas: transferido 900, falta = meta − 900', [mF.transferido, mF.falta], [900, FX.r2(metaFixas - 900)]);
-  igual('a ação de reservar continua, só com o que falta', PA.acoes.find(a => a.tipo === 'item' && a.item.id === itFix.id).valor, FX.r2(metaFixas - 900));
+  igual('despesas fixas: guardar é opcional (não vira ação; as contas viram)', [!!PA.acoes.find(a => a.tipo === 'item' && a.item.id === itFix.id),
+    PA.acoes.some(a => a.tipo === 'item' && a.item.tipo === 'pagamento' && a.item.caixinhaId === fixasPF.id)], [false, true]);
   // exemplo da Carol: planejou X, transferiu uma parte, gastou um pouco
   const metaFax = PA.caixinhas.find(c => c.caixinha.id === faxPF.id).meta;
   await AC.transferir({ valor: '100', data: '2027-04-06', origemId: pfC.id, destinoId: faxPF.id });
@@ -502,11 +503,30 @@ const ctxM = (mes, hoje) => run(`stCtx(${JSON.stringify(mes)}, ${JSON.stringify(
   igual('faxineira: meta · transferido · falta · usado · disponível do mês', [mX.meta, mX.transferido, mX.falta, mX.usado, mX.disponivelMes],
     [metaFax, 100, FX.r2(metaFax - 100), 40, 60]);
 
+  titulo('V3b. Caixinhas de contas e semanada: guardar é opcional, sem desconto em dobro');
+  igual('modo de cada caixinha', ['semanada', 'fixas', 'faxineira', 'cartao', 'mei', 'dividas', 'sazonais', 'cursos', 'reposicao'].map(f => FX.modoCaixinha({ finalidade: f })),
+    ['semana', 'contas', 'contas', 'contas', 'contas', 'contas', 'guardar', 'guardar', 'guardar']);
+  const PB = FX.painelMes('PF', cA('2027-04-06'));
+  igual('nenhuma ação de guardar em semanada/contas', PB.acoes.filter(a => a.tipo === 'item' && FX.aporteOpcional(a.item, ST.contas)).length, 0);
+  igual('"Guardar nas caixinhas" só soma as de guardar', PB.reservar.caixinhas.every(c => FX.modoCaixinha(c.caixinha) === 'guardar'), true);
+  const itConta = itensA('2027-04-06').find(i => i.tipo === 'pagamento' && i.caixinhaId === fixasPF.id && FX.PENDENTE(i._status));
+  const livreAntes = FX.resumo('PF', cA('2027-04-06')).disponivel;
+  await AC.pagarItem(itConta.id, { valor: String(itConta.valor), data: '2027-04-06', contaId: pfC.id, resgatar: true });
+  igual('conta paga com a reserva da caixinha: "Livre no mês" não muda', FX.r2(FX.resumo('PF', cA('2027-04-06')).disponivel - livreAntes), 0);
+  const livreSem = FX.resumo('PF', cA('2027-04-06')).disponivel;
+  await AC.registrarGasto({ entidade: 'PF', valor: '30', data: '2027-04-06', descricao: 'Lanche', categoria: 'Mercado', contaId: pfC.id });
+  igual('semanada gasta direto da conta: "Livre no mês" não cai duas vezes', FX.r2(FX.resumo('PF', cA('2027-04-06')).disponivel - livreSem), 0);
+  const itParc = itensA('2027-04-06').find(i => i.tipo === 'pagamento' && i.caixinhaId === fixasPF.id && FX.PENDENTE(i._status) && i.valor > 50);
+  await AC.pagarItem(itParc.id, { valor: '50', data: '2027-04-06', contaId: pfC.id, resgatar: false });
+  await AC.dispensarItem(itParc.id, 'pago R$ 50, o resto não neste mês');
+  const stParc = itensA('2027-04-06').find(i => i.id === itParc.id);
+  igual('"só isso este mês": parcial fechado com o pago, sem pendência', [stParc._status, stParc._realizado, FX.painelMes('PF', cA('2027-04-06')).acoes.some(a => a.item && a.item.id === itParc.id)], ['dispensado', 50, false]);
+
   titulo('V6. Semanada acima do orçamento');
   await AC.registrarGasto({ entidade: 'PF', valor: '300', data: '2027-04-07', descricao: 'Mercado', categoria: 'Mercado', contaId: pfC.id });
   PA = FX.painelMes('PF', cA('2027-04-07'));
-  igual('semana 1: 420 gastos de 350 → 70 acima', [PA.semana.gasto, PA.semana.acima, PA.semana.podeGastar, PA.semana.estourou], [420, 70, -70, true]);
-  igual('primeira das próximas ações: "passou do orçamento"', [PA.acoes[0].tipo, PA.acoes[0].grupo, PA.acoes[0].valor], ['semanada', 'atencao', 70]);
+  igual('semana 1: 450 gastos de 350 → 100 acima', [PA.semana.gasto, PA.semana.acima, PA.semana.podeGastar, PA.semana.estourou], [450, 100, -100, true]);
+  igual('primeira das próximas ações: "passou do orçamento"', [PA.acoes[0].tipo, PA.acoes[0].grupo, PA.acoes[0].valor], ['semanada', 'atencao', 100]);
 
   titulo('V4. Extrato parcial não apaga as previsões futuras');
   const futuros = h => itensA(h).filter(i => i._data > '2027-04-10' && FX.PENDENTE(i._status)).map(i => i.id).sort();
@@ -607,7 +627,7 @@ const ctxM = (mes, hoje) => run(`stCtx(${JSON.stringify(mes)}, ${JSON.stringify(
   if (process.env.TXT) console.log(txt.slice(0, 2500));
   igual('Hoje: semanada desta semana acima do orçamento, em destaque', txt.includes(`Semanada · esta semana`) && txt.includes(`${run(`brl(${w1.acima})`)} acima do orçamento`), true);
   igual('Hoje: "Próximas ações" com o que passou do orçamento', txt.includes('Próximas ações') && txt.includes('Passou do orçamento'), true);
-  igual('Hoje: receber / distribuir / gastar', ['Receber', 'Distribuir', 'Gastar'].every(k => txt.includes(k)), true);
+  igual('Hoje: receber / distribuir / gastar', ['Receber', 'Guardar', 'Gastar'].every(k => txt.includes(k)), true);
   igual('Hoje: pró-labore com o que falta', /faltam R\$ 3\.555,00/.test(txt), true);
   txt = ver(`UI.tab='caixinhas';render()`);
   igual('Caixinhas: meta, guardado, usado, saldo e o que falta guardar', ['Meta', 'Guardado', 'Usado', 'Saldo hoje', 'falta guardar'].every(k => txt.includes(k)) && !txt.includes('disponível do mês'), true);

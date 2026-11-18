@@ -57,7 +57,7 @@ function formExecutar(itemId) {
   let corpo = '';
   if (i.tipo === 'aporte') {
     corpo = campo('De onde sai', `<select class="fi" id="ex-origem">${optContas(i.entidade, ['corrente', 'especie', 'caixinha'], i.contaId || (FX.contaPadrao(ST.contas, i.entidade, 'corrente') || {}).id)}</select>`) +
-      `<div class="nota">Transferência para a caixinha <b>${esc(cx ? cx.nome : '')}</b>. Não conta como gasto — o dinheiro continua seu, reservado.</div>`;
+      `<div class="nota">Transferência para a caixinha <b>${esc(cx ? cx.nome : '')}</b>. Não conta como gasto — o dinheiro continua seu, guardado.</div>`;
   } else if (i.tipo === 'pagamento') {
     const contaPadr = cx ? (FX.contaPadrao(ST.contas, i.entidade, 'corrente') || {}).id : (i.contaId || (FX.contaPadrao(ST.contas, i.entidade, 'corrente') || {}).id);
     corpo = campo('Pago com', `<select class="fi" id="ex-conta" onchange="exAtualizaResgate()">${optContas(i.entidade, ['corrente', 'caixinha', 'cartao', 'especie'], contaPadr)}</select>`) +
@@ -75,7 +75,7 @@ function formExecutar(itemId) {
     <div class="muted sm">Previsto ${brl(i.valor)} para ${dm(i._data)}${i._realizado ? ` · já feito ${brl(i._realizado)}` : ''}</div>
     <div class="two">${campo('Valor real', inValor('ex-valor', falta))}${campo('Data', inData('ex-data', dataPadrao(i._data)))}</div>
     ${corpo}
-    ${rodape(`acExecutar('${i.id}')`, 'Registrar', FX.PENDENTE(i._status) ? `<div class="row"><button class="lnk sm" onclick="formReprogramar('${i.id}')">Reprogramar</button><button class="lnk sm" onclick="acDispensar('${i.id}')">Dispensar este mês</button></div>` : '')}`);
+    ${rodape(`acExecutar('${i.id}')`, 'Registrar', FX.PENDENTE(i._status) ? `<div class="row"><button class="lnk sm" onclick="formReprogramar('${i.id}')">Reprogramar</button>${i._realizado > FX.EPS ? `<button class="lnk sm" onclick="acSoIsso('${i.id}')">Só isso este mês</button>` : `<button class="lnk sm" onclick="acDispensar('${i.id}')">Dispensar este mês</button>`}</div>` : '')}`);
   exAtualizaResgate();
 }
 function exAtualizaResgate() {
@@ -104,6 +104,12 @@ function formReprogramar(id) {
     <button class="btn" onclick="executar(()=>AC.reprogramarItem('${id}',{novoDia:$v('rp-dia')}),'Data alterada')">Mudar a data</button>
     <button class="btn sec" onclick="executar(()=>AC.reprogramarItem('${id}',{}),'O que falta foi para o mês seguinte')">Levar o que falta para ${nomeMes(FX.addMes(i.mes, 1))}</button>
     <button class="btn ghost" onclick="fecharModal()">Cancelar</button>`);
+}
+// Pagou só uma parte e o resto não vai ser pago neste mês: fecha com o pago
+function acSoIsso(id) {
+  const i = FX.itensDoMes(ST.itens, stItem(id).mes, stMovs(), stHoje(), ST.cfg).find(x => x.id === id);
+  if (!i || !confirm(`${FX.nomeItem(i)}: fechar o mês com ${brl(i._realizado)} pago?`)) return;
+  executar(() => AC.dispensarItem(id, `pago ${brl(i._realizado)}, o resto não neste mês`), 'Fechado com o valor pago');
 }
 function acDispensar(id) {
   const motivo = prompt('Por que este item não vai acontecer neste mês? (fica no histórico)');
@@ -165,7 +171,7 @@ function menuNovo() {
   const pro = FX.itensDoMes(ST.itens, UI.mes, ctx.movs, ctx.hoje, ctx.cfg).find(i => i.tipo === 'prolabore' && FX.PENDENTE(i._status));
   abrirModal(`<h2>Registrar · ${ent === 'PF' ? 'Pessoal' : 'Empresa'}</h2><div class="menu">
     <button onclick="formGasto('${ent}')"><b>Gasto</b><span>Despesa real (Pix, débito, cartão, dinheiro)</span></button>
-    <button onclick="formReservar('${ent}')"><b>Reservar em caixinha</b><span>Transferir para semanada, despesas fixas… — não é gasto</span></button>
+    <button onclick="formReservar('${ent}')"><b>Guardar em caixinha</b><span>Transferir para uma caixinha — não é gasto</span></button>
     ${ent === 'PF' ? `<button onclick="formEntradaPF()"><b>Entrada</b><span>Dinheiro que entrou na conta pessoal</span></button>`
       : `<button onclick="window.location.href='../financeiro/?tela=nova'"><b>Receita de cliente</b><span>Pelo Financeiro (mantém a integração com Orçamentos)</span></button>`}
     <button onclick="${pro ? `formExecutar('${pro.id}')` : 'formProlaboreAvulso()'}"><b>Pró-labore</b><span>${pro ? `${esc(FX.nomeItem(pro))} — falta ${brl(pro._falta)}` : 'Fora do plano: saída PJ + entrada PF vinculadas'}</span></button>
@@ -180,11 +186,11 @@ function formReservar(ent) {
   ent = ent || UI.ent;
   const P = FX.painelMes(ent, stCtx(UI.mes));
   const pend = cxId => P.acoes.find(a => a.tipo === 'item' && a.item.tipo === 'aporte' && a.item.caixinhaId === cxId);
-  abrirModal(`<h2>Reservar em caixinha</h2>
+  abrirModal(`<h2>Guardar em caixinha</h2>
     <div class="nota">Transferência da conta para a caixinha: o dinheiro continua seu, separado para o que foi planejado.</div>
     <div class="menu">${P.caixinhas.filter(c => c.caixinha.finalidade !== 'reserva').map(c => { const it = pend(c.caixinha.id);
       return `<button onclick="${it ? `formExecutar('${it.item.id}')` : `formTransferencia('${ent}', null, '${c.caixinha.id}')`}">
-        <b>${esc(c.caixinha.nome)}</b><span class="${c.falta > 0.01 ? 't-alerta' : ''}">${c.meta > 0 ? (c.falta > 0.01 ? `faltam ${brl(c.falta)} de ${brl(c.meta)}` : `✓ ${brl(c.meta)} reservados`) : 'sem meta neste mês'}</span></button>`; }).join('')}</div>
+        <b>${esc(c.caixinha.nome)}</b><span class="${c.falta > 0.01 ? 't-alerta' : ''}">${c.meta > 0 ? (c.falta > 0.01 ? `faltam ${brl(c.falta)} de ${brl(c.meta)}` : `✓ ${brl(c.meta)} guardados`) : 'sem meta neste mês'}</span></button>`; }).join('')}</div>
     <button class="btn ghost" onclick="fecharModal()">Cancelar</button>`);
 }
 
