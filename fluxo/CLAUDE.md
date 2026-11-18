@@ -12,6 +12,7 @@ core.js           FX — cálculos PUROS (sem DOM/DB). Toda regra de negócio fi
 store.js          ST — estado + leitura/gravação + fin_log
 acoes.js          AC — execução (aporte, gasto, pró-labore, fatura, conciliação, extrato, plano)
 extrato-parser.js ppParseArquivo() — OFX/CSV (veio do /pessoal/)
+ia-extrato.js     iaExtrato() — IA (claude-haiku-5-5) pré-preenche linhas novas do extrato que as regras não reconheceram
 ui.js · telas.js · forms.js · main.js
 ```
 
@@ -86,6 +87,7 @@ se a migration não estiver aplicada, o Financeiro e os Orçamentos quebrariam.
 29. **Saída não precisa de caixinha** (Carol, 2026-11-18): basta estar em saídas com categoria (ex.: Equipe sai direto da conta). "Organizar" (`classificar`) só pede saída **sem categoria** (vazia/Outro/Outros) e sem caixinha/item. Nos textos: "direto da conta", nunca "fora do plano" para gasto.
 30. **Conta: valor do plano é previsão** (`statusItem`): pagamento ligado de verdade (Pagar, extrato, ligar — não o `autoVinculo` por categoria) fecha o item com o valor real, maior ou menor. "Ainda vou pagar o resto" (`AC.pagarItem({resto})`) cria o resto como outra conta "(resto)" no mês. `registrarGasto` não grava o item que ele mesmo deduziu pela categoria (fica `autoVinculo`). "Usar a reserva" só vem marcado se a caixinha tem saldo.
 31. **Categorias** (Ajustes › Categorias, `formCategorias`): criar/editar grupo e caixinha (`cfg.caixinhaPorCategoria[ent][nome]` = finalidade, `-` = direto da conta) e tirar da lista. Categoria nova do grupo Fixas com valor → `AC.criarContaFixa` (modelo a partir do mês atual + meses abertos já criados).
+32. **IA no extrato** (`ia-extrato.js`): depois de `prepararExtrato`, `iaExtrato()` manda só as linhas `novo` **sem** sugestão das regras (`!p.auto`) para o Claude Haiku 5.5 (mesma chave `mk_claude_key`/`configuracoes.claude_api_key` e mesma chamada do Colar do WhatsApp). O schema da resposta (`iaSchema`) só permite categorias, contas, itens pendentes e recebimentos que existem; `iaAplicar` valida de novo (sinal da linha, `ignorar` só com confiança alta, não sobrescreve linha que a Carol já mexeu). Marca `auto: "ia"` ("pela IA", motivo no i). Nada é gravado até aplicar; o confirmado vira regra (`_aprender`), então a IA é chamada cada vez menos. Sem chave ou com erro, a revisão segue só com as regras.
 
 ## Auth
 

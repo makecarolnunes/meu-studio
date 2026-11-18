@@ -450,3 +450,10 @@ textarea.fi { resize: vertical; font-size: 15px; }
 .balao-x { position: absolute; top: 4px; right: 4px; width: 28px; height: 28px; border: 0; border-radius: 50%;
   background: none; color: inherit; font-size: 1.15rem; line-height: 1; cursor: pointer; opacity: .8; }
 .balao-x:hover, .balao-x:focus-visible { opacity: 1; background: rgba(255,255,255,.12); outline: none; }
+
+/* IA no extrato */
+.ia-st { margin-top: 8px; font-size: .8rem; font-weight: 600; color: var(--text-muted); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.ia-st.ia-ok { color: var(--ok, var(--text)); }
+.ia-st.ia-erro { color: var(--warning); }
+.ia-pulso { width: 8px; height: 8px; border-radius: 50%; background: var(--brand); animation: iaPulso 1s ease-in-out infinite alternate; }
+@keyframes iaPulso { from { opacity: .25; } to { opacity: 1; } }

@@ -113,6 +113,19 @@ const titulo = t => console.log('\n■ ' + t);
     check('categoria nova criada e conta fixa no plano', await b.js(`categorias('PF').some(c => c.nome === 'Cuidados pessoais') && ST.itens.some(i => i.mes === 'modelo' && i.descricao === 'Cuidados pessoais')`));
     check('categorias: sem rolagem horizontal', await semOverflow());
     await b.js(`fecharModal();UI.aberto={};go('inicio')`);
+    // IA no extrato (resposta simulada — nenhuma chamada de verdade)
+    await b.js(`(() => { localStorage.setItem('mk_claude_key', 'teste'); const f0 = window.fetch; window.__ia = 0;
+      window.fetch = (u, o) => { if (!String(u).includes('api.anthropic.com')) return f0(u, o);
+        window.__ia++; const body = JSON.parse(o.body), cat = body.output_config.format.schema.properties.linhas.items.properties.categoria.enum[0];
+        const linhas = JSON.parse(body.messages[0].content).linhas.map(l => ({ i: l.i, decisao: 'gasto', categoria: cat, conta: '', item: '', cliente: '', confianca: 'alta', motivo: 'teste' }));
+        return Promise.resolve(new Response(JSON.stringify({ stop_reason: 'end_turn', content: [{ type: 'text', text: JSON.stringify({ linhas }) }] }), { status: 200 })); }; })()`);
+    await b.js(`(() => { const c = ST.contas.find(c => c.entidade === 'PF' && c.tipo === 'corrente'); UI.ent = 'PF'; UI.tab = 'conciliar';
+      UI.extrato = { contaId: c.id, info: 'teste', propostas: AC.prepararExtrato(c.id, [{ data: stHoje(), descricao: 'ZZQX 7781 KWV', valor: -33 }]) }; render(); iaExtrato(); })()`);
+    await espera(400);
+    check('IA pré-preenche a linha do extrato (marca "pela IA")', await b.js(`window.__ia === 1 && UI.extrato.propostas.some(p => p.auto === 'ia') && !!document.querySelector('.ia-st.ia-ok') && document.body.innerText.includes('pela IA')`),
+      await b.js(`JSON.stringify({ chamadas: window.__ia, ia: UI.extrato && UI.extrato.ia, auto: UI.extrato && UI.extrato.propostas.map(p => p.auto + '/' + p.acao) })`));
+    await b.foto(path.join(SAIDA, 'celular-extrato-ia.png'));
+    await b.js(`UI.extrato = null; localStorage.removeItem('mk_claude_key'); go('inicio')`);
     // sub-seções
     await tocar('#tabs button[data-tab="movs"]', true);
     r = await tocar('.seg.sub button:nth-child(2)', true);

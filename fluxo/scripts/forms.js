@@ -439,6 +439,7 @@ async function acLerExtrato() {
     UI.extrato = { contaId, propostas: AC.prepararExtrato(contaId, r.transacoes),
       info: `${r.banco} · ${dm(r.periodoIni)} a ${dm(r.periodoFim)} · ${r.transacoes.length} linhas` };
     fecharModal(); UI.tab = 'conciliar'; uiPersist(); render(); window.scrollTo(0, 0);
+    if (typeof iaExtrato === 'function') iaExtrato();   // pré-preenche com IA o que as regras não reconheceram
   } catch (e) { toast(e.message || 'Erro ao ler o arquivo', true); }
 }
 // Busca na lista de recebimentos sem redesenhar a tela (mantém o foco no campo)

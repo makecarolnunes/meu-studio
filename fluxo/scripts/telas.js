@@ -651,7 +651,7 @@ function telaExtrato() {
   const cartao = (p, k) => `<div class="card ex ${p.acao}">
       <div class="row ex-h"><span>${dm(p.linha.data)} · ${esc(p.linha.descricao || '(sem descrição)')}</span><b class="${p.linha.valor > 0 ? 'pos' : ''}">${brl(p.linha.valor, true)}</b></div>
       ${p.match ? `<div class="muted sm">≈ ${esc(p.match.descricao || p.match.categoria)} · ${dm(p.match.data)}${p.viraRealizado ? ' · <b>previsto → será confirmado</b>' : ''}</div>` : ''}
-      ${p.auto ? `<div class="muted sm">${autoTag({ regra: 'aprendido', plano: 'do plano', palavra: 'pela descrição', nome: 'pelo nome', valor: 'pelo valor' }[p.auto])} ${p.planoItemId && stItem(p.planoItemId) ? esc(FX.nomeItem(stItem(p.planoItemId))) : ''}</div>` : ''}
+      ${p.auto ? `<div class="muted sm">${autoTag({ regra: 'aprendido', plano: 'do plano', palavra: 'pela descrição', nome: 'pelo nome', valor: 'pelo valor', ia: p.iaConf === 'baixa' ? 'IA · confira' : 'pela IA' }[p.auto])} ${p.planoItemId && stItem(p.planoItemId) ? esc(FX.nomeItem(stItem(p.planoItemId))) : ''}${p.auto === 'ia' && p.iaMotivo ? info(p.iaMotivo) : ''}</div>` : ''}
       ${p.acao === 'estorno' ? `<div class="muted sm">${autoTag('devolvido')} ${p.linha.valor < 0 ? 'voltou' : 'devolução de'} ${brl(Math.abs(p.par.valor))} em ${dm(p.par.data)}${info('Os dois se anulam e serão ignorados.')}</div>` : ''}
       ${p.acao === 'duplicada' ? `<div class="muted sm">${p.ignoradaAntes ? 'ignorado antes' : 'já importado'}</div>` : `
       <select class="fi sm" onchange="exDecisao(${k}, this.value)">${opcoesDecisao(p)}</select>
@@ -681,7 +681,11 @@ function telaExtrato() {
   let h = `<div class="toolbar"><button class="lnk" onclick="UI.extrato=null;render()">‹ Cancelar importação</button><b>${esc(conta.nome)}</b></div>
     <div class="card"><div class="muted sm">${esc(x.info || '')}</div>
       <div class="ex-resumo">${GRUPO_EX.map(([g, t]) => { const n = x.propostas.filter(p => p.grupo === g).length;
-        return n ? `<span class="ex-cnt g-${g}"><b>${n}</b> ${t.toLowerCase()}</span>` : ''; }).join('')}</div></div>`;
+        return n ? `<span class="ex-cnt g-${g}"><b>${n}</b> ${t.toLowerCase()}</span>` : ''; }).join('')}</div>
+      ${x.ia ? `<div class="ia-st ia-${x.ia.estado}">${x.ia.estado === 'lendo' ? `<span class="ia-pulso"></span>IA lendo ${x.ia.n} linha${x.ia.n === 1 ? '' : 's'}…`
+        : x.ia.estado === 'ok' ? `IA sugeriu ${x.ia.n} linha${x.ia.n === 1 ? '' : 's'} · confira${info('A IA só preenche o que as regras não reconheceram. Nada é gravado até você aplicar; o que você confirmar vira regra.')}`
+        : x.ia.estado === 'sem-chave' ? `IA desligada${info('Falta a chave da Claude: ⚙️ no Financeiro › Claude IA.')}`
+        : `IA indisponível${info(x.ia.erro || '')} <button class="lnk sm" onclick="iaExtrato()">tentar de novo</button>`}</div>` : ''}</div>`;
   GRUPO_EX.forEach(([g, t, d]) => {
     const idx = x.propostas.map((p, k) => k).filter(k => x.propostas[k].grupo === g);
     if (!idx.length) return;

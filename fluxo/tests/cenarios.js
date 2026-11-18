@@ -583,8 +583,34 @@ const ctxM = (mes, hoje) => run(`stCtx(${JSON.stringify(mes)}, ${JSON.stringify(
     body: { classList: { add() {}, remove() {}, toggle() {} }, dataset: {} }, addEventListener() {} };
   ctx.window = { scrollTo() {}, location: {} }; ctx.setTimeout = () => 0; ctx.clearTimeout = () => {};
   ctx.confirm = () => false; ctx.prompt = () => null; ctx.location = { search: '' }; ctx.URLSearchParams = URLSearchParams;
-  ['extrato-parser.js', 'ui.js', 'telas.js', 'forms.js'].forEach(f =>
+  ['extrato-parser.js', 'ui.js', 'telas.js', 'forms.js', 'ia-extrato.js'].forEach(f =>
     vm.runInContext(fs.readFileSync(path.join(raiz, f), 'utf8'), ctx, { filename: f }));
+  titulo('IA no extrato: só sugere o que as regras não pegaram, e só com valores válidos');
+  run(`UI.extrato = { contaId: '${pjC.id}', propostas: AC.prepararExtrato('${pjC.id}', [
+    { data: '2027-04-12', descricao: 'Pix enviado: LOJA XPTO BELEZA', valor: -89.9 },
+    { data: '2027-04-12', descricao: 'Pix enviado: FULANO DE TAL', valor: -40 },
+    { data: '2027-04-12', descricao: 'Pix enviado: SICRANO', valor: -12 },
+    { data: '2027-04-12', descricao: 'Pix enviado: BELTRANO', valor: -7 },
+    { data: '2027-04-12', descricao: 'Pix enviado: OUTRA LOJA', valor: -55 } ]) }`);
+  const cIA = run('iaContexto(UI.extrato)');
+  cIA.alvo.forEach(a => { a.decisao0 = a.p.decisao; });
+  const kIA = cIA.alvo.map(a => a.k);
+  const catIA = cIA.cats.find(x => x.nome === 'Reposição') ? 'Reposição' : cIA.cats[0].nome;
+  const cxPJ = cIA.contas.find(x => x.tipo === 'caixinha');
+  const okIA = [
+    run('iaAplicar')(cIA, { i: kIA[0], decisao: 'gasto', categoria: catIA, conta: '', item: '', cliente: '', confianca: 'alta', motivo: 'loja de produtos' }),
+    run('iaAplicar')(cIA, { i: kIA[1], decisao: 'gasto', categoria: 'Inventada', conta: '', item: '', cliente: '', confianca: 'alta', motivo: 'x' }),
+    run('iaAplicar')(cIA, { i: kIA[2], decisao: 'cliente', categoria: '', conta: '', item: '', cliente: '999', confianca: 'alta', motivo: 'x' }),
+    run('iaAplicar')(cIA, { i: kIA[3], decisao: 'ignorar', categoria: '', conta: '', item: '', cliente: '', confianca: 'baixa', motivo: 'x' }),
+    run('iaAplicar')(cIA, { i: kIA[4], decisao: 'transferencia', categoria: '', conta: cxPJ.id, item: '', cliente: '', confianca: 'media', motivo: 'caixinha' }),
+  ];
+  igual('aceita só sugestões válidas (categoria real, cliente da lista, ignorar só com certeza)', okIA, [true, false, false, false, true]);
+  const pIA = run('UI.extrato.propostas')[kIA[0]];
+  igual('linha sugerida pela IA: categoria e marca "pela IA", vai para "já sugeridos"', [pIA.decisao, pIA.categoria, pIA.auto, pIA.grupo], ['gasto', catIA, 'ia', 'sugerido']);
+  const sch = run('iaSchema')(cIA);
+  igual('schema só deixa escolher categorias e contas que existem', [sch.properties.linhas.items.properties.categoria.enum.includes('Inventada'), sch.properties.linhas.items.properties.conta.enum.includes(cxPJ.id)], [false, true]);
+  run('UI.extrato = null');
+
   titulo('Categorias: criar uma fixa nova (Cuidados pessoais)');
   const cfgCat = JSON.parse(JSON.stringify(ST.cfg));
   cfgCat.categorias.PF.push({ nome: 'Cuidados pessoais', grupo: 'Fixas' });
