@@ -82,7 +82,8 @@ async function abrir(opc) {
   });
   await send('Runtime.enable'); await send('Page.enable');
   const bloqueadas = [];
-  if (real) {
+  // gravar=true: dados reais COM escrita (só para lançamentos pedidos pela Carol)
+  if (real && !(opc && opc.gravar)) {
     ouvintes.push(m => {
       if (m.method !== 'Fetch.requestPaused') return;
       const q = m.params.request;
