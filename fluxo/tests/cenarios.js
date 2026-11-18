@@ -582,6 +582,16 @@ const ctxM = (mes, hoje) => run(`stCtx(${JSON.stringify(mes)}, ${JSON.stringify(
   ctx.confirm = () => false; ctx.prompt = () => null; ctx.location = { search: '' }; ctx.URLSearchParams = URLSearchParams;
   ['extrato-parser.js', 'ui.js', 'telas.js', 'forms.js'].forEach(f =>
     vm.runInContext(fs.readFileSync(path.join(raiz, f), 'utf8'), ctx, { filename: f }));
+  titulo("Pagar: ligar o que já foi pago");
+  // pago por outro caminho (ex.: Pix pelo extrato): "Pagar" oferece ligar, sem criar outro
+  const itTel = itensA('2027-04-06').find(i => i.tipo === 'pagamento' && i.caixinhaId === fixasPF.id && FX.PENDENTE(i._status) && i._realizado === 0);
+  await AC.registrarGasto({ entidade: 'PF', valor: String(itTel.valor), data: '2027-04-06', descricao: 'Pix conta ' + itTel.descricao, categoria: 'Outros', contaId: pfC.id });
+  const candT = run('candidatosPagamento')(itTel);
+  igual('"Já pagou?" mostra o Pix que já está no app', candT.some(m => m.descricao === 'Pix conta ' + itTel.descricao), true);
+  const nMovs = run('stMovs()').length, mT = candT.find(m => m.descricao === 'Pix conta ' + itTel.descricao);
+  await AC.classificar(mT.tabela, mT.id, { planoItemId: itTel.id, caixinhaId: fixasPF.id });
+  igual('ligar: conta feita, sem lançamento novo', [itensA('2027-04-06').find(i => i.id === itTel.id)._status, run('stMovs()').length], ['feito', nMovs]);
+
   let erros = 0;
   const tenta = (nome, code) => { try { run(code); } catch (e) { erros++; console.log(`   ✗ ${nome}: ${e.stack.split('\n').slice(0, 3).join(' | ')}`); } };
   for (const mes of ['2026-12', '2027-01', '2026-11']) for (const ent of ['PF', 'PJ'])

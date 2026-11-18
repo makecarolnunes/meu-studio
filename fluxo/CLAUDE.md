@@ -82,6 +82,7 @@ se a migration não estiver aplicada, o Financeiro e os Orçamentos quebrariam.
 25. **Extrato ignorado não volta:** linhas com decisão `ignorar` ficam em `cfg.extratoIgnorados[contaId]` (hash `FX.hashRef`, até 3000 por conta) e reaparecem como `duplicada` (`ignoradaAntes`) ao importar o mesmo período de novo.
 26. **Caixinha anual** (`FX.caixinhaAnual`: finalidade sazonais/cursos ou `cfg.metaAnual[id]` > 0; `0` desliga): meta do mês = ritmo; meta do ano = `cfg.metaAnual[id]` > soma de `cfg.sazonais` > soma das metas dos 12 meses (mês sem plano usa o modelo). Ano = 12 meses desde `cfg.anoCaixinhas.mesInicio` (padrão: mês de `inicioFluxo`). Ritmo só conta reservas cujo dia já passou. "Passou do orçamento" só quando o usado no ANO passa da meta do ano.
 27. **Guardar é opcional em semanada e contas** (`FX.aporteOpcional`): aporte para essas caixinhas não vira ação nem entra em "Guardar nas caixinhas"; o dinheiro pode sair direto da conta. No "Livre no mês" (`resumo`), o compromisso delas é: contas = pagamentos pendentes − saldo da caixinha; semanada = o que ainda dá para gastar nas semanas que faltam − saldo da caixinha. Nunca somar o aporte e o pagamento (desconto em dobro).
+28. **Pagar = primeiro ligar o que já existe** (`candidatosPagamento` em forms.js): o formulário de pagar um item lista saídas já registradas (extrato, pago pela PJ…) da mesma entidade, até 20 dias, valor ≤ o que falta e sem item. Tocar liga (`AC.classificar`) em vez de criar outro lançamento.
 
 ## Auth
 

@@ -71,8 +71,14 @@ function formExecutar(itemId) {
     corpo = campo('Entra em', `<select class="fi" id="ex-conta">${optContas(i.entidade, ['corrente', 'especie'], i.contaId)}</select>`) +
       campo('Categoria', `<select class="fi" id="ex-cat">${(ST.cfg || FX_MODELO.config).categorias.receitasPF.map(c => `<option>${c}</option>`).join('')}</select>`);
   }
+  // Já pago por outro caminho (Pix pelo extrato, pago pela PJ…)? Liga o lançamento
+  // existente em vez de criar outro — evita pagamento em dobro.
+  const jaPagos = i.tipo === 'pagamento' ? candidatosPagamento(i) : [];
   abrirModal(`<h2>${i.tipo === 'prolabore' ? 'Registrar pró-labore' : ACAO_LABEL[i.tipo]} · ${esc(FX.nomeItem(i))}</h2>
     <div class="muted sm">Previsto ${brl(i.valor)} para ${dm(i._data)}${i._realizado ? ` · já feito ${brl(i._realizado)}` : ''}</div>
+    ${jaPagos.length ? `<div class="sub-t">Já pagou?${info('Se o pagamento já está no app (veio do extrato, saiu pela PJ…), toque nele para ligar a esta conta. Não cria outro.')}</div>
+      ${jaPagos.map(m => `<div class="mini-l lnk-l" onclick="acLigarPagamento('${i.id}', '${esc(m.key)}')"><span>${dm(m.data)} · ${esc(m.descricao || m.categoria)}</span><span class="lnk xs">ligar</span><b>${brl(m.valor)}</b></div>`).join('')}
+      <div class="sub-t">Ou registre agora</div>` : ''}
     <div class="two">${campo('Valor real', inValor('ex-valor', falta))}${campo('Data', inData('ex-data', dataPadrao(i._data)))}</div>
     ${corpo}
     ${rodape(`acExecutar('${i.id}')`, 'Registrar', FX.PENDENTE(i._status) ? `<div class="row"><button class="lnk sm" onclick="formReprogramar('${i.id}')">Reprogramar</button>${i._realizado > FX.EPS ? `<button class="lnk sm" onclick="acSoIsso('${i.id}')">Só isso este mês</button>` : `<button class="lnk sm" onclick="acDispensar('${i.id}')">Dispensar este mês</button>`}</div>` : '')}`);
@@ -104,6 +110,18 @@ function formReprogramar(id) {
     <button class="btn" onclick="executar(()=>AC.reprogramarItem('${id}',{novoDia:$v('rp-dia')}),'Data alterada')">Mudar a data</button>
     <button class="btn sec" onclick="executar(()=>AC.reprogramarItem('${id}',{}),'O que falta foi para o mês seguinte')">Levar o que falta para ${nomeMes(FX.addMes(i.mes, 1))}</button>
     <button class="btn ghost" onclick="fecharModal()">Cancelar</button>`);
+}
+// Saídas já registradas que podem ser o pagamento deste item: mesma entidade,
+// até 20 dias da data, valor até o que falta, sem item do plano.
+function candidatosPagamento(i) {
+  return stMovs().filter(m => m.natureza === 'saida' && m.realizado && m.entidade === i.entidade &&
+      (!m.planoItemId || m.planoItemId === '-') && m.valor <= i._falta + 0.01 && Math.abs(FX.difDias(m.data, i._data)) <= 20)
+    .sort((a, b) => Math.abs(FX.difDias(a.data, i._data)) - Math.abs(FX.difDias(b.data, i._data))).slice(0, 5);
+}
+function acLigarPagamento(itemId, key) {
+  const m = stMovs().find(x => x.key === key), it = stItem(itemId);
+  if (!m || !it) return;
+  executar(() => AC.classificar(m.tabela, m.id, { planoItemId: itemId, caixinhaId: it.caixinhaId || null }), 'Pagamento ligado');
 }
 // Pagou só uma parte e o resto não vai ser pago neste mês: fecha com o pago
 function acSoIsso(id) {
