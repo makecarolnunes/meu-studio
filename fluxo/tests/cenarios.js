@@ -357,6 +357,14 @@ const ctxM = (mes, hoje) => run(`stCtx(${JSON.stringify(mes)}, ${JSON.stringify(
   igual('soma na parcela do dia 01 (parcial)', [imF.find(i => i.id === proFev1.id)._realizado, imF.find(i => i.id === proFev1.id)._status], [250, 'parcial-atrasado']);
   igual('entrou na PF como pró-labore', DBT.entradas_pessoal.filter(e => e.categoria === 'Pró-labore' && e.data === '2027-02-05').length, 1);
   igual('semanada S3 PJ de fevereiro continua pendente', imF.find(i => i.entidade === 'PJ' && i.descricao === 'Semanada — semana 3')._realizado, 0);
+  // revisão: linha que veio como aporte (mesmo valor) e foi trocada para pró-labore
+  const semFev3 = ST.itens.find(i => i.mes === '2027-02' && i.entidade === 'PJ' && i.descricao === 'Semanada — semana 3');
+  pm = AC.prepararExtrato(pjC.id, [{ data: '2027-02-09', descricao: 'Pix enviado: "00019 569248515 CAROLINE NUNES"', valor: -250 }]);
+  Object.assign(pm[0], { decisao: 'prolabore', planoItemId: semFev3.id });
+  await AC.aplicarExtrato(pjC.id, pm);
+  imF = FX.itensDoMes(ST.itens, '2027-02', run('stMovs()'), '2027-02-10', ST.cfg);
+  const pro09 = run('stMovs()').find(m => m.tabela === 'saidas' && m.data === '2027-02-09' && m.classe === 'prolabore');
+  igual('pró-labore nunca fica ligado a aporte da semanada', [pro09.planoItemId, imF.find(i => i.id === semFev3.id)._realizado], [proFev1.id, 0]);
   pm = AC.prepararExtrato(pjC.id, pixMim('2027-01-28'));
   igual('mês já completo → pró-labore fora do plano', [pm[0].decisao, pm[0].planoItemId], ['prolabore', '']);
   await AC.aplicarExtrato(pjC.id, pm);

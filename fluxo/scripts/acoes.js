@@ -669,7 +669,8 @@ const AC = (function () {
         res.conciliados++; continue;
       }
       if (p.decisao === 'prolabore') {
-        const it = p.planoItemId ? stItem(p.planoItemId) : null;   // sem item = pró-labore fora do plano
+        let it = p.planoItemId ? stItem(p.planoItemId) : null;   // sem item = pró-labore fora do plano
+        if (it && it.tipo !== 'prolabore') it = stItem(_itemProlabore(l.data, valor, new Set()) || '') || null;   // nunca liga pró-labore a aporte/pagamento
         const r = await pagarProlabore(it ? it.id : null, { valor, data: l.data, contaId: ent === 'PJ' ? contaId : undefined,
           contaPFId: ent === 'PF' ? contaId : undefined });
         if (ent === 'PJ') await stSalvarMeta('saidas', r.saidaId, { contaId, conciliado: true, extratoRef: ref });

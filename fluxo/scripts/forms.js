@@ -429,6 +429,8 @@ function exDecisao(k, v) {
   const p = UI.extrato.propostas[k], ent = stConta(UI.extrato.contaId).entidade;
   const de = v === 'pessoal' ? 'PF' : ent;
   if (p.categoria && !categorias(de).some(c => c.nome === p.categoria)) p.categoria = '';
+  // item de outro tipo (ex.: aporte sugerido pelo valor) não serve para pró-labore
+  if (v === 'prolabore' && p.planoItemId && (stItem(p.planoItemId) || {}).tipo !== 'prolabore') p.planoItemId = '';
   if (v === 'prolabore' && !p.planoItemId) {
     const it = AC.itensProlaboreDoMes(FX.mesDe(p.linha.data)).find(i => FX.PENDENTE(i._status) && i._falta > FX.EPS);
     p.planoItemId = it ? it.id : '';
