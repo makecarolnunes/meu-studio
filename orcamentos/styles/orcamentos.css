@@ -1352,3 +1352,10 @@
     .colar-b-rev { color: var(--orange); border-color: #f6cfa8; }
     .colar-salvo { margin-top: 8px; font-size: .78rem; font-weight: 700; color: var(--success); }
     .colar-todos-rev { color: var(--orange); border-color: #f6cfa8; }
+
+/* Alerta de data (ano errado / data que já passou) — ver alertaDataSlot() */
+.slot-alerta {
+  display: block; width: fit-content; margin-top: 4px; padding: 3px 9px; border-radius: 8px;
+  background: var(--warning-soft); color: var(--amber-dark);
+  font-size: 0.7rem; font-weight: 700; line-height: 1.4;
+}

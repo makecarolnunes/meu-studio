@@ -160,7 +160,7 @@ Como preencher:
 - cliente: nome de quem pede (do cabeçalho "[10:32, 03/11/2026] Nome:" ou do texto). Sem nome, use "".
 - telefone: só se aparecer na conversa, no formato "21 99999-9999". Senão, "".
 - servicos: uma linha por serviço e data. "make" é maquiagem; penteado, escova e cabelo são cabelo. Maquiagem e cabelo para a mesma pessoa é o serviço combinado. qtd é o número de pessoas que fazem aquele serviço ("eu, minha mãe e minha irmã" = 3). Escolha a variante do catálogo pelo local: casa, hotel, salão de festa ou endereço da cliente é domicílio; ir até a Carol é Studio. Sem pista de local, use a variante Studio e anote em duvidas. Serviço fora do catálogo: servico "" e descreva em observacoes.
-- data: AAAA-MM-DD. Resolva datas relativas a partir de hoje; sem ano, use a próxima ocorrência. Sem data, "".
+- data: AAAA-MM-DD. Resolva datas relativas a partir de hoje. Sem ano: se o dia/mês caiu nos últimos 60 dias, é deste ano (atendimento já feito ou pedido atrasado); senão, a próxima ocorrência. Se você deduziu um ano diferente do atual (não estava escrito), anote em duvidas "confirmar o ano". Sem data, "".
 - horario: HH:MM (24h), só se a cliente disser o horário de início. "Preciso estar pronta às 17h" vai em observacoes, com horario "".
 - local: studio, domicilio ou "" se não der para saber. endereco: só o que a cliente informou.
 - cacheada: true se falar de cabelo cacheado, crespo ou cachos.

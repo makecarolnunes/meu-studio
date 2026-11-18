@@ -1699,7 +1699,7 @@ function diaDaSemana(dataStr) {
 // Resumo da linha com o dia da semana em destaque na frente
 function slotResumoHTML(s) {
   const dia = diaDaSemana(s.data);
-  return (dia ? '<span class="slot-dia">' + esc(dia) + '</span>' : '') + esc(slotResumoLinha(s));
+  return (dia ? '<span class="slot-dia">' + esc(dia) + '</span>' : '') + esc(slotResumoLinha(s)) + alertaDataHTML(s.data);
 }
 
 // ── Detecção de conflito de agenda (data + horário) ──────────────
@@ -1840,6 +1840,40 @@ function slotDateYearValid(dateStr) {
   if (y < cy - 1 || y > cy + 5) return false;
   const dt = new Date(y, Number(m[2]) - 1, Number(m[3]));
   return dt.getFullYear() === y && (dt.getMonth() + 1) === Number(m[2]) && dt.getDate() === Number(m[3]);
+}
+
+// Alerta de data: pega ano errado (ex.: 31/10 que virou 2027) e data que já passou.
+// Só avisa — atendimento passado ou noiva com 1 ano de antecedência são válidos.
+const DATA_LONGE_DIAS = 150;
+function diasAteData(dataStr) {
+  const [y, m, d] = dataStr.split('-').map(Number);
+  const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+  return Math.round((new Date(y, m - 1, d) - hoje) / 864e5);
+}
+function alertaDataSlot(dataStr) {
+  if (!dataStr) return '';
+  if (!slotDateYearValid(dataStr)) return 'Data inválida';
+  const dias = diasAteData(dataStr);
+  if (dias < 0) return 'Já passou (' + fmtDate(dataStr) + ')';
+  if (dias > DATA_LONGE_DIAS) return 'Daqui a ' + Math.round(dias / 30.4) + ' meses · confere o ano ' + dataStr.slice(0, 4);
+  return '';
+}
+function alertaDataHTML(dataStr) {
+  const a = alertaDataSlot(dataStr);
+  return a ? '<div class="slot-alerta">⚠ ' + esc(a) + '</div>' : '';
+}
+// Ao salvar: confirma datas passadas ou muito à frente
+function confirmaDatas(slots) {
+  const vistas = {}, linhas = [];
+  (slots || []).forEach(s => {
+    if (!s.data || vistas[s.data]) return;
+    vistas[s.data] = 1;
+    const dias = slotDateYearValid(s.data) ? diasAteData(s.data) : 0;
+    if (dias >= 0 && dias <= DATA_LONGE_DIAS) return;
+    const quando = dias < 0 ? 'já passou' : 'daqui a ' + Math.round(dias / 30.4) + ' meses';
+    linhas.push(fmtDate(s.data) + ' (' + (diaDaSemana(s.data) || '') + ') — ' + quando);
+  });
+  return !linhas.length || confirm('Confere a data do atendimento:\n\n' + linhas.join('\n') + '\n\nEstá certo?');
 }
 
 // HTML de uma linha de slot (compartilhado entre Novo Orçamento e Fechar)
@@ -2073,6 +2107,7 @@ async function saveNew(opts) {
   if (!slotsValidos.length) { toast('Adicione pelo menos um serviço'); return; }
   const dataInvalida = slotsValidos.find(s => s.data && !slotDateYearValid(s.data));
   if (dataInvalida) { toast('Confira a data do serviço — ano fora do intervalo: ' + fmtDate(dataInvalida.data)); return; }
+  if (!confirmaDatas(slotsValidos)) return;
 
   const total = slotsValidos.reduce((s, x) => s + (parseFloat(x.valorUnit) || 0) * slotQtd(x), 0);
   const servicoDesc = descreveSlots(slotsValidos);
@@ -2365,6 +2400,7 @@ async function saveAction() {
     if (validos.length) {
       const dataInvalida = validos.find(s => s.data && !slotDateYearValid(s.data));
       if (dataInvalida) { toast('Confira a data do serviço — ano fora do intervalo: ' + fmtDate(dataInvalida.data)); return; }
+      if (!confirmaDatas(validos)) return;
       slotsForPack   = expandRows(validos);
       e.Servico      = descreveSlots(validos);
       const datas    = validos.map(s => s.data).filter(Boolean).sort();
@@ -2691,6 +2727,7 @@ async function confirmarFechamento() {
   if (!slotsValidos.length) { toast('Adicione pelo menos um serviço'); return; }
   const dataInvalida = slotsValidos.find(s => s.data && !slotDateYearValid(s.data));
   if (dataInvalida) { toast('Confira a data do serviço — ano fora do intervalo: ' + fmtDate(dataInvalida.data)); return; }
+  if (!confirmaDatas(slotsValidos)) return;
 
   const total = parseFloat(document.getElementById('fech-total').value) || 0;
   const sinal = parseFloat(document.getElementById('fech-sinal').value) || 0;
@@ -3204,15 +3241,40 @@ function renderActSlots(e) {
         '<div class="slot-num">' + (idx + 1) + '</div>' +
         '<div class="slot-fields">' +
           '<div style="font-size:0.78rem; color:var(--brown); font-weight:700;">' + esc(s.servico || 'Serviço') + '</div>' +
-          '<div class="form-row">' +
-            '<input class="form-input" type="date" value="' + esc(s.data || '') + '" oninput="syncActSlot(' + idx + ', \'data\', this.value)">' +
-            '<input class="form-input" type="time" placeholder="Horário" value="' + esc(s.horario || '') + '" oninput="syncActSlot(' + idx + ', \'horario\', this.value)">' +
+          '<div class="slot-date-row">' +
+            buildSlotDateSelects(Object.assign({}, s, _actDataTmp[idx] || {}, _actDataTmp[idx] ? { data: '' } : {}, { id: idx }), 'syncActSlotData') +
+            '<input class="form-input slot-sel-hora" type="time" placeholder="Horário" value="' + esc(s.horario || '') + '" onchange="syncActSlot(' + idx + ', \'horario\', this.value)">' +
           '</div>' +
+          alertaDataHTML(s.data) +
           (warnRow ? '<div style="font-size:0.66rem; color:#c62828;">Preencha ' + warnMsgs.join(' e ') + ' para poder agendar</div>' : '') +
         '</div>' +
       '</div>'
     );
   }).join('');
+}
+
+// Dia/Mês/Ano do painel de um orçamento fechado (no lugar do calendário livre,
+// que aceitava qualquer ano). Data incompleta fica só na tela (_actDataTmp)
+// até ter dia, mês e ano — nunca grava data pela metade.
+let _actDataTmp = {};
+function syncActSlotData(idx, campo, valor) {
+  const e = entries.find(x => String(x.ID) === String(activeId));
+  if (!e) return;
+  const s = entrySlots(e)[idx];
+  if (!s) return;
+  const tmp = _actDataTmp[idx];
+  const p = slotDateParts(Object.assign({}, s, tmp || {}, tmp ? { data: '' } : {}));
+  if (campo === 'dia') p.d = valor;
+  if (campo === 'mes') p.m = valor;
+  if (campo === 'ano') p.y = valor;
+  if (p.m && p.d && Number(p.d) > daysInMonth(p.y, p.m)) p.d = pad2(daysInMonth(p.y, p.m));
+  if (p.y && p.m && p.d) {
+    delete _actDataTmp[idx];
+    syncActSlot(idx, 'data', p.y + '-' + p.m + '-' + p.d);
+  } else {
+    _actDataTmp[idx] = { _y: p.y, _m: p.m, _d: p.d };
+    renderActSlots(e);
+  }
 }
 
 let _actSlotSyncTimer = null;

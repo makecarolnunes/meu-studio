@@ -388,6 +388,23 @@ Os formulários "Novo orçamento" e "Fechar" usam slots dinâmicos:
 - Valor total = `Σ(valorUnit × qtd)`
 - Sinal padrão = 30% do total (sobrescrito se `fechSinalManual = true`)
 
+### Datas: sempre Dia · Mês · Ano (nunca `<input type="date">`)
+
+O calendário nativo aceitava qualquer ano (gravou `0005-10-03`). Além disso,
+`oninput` + re-render a cada tecla impedia corrigir a data. Todos os editores de
+data de atendimento usam `buildSlotDateSelects`, com anos de atual−1 a atual+3:
+- cadastro/fechamento: `syncSlotField`;
+- painel do fechado: `syncActSlotData`. Data incompleta fica em `_actDataTmp`
+  e só grava com dia, mês e ano.
+- **Alerta** (`alertaDataSlot`, faixa `.slot-alerta` abaixo da linha): data inválida,
+  data que já passou, ou mais de `DATA_LONGE_DIAS` (150) à frente ("confere o
+  ano"). Só avisa: atendimento passado e noiva com 1 ano de antecedência valem.
+- **Ao salvar** (`saveNew`, salvar edição, `confirmarFechamento`):
+  `confirmaDatas()` pede confirmação para essas datas.
+- **Colar do WhatsApp**: data sem ano que caiu nos últimos 60 dias é deste ano.
+  Antes era sempre a próxima ocorrência, e um 31/10 colado em 03/11 virava o ano
+  seguinte. Ano deduzido diferente do atual vai para `duvidas`.
+
 ### Quantidade → slots atômicas (expand / collapse)
 O modelo persistido continua **uma slot = uma ocorrência**. A `qtd` é só
 conveniência de UI:
