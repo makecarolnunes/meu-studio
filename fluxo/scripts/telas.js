@@ -314,7 +314,7 @@ function telaModelo() {
 }
 
 // ══ CAIXINHAS ════════════════════════════════════════════
-const FINALIDADE_LABEL = { semanada: 'gastos do dia a dia, por semana', fixas: 'contas fixas do mês', faxineira: 'faxina',
+const FINALIDADE_LABEL = { semanada: 'pagar as despesas variáveis da semana (o que sobrar, você guarda)', fixas: 'contas fixas do mês', faxineira: 'faxina',
   sazonais: 'gastos do ano, guardados todo mês', dividas: 'parcelas de dívidas', cartao: 'assinaturas e fatura do cartão',
   cursos: 'cursos e investimentos', reposicao: 'reposição de material', mei: 'imposto (DAS)', reserva: 'aplicações fora do plano' };
 function telaCaixinhas() {
@@ -398,7 +398,7 @@ function cartaoCaixinha(c, P) {
   }
   return `<section class="card cx ${erro ? 'cx-erro' : ''} ${ano ? 'cx-anual' : ''}" id="cx-${cx.id}">
     <div class="cx-h" onclick="toggleAberto('${cx.id}')">
-      <div><h3>${esc(cx.nome)}${info(FINALIDADE_LABEL[cx.finalidade] ? 'Para ' + FINALIDADE_LABEL[cx.finalidade] + '.' : '')}</h3></div>
+      <div><h3>${esc(cx.nome)}${info(infoCaixinha(cx))}</h3></div>
       <div class="r">${topo}</div>
     </div>
     ${corpo}
@@ -856,4 +856,12 @@ function telaDividas() {
   if (quit.length) h += `<div class="sec-t">Quitadas</div><div class="card lista">${quit.map(d => `<div class="ct" onclick="formDivida('${d.id}')"><div class="it-m"><div class="it-t">${esc(d.nome)}</div></div></div>`).join('')}</div>`;
   h += `<button class="btn sec" onclick="formDivida(null)">+ Nova dívida</button>`;
   return h;
+}
+
+// "i" da caixinha: para que serve + as categorias de saída que saem dela
+function infoCaixinha(cx) {
+  const cfg = ST.cfg || FX_MODELO.config;
+  const cats = categorias(cx.entidade).filter(c => (FX.caixinhaDaCategoria(ST.contas, cx.entidade, c.nome, cfg) || {}).id === cx.id).map(c => c.nome);
+  return [FINALIDADE_LABEL[cx.finalidade] ? 'Para ' + FINALIDADE_LABEL[cx.finalidade] + '.' : '',
+    cats.length ? 'Categorias: ' + cats.join(', ') + '.' : ''].filter(Boolean).join('\n');
 }

@@ -889,7 +889,7 @@ const FX = (function () {
         if (!m.caixinhaId && !m.semCaixinha && i.caixinhaId && m.classe === 'despesa') { m.caixinhaId = i.caixinhaId; m.caixinhaAuto = true; }
         if (!m.dividaId && i.dividaId) m.dividaId = i.dividaId;
       }
-      if (m.classe === 'despesa' && !m.caixinhaId && !m.semCaixinha && m.data >= inicio && !m.pagoPelaPJ) {
+      if (m.classe === 'despesa' && !m.caixinhaId && !m.semCaixinha && m.data >= inicio) {   // pago pela PJ também conta (ex.: mercado pago pela conta PJ sai da semanada)
         const cx = caixinhaDaCategoria(contas, m.entidade, m.categoria, cfg);
         if (cx) { m.caixinhaId = cx.id; m.caixinhaAuto = true; }
       }

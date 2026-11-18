@@ -611,6 +611,11 @@ const ctxM = (mes, hoje) => run(`stCtx(${JSON.stringify(mes)}, ${JSON.stringify(
   igual('schema só deixa escolher categorias e contas que existem', [sch.properties.linhas.items.properties.categoria.enum.includes('Inventada'), sch.properties.linhas.items.properties.conta.enum.includes(cxPJ.id)], [false, true]);
   run('UI.extrato = null');
 
+  titulo('Semanada paga as despesas variáveis (mesmo pagas pela conta PJ)');
+  const semAntes = FX.semanadas('PF', cA('2027-04-13')).gasto;
+  await AC.registrarGasto({ entidade: 'PJ', pessoal: true, valor: '25', data: '2027-04-13', contaId: pjC.id, categoria: 'Mercado', descricao: 'Mercado pago pela PJ' });
+  igual('mercado pago pela PJ entra no gasto da semanada PF', FX.r2(FX.semanadas('PF', cA('2027-04-13')).gasto - semAntes), 25);
+
   titulo('Categorias: criar uma fixa nova (Cuidados pessoais)');
   const cfgCat = JSON.parse(JSON.stringify(ST.cfg));
   cfgCat.categorias.PF.push({ nome: 'Cuidados pessoais', grupo: 'Fixas' });
