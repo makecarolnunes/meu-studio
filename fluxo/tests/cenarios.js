@@ -591,6 +591,10 @@ const ctxM = (mes, hoje) => run(`stCtx(${JSON.stringify(mes)}, ${JSON.stringify(
   const nMovs = run('stMovs()').length, mT = candT.find(m => m.descricao === 'Pix conta ' + itTel.descricao);
   await AC.classificar(mT.tabela, mT.id, { planoItemId: itTel.id, caixinhaId: fixasPF.id });
   igual('ligar: conta feita, sem lançamento novo', [itensA('2027-04-06').find(i => i.id === itTel.id)._status, run('stMovs()').length], ['feito', nMovs]);
+  await AC.registrarGasto({ entidade: 'PJ', valor: '400', data: '2027-04-08', descricao: 'Pix equipe', categoria: 'Equipe', contaId: pjC.id, caixinhaId: '-' });
+  await AC.registrarGasto({ entidade: 'PJ', valor: '33', data: '2027-04-08', descricao: 'Pix sem nome', categoria: 'Outro', contaId: pjC.id });
+  const clsPJ = (FX.painelMes('PJ', cA('2027-04-08')).acoes.find(a => a.tipo === 'classificar') || { movs: [] }).movs.map(m => m.descricao);
+  igual('saída com categoria (equipe) sem caixinha não pede organizar; sem categoria pede', [clsPJ.includes('Pix equipe'), clsPJ.includes('Pix sem nome')], [false, true]);
 
   let erros = 0;
   const tenta = (nome, code) => { try { run(code); } catch (e) { erros++; console.log(`   ✗ ${nome}: ${e.stack.split('\n').slice(0, 3).join(' | ')}`); } };

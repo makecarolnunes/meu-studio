@@ -150,8 +150,8 @@ function linhaAcao(a) {
     valor: a.valor, sub: 'a data passou e ainda está como previsto', botao: 'Conferir', acao: `go('conciliar')` });
   if (a.tipo === 'conferir') return linhaA({ nivel: 'neutro', titulo: `${a.qtd} conta${a.qtd > 1 ? 's' : ''} sem saldo conferido`,
     sub: a.contas.slice(0, 3).map(c => c.nome).join(', ') + (a.qtd > 3 ? '…' : ''), botao: 'Conferir', acao: `go('conciliar')` });
-  if (a.tipo === 'classificar') return linhaA({ nivel: 'neutro', titulo: `${a.qtd} gasto${a.qtd > 1 ? 's' : ''} sem caixinha`, valor: a.valor,
-    sub: 'diga de qual reserva saiu (ou deixe fora do plano)', botao: 'Organizar', acao: `go('conciliar')` });
+  if (a.tipo === 'classificar') return linhaA({ nivel: 'neutro', titulo: `${a.qtd} saída${a.qtd > 1 ? 's' : ''} sem categoria`, valor: a.valor,
+    sub: 'escolha a categoria', botao: 'Organizar', acao: `go('conciliar')` });
   return '';
 }
 function linhaA(o) {
@@ -182,7 +182,7 @@ function cartaoComoEsta(P) {
     detalhe: P.reservar.caixinhas.map(c => miniLinha(c.caixinha.nome, Math.min(c.transferido, c.meta), c.meta,
       c.falta > FX.EPS ? `falta ${brl(c.falta)}` : '✓', c.falta > FX.EPS ? 'alerta' : 'ok', `abrirCaixinha('${c.caixinha.id}')`)).join('') });
   h += progresso({ rotulo: 'Gastar · gastos do mês', feito: P.gastar.gasto, total: P.gastar.planejado, modo: 'limite', verbo: 'gasto',
-    extra: P.gastar.foraDoPlano > FX.EPS ? `<span class="muted">${brl(P.gastar.foraDoPlano)} fora do plano${info('Gastos sem caixinha e sem item do plano.')}</span>` : '' });
+    extra: P.gastar.foraDoPlano > FX.EPS ? `<span class="muted">${brl(P.gastar.foraDoPlano)} direto da conta${info('Saídas sem caixinha e sem conta do plano (ex.: equipe).')}</span>` : '' });
   return h + `</section>`;
 }
 function miniLinha(rot, feito, total, st, nivel, acao) {
@@ -595,7 +595,7 @@ function telaConciliar() {
 
   // Para organizar: o que o sistema não conseguiu decidir sozinho
   const semCx = (P.acoes.find(a => a.tipo === 'classificar') || {}).movs || [];
-  if (semCx.length) h += `<div class="sec-t">Gastos sem caixinha <span class="cnt">${semCx.length}</span>${info('Toque para dizer de qual reserva saiu (ou deixe “fora do plano”).')}</div>
+  if (semCx.length) h += `<div class="sec-t">Saídas sem categoria <span class="cnt">${semCx.length}</span>${info('Toque e escolha a categoria. Caixinha é opcional: saída pode sair direto da conta.')}</div>
     <div class="card lista">${semCx.slice(0, 40).map(linhaMov).join('')}</div>`;
   if (ent === 'PJ') {
     const venc = (P.acoes.find(a => a.tipo === 'clientes') || {}).lista || [];
@@ -674,7 +674,7 @@ function telaExtrato() {
       ${p.decisao === 'gasto' || p.decisao === 'receita' ? `<select class="fi sm" onchange="UI.extrato.propostas[${k}].categoria=this.value">
         ${p.decisao === 'receita' && conta.entidade === 'PF' ? (ST.cfg || FX_MODELO.config).categorias.receitasPF.map(c => `<option ${p.categoria === c ? 'selected' : ''}>${c}</option>`).join('')
           : p.decisao === 'receita' ? '<option>Extrato</option>' : `<option value="">Categoria…</option>${optCategorias(conta.entidade, p.categoria)}`}</select>` : ''}
-      ${p.decisao === 'gasto' ? `<select class="fi sm" onchange="UI.extrato.propostas[${k}].caixinhaId=this.value">${optContas(conta.entidade, ['caixinha'], p.caixinhaId, 'Sem caixinha (fora do plano)')}</select>` : ''}
+      ${p.decisao === 'gasto' ? `<select class="fi sm" onchange="UI.extrato.propostas[${k}].caixinhaId=this.value">${optContas(conta.entidade, ['caixinha'], p.caixinhaId, 'Sem caixinha')}</select>` : ''}
       ${p.decisao === 'transferencia' ? `<select class="fi sm" onchange="UI.extrato.propostas[${k}].destinoId=this.value"><option value="">${p.linha.valor > 0 ? 'Veio de…' : 'Foi para…'}</option>${optContas(conta.entidade, ['caixinha', 'cartao', 'corrente', 'especie'], p.destinoId).replace(`value="${conta.id}"`, `value="${conta.id}" disabled`)}${!ST.contas.some(c => c.entidade === conta.entidade && c.finalidade === 'reserva') ? `<option value="${AC.RESERVA_NOVA}" ${p.destinoId === AC.RESERVA_NOVA ? 'selected' : ''}>Reserva Inter (não distribuída) — será criada</option>` : ''}</select>
         ${p.interno ? `<div class="muted sm">movimento interno${info('Entre a conta e as caixinhas do banco: não é gasto nem receita (só mantém o saldo da conta igual ao do banco).')}</div>` : ''}` : ''}`}
     </div>`;
@@ -794,7 +794,7 @@ function telaAnalises() {
       <span><b>${nomeMesC(x.mes)}</b></span>
       <span class="muted">${x.planejado ? `${brlc(x.executado)} de ${brlc(x.planejado)}` : 'sem plano'}</span>
       <b class="${x.cumprimento != null && x.cumprimento >= 99.5 ? 't-ok' : ''}">${x.cumprimento != null ? x.cumprimento.toFixed(0) + '%' : '—'}</b>
-      ${x.foraCx ? `<small class="t-alerta">fora do plano ${brlc(x.foraCx)}</small>` : ''}</div>`).join('')}</div>`;
+      ${x.foraCx ? `<small class="muted">direto da conta ${brlc(x.foraCx)}</small>` : ''}</div>`).join('')}</div>`;
   return h;
 }
 function pct(v, hist) {

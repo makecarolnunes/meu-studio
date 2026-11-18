@@ -284,6 +284,8 @@ const FX = (function () {
     if (!cx) return 'guardar';
     return cx.finalidade === 'semanada' ? 'semana' : FINALIDADES_CONTAS.includes(cx.finalidade) ? 'contas' : 'guardar';
   }
+  // Saída sem categoria de verdade (vazia ou genérica)
+  const semCategoria = m => !m.categoria || /^(outros?|sem categoria|extrato)$/i.test(String(m.categoria).trim());
   // Aporte para caixinha que não é de guardar: opcional (não vira pendência)
   function aporteOpcional(i, contas) {
     if (!i || i.tipo !== 'aporte' || !i.caixinhaId) return false;
@@ -698,8 +700,10 @@ const FX = (function () {
     const naoConf = ctx.contas.filter(c => c.entidade === entidade && c.ativa !== false && c.tipo !== 'antiga' &&
       (c.saldoInicial == null || c.saldoInicial === '' || !c.dataSaldoInicial));
     if (naoConf.length) out.push({ tipo: 'conferir', grupo: 'conferir', nivel: 'neutro', qtd: naoConf.length, contas: naoConf });
+    // Saída não precisa de caixinha (ex.: pagamento de equipe): basta ter categoria.
+    // Só pede organizar a saída sem categoria e sem caixinha/item.
     const semCx = movs.filter(m => m.entidade === entidade && m.classe === 'despesa' && m.realizado && !m.caixinhaId &&
-      !m.planoItemId && !m.semCaixinha && mesDe(m.data) === mes);
+      !m.planoItemId && !m.semCaixinha && semCategoria(m) && mesDe(m.data) === mes);
     if (semCx.length) out.push({ tipo: 'classificar', grupo: 'conferir', nivel: 'neutro', qtd: semCx.length, movs: semCx,
       valor: r2(semCx.reduce((t, m) => t + m.valor, 0)) });
     const ordem = { atencao: 0, atrasado: 1, hoje: 2, semana: 3, mes: 4, conferir: 5 };

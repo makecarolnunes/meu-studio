@@ -223,7 +223,7 @@ function formGasto(ent, caixinhaId) {
     ${campo('Descrição', `<input class="fi" id="g-desc" placeholder="Ex.: Uber para atendimento">`)}
     ${ent === 'PJ' ? `<label class="chk"><input type="checkbox" id="g-pess" onchange="gPessoal()"> Gasto pessoal pago pela PJ${info('Escolha uma categoria pessoal: não conta como despesa da empresa.')}</label>` : ''}
     ${campo('Categoria', `<select class="fi" id="g-cat" onchange="gAtualiza()">${optCategorias(ent, cx && cx.finalidade === 'semanada' ? (ent === 'PJ' ? 'Deslocamento' : 'Mercado') : '')}</select>`)}
-    ${campo('De qual reserva (caixinha)', `<select class="fi" id="g-cx" onchange="gAtualiza()"><option value="">Automática pela categoria</option><option value="-">Nenhuma — fora do plano</option>${optContas(ent, ['caixinha'], caixinhaId)}</select>`)}
+    ${campo('De qual reserva (caixinha)', `<select class="fi" id="g-cx" onchange="gAtualiza()"><option value="">Automática pela categoria</option><option value="-">Nenhuma (direto da conta)</option>${optContas(ent, ['caixinha'], caixinhaId)}</select>`)}
     <div class="muted sm" id="g-cx-auto"></div>
     ${campo('Pago com', `<select class="fi" id="g-conta" onchange="gAtualiza()">${optContas(ent, ['caixinha', 'corrente', 'cartao', 'especie'], caixinhaId || (FX.contaPadrao(ST.contas, ent, 'corrente') || {}).id)}</select>`)}
     <label class="chk" id="g-resg-wrap" style="display:none"><input type="checkbox" id="g-resgatar" checked> Registrar resgate da caixinha para a conta</label>
@@ -245,7 +245,7 @@ function gAtualiza() {
   const info = document.getElementById('g-cx-auto');
   if (!cx && info) {
     const auto = FX.caixinhaDaCategoria(ST.contas, ent, $v('g-cat'), ST.cfg || FX_MODELO.config);
-    info.innerHTML = auto ? 'Vai usar: <b>' + esc(auto.nome) + '</b> ' + autoTag() : 'Sem caixinha para esta categoria (fica fora do plano).';
+    info.innerHTML = auto ? 'Vai usar: <b>' + esc(auto.nome) + '</b> ' + autoTag() : 'Sem caixinha: sai direto da conta.';
     cx = auto ? auto.id : '';
   } else if (info) info.innerHTML = '';
   if (cx === '-') cx = '';
@@ -350,7 +350,7 @@ function formMov(key) {
   }
   if (m.natureza === 'saida' && m.classe === 'despesa') {
     const metaCx = (ST.meta[m.key] || {}).caixinhaId;
-    h += campo('Reserva (caixinha)' + (m.caixinhaAuto ? ' ' + autoTag() : ''), `<select class="fi" id="mv-cx"><option value="" ${!metaCx ? 'selected' : ''}>Automática${m.caixinhaAuto ? ' (' + esc(nomeConta(m.caixinhaId)) + ')' : ''}</option><option value="-" ${metaCx === '-' ? 'selected' : ''}>Nenhuma — fora do plano</option>${optContas(ent, ['caixinha'], metaCx && metaCx !== '-' ? metaCx : '')}</select>`);
+    h += campo('Reserva (caixinha)' + (m.caixinhaAuto ? ' ' + autoTag() : ''), `<select class="fi" id="mv-cx"><option value="" ${!metaCx ? 'selected' : ''}>Automática${m.caixinhaAuto ? ' (' + esc(nomeConta(m.caixinhaId)) + ')' : ''}</option><option value="-" ${metaCx === '-' ? 'selected' : ''}>Nenhuma (direto da conta)</option>${optContas(ent, ['caixinha'], metaCx && metaCx !== '-' ? metaCx : '')}</select>`);
     h += campo('Dívida', `<select class="fi" id="mv-div"><option value="">—</option>${ST.dividas.filter(d => d.entidade === ent).map(d => `<option value="${d.id}" ${d.id === m.dividaId ? 'selected' : ''}>${esc(d.nome)}</option>`).join('')}</select>`);
   }
   if (pend.length || m.planoItemId) {
