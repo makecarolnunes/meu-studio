@@ -177,9 +177,9 @@ function cartaoComoEsta(P) {
     modo: 'meta', verbo: 'transferido', chave: 'pg-pro', rotDetalhe: 'Ver parcelas',
     detalhe: P.prolabore.itens.map(i => miniLinha(FX.nomeItem(i) + ' · dia ' + dm(i._data), Math.min(i._realizado, i.valor), i.valor,
       i._falta > FX.EPS ? `falta ${brl(i._falta)}` : '✓', i._falta > FX.EPS ? 'alerta' : 'ok')).join('') });
-  h += progresso({ rotulo: 'Guardar nas caixinhas', feito: P.reservar.transferido, total: P.reservar.meta, modo: 'meta',
-    verbo: 'guardado', chave: 'pg-res', rotDetalhe: 'Ver por caixinha',
-    detalhe: P.reservar.caixinhas.map(c => miniLinha(c.caixinha.nome, Math.min(c.transferido, c.meta), c.meta,
+  h += progresso({ rotulo: 'Juntar nas caixinhas', feito: P.reservar.transferido, total: P.reservar.meta, modo: 'meta',
+    verbo: 'destinado', chave: 'pg-res', rotDetalhe: 'Ver por caixinha',
+    detalhe: P.reservar.caixinhas.map(c => miniLinha(c.caixinha.nome, Math.min(c.destinado, c.meta), c.meta,
       c.falta > FX.EPS ? `falta ${brl(c.falta)}` : '✓', c.falta > FX.EPS ? 'alerta' : 'ok', `abrirCaixinha('${c.caixinha.id}')`)).join('') });
   h += progresso({ rotulo: 'Gastar · gastos do mês', feito: P.gastar.gasto, total: P.gastar.planejado, modo: 'limite', verbo: 'gasto',
     extra: P.gastar.foraDoPlano > FX.EPS ? `<span class="muted">${brl(P.gastar.foraDoPlano)} direto da conta${info('Saídas sem caixinha e sem conta do plano (ex.: equipe).')}</span>` : '' });
@@ -413,12 +413,12 @@ function telaCaixinhas() {
     || (a.caixinha.finalidade === 'reserva' ? 1 : 0) - (b.caixinha.finalidade === 'reserva' ? 1 : 0) || b.meta - a.meta);
   // Resumo só das caixinhas de guardar (semanada = gastar; fixas = pagar contas)
   const g = cxs.filter(c => modoCaixinha(c.caixinha) === 'guardar' && c.meta > 0);
-  const meta = g.reduce((t, c) => t + c.meta, 0), guardado = g.reduce((t, c) => t + Math.min(c.transferido, c.meta), 0);
+  const meta = g.reduce((t, c) => t + c.meta, 0), guardado = g.reduce((t, c) => t + Math.min(c.destinado, c.meta), 0);
   const falta = Math.max(0, meta - guardado);
-  let h = titulo('Caixinhas', 'Semanada: quanto ainda pode gastar na semana.\nDespesas fixas: quanto falta pagar das contas do mês (pode sair direto da conta).\nDemais: quanto falta guardar no mês.\n\nUsado = gastos pagos com o dinheiro da caixinha. Saldo hoje = o que tem nela agora.');
+  let h = titulo('Caixinhas', 'Cada caixinha é um orçamento: o gasto pertence a ela pela categoria, mesmo saindo direto da conta.\n\nSemanada: quanto ainda pode gastar na semana.\nContas (fixas, faxineira, MEI…): quanto falta pagar no mês. Pagar direto da conta não deixa nada devendo para a caixinha.\nJuntar (sazonais, cursos, reposição…): quanto falta destinar. Destinado = guardado na caixinha + gasto direto da conta nas categorias dela.\n\nNa caixinha = dinheiro separado nela de verdade (opcional).');
   if (g.length) h += `<div class="card"><div class="grid3">
-      <div><span>Guardar no mês</span><b>${brlc(meta)}</b></div>
-      <div><span>Guardado</span><b>${brlc(guardado)}</b></div>
+      <div><span>Juntar no mês</span><b>${brlc(meta)}</b></div>
+      <div><span>Destinado</span><b>${brlc(guardado)}</b></div>
       <div><span>Falta guardar</span><b class="${falta > 0.01 ? 't-alerta' : 't-ok'}">${falta > 0.01 ? brlc(falta) : '✓'}</b></div></div>
     ${barra(guardado, meta, falta > 0.01 ? 'andamento' : 'ok')}</div>`;
   h += cxs.length ? `<div class="cx-grid">${cxs.map(c => cartaoCaixinha(c, P)).join('')}</div>` : vazio('Nenhuma caixinha cadastrada (Ajustes › Contas e caixinhas).');
@@ -434,7 +434,9 @@ function cartaoCaixinha(c, P) {
   const cx = c.caixinha, modo = modoCaixinha(cx), sem = modo === 'semana';
   const aberto = UI.aberto[cx.id] != null ? UI.aberto[cx.id] : sem;
   const ano = c.anual;
-  const saldoHoje = `<div><span>Saldo hoje${c.conferido ? '' : ' <i class="t-alerta" title="não conferido com o banco">*</i>'}</span><b>${brlc(c.saldoAtual)}</b></div>`;
+  // Na caixinha = dinheiro separado de verdade (opcional: pagar/usar direto da conta também vale)
+  const saldoHoje = `<div><span>Na caixinha${info('Dinheiro separado nela de verdade hoje. É opcional: o que você paga ou usa direto da conta também conta para esta caixinha.')}${c.conferido ? '' : ' <i class="t-alerta" title="não conferido com o banco">*</i>'}</span><b class="${c.saldoAtual < -0.01 ? 't-erro' : ''}">${brlc(c.saldoAtual)}</b></div>`;
+  const deOnde = c.usado > 0.01 ? `<div class="muted xs cx-orig">${c.usadoDireto > 0.01 ? `${brlc(c.usadoDireto)} direto da conta` : ''}${c.usadoDireto > 0.01 && c.usadoDaCaixinha > 0.01 ? ' · ' : ''}${c.usadoDaCaixinha > 0.01 ? `${brlc(c.usadoDaCaixinha)} com o dinheiro da caixinha` : ''}</div>` : '';
   let topo, corpo, botao = '', erro = false;
   if (modo === 'semana') {
     const S = cx.entidade === P.entidade ? P.semanadas : FX.semanadas(cx.entidade, stCtx(UI.mes));
@@ -460,13 +462,13 @@ function cartaoCaixinha(c, P) {
     const pago = FX.r2(semItens ? c.usado : comp.reduce((t, x) => t + x.pago, 0));
     const falta = FX.r2(semItens ? Math.max(0, total - pago) : pendentes.reduce((t, x) => t + Math.max(0, x.previsto - x.pago), 0));
     const prox = pendentes.slice().sort((a, b) => (a.vencimento < b.vencimento ? -1 : 1))[0];
-    topo = falta > 0.01 ? destaque(brl(falta), 'falta pagar', 't-alerta') : total > 0 ? destaque('✓', 'contas do mês pagas', 't-ok') : destaque(brl(c.saldoAtual), 'saldo hoje');
+    topo = falta > 0.01 ? destaque(brl(falta), 'falta pagar', 't-alerta') : total > 0 ? destaque('✓', 'contas do mês pagas', 't-ok') : destaque(brl(c.saldoAtual), 'na caixinha');
     corpo = `<div class="grid4 cx-n">
         <div><span>Contas do mês</span><b>${brlc(total)}</b></div>
-        <div><span>Pago</span><b>${brlc(pago)}</b></div>
+        <div><span>Pago${info('Pago de qualquer jeito: direto da conta ou com o dinheiro da caixinha. Pagar direto da conta não deixa nada devendo para a caixinha.')}</span><b>${brlc(pago)}</b></div>
         <div><span>Falta pagar</span><b class="${falta > 0.01 ? 't-alerta' : ''}">${falta > 0.01 ? brlc(falta) : '✓'}</b></div>
         ${saldoHoje}</div>
-      ${total > 0 ? barra(pago, total, falta > 0.01 ? 'andamento' : 'ok') : ''}
+      ${total > 0 ? barra(pago, total, falta > 0.01 ? 'andamento' : 'ok') : ''}${deOnde}
       ${prox ? `<div class="muted xs">Próxima: <b>${esc(prox.descricao)}</b> · ${dm(prox.vencimento)} · ${brlc(prox.previsto - prox.pago)}</div>` : ''}`;
     if (prox) botao = `<button class="btn mini" onclick="formExecutar('${prox.item.id}')">Pagar ${esc(prox.descricao)}</button>`;
   } else {
@@ -474,13 +476,13 @@ function cartaoCaixinha(c, P) {
     const reservar = pend.length ? `formExecutar('${pend[0].item.id}')` : `formTransferencia('${cx.entidade}', null, '${cx.id}')`;
     erro = c.estourou;
     topo = c.falta > 0.01 ? destaque(brl(c.falta), 'falta guardar', 't-alerta')
-      : c.meta > 0 ? destaque('✓ ' + brl(c.transferido), 'guardado no mês', 't-ok') : destaque(brl(c.saldoAtual), 'saldo hoje');
+      : c.meta > 0 ? destaque('✓ ' + brl(c.destinado), 'destinado no mês', 't-ok') : destaque(brl(c.saldoAtual), 'na caixinha');
     corpo = `<div class="grid4 cx-n">
         <div><span>${ano ? 'Meta do mês' : 'Meta'}</span><b>${brlc(c.meta)}</b></div>
-        <div><span>Guardado</span><b>${brlc(c.transferido)}</b></div>
+        <div><span>Destinado${info('Dinheiro do mês que já foi para esta finalidade:\nguardado na caixinha ' + brlc(c.transferido) + '\n+ gasto direto da conta nas categorias dela ' + brlc(c.usadoDireto) + '\n\nGastar direto da conta já conta: não precisa guardar de novo.')}</span><b>${brlc(c.destinado)}</b></div>
         <div><span>Usado</span><b class="${!ano && c.estourou ? 't-erro' : ''}">${brlc(c.usado)}</b></div>
         ${saldoHoje}</div>
-      ${c.meta > 0 ? barra(c.transferido, c.meta, c.falta > 0.01 ? 'andamento' : 'ok') : ''}
+      ${c.meta > 0 ? barra(c.destinado, c.meta, c.falta > 0.01 ? 'andamento' : 'ok') : ''}${deOnde}
       ${c.estourou && !ano ? `<div class="t-erro sm">Usou ${brl(c.acima)} além do planejado para esta caixinha.</div>` : ''}
       ${ano ? blocoAno(ano) : ''}`;
     if (c.falta > 0.01 || !c.meta) botao = `<button class="btn mini" onclick="${reservar}">Guardar${c.falta > 0.01 ? ' ' + brlc(pend.length ? pend[0].item._falta : c.falta) : ''}</button>`;
@@ -510,19 +512,20 @@ function blocoAno(a) {
     : a.mesesRestantes ? `<span class="pill">${brlc(a.sugestaoMes)}/mês p/ fechar</span>` : '';
   const txt = 'O valor do mês é só o ritmo: tem mês de guardar ou usar mais, menos ou nada. O que vale é o ano.'
     + '\n\nMédia: ' + brlc(a.mediaMes) + '/mês' + (Math.abs(a.somaMetas - a.metaAnual) >= 1 ? ' (o plano mês a mês soma ' + brlc(a.somaMetas) + ')' : '') + '.'
-    + '\nAdiantada / atrás: guardado × o que o plano previa até hoje (' + brlc(a.planejadoAteAgora) + ').'
-    + (a.mesesRestantes ? '\nPara fechar: quanto guardar por mês nos ' + a.mesesRestantes + ' meses que faltam (contando este).' : '')
+    + '\nDestinado: guardado na caixinha ' + brlc(a.guardado) + ' + gasto direto da conta nas categorias dela ' + brlc(a.usadoDireto) + '.'
+    + '\nAdiantada / atrás: destinado × o que o plano previa até hoje (' + brlc(a.planejadoAteAgora) + ').'
+    + (a.mesesRestantes ? '\nPara fechar: quanto destinar por mês nos ' + a.mesesRestantes + ' meses que faltam (contando este).' : '')
     + '\nPode usar: meta do ano − usado.';
   return `<div class="cx-ano" onclick="event.stopPropagation()">
     <div class="cx-ano-h"><b>No ano</b><span class="muted xs">${nomeMesC(a.ciclo.inicio)} → ${nomeMesC(a.ciclo.fim)}</span>${info(txt)}
       <button class="lnk sm" onclick="formMetaAnual('${cx.id}')">Ajustar meta</button></div>
     <div class="grid4">
       <div><span>Meta do ano</span><b>${brlc(a.metaAnual)}</b></div>
-      <div><span>Guardado</span><b>${brlc(a.guardado)}</b></div>
+      <div><span>Destinado</span><b>${brlc(a.destinado)}</b></div>
       <div><span>Usado</span><b>${brlc(a.usado)}</b></div>
       <div><span>Pode usar</span><b class="${a.estourou ? 't-erro' : ''}">${brlc(a.restaGastar)}</b></div>
     </div>
-    ${barra(a.guardado, a.metaAnual, a.faltaGuardar <= 0.01 ? 'ok' : 'andamento')}
+    ${barra(a.destinado, a.metaAnual, a.faltaGuardar <= 0.01 ? 'ok' : 'andamento')}
     ${ritmo || fechar ? `<div class="pills">${ritmo}${fechar}</div>` : ''}
   </div>`;
 }
@@ -531,7 +534,7 @@ function detalheAno(a) {
     <div class="ano-m ${x.atual ? 'atual' : ''} ${x.passado ? 'passado' : ''}">
       <span class="ano-mes">${nomeMesC(x.mes)}${x.atual ? ' ·' : ''}</span>
       <span><small>meta</small>${x.meta ? brlc(x.meta) : '—'}${x.fonte === 'modelo' ? '<i>*</i>' : ''}</span>
-      <span><small>guardado</small>${x.transferido ? brlc(x.transferido) : x.passado || x.atual ? brlc(0) : '—'}</span>
+      <span><small>destinado</small>${x.destinado ? brlc(x.destinado) : x.passado || x.atual ? brlc(0) : '—'}</span>
       <span><small>usado</small>${x.usado ? brlc(x.usado) : x.passado || x.atual ? brlc(0) : '—'}</span>
     </div>`).join('');
   const temModelo = a.meses.some(x => x.fonte === 'modelo');
@@ -599,7 +602,7 @@ function detalheCaixinha(cx, c, ano) {
   }
   if (ano) h += detalheAno(ano);
   if (c.usos.length && cx.finalidade !== 'semanada') {
-    h += `<div class="sub-t">Usado neste mês</div>${c.usos.map(m => `<div class="mini-l" onclick="formMov('${esc(m.key)}')"><span>${dm(m.data)} · ${esc(m.descricao || m.categoria)}</span><span></span><b>${brl(m.valor)}</b></div>`).join('')}`;
+    h += `<div class="sub-t">Usado neste mês${info('Tudo o que pertence a esta caixinha no mês, pela categoria ou pela conta do plano — saindo dela ou direto da conta.')}</div>${c.usos.map(m => `<div class="mini-l" onclick="formMov('${esc(m.key)}')"><span>${dm(m.data)} · ${esc(m.descricao || m.categoria)}<small class="muted"> · ${esc(m.categoria)} · ${m.valorDireto > 0.01 && m.valorDaCaixinha > 0.01 ? 'parte da caixinha' : m.valorDaCaixinha > 0.01 ? 'da caixinha' : m.pagoPelaPJ ? 'pago pela PJ' : 'direto da conta'}</small></span><span></span><b>${brl(m.valor)}</b></div>`).join('')}`;
   }
   if (c.saldoInicio) h += `<div class="mini-l"><span>Sobrou de meses anteriores</span><span></span><b>${brl(c.saldoInicio)}</b></div>`;
   h += `<div class="cx-links"><button class="lnk sm" onclick="formConciliar('${cx.id}')">Conferir saldo com o banco</button>

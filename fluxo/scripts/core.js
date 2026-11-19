@@ -252,15 +252,30 @@ const FX = (function () {
   const PENDENTE = st => ['atrasado', 'hoje', 'futuro', 'parcial', 'parcial-atrasado'].includes(st);
 
   // Enriquecer itens de um mês com data, semana, realizado, falta e status
+  // Guardar numa caixinha de juntar (Sazonais, Cursos, Reposição…): gasto nas
+  // categorias dela pago DIRETO da conta já é dinheiro do mês que foi para essa
+  // finalidade → abate o "guardar" do mês (_direto), na ordem das datas.
+  // Não vale para semanada e contas (lá o guardar é opcional).
   function itensDoMes(itens, mes, movs, hoje, cfg) {
-    return itens.filter(i => i.mes === mes).map(i => {
+    const direto = {};
+    movs.forEach(m => {
+      if (m.classe === 'despesa' && m.realizado && m.caixinhaModo === 'guardar' && m.valorDireto > EPS && mesDe(m.competencia || m.data) === mes)
+        direto[m.caixinhaId] = r2((direto[m.caixinhaId] || 0) + m.valorDireto);
+    });
+    return itens.filter(i => i.mes === mes)
+      .sort((a, b) => (num(a.dia) - num(b.dia)) || ((a.ordem || 0) - (b.ordem || 0))).map(i => {
       const r = realizadoDoItem(i, movs);
-      const st = statusItem(i, r.valor, hoje, mes, r.explicito);
+      let cred = 0;
+      if (i.tipo === 'aporte' && i.caixinhaId && direto[i.caixinhaId] > EPS && !i.dispensado && !i.reprogramadoPara) {
+        cred = r2(Math.min(direto[i.caixinhaId], Math.max(0, num(i.valor) - r.valor)));
+        direto[i.caixinhaId] = r2(direto[i.caixinhaId] - cred);
+      }
+      const st = statusItem(i, r2(r.valor + cred), hoje, mes, r.explicito);
       const data = dataDoDia(mes, i.dia);
       const vivo = PENDENTE(st);
       return Object.assign({}, i, {
-        _data: data, _semana: semanaDe(data, cfg), _realizado: r.valor, _movs: r.movs, _status: st,
-        _falta: vivo ? r2(Math.max(0, num(i.valor) - r.valor)) : 0,
+        _data: data, _semana: semanaDe(data, cfg), _realizado: r.valor, _direto: cred, _movs: r.movs, _status: st,
+        _falta: vivo ? r2(Math.max(0, num(i.valor) - r.valor - cred)) : 0,
         _excedente: r2(Math.max(0, r.valor - num(i.valor))),
       });
     }).sort((a, b) => (a._data.localeCompare(b._data)) || ((a.ordem || 0) - (b.ordem || 0)));
@@ -588,10 +603,14 @@ const FX = (function () {
     const usoPrevisto = r2(im.filter(i => i.tipo === 'pagamento').reduce((t, i) => t + num(i.valor), 0));
     const totalAportado = r2(aportes.reduce((t, m) => t + m.valor, 0));
     const totalUsado = r2(usos.reduce((t, m) => t + m.valor, 0));
+    // usado = tudo o que pertence à caixinha; parte saiu dela, parte direto da conta
+    const usadoDireto = r2(usos.reduce((t, m) => t + (m.valorDireto != null ? m.valorDireto : 0), 0));
+    // destinado = guardado na caixinha + gasto direto da conta nas categorias dela
+    const destinado = modoCaixinha(cx) === 'guardar' ? r2(totalAportado + usadoDireto) : totalAportado;
     return {
       caixinha: cx, saldoInicio, saldoAtual: sAtual.saldo, conferido: sAtual.conferido,
-      aportePrevisto, aportado: totalAportado, aporteFalta: r2(Math.max(0, aportePrevisto - totalAportado)),
-      usoPrevisto, usado: totalUsado, aportes, usos, retiradas: saidasCx,
+      aportePrevisto, aportado: totalAportado, destinado, aporteFalta: r2(Math.max(0, aportePrevisto - destinado)),
+      usoPrevisto, usado: totalUsado, usadoDireto, usadoDaCaixinha: r2(totalUsado - usadoDireto), aportes, usos, retiradas: saidasCx,
       composicao: im.filter(i => i.tipo === 'pagamento'), itensAporte: im.filter(i => i.tipo === 'aporte'),
     };
   }
@@ -726,8 +745,9 @@ const FX = (function () {
       // só passa do orçamento quando o usado no ano passa da meta do ano.
       const ano = caixinhaAnual(cx, ctx.cfg) ? anoCaixinha(cx, ctx) : null;
       return {
-        caixinha: cx, meta: c.aportePrevisto, transferido: c.aportado, falta: c.aporteFalta,
-        usado: c.usado, usoPrevisto: c.usoPrevisto, disponivelMes: r2(c.aportado - c.usado),
+        caixinha: cx, meta: c.aportePrevisto, transferido: c.aportado, destinado: c.destinado, falta: c.aporteFalta,
+        usado: c.usado, usadoDireto: c.usadoDireto, usadoDaCaixinha: c.usadoDaCaixinha,
+        usoPrevisto: c.usoPrevisto, disponivelMes: r2(c.aportado - c.usado),
         estourou: ano ? ano.estourou : c.usado > teto + EPS,
         acima: ano ? r2(Math.max(0, ano.usado - ano.metaAnual)) : r2(Math.max(0, c.usado - teto)), anual: ano,
         saldoAtual: c.saldoAtual, saldoInicio: c.saldoInicio, conferido: c.conferido,
@@ -774,8 +794,10 @@ const FX = (function () {
       const noMes = m => mesDe(m.data) === mm && m.realizado;
       const transferido = movs.filter(m => noMes(m) && m.natureza === 'transferencia' && m.destinoId === cx.id).reduce((t, m) => t + m.valor, 0);
       const doMes = movs.filter(m => mesDe(m.competencia || m.data) === mm && m.realizado && m.classe === 'despesa' && m.caixinhaId === cx.id);
-      return { mes: mm, meta: r2(meta), metaVencida: r2(metaVencida), fonte, antes, transferido: r2(transferido), usado: r2(doMes.reduce((t, m) => t + m.valor, 0)),
-        usos: doMes, atual: mm === mes, passado: mm < mes };
+      const usadoM = r2(doMes.reduce((t, m) => t + m.valor, 0));
+      const diretoM = r2(doMes.reduce((t, m) => t + (m.valorDireto != null ? m.valorDireto : 0), 0));
+      return { mes: mm, meta: r2(meta), metaVencida: r2(metaVencida), fonte, antes, transferido: r2(transferido), usado: usadoM,
+        usadoDireto: diretoM, destinado: r2(transferido + diretoM), usos: doMes, atual: mm === mes, passado: mm < mes };
     });
     const soma = (arr, f) => r2(arr.reduce((t, x) => t + f(x), 0));
     const somaMetas = soma(meses, x => x.meta);
@@ -785,10 +807,13 @@ const FX = (function () {
     const fonteMeta = definida > EPS ? 'definida' : sazonais > EPS ? 'sazonais' : 'meses';
     const guardado = soma(meses, x => x.transferido);
     const usado = soma(meses, x => x.usado);
+    // gasto direto da conta já é dinheiro do ano que foi para esta finalidade
+    const usadoDireto = soma(meses, x => x.usadoDireto);
+    const destinado = r2(guardado + usadoDireto);
     const planejadoAteAgora = soma(meses, x => x.metaVencida);
     const mesRef = mesDe(hoje) < ciclo.inicio ? ciclo.inicio : mesDe(hoje) > ciclo.fim ? ciclo.fim : mesDe(hoje);
     const restantes = meses.filter(x => x.mes >= mesRef && !x.antes).length;
-    const faltaGuardar = r2(Math.max(0, metaAnual - guardado));
+    const faltaGuardar = r2(Math.max(0, metaAnual - destinado));
     // por categoria (quanto já usou de cada finalidade no ano)
     const porCat = {};
     meses.forEach(x => x.usos.forEach(m => { porCat[m.categoria || 'Outros'] = r2((porCat[m.categoria || 'Outros'] || 0) + m.valor); }));
@@ -797,9 +822,9 @@ const FX = (function () {
       .concat(Object.keys(porCat).filter(k => !orc.some(s => s.nome === k)).map(k => ({ nome: k, anual: 0, usado: porCat[k] })))
       .map(c => Object.assign(c, { resta: r2(c.anual - c.usado) }));
     return {
-      caixinha: cx, ciclo, meses, metaAnual, fonteMeta, somaMetas, guardado, usado,
+      caixinha: cx, ciclo, meses, metaAnual, fonteMeta, somaMetas, guardado, usado, usadoDireto, destinado,
       faltaGuardar, restaGastar: r2(metaAnual - usado), estourou: usado > metaAnual + EPS && metaAnual > EPS,
-      planejadoAteAgora, ritmo: r2(guardado - planejadoAteAgora),   // + adiantada · − atrás (só datas que já passaram)
+      planejadoAteAgora, ritmo: r2(destinado - planejadoAteAgora),   // + adiantada · − atrás (só datas que já passaram)
       mesesRestantes: restantes, sugestaoMes: restantes ? r2(faltaGuardar / restantes) : 0,
       mediaMes: r2(metaAnual / 12), categorias,
     };
@@ -837,7 +862,7 @@ const FX = (function () {
     const cxs = metasCaixinhas(entidade, ctx);
     const comMeta = cxs.filter(c => c.meta > EPS && modoCaixinha(c.caixinha) === 'guardar');
     out.caixinhas = cxs;
-    out.reservar = { meta: soma(comMeta, c => c.meta), transferido: soma(comMeta, c => Math.min(c.transferido, c.meta)),
+    out.reservar = { meta: soma(comMeta, c => c.meta), transferido: soma(comMeta, c => Math.min(c.destinado, c.meta)),
       falta: soma(comMeta, c => c.falta), caixinhas: comMeta };
 
     // 3. Gastar
@@ -1076,6 +1101,18 @@ const FX = (function () {
         const cx = caixinhaDaCategoria(contas, m.entidade, m.categoria, cfg);
         if (cx) { m.caixinhaId = cx.id; m.caixinhaAuto = true; }
       }
+    });
+    // Caixinha = orçamento. O gasto pertence a ela mesmo quando o dinheiro saiu
+    // direto da conta. Separa as duas partes: da caixinha (pago da própria
+    // caixinha ou com resgate ligado) e direto da conta.
+    const resg = {};
+    movs.forEach(m => { if (m.natureza === 'transferencia' && m.tipoTransf === 'resgate' && m.vinculoId) resg[m.vinculoId] = (resg[m.vinculoId] || 0) + m.valor; });
+    movs.forEach(m => {
+      if (m.classe !== 'despesa' || !m.caixinhaId) return;
+      const daCx = m.contaId === m.caixinhaId ? m.valor : Math.min(m.valor, resg[m.key] || 0);
+      m.valorDaCaixinha = r2(daCx);
+      m.valorDireto = r2(m.valor - daCx);
+      m.caixinhaModo = modoCaixinha(contas.find(c => c.id === m.caixinhaId));
     });
     return movs;
   }

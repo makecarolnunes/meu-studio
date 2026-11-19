@@ -634,6 +634,28 @@ const ctxM = (mes, hoje) => run(`stCtx(${JSON.stringify(mes)}, ${JSON.stringify(
     igual('categoria trocada no próprio registro, caixinha segue a categoria', [mR.categoria, nomeC(mR.caixinhaId), mR.planoItemId], ['Cosméticos', cxSaz.nome, null]);
   }
 
+  titulo('Caixinha = orçamento: gasto direto da conta pertence à caixinha e já conta como destinado');
+  {
+    const cxSaz = ST.contas.find(c => c.entidade === 'PF' && c.finalidade === 'sazonais');
+    const ap = () => FX.itensDoMes(ST.itens, ABR, run('stMovs()'), '2027-04-28', ST.cfg).find(i => i.tipo === 'aporte' && i.caixinhaId === cxSaz.id && !i.dispensado);
+    const mt = () => FX.metasCaixinhas('PF', cA('2027-04-28')).find(c => c.caixinha.id === cxSaz.id);
+    const a0 = ap(), m0 = mt(), an0 = FX.anoCaixinha(cxSaz, cA('2027-04-28'));
+    // passagem paga direto da conta (sem resgate): é Viagem, sai do que devia ser juntado
+    const r = await AC.registrarGasto({ entidade: 'PF', valor: '300', data: '2027-04-20', categoria: 'Viagem', descricao: 'Passagem', contaId: pfC.id, resgatar: false });
+    const mov = run('stMovs()').find(m => m.key === 'saidas_pessoal:' + r.id);
+    igual('passagem pertence à Sazonais, saiu direto da conta', [nomeC(mov.caixinhaId), mov.valorDireto, mov.valorDaCaixinha], [cxSaz.nome, 300, 0]);
+    const a1 = ap(), m1 = mt(), an1 = FX.anoCaixinha(cxSaz, cA('2027-04-28'));
+    igual('abate o "guardar" do mês (sem transferência)', FX.r2(a0._falta - a1._falta), Math.min(300, a0._falta));
+    igual('mês: usado +300, destinado +300, guardado na caixinha igual', [FX.r2(m1.usado - m0.usado), FX.r2(m1.destinado - m0.destinado), FX.r2(m1.transferido - m0.transferido)], [300, 300, 0]);
+    igual('ano: falta juntar −300 e pode usar −300', [FX.r2(an0.faltaGuardar - an1.faltaGuardar), FX.r2(an0.restaGastar - an1.restaGastar)], [Math.min(300, an0.faltaGuardar), 300]);
+    // contas (Despesas fixas): pagar direto da conta não cria dívida com a caixinha
+    const cxFix = ST.contas.find(c => c.entidade === 'PF' && c.finalidade === 'fixas');
+    const sFix0 = FX.saldoConta(cxFix, run('stMovs()'), '2027-12-31', ST.cfg).saldo;
+    const r2 = await AC.registrarGasto({ entidade: 'PF', valor: '45', data: '2027-04-21', categoria: 'Telefone', descricao: 'Telefone', contaId: pfC.id, resgatar: false });
+    const mf = run('stMovs()').find(m => m.key === 'saidas_pessoal:' + r2.id);
+    igual('conta fixa paga direto: pertence a Despesas fixas, saldo da caixinha não muda', [nomeC(mf.caixinhaId), mf.valorDireto, FX.r2(FX.saldoConta(cxFix, run('stMovs()'), '2027-12-31', ST.cfg).saldo - sFix0)], [cxFix.nome, 45, 0]);
+  }
+
   titulo('Plano: quanto tenho, comprometido, para onde vai e se o mês fecha');
   {
     // linha do tempo pura
@@ -734,10 +756,10 @@ const ctxM = (mes, hoje) => run(`stCtx(${JSON.stringify(mes)}, ${JSON.stringify(
   if (process.env.TXT) console.log(txt.slice(0, 2500));
   igual('Hoje: semanada desta semana acima do orçamento, em destaque', txt.includes(`Semanada · esta semana`) && txt.includes(`${run(`brl(${w1.acima})`)} acima do orçamento`), true);
   igual('Hoje: "Próximas ações" com o que passou do orçamento', txt.includes('Próximas ações') && txt.includes('Passou do orçamento'), true);
-  igual('Hoje: receber / distribuir / gastar', ['Receber', 'Guardar', 'Gastar'].every(k => txt.includes(k)), true);
+  igual('Hoje: receber / distribuir / gastar', ['Receber', 'Juntar', 'Gastar'].every(k => txt.includes(k)), true);
   igual('Hoje: pró-labore com o que falta', /faltam R\$ 3\.555,00/.test(txt), true);
   txt = ver(`UI.tab='caixinhas';render()`);
-  igual('Caixinhas: meta, guardado, usado, saldo e o que falta guardar', ['Meta', 'Guardado', 'Usado', 'Saldo hoje', 'falta guardar'].every(k => txt.includes(k)) && !txt.includes('disponível do mês'), true);
+  igual('Caixinhas: meta, destinado, usado, na caixinha e o que falta guardar', ['Meta', 'Destinado', 'Usado', 'Na caixinha', 'falta guardar'].every(k => txt.includes(k)) && !txt.includes('disponível do mês'), true);
   const cartao = fin => { const i = txt.indexOf(ST.contas.find(c => c.entidade === 'PF' && c.finalidade === fin).nome); const f = txt.indexOf('Detalhes', i); return txt.slice(i, f > i ? f : i + 200); };
   igual('Semanada = quanto pode gastar (não "falta guardar", sem "reservado")', /pode gastar esta semana|acima esta semana/.test(cartao('semanada')) && !/falta guardar|reservado/.test(cartao('semanada')), true);
   igual('Despesas fixas = quanto falta pagar das contas', /falta pagar|contas do mês pagas/.test(cartao('fixas')) && /Contas do mês/.test(cartao('fixas')) && !/falta guardar/.test(cartao('fixas')), true);
@@ -766,7 +788,8 @@ const ctxM = (mes, hoje) => run(`stCtx(${JSON.stringify(mes)}, ${JSON.stringify(
   igual('reserva de abril (dia 15) ainda não conta como "atrás" no dia 10', venc10, 0);
   const an20 = FX.anoCaixinha(saz, cA('2027-04-20'));
   igual('no dia 20 já conta no ritmo', FX.r2(an20.planejadoAteAgora - an.planejadoAteAgora), 1245);
-  igual('guardado do ano = soma dos meses; falta = meta − guardado', [an.guardado, an.faltaGuardar], [FX.r2(an.meses.reduce((t, x) => t + x.transferido, 0)), FX.r2(14950 - an.guardado)]);
+  igual('guardado do ano = soma dos meses; falta = meta − (guardado + gasto direto da conta)', [an.guardado, an.destinado, an.faltaGuardar],
+    [FX.r2(an.meses.reduce((t, x) => t + x.transferido, 0)), FX.r2(an.guardado + an.usadoDireto), FX.r2(14950 - an.guardado - an.usadoDireto)]);
   igual('sugestão para fechar o ano = falta ÷ meses que restam (abr → nov = 8)', [an.mesesRestantes, an.sugestaoMes], [8, FX.r2(an.faltaGuardar / 8)]);
   const usado0 = an.usado;
   await AC.registrarGasto({ entidade: 'PF', valor: '2000', data: '2027-04-08', descricao: 'Roupas de inverno', categoria: 'Roupas', contaId: saz.id });
@@ -787,7 +810,7 @@ const ctxM = (mes, hoje) => run(`stCtx(${JSON.stringify(mes)}, ${JSON.stringify(
   igual('ano começando em janeiro', [FX.cicloAno('2027-04', { anoCaixinhas: { mesInicio: 1 } }).inicio, FX.cicloAno('2026-12', { anoCaixinhas: { mesInicio: 1 } }).inicio], ['2027-01', '2026-01']);
   run(`stHoje = () => '2027-04-10'`);
   txt = ver(`UI.tab='caixinhas';UI.ent='PF';UI.mes='2027-04';UI.aberto={'${saz.id}':true};render()`);
-  igual('tela: Sazonais mostra meta do mês e o ano (meta, guardado, usado)', ['Meta do mês', 'No ano', 'Meta do ano', 'Guardado', 'R$ 14.950', 'Pode usar', 'p/ fechar', 'Mês a mês', 'Orçamento do ano por finalidade'].every(k => txt.includes(k)), true);
+  igual('tela: Sazonais mostra meta do mês e o ano (meta, destinado, usado)', ['Meta do mês', 'No ano', 'Meta do ano', 'Destinado', 'R$ 14.950', 'Pode usar', 'p/ fechar', 'Mês a mês', 'Orçamento do ano por finalidade'].every(k => txt.includes(k)), true);
   igual('tela: sem frases longas (explicação no i)', !/Para fechar o ano|Ainda pode usar|Em média|sem contar o que sobrou/.test(txt) && el('view').innerHTML.includes('class="i-info"'), true);
   txt = ver(`UI.ent='PJ';UI.aberto={};render()`);
   igual('tela: Cursos e investimentos mostra a meta do ano 6.500', txt.includes('No ano') && txt.includes('R$ 6.500'), true);
