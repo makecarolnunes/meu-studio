@@ -262,8 +262,13 @@ function telaPlano() {
 function cartaoTenho(Q) {
   const pc = Q.principal;
   const pLivre = Q.naConta > 0 ? Math.round(Q.livre / Q.naConta * 100) : 0;
+  // última conferência com o banco (não só o saldo de abertura)
+  const ult = pc && ST.conciliacoes.filter(x => x.contaId === pc.id)
+    .sort((a, b) => b.data.localeCompare(a.data) || String(b.createdAt || '').localeCompare(String(a.createdAt || '')))[0];
+  const quando = ult && ult.data > (Q.conferidoEm || '') ? ult.data : Q.conferidoEm;
+  const dif = ult && ult.data === quando && ult.tipo === 'conferencia' ? Number(ult.diferenca) || 0 : 0;
   const tag = pc ? (Q.conferido
-    ? `<button class="tag-btn" onclick="formConciliar('${pc.id}')">conferido ${Q.conferidoEm === stHoje() ? 'hoje' : dm(Q.conferidoEm)}</button>`
+    ? `<button class="tag-btn ${Math.abs(dif) > 0.004 ? 'alerta' : ''}" onclick="formConciliar('${pc.id}')">${Math.abs(dif) > 0.004 ? `diferença ${brl(dif)}` : `conferido ${quando === stHoje() ? 'hoje' : dm(quando)}`}</button>`
     : `<button class="tag-btn alerta" onclick="formConciliar('${pc.id}')">conferir com o banco</button>`) : '';
   return `<section class="card q-tenho">
     <div class="row"><span class="eyebrow">Na conta hoje${info('Saldo da conta ' + (pc ? pc.nome : '') + ': último saldo conferido com o banco + o que foi registrado depois.\nToque em "conferido" para comparar com o app do banco e ver a diferença.')}</span>${tag}</div>
