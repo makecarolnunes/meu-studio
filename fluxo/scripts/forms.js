@@ -46,6 +46,18 @@ function acFechar(fechar) {
   executar(() => fechar ? AC.fecharMes(UI.mes) : AC.reabrirMes(UI.mes), fechar ? 'Mês fechado' : 'Mês reaberto');
 }
 
+// ── RECEBI (cliente previsto no Financeiro) ──────────────
+// Mesmo caminho do extrato (AC.receberCliente): igual confirma; parcial
+// confirma o que entrou e o resto continua previsto; maior confirma o valor.
+function formReceberCliente(entryId) {
+  const m = stMovs().find(x => x.tabela === 'entries' && x.id === String(entryId));
+  if (!m) return;
+  abrirModal(`<h2>Recebi · ${esc(m.cliente || 'Cliente')}</h2>
+    <div class="nota">Previsto: ${brl(m.valor)} em ${dm(m.data)}${m.tipoEntrada ? ' · ' + esc(m.tipoEntrada) : ''}. Valor menor: o resto continua previsto.</div>
+    <div class="two">${campo('Valor recebido', inValor('rc-valor', m.valor))}${campo('Data', inData('rc-data', stHoje()))}</div>
+    ${rodape(`executar(()=>AC.receberCliente('${m.id}',{valor:$v('rc-valor'),data:$v('rc-data')}),'Recebimento confirmado')`, 'Confirmar')}`);
+}
+
 // ── EXECUTAR ITEM DO PLANO ───────────────────────────────
 function formExecutar(itemId) {
   const ctx = stCtx(UI.mes);

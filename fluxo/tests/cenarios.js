@@ -616,6 +616,36 @@ const ctxM = (mes, hoje) => run(`stCtx(${JSON.stringify(mes)}, ${JSON.stringify(
   await AC.registrarGasto({ entidade: 'PJ', pessoal: true, valor: '25', data: '2027-04-13', contaId: pjC.id, categoria: 'Mercado', descricao: 'Mercado pago pela PJ' });
   igual('mercado pago pela PJ entra no gasto da semanada PF', FX.r2(FX.semanadas('PF', cA('2027-04-13')).gasto - semAntes), 25);
 
+  titulo('Plano: quanto tenho, comprometido, para onde vai e se o mês fecha');
+  {
+    // linha do tempo pura
+    const L = FX.linhaDoTempo(100, [{ data: '2027-04-15', venc: '2027-04-15', valor: 500, tipo: 'prolabore' }],
+      [{ data: '2027-04-10', venc: '2027-04-10', valor: 80, tipo: 'pagamento' }, { data: '2027-04-12', venc: '2027-04-12', valor: 50, tipo: 'aporte' },
+       { data: '2027-04-20', venc: '2027-04-20', valor: 300, tipo: 'pagamento' }, { data: '2027-04-28', venc: '2027-04-28', valor: 400, tipo: 'semanada' }]);
+    igual('fim do mês = hoje + entra − sai', L.fim, 100 + 500 - 830);
+    igual('cobertura: conta cobre · falta antes de entrar · depois do recebimento · falta', L.eventos.filter(e => e.lado === 'sai').map(e => e.cobertura), ['agora', 'falta', 'depois', 'falta']);
+    igual('primeira falta = antes do recebimento', L.primeiraFalta, '2027-04-12');
+    igual('no mesmo dia, conta antes de pró-labore', FX.linhaDoTempo(0, [], [{ data: 'd', venc: 'v', valor: 1, tipo: 'prolabore' }, { data: 'd', venc: 'v', valor: 1, tipo: 'pagamento' }]).eventos.map(e => e.tipo), ['pagamento', 'prolabore']);
+
+    const c = cA('2027-04-13'), Q = FX.quadroMes('PF', c), R = FX.resumo('PF', c);
+    igual('na conta = comprometido + livre', FX.r2(Q.comprometido + Q.livre), Math.max(0, Q.naConta));
+    igual('livre nunca passa do que está na conta', Q.livre <= Math.max(0, Q.naConta) + 0.001, true);
+    igual('vai sair = compromissos do resumo (+ fatura)', Q.sai, FX.r2(R.compromissos + R.faturaACobrir));
+    igual('fim do mês = na conta + entra − sai', Q.fimMes, FX.r2(Q.naConta + Q.entra - Q.sai));
+    igual('aporte de semanada/contas não aparece como saída (sem desconto em dobro)',
+      Q.eventos.some(e => e.tipo === 'aporte' && e.item && FX.aporteOpcional(e.item, ST.contas)), false);
+    igual('falta ⇔ fim do mês ou algum ponto negativo', !!Q.falta, Q.eventos.some(e => e.saldoApos < -0.005) || Q.naConta < -0.005);
+    const P = Q.ponte;
+    igual('pró-labore: transferido + falta = previsto', FX.r2(P.transferido + P.falta), P.previsto);
+    igual('pró-labore: hoje ≤ no mês ≤ falta', P.podeHoje <= P.podeNoMes + 0.001 && P.podeNoMes <= P.falta + 0.001, true);
+    igual('pró-labore: hoje nunca passa do que a PJ tem', P.podeHoje <= Math.max(0, P.naContaPJ) + 0.001, true);
+    igual('PF só conta o pró-labore que a PJ consegue pagar',
+      FX.r2(Q.eventos.filter(e => e.tipo === 'prolabore').reduce((t, e) => t + e.valor, 0) + Q.proSemDinheiro) >= 0 && Q.proSemDinheiro <= P.falta + 0.001, true);
+    const QJ = FX.quadroMes('PJ', c);
+    igual('PJ: "sem dinheiro" da ponte = o que a PF não conta', FX.r2(P.semDinheiro), FX.r2(QJ.ponte.semDinheiro));
+    igual('mês que não é o atual: só o planejado', [FX.quadroMes('PF', Object.assign({}, c, { mes: '2027-06' })).atual, 'eventos' in FX.quadroMes('PF', Object.assign({}, c, { mes: '2027-06' }))], [false, false]);
+  }
+
   titulo('Categorias: criar uma fixa nova (Cuidados pessoais)');
   const cfgCat = JSON.parse(JSON.stringify(ST.cfg));
   cfgCat.categorias.PF.push({ nome: 'Cuidados pessoais', grupo: 'Fixas' });

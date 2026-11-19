@@ -134,6 +134,21 @@ const titulo = t => console.log('\n■ ' + t);
       selCat.value = cat; selCat.dispatchEvent(new Event('change'));
       return sel.value === cx.id && UI.extrato.propostas[0].caixinhaId === cx.id; })()`));
     await b.js(`UI.extrato = null; localStorage.removeItem('mk_claude_key'); go('inicio')`);
+    // Plano: as 4 partes na ordem das perguntas, e o botão de cada linha registra
+    for (const e of ['PF', 'PJ']) {
+      await b.js(`UI.ent='${e}';UI.mes=FX.mesDe(stHoje());go('plano')`); await espera(120);
+      check(`plano ${e}: quanto tenho → fecha o mês → pró-labore → para onde vai`, await b.js(`(() => { const o = ['.q-tenho', '.q-fecha', '.q-cam', '.q-itens'].map(s => document.querySelector(s));
+        return o.every(Boolean) && o[0].compareDocumentPosition(o[1]) & 4 && o[1].compareDocumentPosition(o[2]) & 4; })()`));
+      check(`plano ${e}: sem rolagem horizontal`, await semOverflow());
+      const temBtn = await b.js(`!!document.querySelector('.q-ev .q-r .btn')`);
+      if (temBtn) {
+        await tocar('.q-ev .q-r .btn', true); await espera(120);
+        check(`plano ${e}: botão da linha abre o registro`, await b.js(`document.getElementById('modal').classList.contains('on')`));
+        await b.js('fecharModal()');
+      }
+    }
+    await b.foto(path.join(SAIDA, 'celular-plano.png'));
+    await b.js(`go('inicio')`);
     // sub-seções
     await tocar('#tabs button[data-tab="movs"]', true);
     r = await tocar('.seg.sub button:nth-child(2)', true);

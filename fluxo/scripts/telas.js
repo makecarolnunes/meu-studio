@@ -83,10 +83,10 @@ function telaInicio() {
 function cartaoSemana(P) {
   const w = P.semana, cx = P.semanadas && P.semanadas.caixinha;
   if (!w) {
-    const r = P.resumo;
+    const Q = P.quadro, livre = Q.atual ? Q.livre : P.resumo.disponivel;
     return `<section class="card hero">
-      <div class="eyebrow">Livre para gastar no mês${info('O que fica na conta depois de tudo o que ainda falta pagar e guardar no mês.')}</div>
-      <div class="hero-v ${r.disponivel < 0 ? 'neg' : ''}">${brl(r.disponivel)}</div></section>`;
+      <div class="eyebrow">Livre para usar${info('Pode usar sem faltar para nada do mês, contando o que ainda vai entrar.')}</div>
+      <div class="hero-v ${livre < 0 ? 'neg' : ''}">${brl(livre)}</div></section>`;
   }
   const passou = w.acima > FX.EPS;
   const nivel = passou ? 'erro' : (w.orcamento > 0 && w.gasto >= w.orcamento * 0.85 ? 'alerta' : 'ok');
@@ -190,14 +190,16 @@ function miniLinha(rot, feito, total, st, nivel, acao) {
 }
 
 // 4º bloco: dinheiro agora (saldo real — depende de saldo conferido)
+// Mesmos números do Plano (FX.quadroMes): na conta · nas caixinhas · livre
 function cartaoDinheiro(P) {
-  const r = P.resumo, nc = r.naoConferidas.length;
+  const r = P.resumo, Q = P.quadro, nc = r.naoConferidas.length;
+  const livre = Q.atual ? Q.livre : r.disponivel;
   return `<section class="card">
     <div class="row"><h3>Dinheiro agora</h3>${nc ? `<button class="tag-btn alerta" onclick="go('conciliar')">${nc} sem saldo conferido ›</button>` : '<span class="t-ok sm">✓ saldos conferidos</span>'}</div>
     <div class="grid3"><div><span>Na conta</span><b>${brl(r.saldoBancario)}</b></div>
       <div><span>Nas caixinhas</span><b>${brl(r.reservado)}</b></div>
-      <div><span>Livre no mês${info('Na conta − o que ainda falta pagar e guardar neste mês' + (r.faturaACobrir > FX.EPS ? ' − fatura do cartão sem reserva' : '') + '.')}</span><b class="${r.disponivel < 0 ? 'neg' : ''}">${brl(r.disponivel)}</b></div></div>
-    ${r.disponivel < 0 ? `<div class="t-erro sm" style="margin-top:6px">Faltam ${brl(-r.disponivel)} no mês${info('A conta não cobre o resto do mês. Reprograme algum item no Plano.')}</div>` : ''}
+      <div><span>Livre${info('Pode usar sem faltar para nada do mês, contando o que ainda vai entrar.')}</span><b class="${livre > 0.01 ? 't-ok' : ''}">${brl(livre)}</b></div></div>
+    ${Q.atual && Q.falta ? `<div class="t-erro sm" style="margin-top:6px">Faltam ${brl(Q.falta.valor)} a partir de ${dm(Q.falta.data)} <button class="lnk sm" onclick="go('plano')">Ver no Plano ›</button></div>` : ''}
   </section>`;
 }
 function linkOutraEnt() {
@@ -226,7 +228,7 @@ function telaPlano() {
   if (UI.modelo) return telaModelo();
   const ent = UI.ent;
   const plano = stPlano(UI.mes);
-  let h = titulo('Plano do mês', 'O que você planejou receber, guardar e pagar. Cada item só fica ✓ quando você registra o que aconteceu.');
+  let h = titulo('Plano do mês', 'Quanto você tem, quanto já tem destino, para onde vai e se o mês fecha.\nUsa o plano e o que foi registrado: funciona antes e depois de importar o extrato.\nCada item só fica ✓ quando você registra o que aconteceu.');
   if (!plano) {
     const temAnt = ST.itens.some(i => i.mes === FX.addMes(UI.mes, -1));
     return h + `<div class="card"><h3>${nomeMes(UI.mes)} sem plano${info('O mês é criado como cópia: alterar depois não muda outros meses nem o que já aconteceu.')}</h3>
@@ -236,66 +238,148 @@ function telaPlano() {
   }
   if (pfTravada()) return h + cartaoPFBloqueado();
   const ctx = stCtx(UI.mes);
-  const P = painel();
+  const Q = painel().quadro;
   const todos = FX.itensDoMes(ST.itens, UI.mes, ctx.movs, ctx.hoje, ctx.cfg);
   const im = todos.filter(i => i.entidade === ent || (ent === 'PF' && i.tipo === 'prolabore'));
   const fechado = plano.status === 'fechado';
   const avisos = FX.checarPlano(todos.filter(i => i.entidade === ent || i.tipo === 'prolabore'), ST.contas.filter(c => c.entidade === ent));
-  const vivos = im.filter(i => !['dispensado', 'reprogramado'].includes(i._status));
-  const pag = vivos.filter(i => i.tipo === 'pagamento');
-  const totPag = pag.reduce((t, i) => t + Number(i.valor), 0), feitoPag = pag.reduce((t, i) => t + Math.min(Number(i.valor), i._realizado), 0);
-  const rec = ent === 'PF' ? P.receber : { previsto: P.prolabore.previsto, recebido: P.prolabore.pago };
-
-  h += `<div class="card"><div class="grid3 plano-n">
-      <div><span>${ent === 'PF' ? 'Receber' : 'Pró-labore'}</span><b>${brlc(rec.previsto)}</b><small class="${rec.recebido >= rec.previsto - 0.01 && rec.previsto ? 't-ok' : 'muted'}">${brlc(rec.recebido)} ${ent === 'PF' ? 'recebido' : 'pago'}</small></div>
-      <div><span>Guardar</span><b>${brlc(P.reservar.meta)}</b><small class="${P.reservar.falta > 0.01 ? 't-alerta' : 't-ok'}">${P.reservar.falta > 0.01 ? 'faltam ' + brlc(P.reservar.falta) : '✓ guardado'}</small></div>
-      <div><span>Pagar</span><b>${brlc(totPag)}</b><small class="${totPag - feitoPag > 0.01 ? 'muted' : 't-ok'}">${brlc(feitoPag)} pago</small></div>
-    </div></div>
-    <div class="toolbar"><span class="muted sm">${fechado ? '🔒 Mês fechado' : 'Origem: ' + (plano.origem === 'modelo' ? 'modelo' : nomeMes(plano.origem || UI.mes))}</span>
-      <span>${fechado ? `<button class="lnk" onclick="acFechar(false)">Reabrir</button>`
-        : `<button class="lnk" onclick="formItem(null)">+ Item</button><button class="lnk" onclick="acFechar(true)">Fechar mês</button>`}
-        <button class="lnk" onclick="UI.modelo=true;render()">Modelo</button></span></div>`;
   if (avisos.length) h += `<div class="aviso">${avisos.map(a => esc(a.msg)).join('<br>')}</div>`;
 
-  if (ent === 'PF') {
-    const dist = FX.distribuicoesPF(todos, ctx.movs);
-    dist.forEach(d => {
-      const rc = d.recebimento;
-      const aps = d.itens.filter(i => i.tipo === 'aporte' && FX.PENDENTE(i._status) && i._data <= ctx.hoje);
-      h += `<section class="card dist">
-        <div class="dist-h">
-          <div><div class="eyebrow">Recebimento · dia ${dm(rc._data)}</div><h3>${esc(FX.nomeItem(rc))}</h3></div>
-          <div class="r"><b>${brl(d.previsto)}</b>${chip(d.recebidoCompleto ? 'feito' : rc._status, rc.tipo)}</div>
-        </div>
-        ${d.recebido > 0 && !d.recebidoCompleto ? `<div class="muted sm pad">Recebido até agora: ${brl(d.recebido)}</div>` : ''}
-        ${!d.recebidoCompleto && FX.PENDENTE(rc._status) ? `<div class="pad"><button class="btn mini" onclick="formExecutar('${rc.id}')">Registrar recebimento</button></div>` : ''}
-        <div class="pad">${progresso({ rotulo: 'Distribuído deste recebimento', feito: d.distribuido, total: d.planejado, modo: 'meta', verbo: 'distribuído' })}</div>
-        <div class="lista">${d.itens.map(i => linhaItem(i)).join('') || vazio('Nada distribuído a partir deste recebimento.')}</div>
-        ${aps.length && d.recebido > 0 ? `<div class="pad"><button class="btn sec" onclick="acComoPlanejado(${esc(JSON.stringify(aps.map(i => i.id)))})">Fiz as reservas como planejado (${brl(aps.reduce((t, i) => t + i._falta, 0))})</button></div>` : ''}
-        <div class="dist-f">
-          <div class="kv ${d.sobraPlanejada < 0 ? 'neg' : ''}"><span>Sobra planejada</span><b>${brl(d.sobraPlanejada)}</b></div>
-          ${d.recebido > 0 ? `<div class="kv"><span>Sobra real${info('Recebido − distribuído.')}</span><b>${brl(d.sobraReal)}</b></div>` : ''}
-        </div></section>`;
-    });
-    const viaCx = im.filter(i => i.entidade === 'PF' && i.tipo === 'pagamento' && i.caixinhaId);
-    if (viaCx.length) h += `<div class="sec-t">Contas pagas com o dinheiro das caixinhas</div>
-      <div class="card lista">${viaCx.map(i => linhaItem(i)).join('')}</div>`;
-    const outros = im.filter(i => i.entidade === 'PF' && i.tipo === 'pagamento' && !i.caixinhaId && !dist.some(d => d.itens.includes(i)));
-    if (outros.length) h += `<div class="sec-t">Outros pagamentos</div><div class="card lista">${outros.map(i => linhaItem(i)).join('')}</div>`;
-  } else {
-    const r = P.resumo;
-    h += `<div class="card">
-      ${progresso({ rotulo: 'Clientes · recebido no mês', feito: P.receber.recebido, total: P.receber.previsto, modo: 'meta', verbo: 'recebido' })}
-      <div class="kv"><span>A distribuir no mês${info('Pró-labore + reservas + pagamentos que ainda faltam.')}</span><b>${brl(r.compromissosPlano)}</b></div>
-      <div class="kv ${r.saldoBancario < r.compromissosPlano ? 'neg' : ''}"><span>Na conta agora</span><b>${brl(r.saldoBancario)}</b></div>
-      ${r.saldoBancario < r.compromissosPlano ? `<div class="t-alerta sm">Conta ainda não cobre tudo${info('Distribua conforme os recebimentos entram, na ordem das datas.')}</div>` : ''}</div>`;
-    FX.semanas(UI.mes, ctx.cfg).forEach(w => {
-      const its = im.filter(i => i._semana === w.n);
-      if (!its.length) return;
-      h += `<div class="sec-t">Semana ${w.n} · ${w.label}</div><div class="card lista">${its.map(i => linhaItem(i)).join('')}</div>`;
-    });
-  }
+  // Ordem = as perguntas: 1-2 quanto tenho e quanto já tem destino ·
+  // 5 o mês fecha? · ponte PJ→PF · 3-4 para onde vai e o que entra/sai
+  h += Q.atual ? `<div class="cols">
+      <div>${cartaoTenho(Q)}${cartaoFecha(Q)}${cartaoPonte(Q)}</div>
+      <div>${cartaoCaminho(Q)}${cartaoItens(im, fechado, plano)}</div>
+    </div>`
+    : `<div class="cols"><div>${cartaoPlanejado(Q)}${cartaoPonte(Q)}</div><div>${cartaoItens(im, fechado, plano, true)}</div></div>`;
   return h;
+}
+
+// Cores do Plano (só com função): grafite = saldo · âmbar = comprometido ·
+// verde = livre / fecha · azul = vai entrar · vermelho = falta dinheiro.
+
+// 1-2. Quanto tenho hoje e quanto disso já tem destino
+function cartaoTenho(Q) {
+  const pc = Q.principal;
+  const pLivre = Q.naConta > 0 ? Math.round(Q.livre / Q.naConta * 100) : 0;
+  const tag = pc ? (Q.conferido
+    ? `<button class="tag-btn" onclick="formConciliar('${pc.id}')">conferido ${Q.conferidoEm === stHoje() ? 'hoje' : dm(Q.conferidoEm)}</button>`
+    : `<button class="tag-btn alerta" onclick="formConciliar('${pc.id}')">conferir com o banco</button>`) : '';
+  return `<section class="card q-tenho">
+    <div class="row"><span class="eyebrow">Na conta hoje${info('Saldo da conta ' + (pc ? pc.nome : '') + ': último saldo conferido com o banco + o que foi registrado depois.\nToque em "conferido" para comparar com o app do banco e ver a diferença.')}</span>${tag}</div>
+    <div class="hero-v ${Q.naConta < 0 ? 'neg' : ''}">${brl(Q.naConta)}</div>
+    ${Q.naConta > 0 ? `<div class="q-bar" role="img" aria-label="Comprometido e livre"><i class="q-comp" style="width:${100 - pLivre}%"></i><i class="q-livre" style="width:${pLivre}%"></i></div>` : ''}
+    <div class="q-leg">
+      <span><i class="dot comp"></i>Comprometido${info('Já tem destino neste mês: contas, caixinhas, semanada' + (Q.entidade === 'PJ' ? ' e pró-labore' : '') + ' que vencem antes de entrar mais dinheiro.')}<b>${brl(Q.comprometido)}</b></span>
+      <span><i class="dot livre"></i>Livre${info('Pode usar sem faltar para nada do mês, contando o que ainda vai entrar.')}<b class="t-ok">${brl(Q.livre)}</b></span>
+    </div>
+    <button class="q-cx" onclick="go('caixinhas')"><span>Guardado nas caixinhas</span>
+      <span>${Q.caixinhasNegativas.length ? `<span class="t-erro xs">${Q.caixinhasNegativas.length} negativa${Q.caixinhasNegativas.length > 1 ? 's' : ''}</span> ` : ''}<b>${brl(Q.caixinhas)}</b> ›</span></button>
+  </section>`;
+}
+
+// 5. O mês fecha? (hoje + entra − sai = fim do mês)
+function cartaoFecha(Q) {
+  const pro = Q.proSemDinheiro > 0.01;
+  return `<section class="card q-fecha">
+    <h3>Até o fim do mês${info('Hoje + o que ainda vai entrar − o que ainda vai sair, pelo plano e pelo que já foi registrado.\nImportar o extrato só deixa os números mais certos.')}</h3>
+    <div class="q-conta">
+      <div><span>Na conta hoje</span><b>${brl(Q.naConta)}</b></div>
+      <div><span>Vai entrar</span><b class="q-in">${brl(Q.entra, true)}</b></div>
+      <div><span>Vai sair</span><b>${brl(-Q.sai, true)}</b></div>
+      <div class="tot"><span>Fim do mês</span><b class="${Q.fimMes < 0 ? 'neg' : 't-ok'}">${brl(Q.fimMes)}</b></div>
+    </div>
+    ${Q.falta ? `<div class="q-st erro"><span><b>Faltam ${brl(Q.falta.valor)}</b> a partir de ${Q.falta.data === stHoje() ? 'hoje' : dm(Q.falta.data)}</span>${info('Para fechar o plano: receber ou transferir esse valor até essa data, ou reprogramar/dispensar algum item (toque nele na lista).')}</div>`
+      : `<div class="q-st ok">✓ O plano do mês fecha</div>`}
+    ${pro ? `<div class="q-st alerta"><span>${brl(Q.proSemDinheiro)} do pró-labore sem dinheiro na PJ</span>${info('Não entram na conta acima: a PJ não tem esse valor nem com os clientes previstos no mês.')}</div>` : ''}
+  </section>`;
+}
+
+// Pró-labore: ponte PJ → PF (aparece nas duas)
+function cartaoPonte(Q) {
+  const p = Q.ponte;
+  if (!p || p.previsto <= 0.01) return '';
+  const pf = Q.entidade === 'PF', completo = p.falta <= 0.01;
+  const detalhe = p.naContaPJ != null && !completo;
+  return `<section class="card q-ponte">
+    <div class="row"><h3>Pró-labore${info(pf ? 'O que a empresa transfere para você no mês.' : 'O que vai da conta PJ para a sua conta pessoal no mês.')}</h3>
+      <span class="sm ${completo ? 't-ok' : 'muted'}">${completo ? '✓ completo' : `falta ${brl(p.falta)}`}</span></div>
+    <div class="pg-v"><b>${brl(p.transferido)}</b><span> ${pf ? 'recebido' : 'transferido'} de ${brl(p.previsto)}</span></div>
+    ${barra(p.transferido, p.previsto, completo ? 'ok' : 'andamento')}
+    ${detalhe ? `<div class="q-ponte-l">
+      <div class="kv"><span>Dá para transferir hoje${info('O que está na conta PJ hoje, depois das contas da PJ que vencem antes (ordem do plano).')}</span><b class="${p.podeHoje > 0.01 ? 't-ok' : ''}">${brl(p.podeHoje)}</b></div>
+      <div class="kv"><span>Com os clientes previstos${info('Na PJ hoje: ' + brl(p.naContaPJ) + '\nClientes previstos no mês: ' + brl(p.aReceberPJ) + '\nRepartido na ordem do plano (contas, pró-labore, caixinhas, semanada).')}</span><b>${brl(p.podeNoMes)}</b></div>
+      ${p.semDinheiro > 0.01 ? `<div class="kv neg"><span>Sem dinheiro na PJ</span><b>${brl(p.semDinheiro)}</b></div>` : ''}
+    </div>` : ''}
+    ${!completo && p.proximo && p.podeHoje > 0.01 ? `<button class="btn sec" onclick="formExecutar('${p.proximo.id}')">${pf ? 'Registrar o que recebi' : 'Transferir para o pessoal'}</button>` : ''}
+  </section>`;
+}
+
+// 3-4. Para onde vai o dinheiro: linha do tempo até o fim do mês
+const COB = { agora: ['✓', 'a conta já cobre'], depois: ['◷', 'cobre quando entrar o previsto'], falta: ['!', 'falta dinheiro'] };
+function cartaoCaminho(Q) {
+  const ev = Q.eventos || [];
+  const k = 'q-ev', todos = UI.aberto[k], lim = 6;
+  const vis = todos ? ev : ev.slice(0, lim);
+  return `<section class="card q-cam">
+    <h3>Para onde vai o dinheiro${info('Tudo o que ainda entra e sai neste mês, na ordem das datas (atrasado conta como hoje).\n✓ a conta já cobre\n◷ cobre quando entrar o previsto\n! falta dinheiro\nNada é marcado como feito sozinho: o botão registra o que aconteceu.')}</h3>
+    ${ev.length ? vis.map(linhaEvento).join('') : `<div class="ok-linha">✓ Nada mais para entrar ou sair em ${nomeMes(UI.mes).split(' ')[0].toLowerCase()}.</div>`}
+    ${ev.length > lim ? `<button class="lnk sm mais-l" onclick="UI.aberto['${k}']=!UI.aberto['${k}'];render()">${todos ? 'Mostrar menos' : `Ver o mês todo · mais ${ev.length - lim}`}</button>` : ''}
+  </section>`;
+}
+function linhaEvento(e) {
+  const entra = e.lado === 'entra', hoje = stHoje();
+  const atras = e.venc && e.venc < hoje ? `venceu ${dm(e.venc)}` : '';
+  let sub = '', botao = '', abrir = '';
+  const it = e.item;
+  if (entra) {
+    sub = e.tipo === 'cliente' ? [e.sub, atras].filter(Boolean).join(' · ') : e.tipo === 'prolabore' ? 'da empresa' : 'receber';
+    if (e.tipo === 'cliente') botao = `<button class="btn mini sec" onclick="formReceberCliente('${e.mov.id}')">Recebi</button>`;
+    else if (it) { botao = `<button class="btn mini sec" onclick="formExecutar('${it.id}')">Recebi</button>`; abrir = `formItem('${it.id}')`; }
+  } else {
+    const cx = e.caixinha;
+    sub = e.tipo === 'aporte' ? `guardar em ${cx ? cx.nome : 'caixinha'}`
+      : e.tipo === 'prolabore' ? 'para o pessoal'
+      : e.tipo === 'semanada' ? 'para gastar na semana'
+      : e.tipo === 'caixinha' ? 'contas do mês'
+      : e.tipo === 'fatura' ? 'sem reserva no cartão'
+      : e.tipo === 'previsto' ? 'previsto no Financeiro' : 'pagar';
+    if (e.coberto > 0.01) sub += ` · ${brl(e.coberto)} já na caixinha`;
+    if (atras) sub += ' · ' + atras;
+    if (e.tipo === 'semanada' || e.tipo === 'caixinha') { botao = `<button class="btn mini sec" onclick="abrirCaixinha('${cx.id}')">Ver</button>`; }
+    else if (it) { botao = `<button class="btn mini" onclick="formExecutar('${it.id}')">${ACAO_LABEL[it.tipo] === 'Pagar' && it.tipo === 'prolabore' ? 'Transferir' : ACAO_LABEL[it.tipo]}</button>`; abrir = `formItem('${it.id}')`; }
+  }
+  const c = !entra && COB[e.cobertura];
+  return `<div class="q-ev ${entra ? 'ev-in' : 'ev-out cob-' + e.cobertura}">
+    <div class="q-d">${e.data === hoje ? 'hoje' : dm(e.data)}</div>
+    <div class="q-m" ${abrir ? `onclick="${abrir}"` : ''}><div class="q-t">${c ? `<span class="q-ic" title="${c[1]}">${c[0]}</span>` : '<span class="q-ic">+</span>'}${esc(e.titulo)}</div><div class="q-s">${esc(sub)}</div></div>
+    <div class="q-r"><b>${brl(entra ? e.valor : -e.valor, true)}</b>${botao}</div>
+  </div>`;
+}
+
+// Mês que não é o atual: só o planejado (sem saldo de hoje)
+function cartaoPlanejado(Q) {
+  return `<section class="card q-fecha">
+    <h3>Planejado em ${nomeMes(UI.mes).split(' ')[0].toLowerCase()}${info('Mês que não é o atual: mostra só o plano.' + (Q.entidade === 'PJ' ? '\nEntra = recebimentos de clientes do mês.' : ''))}</h3>
+    <div class="q-conta">
+      <div><span>Entra</span><b class="q-in">${brl(Q.planejado.entra, true)}</b></div>
+      <div><span>Sai</span><b>${brl(-Q.planejado.sai, true)}</b></div>
+      <div class="tot"><span>Sobra</span><b class="${Q.planejado.sobra < 0 ? 'neg' : 't-ok'}">${brl(Q.planejado.sobra)}</b></div>
+    </div></section>`;
+}
+
+// Todos os itens do plano (editar, dispensar, reprogramar) — recolhido
+function cartaoItens(im, fechado, plano, aberto) {
+  const feitos = im.filter(i => !FX.PENDENTE(i._status)).length;
+  const k = 'q-itens', open = UI.aberto[k] != null ? UI.aberto[k] : !!aberto;
+  return `<details class="card q-itens" ${open ? 'open' : ''} ontoggle="UI.aberto['${k}']=this.open">
+    <summary><span>Itens do plano</span><span class="muted sm">${feitos} de ${im.length} feitos</span></summary>
+    <div class="lista">${im.map(i => linhaItem(i)).join('') || vazio('Sem itens.')}</div>
+    <div class="toolbar q-tb"><span class="muted sm">${fechado ? '🔒 Mês fechado' : 'Origem: ' + (plano.origem === 'modelo' ? 'modelo' : nomeMes(plano.origem || UI.mes))}</span>
+      <span>${fechado ? `<button class="lnk" onclick="acFechar(false)">Reabrir</button>`
+        : `<button class="lnk" onclick="formItem(null)">+ Item</button><button class="lnk" onclick="acFechar(true)">Fechar mês</button>`}
+        <button class="lnk" onclick="UI.modelo=true;render()">Modelo</button></span></div>
+  </details>`;
 }
 
 function telaModelo() {

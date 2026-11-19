@@ -338,30 +338,15 @@ const FX = (function () {
       .reduce((t, s) => t + Math.max(0, s.saldo), 0));
     const faturaACobrir = r2(Math.max(0, faturaAberta - reservaCartao));
 
-    const im = itensDoMes(itens, mes, movs, hoje, cfg).filter(i => i.entidade === entidade);
+    const todosMes = itensDoMes(itens, mes, movs, hoje, cfg);
+    const im = todosMes.filter(i => i.entidade === entidade);
     const pend = im.filter(i => PENDENTE(i._status));
-    // Aportes de semanada/contas não contam: o compromisso dessas caixinhas é
-    // o que ainda falta pagar/gastar, menos o que já está guardado nelas.
-    const compromissosItens = r2(pend.filter(i => consomeConta(i) && !aporteOpcional(i, contas)).reduce((t, i) => t + i._falta, 0));
-    const saldoCx = id => { const s = saldos.find(x => x.conta.id === id); return s ? Math.max(0, s.saldo) : 0; };
-    let compromissosCx = 0;
-    doEnt.filter(c => c.tipo === 'caixinha').forEach(c => {
-      const modo = modoCaixinha(c);
-      let falta = 0;
-      if (modo === 'contas') falta = pend.filter(i => i.tipo === 'pagamento' && i.caixinhaId === c.id).reduce((t, i) => t + i._falta, 0);
-      else if (modo === 'semana') {
-        const S = semanadas(entidade, ctx);
-        if (S && S.caixinha.id === c.id) falta = S.linhas.filter(l => !l.passada).reduce((t, l) => t + Math.max(0, l.orcamento - l.gasto), 0);
-      } else return;
-      compromissosCx += Math.max(0, falta - saldoCx(c.id));
-    });
-    const compromissosPlano = r2(compromissosItens + compromissosCx);
+    // O que ainda vai sair da conta no mês (ver `necessidades`): aporte de
+    // semanada/contas não soma com o pagamento; o guardado na caixinha desconta.
+    const nec = necessidades(entidade, ctx, todosMes);
+    const compromissosPlano = r2(nec.filter(e => e.tipo !== 'previsto').reduce((t, e) => t + e.valor, 0));
     // PJ: saídas "Previsto" do Financeiro no mês que não são item do plano
-    const ligadas = new Set(im.map(i => i.id));
-    const saidasPrevistas = entidade === 'PJ'
-      ? r2(movs.filter(m => m.tabela === 'saidas' && !m.realizado && mesDe(m.data) === mes &&
-          m.data >= hoje && !(m.planoItemId && ligadas.has(m.planoItemId))).reduce((t, m) => t + m.valor, 0))
-      : 0;
+    const saidasPrevistas = r2(nec.filter(e => e.tipo === 'previsto').reduce((t, e) => t + e.valor, 0));
     const compromissos = r2(compromissosPlano + saidasPrevistas);
     const disponivel = r2(saldoBancario - compromissos - faturaACobrir);
 
@@ -389,6 +374,201 @@ const FX = (function () {
       pendentes: pend, atrasados: pend.filter(i => /atrasado/.test(i._status)),
       itens: im, naoConferidas: saldos.filter(s => !s.conferido),
     };
+  }
+
+  // ── QUADRO DO MÊS (Plano) ───────────────────────────────
+  // Responde, olhando para a conta corrente:
+  //   1. quanto tenho hoje · 2. quanto já tem destino · 3. para onde vai
+  //   4. o que ainda entra e sai no mês · 5. o mês fecha?
+  // Só usa plano + registros: funciona antes e depois de importar o extrato
+  // (o extrato só deixa os registros mais completos).
+  const vivoItem = i => !['dispensado', 'reprogramado'].includes(i._status);
+  const somaV = arr => r2(arr.reduce((t, e) => t + e.valor, 0));
+
+  // O que ainda vai SAIR da conta no mês. Cada linha = { data, venc, valor,
+  // tipo, titulo, item?, caixinha?, coberto? }. Atrasado vale para hoje.
+  //   · item que tira dinheiro da conta (guardar, pagar direto, pró-labore na PJ)
+  //   · caixinha de contas: contas pendentes − o que já está guardado nela
+  //     (sem contas no plano: o planejado para ela − o já usado no mês)
+  //   · semanada: o que ainda dá para gastar nas semanas que faltam − saldo dela
+  //   · PJ: saídas "Previsto" do Financeiro que não são item do plano
+  // Aporte para semanada/contas nunca soma com o pagamento (desconto em dobro).
+  function necessidades(entidade, ctx, todos) {
+    const { contas, movs, mes, hoje, cfg } = ctx;
+    todos = todos || itensDoMes(ctx.itens, mes, movs, hoje, cfg);
+    const fim = ultimoDia(mes), ate = hoje < fim ? hoje : fim;
+    const quando = d => d < hoje ? hoje : d;
+    const out = [];
+    todos.filter(i => i.entidade === entidade && PENDENTE(i._status) && i._falta > EPS && consomeConta(i) && !aporteOpcional(i, contas))
+      .forEach(i => out.push({ data: quando(i._data), venc: i._data, valor: i._falta, tipo: i.tipo, item: i, titulo: nomeItem(i),
+        caixinha: i.caixinhaId ? contas.find(c => c.id === i.caixinhaId) || null : null }));
+    contas.filter(c => c.entidade === entidade && c.tipo === 'caixinha' && c.ativa !== false && modoCaixinha(c) !== 'guardar').forEach(c => {
+      let saldo = Math.max(0, saldoConta(c, movs, ate, cfg).saldo);
+      const usar = (data, valor, base) => {
+        const cob = Math.min(saldo, Math.max(0, valor));
+        saldo = r2(saldo - cob);
+        const v = r2(valor - cob);
+        if (v > EPS) out.push(Object.assign({ data: quando(data), venc: data, valor: v, caixinha: c, coberto: r2(cob) }, base));
+      };
+      if (modoCaixinha(c) === 'semana') {
+        const S = semanadas(entidade, ctx);
+        if (!S || S.caixinha.id !== c.id) return;
+        S.linhas.filter(l => !l.passada).forEach(l => usar(l.atual ? hoje : l.semana.ini, Math.max(0, l.orcamento - l.gasto),
+          { tipo: 'semanada', titulo: 'Semanada · semana ' + l.semana.n, semana: l }));
+        return;
+      }
+      const daCx = todos.filter(i => i.caixinhaId === c.id && vivoItem(i));
+      const pags = daCx.filter(i => i.tipo === 'pagamento');
+      if (pags.length) {
+        pags.filter(i => PENDENTE(i._status) && i._falta > EPS).forEach(i => usar(i._data, i._falta, { tipo: 'pagamento', item: i, titulo: nomeItem(i) }));
+        return;
+      }
+      const aps = daCx.filter(i => i.tipo === 'aporte');
+      const plan = aps.reduce((t, i) => t + num(i.valor), 0);
+      if (plan <= EPS) return;
+      const usado = movs.filter(m => mesDe(m.competencia || m.data) === mes && m.realizado && m.classe === 'despesa' && m.caixinhaId === c.id)
+        .reduce((t, m) => t + m.valor, 0);
+      const ref = aps.find(i => PENDENTE(i._status)) || aps[0];
+      usar(ref._data, r2(plan - usado), { tipo: 'caixinha', item: ref, titulo: c.nome });
+    });
+    if (entidade === 'PJ') {
+      const ligadas = new Set(todos.map(i => i.id));
+      movs.filter(m => m.tabela === 'saidas' && !m.realizado && mesDe(m.data) === mes && m.data >= hoje && !(m.planoItemId && ligadas.has(m.planoItemId)))
+        .forEach(m => out.push({ data: m.data, venc: m.data, valor: m.valor, tipo: 'previsto', mov: m, titulo: m.descricao || m.categoria || 'Saída prevista' }));
+    }
+    return out;
+  }
+
+  // O que ainda vai ENTRAR na conta no mês.
+  //   PF: pró-labore e receitas do plano que faltam receber
+  //   PJ: recebimentos de clientes "Previsto" (até 1 mês de atraso: vale hoje)
+  function entradasPrevistas(entidade, ctx, todos) {
+    const { movs, mes, hoje, cfg } = ctx;
+    todos = todos || itensDoMes(ctx.itens, mes, movs, hoje, cfg);
+    const quando = d => d < hoje ? hoje : d;
+    if (entidade === 'PF') {
+      return todos.filter(i => vivoItem(i) && (i.tipo === 'prolabore' || (i.tipo === 'receita' && i.entidade === 'PF'))).map(i => {
+        const rec = i.tipo === 'prolabore' ? recebidoPF(i, movs) : i._realizado;
+        return { data: quando(i._data), venc: i._data, valor: r2(Math.max(0, num(i.valor) - rec)), tipo: i.tipo, item: i, titulo: nomeItem(i) };
+      }).filter(e => e.valor > EPS);
+    }
+    const ini = addDias(`${mes}-01`, -31), fim = ultimoDia(mes);
+    return movs.filter(m => m.tabela === 'entries' && !m.realizado && m.data && m.data >= ini && m.data <= fim && m.valor > EPS)
+      .map(m => ({ data: quando(m.data), venc: m.data, valor: m.valor, tipo: 'cliente', mov: m, titulo: m.cliente || 'Cliente', sub: m.tipoEntrada || '' }));
+  }
+
+  // Linha do tempo do mês: saldo depois de cada entrada/saída, na ordem das
+  // datas (no mesmo dia, entra antes de sair). Cada saída fica:
+  //   agora  → o dinheiro que já está na conta cobre
+  //   depois → cobre quando entrar o que está previsto até essa data
+  //   falta  → nem com o previsto até essa data
+  function linhaDoTempo(inicio, entra, sai) {
+    const ev = entra.map(e => Object.assign({}, e, { lado: 'entra' })).concat(sai.map(e => Object.assign({}, e, { lado: 'sai' })))
+      .sort((a, b) => a.data.localeCompare(b.data) || (a.lado === b.lado ? 0 : a.lado === 'entra' ? -1 : 1) || String(a.venc).localeCompare(String(b.venc))
+        || prioridade(a.tipo) - prioridade(b.tipo));
+    let s = r2(inicio), caixa = r2(inicio), min = r2(inicio), primeiraFalta = null;
+    ev.forEach(e => {
+      s = r2(s + (e.lado === 'entra' ? e.valor : -e.valor));
+      e.saldoApos = s;
+      if (e.lado === 'sai') {
+        caixa = r2(caixa - e.valor);
+        e.cobertura = caixa >= -EPS ? 'agora' : s >= -EPS ? 'depois' : 'falta';
+        if (e.cobertura === 'falta' && !primeiraFalta) primeiraFalta = e.data;
+      }
+      if (s < min) min = s;
+    });
+    return { eventos: ev, inicio: r2(inicio), fim: s, minimo: min, primeiraFalta,
+      entra: somaV(ev.filter(e => e.lado === 'entra')), sai: somaV(ev.filter(e => e.lado === 'sai')) };
+  }
+
+  // Pró-labore: a ponte PJ → PF. Quanto já foi, quanto falta e quanto a PJ
+  // consegue pagar. O dinheiro da PJ é repartido na ordem do plano (data de
+  // vencimento; no mesmo dia: contas > pró-labore > caixinhas > semanada):
+  //   podeHoje  → só com o que está na conta PJ hoje
+  //   podeNoMes → contando também os clientes previstos no mês
+  // A PF só conta como "vai entrar" o pró-labore que a PJ consegue pagar.
+  const PRIORIDADE = { pagamento: 0, previsto: 0, fatura: 0, prolabore: 1, caixinha: 2, aporte: 2, semanada: 3 };
+  const prioridade = t => PRIORIDADE[t] != null ? PRIORIDADE[t] : 2;
+  function ponteProlabore(ctx, todos) {
+    const { contas, mes, hoje } = ctx;
+    const pro = todos.filter(i => i.tipo === 'prolabore' && vivoItem(i));
+    if (!pro.length) return null;
+    const previsto = r2(pro.reduce((t, i) => t + num(i.valor), 0));
+    const transferido = r2(pro.reduce((t, i) => t + Math.min(num(i.valor), i._realizado), 0));
+    const falta = r2(Math.max(0, previsto - transferido));
+    const out = { itens: pro, previsto, transferido, falta, proximo: pro.find(i => PENDENTE(i._status)) || null };
+    if (!contas.some(c => c.entidade === 'PJ' && c.tipo === 'corrente')) return out;
+    const resPJ = resumo('PJ', ctx);
+    const entraPJ = mes === mesDe(hoje) ? entradasPrevistas('PJ', ctx, todos) : [];
+    const saiPJ = necessidades('PJ', ctx, todos);
+    if (resPJ.faturaACobrir > EPS) saiPJ.push({ data: hoje, venc: hoje, valor: resPJ.faturaACobrir, tipo: 'fatura', titulo: 'Fatura do cartão' });
+    const ordem = saiPJ.slice().sort((a, b) => String(a.venc).localeCompare(String(b.venc)) || prioridade(a.tipo) - prioridade(b.tipo));
+    const reparte = total => {
+      const por = {};
+      let r = Math.max(0, total);
+      ordem.forEach(e => { const v = Math.min(r, e.valor); r = r2(r - v); if (e.tipo === 'prolabore') por[e.item.id] = r2((por[e.item.id] || 0) + v); });
+      return por;
+    };
+    const somaObj = o => r2(Object.keys(o).reduce((t, k) => t + o[k], 0));
+    const aReceberPJ = somaV(entraPJ);
+    const porItemHoje = reparte(resPJ.saldoBancario), porItemMes = reparte(resPJ.saldoBancario + aReceberPJ);
+    return Object.assign(out, {
+      naContaPJ: resPJ.saldoBancario, aReceberPJ, porItemHoje, porItemMes,
+      podeHoje: somaObj(porItemHoje), podeNoMes: somaObj(porItemMes),
+      semDinheiro: r2(Math.max(0, falta - somaObj(porItemMes))),
+    });
+  }
+
+  function quadroMes(entidade, ctx, pre) {
+    pre = pre || {};
+    const { contas, movs, mes, hoje, cfg } = ctx;
+    const todos = pre.itens || itensDoMes(ctx.itens, mes, movs, hoje, cfg);
+    const res = pre.resumo || resumo(entidade, ctx);
+    const atual = mes === mesDe(hoje);
+    // contas de dinheiro (corrente; espécie só se tiver saldo)
+    const correntes = res.saldos.filter(s => s.conta.tipo === 'corrente' || (s.conta.tipo === 'especie' && Math.abs(s.saldo) > EPS));
+    const principal = correntes.find(s => s.conta.tipo === 'corrente' && s.conta.padrao) || correntes.find(s => s.conta.tipo === 'corrente') || null;
+    const conferido = correntes.length > 0 && correntes.every(s => s.conferido);
+    const datas = correntes.filter(s => s.conferido).map(s => s.conta.dataSaldoInicial).sort();
+    const cxs = res.saldos.filter(s => s.conta.tipo === 'caixinha');
+    const out = {
+      entidade, mes, atual, naConta: res.saldoBancario, principal: principal && principal.conta, correntes,
+      conferido, conferidoEm: datas.length ? datas[0] : null,
+      caixinhas: res.reservado, caixinhasNegativas: cxs.filter(s => s.saldo < -EPS).map(s => s.conta),
+      faturaACobrir: res.faturaACobrir,
+    };
+    // Planejado do mês inteiro (para meses que não são o atual)
+    const vivos = todos.filter(vivoItem);
+    const entraPlano = entidade === 'PF'
+      ? vivos.filter(i => i.tipo === 'prolabore' || (i.tipo === 'receita' && i.entidade === 'PF'))
+      : [];
+    out.planejado = {
+      entra: entidade === 'PF' ? r2(entraPlano.reduce((t, i) => t + num(i.valor), 0)) : res.previstoEntrar,
+      sai: r2(vivos.filter(i => i.entidade === entidade && consomeConta(i) && (entidade === 'PJ' || i.tipo !== 'prolabore')).reduce((t, i) => t + num(i.valor), 0)),
+    };
+    out.planejado.sobra = r2(out.planejado.entra - out.planejado.sai);
+    out.ponte = ponteProlabore(ctx, todos);
+    if (!atual) return out;
+
+    const sai = necessidades(entidade, ctx, todos);
+    if (res.faturaACobrir > EPS) sai.push({ data: hoje, venc: hoje, valor: res.faturaACobrir, tipo: 'fatura', titulo: 'Fatura do cartão' });
+    const entra = entradasPrevistas(entidade, ctx, todos);
+    // PF: pró-labore que a PJ não tem como pagar no mês não conta como entrada
+    const p = out.ponte;
+    if (entidade === 'PF' && p && p.porItemMes) entra.forEach(e => {
+      if (e.tipo !== 'prolabore') return;
+      const cob = Math.min(e.valor, p.porItemMes[e.item.id] || 0);
+      e.semDinheiro = r2(e.valor - cob);
+      e.valor = r2(cob);
+    });
+    const L = linhaDoTempo(res.saldoBancario, entra.filter(e => e.valor > EPS), sai);
+    out.proSemDinheiro = entidade === 'PF' ? r2(entra.reduce((t, e) => t + (e.semDinheiro || 0), 0)) : 0;
+    const livre = r2(Math.max(0, L.minimo));
+    return Object.assign(out, {
+      eventos: L.eventos, entra: L.entra, sai: L.sai, fimMes: L.fim,
+      livre, comprometido: r2(Math.max(0, res.saldoBancario - livre)),
+      falta: L.minimo < -EPS ? { valor: r2(-L.minimo), data: L.primeiraFalta } : null,
+    });
   }
 
   // ── CAIXINHAS ───────────────────────────────────────────
@@ -671,6 +851,9 @@ const FX = (function () {
 
     // 5. Próximas ações
     out.acoes = proximasAcoes(entidade, ctx, { itens: todos, cxs, sem: out.semana });
+
+    // 6. Quadro do mês: hoje → comprometido → para onde vai → fecha o mês?
+    out.quadro = quadroMes(entidade, ctx, { itens: todos, resumo: res });
     return out;
   }
 
@@ -1045,7 +1228,7 @@ const FX = (function () {
   return {
     EPS, r2, num, parseValor, diasNoMes, dataDoDia, mesDe, diaDe, addMes, addDias, difDias, ultimoDia,
     semanas, semanaDe, contaPadrao, caixinhaPorFinalidade, normalizar, efeito, saldoConta,
-    realizadoDoItem, statusItem, PENDENTE, itensDoMes, recebidoPF, consomeConta, distribuicoesPF, modoCaixinha, aporteOpcional,
+    realizadoDoItem, statusItem, PENDENTE, itensDoMes, recebidoPF, consomeConta, distribuicoesPF, modoCaixinha, aporteOpcional, necessidades, entradasPrevistas, linhaDoTempo, ponteProlabore, quadroMes,
     resumo, caixinha, composicao, semanadas, atendimentosPorData, receitaMaquiagem, divida,
     semanaFoco, metasCaixinhas, painelMes, proximasAcoes, hashRef, cicloAno, caixinhaAnual, anoCaixinha,
     casarExtrato, refExtrato, analiseMes, historico, copiarItens, checarPlano,
