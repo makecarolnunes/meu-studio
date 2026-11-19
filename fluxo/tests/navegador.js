@@ -125,6 +125,14 @@ const titulo = t => console.log('\n■ ' + t);
     check('IA pré-preenche a linha do extrato (marca "pela IA")', await b.js(`window.__ia === 1 && UI.extrato.propostas.some(p => p.auto === 'ia') && !!document.querySelector('.ia-st.ia-ok') && document.body.innerText.includes('pela IA')`),
       await b.js(`JSON.stringify({ chamadas: window.__ia, ia: UI.extrato && UI.extrato.ia, auto: UI.extrato && UI.extrato.propostas.map(p => p.auto + '/' + p.acao) })`));
     await b.foto(path.join(SAIDA, 'celular-extrato-ia.png'));
+    // categoria do gasto escolhida → caixinha preenchida sozinha
+    check('escolher a categoria preenche a caixinha do gasto', await b.js(`(() => { const cfg = ST.cfg || FX_MODELO.config;
+      const cat = categorias('PF').map(c => c.nome).find(n => FX.caixinhaDaCategoria(ST.contas, 'PF', n, cfg));
+      const cx = FX.caixinhaDaCategoria(ST.contas, 'PF', cat, cfg);
+      const sel = document.getElementById('ex-cx-0'), selCat = sel && sel.previousElementSibling;
+      if (!sel || !selCat) return false;
+      selCat.value = cat; selCat.dispatchEvent(new Event('change'));
+      return sel.value === cx.id && UI.extrato.propostas[0].caixinhaId === cx.id; })()`));
     await b.js(`UI.extrato = null; localStorage.removeItem('mk_claude_key'); go('inicio')`);
     // sub-seções
     await tocar('#tabs button[data-tab="movs"]', true);

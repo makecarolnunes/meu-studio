@@ -451,6 +451,17 @@ function exBuscaCliente(k, txt) {
   sel.innerHTML = opcoesCliente(p);
   if (sel.value && sel.value !== String(p.entryId)) p.entryId = sel.value;
 }
+// Categoria do gasto escolhida → já preenche a caixinha de onde ele sai
+// (Ajustes › Categorias). Categoria "direto da conta" → Sem caixinha.
+function exCategoria(k, v) {
+  const p = UI.extrato.propostas[k];
+  p.categoria = v;
+  if (p.decisao !== 'gasto' || !v) return;
+  const cx = FX.caixinhaDaCategoria(ST.contas, stConta(UI.extrato.contaId).entidade, v, ST.cfg || FX_MODELO.config);
+  p.caixinhaId = cx ? cx.id : '';
+  const sel = document.getElementById('ex-cx-' + k);
+  if (sel) sel.value = p.caixinhaId;
+}
 function exDecisao(k, v) {
   const p = UI.extrato.propostas[k], ent = stConta(UI.extrato.contaId).entidade;
   const de = v === 'pessoal' ? 'PF' : ent;
@@ -463,6 +474,8 @@ function exDecisao(k, v) {
   }
   if (v !== 'prolabore' && p.planoItemId && (stItem(p.planoItemId) || {}).tipo === 'prolabore') p.planoItemId = '';
   if (v === 'cliente' && !p.entryId && (p.candidatos || []).length) p.entryId = p.candidatos[0].id;
+  if (v === 'gasto' && p.categoria && !p.caixinhaId)
+    p.caixinhaId = (FX.caixinhaDaCategoria(ST.contas, de, p.categoria, ST.cfg || FX_MODELO.config) || {}).id || '';
   p.decisao = v; render();
 }
 function acAplicarExtrato() {

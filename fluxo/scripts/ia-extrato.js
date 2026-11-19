@@ -122,7 +122,8 @@ function iaAplicar(c, s) {
     const it = c.itens.find(x => x.id === s.item);
     if (it) novo.planoItemId = it.id;
     const itc = it && stItem(it.id);
-    novo.caixinhaId = conta && conta.tipo === 'caixinha' ? conta.id : (itc && itc.caixinhaId) || '';
+    const cxCat = novo.categoria ? FX.caixinhaDaCategoria(ST.contas, c.ent, novo.categoria, ST.cfg || FX_MODELO.config) : null;
+    novo.caixinhaId = conta && conta.tipo === 'caixinha' ? conta.id : (itc && itc.caixinhaId) || (cxCat && cxCat.id) || '';
     if (!novo.categoria && !it) return false;                          // nada útil para sugerir
   } else if (s.decisao === 'pessoal') {
     if (!temCatPF(s.categoria)) return false;

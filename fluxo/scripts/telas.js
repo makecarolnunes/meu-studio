@@ -671,10 +671,10 @@ function telaExtrato() {
         <div class="muted sm">PJ → sua conta pessoal${info('Não é despesa da empresa. Pagamentos soltos vão somando na parcela até completar.')}</div>` : ''}
       ${p.decisao === 'pessoal' ? `<select class="fi sm" onchange="UI.extrato.propostas[${k}].categoria=this.value"><option value="">Categoria pessoal…</option>${optCategorias('PF', p.categoria)}</select>
         <div class="muted sm">PJ → pessoal${info('Sai da conta PJ, não conta como despesa da empresa e entra no seu pessoal.')}</div>` : ''}
-      ${p.decisao === 'gasto' || p.decisao === 'receita' ? `<select class="fi sm" onchange="UI.extrato.propostas[${k}].categoria=this.value">
+      ${p.decisao === 'gasto' || p.decisao === 'receita' ? `<select class="fi sm" onchange="exCategoria(${k}, this.value)">
         ${p.decisao === 'receita' && conta.entidade === 'PF' ? (ST.cfg || FX_MODELO.config).categorias.receitasPF.map(c => `<option ${p.categoria === c ? 'selected' : ''}>${c}</option>`).join('')
           : p.decisao === 'receita' ? '<option>Extrato</option>' : `<option value="">Categoria…</option>${optCategorias(conta.entidade, p.categoria)}`}</select>` : ''}
-      ${p.decisao === 'gasto' ? `<select class="fi sm" onchange="UI.extrato.propostas[${k}].caixinhaId=this.value">${optContas(conta.entidade, ['caixinha'], p.caixinhaId, 'Sem caixinha')}</select>` : ''}
+      ${p.decisao === 'gasto' ? `<select class="fi sm" id="ex-cx-${k}" onchange="UI.extrato.propostas[${k}].caixinhaId=this.value">${optContas(conta.entidade, ['caixinha'], p.caixinhaId, 'Sem caixinha')}</select>` : ''}
       ${p.decisao === 'transferencia' ? `<select class="fi sm" onchange="UI.extrato.propostas[${k}].destinoId=this.value"><option value="">${p.linha.valor > 0 ? 'Veio de…' : 'Foi para…'}</option>${optContas(conta.entidade, ['caixinha', 'cartao', 'corrente', 'especie'], p.destinoId).replace(`value="${conta.id}"`, `value="${conta.id}" disabled`)}${!ST.contas.some(c => c.entidade === conta.entidade && c.finalidade === 'reserva') ? `<option value="${AC.RESERVA_NOVA}" ${p.destinoId === AC.RESERVA_NOVA ? 'selected' : ''}>Reserva Inter (não distribuída) — será criada</option>` : ''}</select>
         ${p.interno ? `<div class="muted sm">movimento interno${info('Entre a conta e as caixinhas do banco: não é gasto nem receita (só mantém o saldo da conta igual ao do banco).')}</div>` : ''}` : ''}`}
     </div>`;
