@@ -148,6 +148,20 @@ const titulo = t => console.log('\n■ ' + t);
       }
     }
     await b.foto(path.join(SAIDA, 'celular-plano.png'));
+    // Editar gasto: escolher Sazonais traz as categorias dela primeiro; escolher a categoria ajusta a caixinha
+    check('editar gasto: caixinha ↔ categoria', await b.js(`(() => { UI.ent = 'PF';
+      const m = stMovs().find(x => x.entidade === 'PF' && x.natureza === 'saida' && x.classe === 'despesa' && !x.pagoPelaPJ);
+      if (!m) return 'sem gasto PF';
+      formMov(m.key);
+      const cx = document.getElementById('mv-cx'), cat = document.getElementById('mv-cat');
+      const saz = ST.contas.find(c => c.entidade === 'PF' && c.finalidade === 'sazonais'), sem = ST.contas.find(c => c.entidade === 'PF' && c.finalidade === 'semanada');
+      cx.value = saz.id; cx.dispatchEvent(new Event('change'));
+      const g = cat.querySelector('optgroup');
+      const ok1 = g && g.label === saz.nome && [...g.querySelectorAll('option')].some(o => o.value === 'Roupas');
+      cat.value = 'Mercado'; cat.dispatchEvent(new Event('change'));
+      const ok2 = cx.value === sem.id;
+      fecharModal();
+      return ok1 && ok2 ? true : JSON.stringify({ ok1, ok2, g: g && g.label }); })()`));
     await b.js(`go('inicio')`);
     // sub-seções
     await tocar('#tabs button[data-tab="movs"]', true);

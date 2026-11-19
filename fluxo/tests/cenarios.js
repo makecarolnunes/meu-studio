@@ -622,6 +622,18 @@ const ctxM = (mes, hoje) => run(`stCtx(${JSON.stringify(mes)}, ${JSON.stringify(
   await AC.registrarGasto({ entidade: 'PJ', pessoal: true, valor: '25', data: '2027-04-13', contaId: pjC.id, categoria: 'Mercado', descricao: 'Mercado pago pela PJ' });
   igual('mercado pago pela PJ entra no gasto da semanada PF', FX.r2(FX.semanadas('PF', cA('2027-04-13')).gasto - semAntes), 25);
 
+  titulo('Editar gasto: categoria no registro; resgate nunca deixa a caixinha negativa');
+  {
+    const cxSaz = ST.contas.find(c => c.entidade === 'PF' && c.finalidade === 'sazonais');
+    const sCx = () => FX.saldoConta(cxSaz, run('stMovs()'), '2027-12-31', ST.cfg).saldo;
+    const s0 = sCx(), nT = DBT.fin_transferencias ? DBT.fin_transferencias.length : 0;
+    const rg = await AC.registrarGasto({ entidade: 'PF', valor: String(FX.r2(Math.max(0, s0) + 40)), data: '2027-04-13', categoria: 'Roupas', descricao: 'Loja', resgatar: true });
+    igual('resgate só do que a caixinha tem (sem saldo negativo)', [rg.caixinhaId === cxSaz.id, FX.r2(sCx()) >= -0.005], [true, true]);
+    await AC.classificar('saidas_pessoal', rg.id, { categoria: 'Cosméticos', planoItemId: '-' });
+    const mR = run('stMovs()').find(m => m.key === 'saidas_pessoal:' + rg.id);
+    igual('categoria trocada no próprio registro, caixinha segue a categoria', [mR.categoria, nomeC(mR.caixinhaId), mR.planoItemId], ['Cosméticos', cxSaz.nome, null]);
+  }
+
   titulo('Plano: quanto tenho, comprometido, para onde vai e se o mês fecha');
   {
     // linha do tempo pura

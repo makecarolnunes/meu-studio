@@ -333,8 +333,13 @@ const AC = (function () {
       planoItemId: d.planoItemId || null,
       dividaId, conciliado: !!d.conciliado, extratoRef: d.extratoRef || null });
     let resgate = null;
-    if (caixinhaId && caixinhaId !== conta.id && conta.tipo !== 'cartao' && d.resgatar !== false) {
-      resgate = await transferir({ valor, data, origemId: caixinhaId, destinoId: conta.id, tipo: 'resgate',
+    // Resgate só do que a caixinha tem (nunca deixa a caixinha negativa:
+    // caixinha vazia = o gasto saiu direto da conta)
+    const cxR = caixinhaId && stConta(caixinhaId);
+    const temNaCx = cxR ? r2(Math.max(0, FX.saldoConta(cxR, stMovs(), data > stHoje() ? data : stHoje(), ST.cfg || FX_MODELO.config).saldo)) : 0;
+    const valorResg = r2(Math.min(valor, temNaCx));
+    if (caixinhaId && caixinhaId !== conta.id && conta.tipo !== 'cartao' && d.resgatar !== false && valorResg > FX.EPS) {
+      resgate = await transferir({ valor: valorResg, data, origemId: caixinhaId, destinoId: conta.id, tipo: 'resgate',
         descricao: `Resgate p/ ${desc}`, vinculoId: `${tabela}:${regId}`, origem: 'sistema' });
     }
     return { tabela, id: regId, resgate, caixinhaId, planoItemId };
@@ -832,7 +837,21 @@ const AC = (function () {
   }
 
   // Ligar um lançamento existente a conta/caixinha/item/dívida
-  async function classificar(tabela, id, campos) { return stSalvarMeta(tabela, id, campos); }
+  // Ligações (fin_mov_meta) + categoria, que fica no próprio registro:
+  // PF → saidas_pessoal.categoria · PJ → saidas.tipo (gasto pessoal da PJ fica 'Pessoal')
+  async function classificar(tabela, id, campos) {
+    const c = Object.assign({}, campos);
+    const cat = c.categoria !== undefined ? String(c.categoria || '').trim() : '';
+    delete c.categoria;
+    if (cat && tabela === 'saidas_pessoal') {
+      const r = ST.saidasPF.find(x => String(x.id) === String(id));
+      if (r && r.categoria !== cat) await stSalvarPF('saida', Object.assign({}, r, { categoria: cat }));
+    } else if (cat && tabela === 'saidas') {
+      const r = ST.saidas.find(x => String(x.id) === String(id));
+      if (r && r.tipo !== cat && String(r.natureza || '').toUpperCase() !== 'PESSOAL') await stAtualizarSaidaPJ(id, { tipo: cat });
+    }
+    return stSalvarMeta(tabela, id, c);
+  }
 
   async function excluirTransferencia(id) {
     const t = ST.transferencias.find(x => x.id === id);

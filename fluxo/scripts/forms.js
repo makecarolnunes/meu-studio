@@ -263,7 +263,12 @@ function gAtualiza() {
   } else if (info) info.innerHTML = '';
   if (cx === '-') cx = '';
   const w = document.getElementById('g-resg-wrap');
-  if (w) w.style.display = cx && conta && cx !== conta.id && (conta.tipo === 'corrente' || conta.tipo === 'especie') ? '' : 'none';
+  // só oferece "resgate" se a caixinha tem dinheiro (vazia = sai direto da conta)
+  const cxC = cx && stConta(cx);
+  const temSaldo = cxC && FX.saldoConta(cxC, stMovs(), stHoje(), ST.cfg || FX_MODELO.config).saldo > 0.01;
+  if (w) w.style.display = cx && temSaldo && conta && cx !== conta.id && (conta.tipo === 'corrente' || conta.tipo === 'especie') ? '' : 'none';
+  const ck = document.getElementById('g-resgatar');
+  if (ck && !temSaldo) ck.checked = false;
 }
 function acGasto(ent) {
   const itemId = $v('g-item');
@@ -363,7 +368,9 @@ function formMov(key) {
   }
   if (m.natureza === 'saida' && m.classe === 'despesa') {
     const metaCx = (ST.meta[m.key] || {}).caixinhaId;
-    h += campo('Reserva (caixinha)' + (m.caixinhaAuto ? ' ' + autoTag() : ''), `<select class="fi" id="mv-cx"><option value="" ${!metaCx ? 'selected' : ''}>Automática${m.caixinhaAuto ? ' (' + esc(nomeConta(m.caixinhaId)) + ')' : ''}</option><option value="-" ${metaCx === '-' ? 'selected' : ''}>Nenhuma (direto da conta)</option>${optContas(ent, ['caixinha'], metaCx && metaCx !== '-' ? metaCx : '')}</select>`);
+    // categoria: escolher já ajusta a caixinha; escolher a caixinha traz as categorias dela primeiro
+    h += campo('Categoria', `<select class="fi" id="mv-cat" onchange="mvCategoria('${ent}')">${optCategoriasDaCaixinha(ent, m.categoria, m.caixinhaId)}</select>`);
+    h += campo('Reserva (caixinha)' + (m.caixinhaAuto ? ' ' + autoTag() : ''), `<select class="fi" id="mv-cx" onchange="mvCaixinha('${ent}')"><option value="" ${!metaCx ? 'selected' : ''}>Automática${m.caixinhaAuto ? ' (' + esc(nomeConta(m.caixinhaId)) + ')' : ''}</option><option value="-" ${metaCx === '-' ? 'selected' : ''}>Nenhuma (direto da conta)</option>${optContas(ent, ['caixinha'], metaCx && metaCx !== '-' ? metaCx : '')}</select>`);
     h += campo('Dívida', `<select class="fi" id="mv-div"><option value="">—</option>${ST.dividas.filter(d => d.entidade === ent).map(d => `<option value="${d.id}" ${d.id === m.dividaId ? 'selected' : ''}>${esc(d.nome)}</option>`).join('')}</select>`);
   }
   if (pend.length || m.planoItemId) {
@@ -378,9 +385,43 @@ function formMov(key) {
     (m.tabela === 'entries' || m.tabela === 'saidas') ? `<div class="muted sm center">Valor, data e exclusão: editar no <a href="../financeiro/">Financeiro</a>.</div>` : '');
   abrirModal(h);
 }
+// Categorias da caixinha escolhida primeiro (ex.: Sazonais → Roupas, Cosméticos…), depois as outras
+function optCategoriasDaCaixinha(ent, sel, cxId) {
+  const cfg = ST.cfg || FX_MODELO.config;
+  const cx = cxId && cxId !== '-' ? stConta(cxId) : null;
+  const todas = categorias(ent);
+  const daCx = cx ? todas.filter(c => (FX.caixinhaDaCategoria(ST.contas, ent, c.nome, cfg) || {}).id === cx.id).map(c => c.nome) : [];
+  if (!daCx.length) return optCategorias(ent, sel);
+  const op = n => `<option ${n === sel ? 'selected' : ''}>${esc(n)}</option>`;
+  const extra = sel && !todas.some(c => c.nome === sel) ? `<option selected>${esc(sel)}</option>` : '';
+  const outras = {};
+  todas.filter(c => !daCx.includes(c.nome)).forEach(c => (outras[c.grupo || 'Outras'] = outras[c.grupo || 'Outras'] || []).push(c.nome));
+  return extra + `<optgroup label="${esc(cx.nome)}">${daCx.map(op).join('')}</optgroup>` +
+    Object.keys(outras).map(g => `<optgroup label="${esc(g)}">${outras[g].map(op).join('')}</optgroup>`).join('');
+}
+function mvCaixinhaEscolhida() {
+  const v = $v('mv-cx');
+  if (v && v !== '-') return v;
+  if (v === '-') return '';
+  const cat = $v('mv-cat'), ent = UI._mvEnt;
+  return (FX.caixinhaDaCategoria(ST.contas, ent, cat, ST.cfg || FX_MODELO.config) || {}).id || '';
+}
+function mvCategoria(ent) {
+  const cx = FX.caixinhaDaCategoria(ST.contas, ent, $v('mv-cat'), ST.cfg || FX_MODELO.config);
+  const sel = document.getElementById('mv-cx');
+  if (sel) sel.value = cx ? cx.id : '-';
+}
+function mvCaixinha(ent) {
+  const sel = document.getElementById('mv-cat');
+  if (!sel) return;
+  UI._mvEnt = ent;
+  const atual = sel.value;
+  sel.innerHTML = optCategoriasDaCaixinha(ent, atual, mvCaixinhaEscolhida());
+}
 function acClassificar(key) {
   const m = stMovs().find(x => x.key === key);
   const campos = { conciliado: $v('mv-conc') === true };
+  if (document.getElementById('mv-cat') && $v('mv-cat') !== m.categoria) campos.categoria = $v('mv-cat');
   if (document.getElementById('mv-conta')) campos.contaId = $v('mv-conta') || null;
   if (document.getElementById('mv-cx')) campos.caixinhaId = $v('mv-cx') || null;
   if (document.getElementById('mv-div')) campos.dividaId = $v('mv-div') || null;
@@ -471,6 +512,9 @@ function exCategoria(k, v) {
   if (p.decisao !== 'gasto' || !v) return;
   const cx = FX.caixinhaDaCategoria(ST.contas, stConta(UI.extrato.contaId).entidade, v, ST.cfg || FX_MODELO.config);
   p.caixinhaId = cx ? cx.id : '';
+  // conta do plano de outro assunto (ex.: IA ligou à Faxineira e a categoria virou Roupas) → desliga
+  const it = p.planoItemId && stItem(p.planoItemId);
+  if (it && it.categoria && FX.semAcento(it.categoria) !== FX.semAcento(v)) { p.planoItemId = ''; return render(); }
   const sel = document.getElementById('ex-cx-' + k);
   if (sel) sel.value = p.caixinhaId;
 }

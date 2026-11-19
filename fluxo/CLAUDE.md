@@ -101,3 +101,5 @@ Hub (`mk_session`) libera o módulo e a PJ. **PF:** usuário com `nivel = admin`
 `stMovs()` não inclui nada da PF.
 
 Modal não fecha ao tocar fora (só Cancelar/Fechar ou Esc) — toda folha precisa ter botão de fechar.
+35. **Editar gasto** (`formMov`): campo Categoria grava no próprio registro (`AC.classificar` → `saidas_pessoal.categoria` / `saidas.tipo`; gasto pessoal da PJ fica 'Pessoal'). Escolher a categoria ajusta a caixinha; escolher a caixinha traz as categorias dela primeiro (`optCategoriasDaCaixinha`). Na revisão do extrato, a conta do plano ligada aparece ("paga a conta X · não é essa"), e trocar a categoria desliga a conta de outro assunto.
+36. **Resgate nunca deixa caixinha negativa** (`registrarGasto`): resgate automático = mínimo entre o gasto e o saldo da caixinha; caixinha vazia → o gasto saiu direto da conta. O "+ Gasto" só oferece o resgate se a caixinha tem saldo.
