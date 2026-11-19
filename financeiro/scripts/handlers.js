@@ -74,8 +74,7 @@ function chm(d) { selMonth+=d; if(selMonth<0){selMonth=11;selYear--;}if(selMonth
 function setF(f) { listFilter=f; render(); }
 function setEquipeFilter(f) { listEquipeFilter=f; render(); }
 function setSaidaNatureza(n) { saidasNaturezaFilter = n; saidasTipoFilter = 'todas'; saidasVerTodosMeses = false; render(); }
-function pickSaidaNatureza(n) { Fs.natureza = n; if (n !== 'PESSOAL') Fs.transferenciaParaMim = false; render(); }
-function toggleTransfMim(checked) { Fs.transferenciaParaMim = !!checked; }
+function pickSaidaNatureza(n) { syncF(); Fs.natureza = n; render(); }
 function setSaidaTipoFilter(val) { saidasTipoFilter = val; saidasVerTodosMeses = false; render(); }
 function toggleSaidasTodosMeses() { saidasVerTodosMeses = !saidasVerTodosMeses; render(); }
 // Alterna a visão temporal das saídas: 'caixa' (competência) ou 'banco' (vencimento)
@@ -206,17 +205,23 @@ async function saveSaida() {
         syncF();
         if (!Fs.valor||Number(Fs.valor)<=0) { toast('⚠️ Informe o valor!'); return; }
         if (!Fs.dataPag) { toast('⚠️ Informe a data!'); return; }
-        const rec = Fs.recorrencia || 'unica';
+        // Pró-labore: saída PESSOAL + transferência para mim (o gatilho do banco cria a
+        // entrada PF 'sync_<id>' com categoria Pró-labore). Sempre única, paga e
+        // 'Transferência' (o gatilho só reconhece transferência). Meu dinheiro liga ao
+        // item de pró-labore do mês sozinho.
+        const pro = Fs.natureza === 'PROLABORE';
+        const rec = pro ? 'unica' : (Fs.recorrencia || 'unica');
         const k = {tipo:Fs.tipo, forma:Fs.forma};
-        const naturezaFs = Fs.natureza || 'PROFISSIONAL';
-        // Pessoais: zera tipo (a interface não pede categoria — basta natureza)
-        const tipoFs = naturezaFs === 'PESSOAL' ? 'Pessoal' : Fs.tipo;
-        // Só marca transferência-para-mim quando faz sentido (pessoal + transferência)
-        const transfMim = (naturezaFs === 'PESSOAL' && Fs.forma === 'Transferência' && Fs.transferenciaParaMim === true);
+        const naturezaFs = pro ? 'PESSOAL' : (Fs.natureza || 'PROFISSIONAL');
+        const tipoFs = pro ? 'Pró-labore' : naturezaFs === 'PESSOAL' ? 'Pessoal' : Fs.tipo;
+        const transfMim = pro;
+        const formaFs = pro ? 'Transferência' : Fs.forma;
+        const statusFs = pro ? 'Pago' : Fs.status;
+        if (pro) k.natureza = 'PROLABORE';
         if (rec === 'unica') {
-            const saida = { id:genId(), dataPag:Fs.dataPag, dataCaixa:defaultDataCaixa(Fs.dataPag, Fs.forma),
+            const saida = { id:genId(), dataPag:Fs.dataPag, dataCaixa:defaultDataCaixa(Fs.dataPag, formaFs),
                 tipo:tipoFs, valor:Fs.valor,
-                forma:Fs.forma, status:Fs.status, obs:Fs.obs,
+                forma:formaFs, status:statusFs, obs:pro ? (String(Fs.obs||'').trim() || 'Pró-labore') : Fs.obs,
                 recorrencia:'unica', grupoId:null, natureza:naturezaFs,
                 transferenciaParaMim:transfMim,
                 createdAt:new Date().toISOString() };

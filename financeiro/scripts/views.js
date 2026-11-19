@@ -422,33 +422,35 @@ function renderSaidas() {
 // Helper: form de nova saída (compartilhado entre mobile e desktop)
 function renderSaidaForm() {
     const natFs = Fs.natureza || 'PROFISSIONAL';
-    const tiposProf = getTiposProfissionais();
+    // Pró-labore = Pix/transferência da PJ para a conta pessoal da Carol (vira entrada na PF)
+    const pro = natFs === 'PROLABORE';
     return `
     <div class="card">
-        <div class="fg"><label class="fl">Natureza</label><div class="bg">
+        <div class="fg"><label class="fl">Natureza</label><div class="bg" style="flex-wrap:wrap">
             <button class="bt ${natFs==='PROFISSIONAL'?'on':''}" onclick="pickSaidaNatureza('PROFISSIONAL')">Profissional</button>
             <button class="bt ${natFs==='PESSOAL'?'on':''}" onclick="pickSaidaNatureza('PESSOAL')">Pessoal</button>
+            <button class="bt ${pro?'on':''}" onclick="pickSaidaNatureza('PROLABORE')">Pró-labore</button>
             <button class="bt ${natFs==='MISTA'?'on':''}" onclick="pickSaidaNatureza('MISTA')">Mista</button>
         </div></div>
         <div class="two">
             <div class="fg"><label class="fl">Data</label><input class="fi" type="date" id="si-dp" value="${Fs.dataPag}"></div>
             <div class="fg"><label class="fl">Valor</label><div class="vwrap"><span class="vpfx">R$</span><input class="fi" type="number" id="si-v" placeholder="0,00" step="0.01" min="0" value="${Fs.valor}" inputmode="decimal"></div></div>
         </div>
-        ${natFs!=='PESSOAL'?`<div class="fg"><label class="fl">Tipo de Despesa</label><select class="fi" id="si-tipo">${optTiposDespesa(Fs.tipo)}</select></div>`
-          : !(Fs.forma==='Transferência' && Fs.transferenciaParaMim) && optCategoriasPF('') ? `<div class="fg"><label class="fl">Categoria pessoal</label><select class="fi" id="si-catpf" onchange="Fs.catPF=this.value">${optCategoriasPF(Fs.catPF)}</select></div>` : ''}
-        <div class="fg"><label class="fl">Status</label><div class="stog">
+        ${pro ? '' : natFs!=='PESSOAL'?`<div class="fg"><label class="fl">Tipo de Despesa</label><select class="fi" id="si-tipo">${optTiposDespesa(Fs.tipo)}</select></div>`
+          : optCategoriasPF('') ? `<div class="fg"><label class="fl">Categoria pessoal</label><select class="fi" id="si-catpf" onchange="Fs.catPF=this.value">${optCategoriasPF(Fs.catPF)}</select></div>` : ''}
+        ${pro ? '' : `<div class="fg"><label class="fl">Status</label><div class="stog">
             <button class="stbtn ${Fs.status==='Pago'?'on-g':''}"    data-f="status" data-v="Pago"    data-form="s" onclick="pick('status','Pago','s')">Pago</button>
             <button class="stbtn ${Fs.status==='Previsto'?'on-r':''}" data-f="status" data-v="Previsto" data-form="s" onclick="pick('status','Previsto','s')">Previsto</button>
         </div></div>
         <div class="fg"><label class="fl">Forma de Pagamento</label><div class="bg" style="flex-wrap:wrap">${['PIX','Débito','Transferência','Crédito','Dinheiro'].map(f=>`<button class="bt ${Fs.forma===f?'on':''}" data-f="forma" data-v="${f}" data-form="s" onclick="pick('forma','${f}','s')">${f}</button>`).join('')}</div></div>
-        ${(natFs==='PESSOAL' && Fs.forma==='Transferência')?`<div class="fg" style="background:var(--info-soft,#E3F2FD);border-radius:10px;padding:11px 12px"><label style="display:flex;align-items:center;gap:9px;cursor:pointer;font-size:13px;font-weight:600;color:var(--info,#1565C0)"><input type="checkbox" id="si-transfmim" ${Fs.transferenciaParaMim?'checked':''} onchange="toggleTransfMim(this.checked)" style="width:18px;height:18px;accent-color:var(--info,#1565C0)"> 🔁 Transferência para minha conta pessoal</label><div style="font-size:11px;color:var(--text-muted);margin-top:5px;padding-left:27px">Vira uma <strong>entrada</strong> no seu Financeiro Pessoal. Desmarque se for transferência para outra pessoa/conta.</div></div>`:''}
+`}
         <div class="fg"><label class="fl">Observações</label><textarea class="fi ta" id="si-ob" placeholder="Detalhe...">${Fs.obs}</textarea></div>
-        <div class="fg"><label class="fl">Recorrência</label><div class="bg" style="flex-wrap:wrap">
+        ${pro ? '' : `<div class="fg"><label class="fl">Recorrência</label><div class="bg" style="flex-wrap:wrap">
             <button class="bt ${Fs.recorrencia==='unica'?'on':''}" data-f="recorrencia" data-v="unica" data-form="s" onclick="pick('recorrencia','unica','s')">Única</button>
             <button class="bt ${Fs.recorrencia==='fixa'?'on':''}" data-f="recorrencia" data-v="fixa" data-form="s" onclick="pick('recorrencia','fixa','s')">Fixa · 12 meses</button>
             <button class="bt ${Fs.recorrencia==='recorrente'?'on':''}" data-f="recorrencia" data-v="recorrente" data-form="s" onclick="pick('recorrencia','recorrente','s')">Recorrente</button>
         </div></div>
-        ${Fs.recorrencia==='recorrente'?`<div class="fg"><label class="fl">Quantos meses?</label><div class="vwrap"><span class="vpfx">#</span><input class="fi" type="number" id="si-meses" min="2" max="60" value="${Fs.meses||2}" inputmode="numeric"></div></div>`:''}
+        ${Fs.recorrencia==='recorrente'?`<div class="fg"><label class="fl">Quantos meses?</label><div class="vwrap"><span class="vpfx">#</span><input class="fi" type="number" id="si-meses" min="2" max="60" value="${Fs.meses||2}" inputmode="numeric"></div></div>`:''}`}
         <button class="bsub red" onclick="saveSaida()">Salvar Saída</button>
     </div>`;
 }

@@ -423,37 +423,31 @@ function openEditSaida(id) {
     if (!s) return;
     _pick = {};
     document.getElementById('modal-bg').style.display='flex';
-    const natAtual = s.natureza || 'PROFISSIONAL';
-    const tiposProf = getTiposProfissionais();
+    // Pró-labore = pessoal + transferência para mim (aparece como natureza própria)
+    const natAtual = s.transferenciaParaMim ? 'PROLABORE' : (s.natureza || 'PROFISSIONAL');
     document.getElementById('modal-inner').innerHTML=`
     <div class="modal-title">Editar Saída</div>
-    <div class="fg"><label class="fl">Natureza</label><div class="bg">
+    <div class="fg"><label class="fl">Natureza</label><div class="bg" style="flex-wrap:wrap">
         <button class="bt ${natAtual==='PROFISSIONAL'?'on':''}" onclick="edPickNatureza('PROFISSIONAL',this)">Profissional</button>
         <button class="bt ${natAtual==='PESSOAL'?'on':''}" onclick="edPickNatureza('PESSOAL',this)">Pessoal</button>
+        <button class="bt ${natAtual==='PROLABORE'?'on':''}" onclick="edPickNatureza('PROLABORE',this)">Pró-labore</button>
         <button class="bt ${natAtual==='MISTA'?'on':''}" onclick="edPickNatureza('MISTA',this)">Mista</button>
     </div></div>
     <div class="fg"><label class="fl">Vencimento / pagamento</label><input class="fi" type="date" id="es-data" value="${s.dataPag||''}"></div>
     <div class="fg"><label class="fl">Compete no caixa</label><input class="fi" type="date" id="es-datacaixa" value="${saidaDataCaixa(s)}"><div style="font-size:.68rem;color:var(--muted);margin-top:4px">Mês em que a despesa pesa no fluxo de caixa. No cartão, normalmente 1 mês antes do vencimento.</div></div>
-    <div id="es-tipo-wrap" style="display:${natAtual==='PESSOAL'?'none':'block'}">
+    <div id="es-tipo-wrap" style="display:${natAtual==='PESSOAL'||natAtual==='PROLABORE'?'none':'block'}">
       <div class="fg"><label class="fl">Tipo de Despesa</label>
         <select class="fi" id="es-tipo-sel">
           ${optTiposDespesa(s.tipo)}
         </select>
       </div>
     </div>
-    ${optCategoriasPF('') ? `<div id="es-catpf-wrap" class="fg" style="display:${natAtual==='PESSOAL'&&!s.transferenciaParaMim?'block':'none'}"><label class="fl">Categoria pessoal</label>
+    ${optCategoriasPF('') ? `<div id="es-catpf-wrap" class="fg" style="display:${natAtual==='PESSOAL'?'block':'none'}"><label class="fl">Categoria pessoal</label>
       <select class="fi" id="es-catpf">${optCategoriasPF('').replace('Categoria pessoal…', 'Manter a categoria atual')}</select></div>` : ''}
     <div class="fg"><label class="fl">Valor (R$)</label><div class="vwrap"><span class="vpfx">R$</span><input class="fi" type="number" id="es-valor" value="${s.valor||''}" step="0.01" min="0" inputmode="decimal"></div></div>
-    <div class="fg"><label class="fl">Forma</label><div class="bg" style="flex-wrap:wrap">
-        ${['PIX','Débito','Transferência','Crédito','Dinheiro'].map(f=>`<button class="bt ${s.forma===f?'on':''}" onclick="edPickSaidaForma('${f}',this)">${f}</button>`).join('')}
+    <div class="fg" id="es-forma-wrap" style="display:${natAtual==='PROLABORE'?'none':'block'}"><label class="fl">Forma</label><div class="bg" style="flex-wrap:wrap">
+        ${['PIX','Débito','Transferência','Crédito','Dinheiro'].map(f=>`<button class="bt ${s.forma===f?'on':''}" onclick="edPick('sforma','${f}',this)">${f}</button>`).join('')}
     </div></div>
-    <div id="es-transfmim-wrap" class="fg" style="display:${(natAtual==='PESSOAL'&&s.forma==='Transferência')?'block':'none'};background:var(--info-soft,#E3F2FD);border-radius:10px;padding:11px 12px">
-        <label style="display:flex;align-items:center;gap:9px;cursor:pointer;font-size:13px;font-weight:600;color:var(--info,#1565C0)">
-          <input type="checkbox" id="es-transfmim" ${s.transferenciaParaMim?'checked':''} style="width:18px;height:18px;accent-color:var(--info,#1565C0)">
-          🔁 Transferência para minha conta pessoal
-        </label>
-        <div style="font-size:11px;color:var(--text-muted);margin-top:5px;padding-left:27px">Vira uma <strong>entrada</strong> no Financeiro Pessoal. Desmarque se for para outra pessoa/conta.</div>
-    </div>
     <div class="fg"><label class="fl">Status</label>
         <div class="stog">
             <button class="stbtn ${s.status==='Pago'?'on-g':''}" onclick="edPickStatus('Pago',this)">Pago</button>
@@ -483,34 +477,23 @@ function edPickNatureza(value, btn) {
         btn.classList.add('on');
     }
     const wrap = document.getElementById('es-tipo-wrap');
-    if (wrap) wrap.style.display = value === 'PESSOAL' ? 'none' : 'block';
+    if (wrap) wrap.style.display = value === 'PESSOAL' || value === 'PROLABORE' ? 'none' : 'block';
     const cpf = document.getElementById('es-catpf-wrap');
     if (cpf) cpf.style.display = value === 'PESSOAL' ? 'block' : 'none';
-    edToggleTransfMimVis();
-}
-
-// Forma no modal de edição de saída + toggle do checkbox "transferência para mim"
-function edPickSaidaForma(value, btn) {
-    edPick('sforma', value, btn);
-    edToggleTransfMimVis();
-}
-function edToggleTransfMimVis() {
-    const wrap = document.getElementById('es-transfmim-wrap');
-    if (!wrap) return;
-    const show = (_pick['snatureza'] === 'PESSOAL') && (_pick['sforma'] === 'Transferência');
-    wrap.style.display = show ? 'block' : 'none';
+    const fw = document.getElementById('es-forma-wrap');
+    if (fw) fw.style.display = value === 'PROLABORE' ? 'none' : 'block';
 }
 async function saveEditSaida(id) {
     const s = saidas.find(x=>String(x.id)===String(id));
     if (!s) return;
     const valor = document.getElementById('es-valor').value;
     if (!valor||Number(valor)<=0) { toast('⚠️ Informe o valor!'); return; }
-    const natChosen = _pick['snatureza'] || s.natureza || 'PROFISSIONAL';
+    const natPick = _pick['snatureza'] || (s.transferenciaParaMim ? 'PROLABORE' : s.natureza) || 'PROFISSIONAL';
+    const transfMim = natPick === 'PROLABORE';   // pró-labore: o gatilho do banco cria a entrada PF
+    const natChosen = transfMim ? 'PESSOAL' : natPick;
     const tipoSel = document.getElementById('es-tipo-sel');
-    const tipoChosen = natChosen === 'PESSOAL' ? 'Pessoal' : (tipoSel ? tipoSel.value : (_pick['stipo'] || s.tipo));
-    const formaChosen = _pick['sforma'] || s.forma;
-    const transfMimEl = document.getElementById('es-transfmim');
-    const transfMim = (natChosen === 'PESSOAL' && formaChosen === 'Transferência' && !!(transfMimEl && transfMimEl.checked));
+    const tipoChosen = transfMim ? 'Pró-labore' : natChosen === 'PESSOAL' ? 'Pessoal' : (tipoSel ? tipoSel.value : (_pick['stipo'] || s.tipo));
+    const formaChosen = transfMim ? 'Transferência' : (_pick['sforma'] || s.forma);
     const changes = {
         tipo:     tipoChosen,
         forma:    formaChosen,
