@@ -403,6 +403,12 @@ const ctxM = (mes, hoje) => run(`stCtx(${JSON.stringify(mes)}, ${JSON.stringify(
   igual('"Devolução Pix" no dia seguinte → ignorados', [p18[2].acao, p18[3].acao], ['estorno', 'estorno']);
   igual('devolução 8 dias depois não é casada (fora do prazo)', [p18[4].acao, p18[5].acao], ['novo', 'novo']);
   igual('corrida normal continua como gasto de Deslocamento', [p18[6].acao, p18[6].decisao, p18[6].categoria], ['novo', 'gasto', 'Deslocamento']);
+  const pVolta = AC.prepararExtrato(pjC.id, [
+    { data: '2027-02-14', descricao: 'Pix enviado: "00019 569249970 CAROLINE NUNES"', valor: -324 },
+    { data: '2027-02-14', descricao: 'Pix recebido: "Cp :18236120-50.927.800 CAROLINE NUNES"', valor: 324 },
+    { data: '2027-02-15', descricao: 'Pix enviado: "00019 569249970 CAROLINE NUNES"', valor: -200 }]);
+  igual('ida e volta entre as contas dela no mesmo dia → ignorados (não vira pró-labore)', pVolta.map(p => p.acao + '/' + p.decisao),
+    ['estorno/ignorar', 'estorno/ignorar', 'novo/prolabore']);
   const nS18 = DBT.saidas.length, nE18 = DBT.entries.length;
   await AC.aplicarExtrato(pjC.id, p18.filter(p => p.acao === 'estorno'));
   igual('nada gravado para os pares devolvidos', [DBT.saidas.length - nS18, DBT.entries.length - nE18], [0, 0]);

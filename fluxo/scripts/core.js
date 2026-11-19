@@ -1106,6 +1106,10 @@ const FX = (function () {
     const dias = e.dias != null ? e.dias : 3;
     const reEst = e.palavras ? new RegExp(e.palavras) : null;
     const reApp = e.apps ? new RegExp('\\b(' + e.apps + ')\\b') : null;
+    // Ida e volta entre contas dela (ex.: PJ → PF e PF → PJ no mesmo dia):
+    // as duas linhas com o nome dela, até 1 dia → não é pró-labore nem gasto
+    const nomes = ((cfg && cfg.nomesProprios) || []).map(semAcento).filter(n => n.length >= 6);
+    const meu = d => nomes.some(n => d.includes(n));
     const usados = new Set(), pares = [];
     const idx = linhas.map((l, i) => i).sort((a, b) => String(linhas[a].data).localeCompare(String(linhas[b].data)));
     idx.forEach(i => {
@@ -1121,6 +1125,7 @@ const FX = (function () {
         const dc = semAcento(c.descricao);
         if (reEst && reEst.test(dc)) return true;
         if (appS && (dc.match(reApp) || [])[1] === appS) return true;
+        if (dd <= 1 && meu(ds) && meu(dc)) return true;
         const kc = chaveExtrato(c.descricao);
         return ks.length >= 4 && kc === ks;
       });
