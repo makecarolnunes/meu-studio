@@ -673,6 +673,21 @@ const ctxM = (mes, hoje) => run(`stCtx(${JSON.stringify(mes)}, ${JSON.stringify(
       FX.r2(Math.max(ap ? ap._falta : 0, sepCons)));
   }
 
+  titulo('Pró-labore: chegou a parcela seguinte → a anterior encerra com o que foi pago');
+  {
+    const MAR = '2027-03';
+    const pro = h => FX.itensDoMes(ST.itens, MAR, run('stMovs()'), h, ST.cfg).filter(i => i.tipo === 'prolabore').sort((a, b) => a.dia - b.dia);
+    const [p1a] = pro('2027-03-10'), [p1b, p2b] = pro('2027-03-20');
+    igual('antes do dia da 2ª: 1ª continua pendente', FX.PENDENTE(p1a._status), true);
+    igual('depois do dia da 2ª: 1ª encerrada, com o que faltou anotado e sem cobrança',
+      [p1b._status, p1b._falta, p1b._faltou, FX.PENDENTE(p2b._status)], ['encerrado', 0, FX.r2(Number(p1b.valor) - p1b._realizado), true]);
+    const Q = FX.quadroMes('PF', ctxM(MAR, '2027-03-20'));
+    igual('Plano: a 1ª sai do que vai entrar; a ponte separa o que faltou', [Q.eventos.some(e => e.item && e.item.id === p1b.id), Q.ponte.faltou, Q.ponte.falta],
+      [false, p1b._faltou, FX.r2(Q.ponte.previsto - Q.ponte.transferido - p1b._faltou)]);
+    const QJ = FX.quadroMes('PJ', ctxM(MAR, '2027-03-20'));
+    igual('PJ: a 1ª encerrada não aparece como "Transferir"', QJ.eventos.some(e => e.item && e.item.id === p1b.id), false);
+  }
+
   titulo('Plano: quanto tenho, comprometido, para onde vai e se o mês fecha');
   {
     // linha do tempo pura

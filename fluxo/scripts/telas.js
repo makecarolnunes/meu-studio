@@ -172,11 +172,13 @@ function cartaoComoEsta(P) {
       !pf && P.receber.vencido > FX.EPS ? `<span class="t-alerta">${brl(P.receber.vencido)} vencido sem confirmar</span>` : ''].join(''),
     chave: 'pg-rec', rotDetalhe: 'Ver recebimentos',
     detalhe: pf && P.receber.itens.length ? P.receber.itens.map(x => miniLinha(FX.nomeItem(x.item) + ' · dia ' + dm(x.item._data),
-      x.recebido, x.previsto, x.falta > FX.EPS ? `falta ${brl(x.falta)}` : '✓', x.falta > FX.EPS ? 'alerta' : 'ok')).join('') : '' });
+      x.recebido, x.encerrado ? FX.num(x.item.valor) : x.previsto, x.encerrado && x.faltou > FX.EPS ? `encerrada · faltou ${brl(x.faltou)}` : x.falta > FX.EPS ? `falta ${brl(x.falta)}` : '✓',
+      x.falta > FX.EPS || x.faltou > FX.EPS ? 'alerta' : 'ok')).join('') : '' });
   if (!pf) h += progresso({ rotulo: 'Pró-labore · para a sua conta pessoal', feito: P.prolabore.pago, total: P.prolabore.previsto,
     modo: 'meta', verbo: 'transferido', chave: 'pg-pro', rotDetalhe: 'Ver parcelas',
     detalhe: P.prolabore.itens.map(i => miniLinha(FX.nomeItem(i) + ' · dia ' + dm(i._data), Math.min(i._realizado, i.valor), i.valor,
-      i._falta > FX.EPS ? `falta ${brl(i._falta)}` : '✓', i._falta > FX.EPS ? 'alerta' : 'ok')).join('') });
+      i._status === 'encerrado' && i._faltou > FX.EPS ? `encerrada · faltou ${brl(i._faltou)}` : i._falta > FX.EPS ? `falta ${brl(i._falta)}` : '✓',
+      i._falta > FX.EPS || i._faltou > FX.EPS ? 'alerta' : 'ok')).join('') });
   h += progresso({ rotulo: 'Juntar nas caixinhas', feito: P.reservar.transferido, total: P.reservar.meta, modo: 'meta',
     verbo: 'destinado', chave: 'pg-res', rotDetalhe: 'Ver por caixinha',
     detalhe: P.reservar.caixinhas.map(c => miniLinha(c.caixinha.nome, Math.min(c.destinado, c.meta), c.meta,
@@ -215,7 +217,8 @@ function linhaItem(i, comEnt) {
   const cx = i.caixinhaId ? stConta(i.caixinhaId) : null;
   const vivo = FX.PENDENTE(i._status);
   const sub = [comEnt ? i.entidade : '', TIPO_LABEL[i.tipo], cx ? cx.nome : (i.tipo === 'pagamento' ? 'direto da conta' : ''),
-    i._realizado > 0 && vivo ? `${brl(i._realizado)} feito` : ''].filter(Boolean).join(' · ');
+    i._realizado > 0 && vivo ? `${brl(i._realizado)} feito` : '',
+    i._status === 'encerrado' ? `pago ${brl(i._realizado)} · faltou ${brl(i._faltou)}` : ''].filter(Boolean).join(' · ');
   return `<div class="it st-${i._status}">
     <div class="it-d">${dm(i._data)}<small>S${i._semana || ''}</small></div>
     <div class="it-m" onclick="formItem('${i.id}')"><div class="it-t">${esc(FX.nomeItem(i))}</div><div class="it-s">${esc(sub)}</div></div>
@@ -311,6 +314,7 @@ function cartaoPonte(Q) {
       <span class="sm ${completo ? 't-ok' : 'muted'}">${completo ? '✓ completo' : `falta ${brl(p.falta)}`}</span></div>
     <div class="pg-v"><b>${brl(p.transferido)}</b><span> ${pf ? 'recebido' : 'transferido'} de ${brl(p.previsto)}</span></div>
     ${barra(p.transferido, p.previsto, completo ? 'ok' : 'andamento')}
+    ${(p.encerradas || []).filter(i => i._faltou > 0.01).map(i => `<div class="kv sm"><span>${esc(FX.nomeItem(i))} · encerrada${info('Já chegou a data da parcela seguinte: esta fecha com o que foi pago e o que entrar agora conta na parcela atual. Fica anotado o que faltou.')}</span><b class="t-alerta">faltou ${brl(i._faltou)}</b></div>`).join('')}
     ${detalhe ? `<div class="q-ponte-l">
       <div class="kv"><span>Dá para transferir hoje${info('O que está na conta PJ hoje, depois das contas da PJ que vencem antes (ordem do plano).')}</span><b class="${p.podeHoje > 0.01 ? 't-ok' : ''}">${brl(p.podeHoje)}</b></div>
       <div class="kv"><span>Com os clientes previstos${info('Na PJ hoje: ' + brl(p.naContaPJ) + '\nClientes previstos no mês: ' + brl(p.aReceberPJ) + '\nRepartido na ordem do plano (contas, pró-labore, caixinhas, semanada).')}</span><b>${brl(p.podeNoMes)}</b></div>

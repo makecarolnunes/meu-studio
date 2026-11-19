@@ -638,7 +638,9 @@ const AC = (function () {
   // tem saldo (o mais antigo primeiro). Mês já completo → fora do plano.
   function _itemProlabore(data, valor, reservado) {
     const cfg = ST.cfg || FX_MODELO.config;
-    const its = FX.itensDoMes(ST.itens, FX.mesDe(data), stMovs(), stHoje(), cfg)
+    // olhando a partir da data do Pix: transferência de 10/11 ainda é da 1ª parcela;
+    // depois do dia da 2ª, a 1ª está encerrada e tudo conta na 2ª
+    const its = FX.itensDoMes(ST.itens, FX.mesDe(data), stMovs(), data, cfg)
       .filter(i => i.tipo === 'prolabore' && FX.PENDENTE(i._status) && i._falta > FX.EPS && !(reservado && reservado.has(i.id)))
       .sort((a, b) => a._data.localeCompare(b._data));
     return its.length ? its[0].id : null;

@@ -114,7 +114,7 @@ function nomeMesC(mes) { const [y, m] = mes.split('-'); return `${MESES_C[Number
 function valIn(n) { return n === '' || n == null ? '' : String(FX.r2(n)).replace('.', ','); }
 
 const ST_LABEL = { feito: 'feito', parcial: 'parcial', 'parcial-atrasado': 'parcial · atrasado', atrasado: 'atrasado',
-  hoje: 'hoje', futuro: 'previsto', dispensado: 'dispensado', reprogramado: 'reprogramado' };
+  hoje: 'hoje', futuro: 'previsto', dispensado: 'dispensado', reprogramado: 'reprogramado', encerrado: 'encerrada · incompleta' };
 // Atrasado só fica vermelho quando é conta a pagar; reserva/pró-labore atrasados = âmbar (pendente)
 function chip(status, tipo) {
   const leve = /atrasado/.test(status) && tipo && tipo !== 'pagamento';

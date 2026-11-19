@@ -262,7 +262,7 @@ const FX = (function () {
       if (m.classe === 'despesa' && m.realizado && m.caixinhaModo === 'guardar' && m.valorDireto > EPS && mesDe(m.competencia || m.data) === mes)
         direto[m.caixinhaId] = r2((direto[m.caixinhaId] || 0) + m.valorDireto);
     });
-    return itens.filter(i => i.mes === mes)
+    const lista = itens.filter(i => i.mes === mes)
       .sort((a, b) => (num(a.dia) - num(b.dia)) || ((a.ordem || 0) - (b.ordem || 0))).map(i => {
       const r = realizadoDoItem(i, movs);
       let cred = 0;
@@ -279,6 +279,17 @@ const FX = (function () {
         _excedente: r2(Math.max(0, r.valor - num(i.valor))),
       });
     }).sort((a, b) => (a._data.localeCompare(b._data)) || ((a.ordem || 0) - (b.ordem || 0)));
+    // Pró-labore (Carol, 2026-11-19): chegou a data da parcela seguinte → a
+    // anterior ENCERRA com o que foi pago (não volta para ela). Fica visível o
+    // que faltou (_faltou), mas sai das pendências; o que entrar depois conta
+    // na parcela atual.
+    const pros = lista.filter(i => i.tipo === 'prolabore' && !i.dispensado && !i.reprogramadoPara);
+    pros.forEach(i => {
+      if (!PENDENTE(i._status) || !pros.some(j => j !== i && j._data > i._data && j._data <= hoje)) return;
+      i._faltou = r2(Math.max(0, num(i.valor) - i._realizado));
+      i._status = 'encerrado'; i._falta = 0;
+    });
+    return lista;
   }
 
   // Quanto a PF efetivamente recebeu de um item de pró-labore (via trigger
@@ -484,7 +495,7 @@ const FX = (function () {
     todos = todos || itensDoMes(ctx.itens, mes, movs, hoje, cfg);
     const quando = d => d < hoje ? hoje : d;
     if (entidade === 'PF') {
-      return todos.filter(i => vivoItem(i) && (i.tipo === 'prolabore' || (i.tipo === 'receita' && i.entidade === 'PF'))).map(i => {
+      return todos.filter(i => vivoItem(i) && i._status !== 'encerrado' && (i.tipo === 'prolabore' || (i.tipo === 'receita' && i.entidade === 'PF'))).map(i => {
         const rec = i.tipo === 'prolabore' ? recebidoPF(i, movs) : i._realizado;
         return { data: quando(i._data), venc: i._data, valor: r2(Math.max(0, num(i.valor) - rec)), tipo: i.tipo, item: i, titulo: nomeItem(i) };
       }).filter(e => e.valor > EPS);
@@ -532,8 +543,11 @@ const FX = (function () {
     if (!pro.length) return null;
     const previsto = r2(pro.reduce((t, i) => t + num(i.valor), 0));
     const transferido = r2(pro.reduce((t, i) => t + Math.min(num(i.valor), i._realizado), 0));
-    const falta = r2(Math.max(0, previsto - transferido));
-    const out = { itens: pro, previsto, transferido, falta, proximo: pro.find(i => PENDENTE(i._status)) || null };
+    // parcela encerrada (já chegou a seguinte): o que faltou nela não é mais cobrado
+    const encerradas = pro.filter(i => i._status === 'encerrado');
+    const faltou = r2(encerradas.reduce((t, i) => t + (i._faltou || 0), 0));
+    const falta = r2(Math.max(0, previsto - transferido - faltou));
+    const out = { itens: pro, previsto, transferido, falta, faltou, encerradas, proximo: pro.find(i => PENDENTE(i._status)) || null };
     if (!contas.some(c => c.entidade === 'PJ' && c.tipo === 'corrente')) return out;
     const resPJ = resumo('PJ', ctx);
     const entraPJ = mes === mesDe(hoje) ? entradasPrevistas('PJ', ctx, todos) : [];
@@ -864,10 +878,13 @@ const FX = (function () {
     if (entidade === 'PF') {
       const its = todos.filter(i => vivo(i) && (i.tipo === 'prolabore' || (i.tipo === 'receita' && i.entidade === 'PF'))).map(i => {
         const rec = r2(i.tipo === 'prolabore' ? recebidoPF(i, movs) : i._realizado);
-        return { item: i, previsto: num(i.valor), recebido: rec, falta: r2(Math.max(0, num(i.valor) - rec)) };
+        // parcela encerrada: conta só o que entrou (o que faltou fica à parte)
+        const enc = i._status === 'encerrado';
+        return { item: i, previsto: enc ? Math.min(rec, num(i.valor)) : num(i.valor), recebido: rec, encerrado: enc,
+          faltou: enc ? r2(Math.max(0, num(i.valor) - rec)) : 0, falta: enc ? 0 : r2(Math.max(0, num(i.valor) - rec)) };
       });
       const recebido = soma(its, x => Math.min(x.recebido, x.previsto));
-      out.receber = { previsto: soma(its, x => x.previsto), recebido, itens: its,
+      out.receber = { previsto: soma(its, x => x.previsto), recebido, itens: its, faltou: soma(its, x => x.faltou),
         foraDoPlano: r2(Math.max(0, res.entrou - soma(its, x => x.recebido))) };
     } else {
       const rm = receitaMaquiagem(ctx);
@@ -875,7 +892,8 @@ const FX = (function () {
         vencido: rm.caixa.atrasado, itens: [] };
       const pro = todos.filter(i => vivo(i) && i.tipo === 'prolabore');
       const pago = soma(pro, i => Math.min(num(i.valor), i._realizado));
-      out.prolabore = { previsto: soma(pro, i => num(i.valor)), pago, itens: pro };
+      const faltou = soma(pro, i => i._faltou || 0);
+      out.prolabore = { previsto: r2(soma(pro, i => num(i.valor)) - faltou), pago, faltou, itens: pro };
       out.prolabore.falta = r2(Math.max(0, out.prolabore.previsto - pago));
     }
     out.receber.falta = r2(Math.max(0, out.receber.previsto - out.receber.recebido));
