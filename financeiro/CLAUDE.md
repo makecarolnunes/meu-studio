@@ -173,3 +173,11 @@ Cada saída tem **duas datas** — não confundir:
 - [ ] Notificação de pagamentos Previstos vencendo
 - [ ] Migrar `clientes/` para ler de `DB.entries` diretamente (atualmente lê de GAS)
 - [ ] Adicionar campo `comissao_assistente` em entries para descontar do bruto
+
+---
+
+## Categorias = as do Meu dinheiro (2026-11-19)
+
+- "Tipo de despesa" vem de `shared/js/categorias.js` (`CATEGORIAS.PJ()`, mesma lista de Meu dinheiro › Ajustes › Categorias), agrupado por grupo (`optTiposDespesa`). Sem cache: `SAIDA_TIPOS_PROF`. Registro com tipo antigo continua aparecendo selecionado (não muda sozinho).
+- Saída **Pessoal** (gasto pessoal pago pela PJ): campo "Categoria pessoal" (`CATEGORIAS.PF()`); depois de salvar, `gravarCategoriaPF` grava a categoria no gasto PF espelhado `sync_<id>` (o gatilho cria como "Outros" e não sobrescreve depois).
+- Chave `.mod-sw` (Financeiro | Meu dinheiro) abaixo do cabeçalho — mesma do /fluxo/.

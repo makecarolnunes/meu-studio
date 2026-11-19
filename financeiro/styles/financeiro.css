@@ -1078,3 +1078,11 @@ body { max-width: var(--fin-container); margin: 0 auto; }
 }
 .rf-custom .fi { flex: 1; min-width: 130px; padding: 8px 10px; font-size: .82rem; }
 .rf-custom span { color: var(--muted); font-weight: 600; }
+
+/* ── Troca rápida Financeiro | Meu dinheiro (mesma chave nos dois módulos) ── */
+.mod-sw { display: flex; gap: 3px; margin: 10px 14px 0; padding: 3px; background: var(--surface-2, #F3F1EE); border-radius: 11px; }
+.mod-sw a { flex: 1; text-align: center; padding: 7px 0; border-radius: 9px; font-size: .82rem; font-weight: 600;
+  color: var(--text-muted, #6E6963); text-decoration: none; cursor: pointer; }
+.mod-sw a.on { background: var(--surface, #fff); color: var(--text, #22201E); box-shadow: 0 1px 2px rgba(20, 18, 16, .08); cursor: default; }
+.mod-sw a:not(.on):hover { color: var(--text, #22201E); }
+@media (min-width: 900px) { .mod-sw { max-width: 360px; margin: 14px 32px 0; } }

@@ -118,6 +118,8 @@ async function stCarregar() {
     ST.cfg = raw ? JSON.parse(raw) : null;
     if (ST.cfg && ST.migracaoOk && stAtualizarCfg(ST.cfg)) await DB.config.set('fluxo_config', JSON.stringify(ST.cfg));
   } catch (_) { /* sem config ainda */ }
+  // mesma lista de categorias no Financeiro (shared/js/categorias.js)
+  if (window.CATEGORIAS) CATEGORIAS.guardar(ST.cfg || FX_MODELO.config);
 
   ST.carregado = true;
   stInvalidar();
@@ -165,6 +167,18 @@ function stAtualizarCfg(cfg) {
     const atual = pt.caixinha || '';
     pt.caixinha = atual ? atual + (/porq/.test(atual) ? '' : '|\\bporq\\b|\\bcdb\\b') : FX_MODELO.config.palavrasTransferencia.caixinha;
     cfg.versao = 6; mudou = true;
+  }
+  if (cfg.versao < 7) {
+    // Uma lista só com o Financeiro: tipos de despesa que só existiam lá entram aqui
+    // (sem caixinha: saem direto da conta). "Outro" continua por último.
+    cfg.categorias = cfg.categorias || {};
+    const pj = cfg.categorias.PJ = (cfg.categorias.PJ || []).slice();
+    const novas = FX_MODELO.config.categorias.PJ.filter(c => ['Equipe', 'Assistente', 'Modelos', 'Marketing'].includes(c.nome) && !pj.some(x => x.nome === c.nome));
+    if (novas.length) {
+      const iOutro = pj.findIndex(c => c.nome === 'Outro');
+      pj.splice(iOutro >= 0 ? iOutro : pj.length, 0, ...novas);
+    }
+    cfg.versao = 7; mudou = true;
   }
   return mudou;
 }
@@ -238,6 +252,7 @@ async function stSalvarCfg(cfg) {
   await DB.config.set('fluxo_config', JSON.stringify(cfg));
   const antes = ST.cfg;
   ST.cfg = cfg;
+  if (typeof window !== 'undefined' && window.CATEGORIAS) CATEGORIAS.guardar(cfg);
   stLog('config', 'configuracoes', 'fluxo_config', { antes, depois: cfg });
   stInvalidar(); stSalvarCache();
 }

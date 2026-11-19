@@ -20,6 +20,10 @@ noivas  = noivas.map(normalizeN);
 initF(); initFs();
 checkAuth();
 
+// Categorias iguais às do Meu dinheiro (shared/js/categorias.js): cache abre na hora,
+// o Supabase atualiza em segundo plano
+if (window.CATEGORIAS) CATEGORIAS.atualizar().then(() => { try { render(); } catch (_) {} });
+
 // Atalho do Início: ?tela=nova abre direto o formulário de lançamento
 (function () {
     const t = new URLSearchParams(location.search).get('tela');

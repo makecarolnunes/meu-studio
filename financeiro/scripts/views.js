@@ -434,7 +434,8 @@ function renderSaidaForm() {
             <div class="fg"><label class="fl">Data</label><input class="fi" type="date" id="si-dp" value="${Fs.dataPag}"></div>
             <div class="fg"><label class="fl">Valor</label><div class="vwrap"><span class="vpfx">R$</span><input class="fi" type="number" id="si-v" placeholder="0,00" step="0.01" min="0" value="${Fs.valor}" inputmode="decimal"></div></div>
         </div>
-        ${natFs!=='PESSOAL'?`<div class="fg"><label class="fl">Tipo de Despesa</label><select class="fi" id="si-tipo">${tiposProf.map(t=>`<option value="${t}" ${Fs.tipo===t?'selected':''}>${t}</option>`).join('')}</select></div>`:''}
+        ${natFs!=='PESSOAL'?`<div class="fg"><label class="fl">Tipo de Despesa</label><select class="fi" id="si-tipo">${optTiposDespesa(Fs.tipo)}</select></div>`
+          : !(Fs.forma==='Transferência' && Fs.transferenciaParaMim) && optCategoriasPF('') ? `<div class="fg"><label class="fl">Categoria pessoal</label><select class="fi" id="si-catpf" onchange="Fs.catPF=this.value">${optCategoriasPF(Fs.catPF)}</select></div>` : ''}
         <div class="fg"><label class="fl">Status</label><div class="stog">
             <button class="stbtn ${Fs.status==='Pago'?'on-g':''}"    data-f="status" data-v="Pago"    data-form="s" onclick="pick('status','Pago','s')">Pago</button>
             <button class="stbtn ${Fs.status==='Previsto'?'on-r':''}" data-f="status" data-v="Previsto" data-form="s" onclick="pick('status','Previsto','s')">Previsto</button>

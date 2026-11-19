@@ -31,7 +31,7 @@ const CHAT_TOOLS = [
         dataCaixa:{ type:'string', description:'Competência YYYY-MM-DD — mês de impacto no caixa. Opcional, calculado automaticamente.' },
         // Categorias e status vêm da fonte da verdade (state.js) — enum fixo
         // aqui já divergiu do banco no passado e gerava despesa mal categorizada
-        tipo:    { type:'string', enum: SAIDA_TIPOS_PROF },
+        tipo:    { type:'string', enum: getTiposProfissionais() },
         valor:   { type:'number', description:'Valor da despesa' },
         forma:   { type:'string', enum:['PIX','Crédito','Dinheiro'] },
         status:  { type:'string', enum:['Pago','Previsto'] },

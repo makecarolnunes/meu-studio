@@ -23,8 +23,34 @@ const SAIDA_TIPOS_PROF = [
   'Outro',
 ];
 
+// Uma lista só com o Meu dinheiro (shared/js/categorias.js): as categorias PJ
+// editadas em Meu dinheiro › Ajustes › Categorias. Sem cache, usa a lista acima.
+// Config do Meu dinheiro ainda sem a lista unificada (versão < 7, antes de abrir o
+// Meu dinheiro): completa com os tipos que só existiam aqui, antes do 'Outro'.
+function catsPJ() {
+    const pj = window.CATEGORIAS && CATEGORIAS.PJ();
+    if (!pj || CATEGORIAS.versao() >= 7) return pj;
+    const falta = SAIDA_TIPOS_PROF.filter(n => n !== 'Outro' && !pj.some(c => c.nome === n)).map(n => ({ nome: n, grupo: 'Atendimento' }));
+    const i = pj.findIndex(c => c.nome === 'Outro');
+    return i < 0 ? pj.concat(falta) : pj.slice(0, i).concat(falta, pj.slice(i));
+}
 function getTiposProfissionais() {
-    return SAIDA_TIPOS_PROF;
+    const pj = catsPJ();
+    if (!pj) return SAIDA_TIPOS_PROF;
+    const nomes = pj.map(c => c.nome).filter(n => n !== 'Outro');
+    return nomes.concat(['Outro']);
+}
+// <option>s do "Tipo de despesa", agrupados como no Meu dinheiro (Semanada, Reposição…)
+function optTiposDespesa(sel) {
+    const pj = catsPJ();
+    if (pj) return CATEGORIAS.opcoes(pj, sel);
+    const lista = SAIDA_TIPOS_PROF.concat(sel && !SAIDA_TIPOS_PROF.includes(sel) ? [sel] : []);
+    return lista.map(t => `<option value="${t}" ${sel === t ? 'selected' : ''}>${t}</option>`).join('');
+}
+// Categoria do gasto pessoal (PF), para a saída "Pessoal" já chegar organizada no Meu dinheiro
+function optCategoriasPF(sel) {
+    const pf = window.CATEGORIAS && CATEGORIAS.PF();
+    return pf ? CATEGORIAS.opcoes(pf, sel, 'Categoria pessoal…') : '';
 }
 
 let entries        = JSON.parse(localStorage.getItem('mk_entries') || '[]');
@@ -124,5 +150,5 @@ function initF()  {
 function initFs() {
     Fs = { dataPag: today(), valor: '', tipo: 'Reposição',
            status: 'Pago', forma: 'PIX', obs: '', recorrencia: 'unica', meses: 2,
-           natureza: 'PROFISSIONAL', transferenciaParaMim: false };
+           natureza: 'PROFISSIONAL', transferenciaParaMim: false, catPF: '' };
 }

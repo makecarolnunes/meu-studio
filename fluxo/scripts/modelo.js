@@ -16,7 +16,7 @@ const FX_MODELO = {
 
   // ── Configuração (vai para configuracoes.chave = 'fluxo_config') ──
   config: {
-    versao: 6,
+    versao: 7,
     // Pix que sai e volta (corrida não aceita, compra cancelada): os dois se anulam
     estorno: { dias: 3, palavras: 'estorno|estornad|devolu|devolvid|reembols|cancelad|cancelament|reversao|revertid',
                apps: 'uber|99|99app|99pop|cabify|indrive|in drive|ifood|rappi' },
@@ -64,6 +64,11 @@ const FX_MODELO = {
         { nome: 'Assinaturas', grupo: 'Assinaturas' },
         { nome: 'DAS', grupo: 'MEI' },
         { nome: 'Dívidas', grupo: 'Dívidas' },
+        // também do Financeiro (sem caixinha: saem direto da conta)
+        { nome: 'Equipe', grupo: 'Atendimento' },
+        { nome: 'Assistente', grupo: 'Atendimento' },
+        { nome: 'Modelos', grupo: 'Atendimento' },
+        { nome: 'Marketing', grupo: 'Marketing' },
         { nome: 'Outro', grupo: 'Outras' },
       ],
       receitasPF: ['Pró-labore', 'Transferência', 'Salário/Renda', 'Reembolso', 'Presente', 'Investimentos', 'Outros'],

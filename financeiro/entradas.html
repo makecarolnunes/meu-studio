@@ -9,7 +9,7 @@
     <title>Financeiro · Meu Studio</title>
     <link rel="stylesheet" href="../shared/css/tokens.css">
     <link rel="stylesheet" href="../shared/css/base.css">
-    <link rel="stylesheet" href="./styles/financeiro.css?v=2026072701">
+    <link rel="stylesheet" href="./styles/financeiro.css?v=20261119k">
     <!-- Fiscal CSS: estilos do fluxo de import (modal, revisão).
          Todos seletores com prefixo .fs- não conflitam. -->
     <link rel="stylesheet" href="./styles/fiscal.css">
@@ -62,10 +62,6 @@
         <div class="hdr-sub" id="hsub">Resumo</div>
     </div>
     <div class="hdr-right">
-        <!-- Planejamento, caixinhas e conciliação PF + PJ (módulo /fluxo/) -->
-        <button class="gear-btn" onclick="window.location.href='../fluxo/?ent=PJ'" title="Planejamento e caixinhas" aria-label="Planejamento e caixinhas">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/><path d="M8 14h3v3H8z"/></svg>
-        </button>
         <button class="gear-btn" onclick="openGlobalSearch()" title="Buscar (atalho: /)" aria-label="Buscar">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         </button>
@@ -80,6 +76,9 @@
         </button>
     </div>
 </div>
+
+<!-- Troca rápida entre os módulos de dinheiro (mesma chave no Meu dinheiro) -->
+<nav class="mod-sw" aria-label="Módulos de dinheiro"><a class="on" aria-current="page">Financeiro</a><a href="../fluxo/?ent=PJ">Meu dinheiro</a></nav>
 
 <div class="content" id="content"></div>
 
@@ -160,20 +159,21 @@
 <!-- ?v= força o navegador a baixar o JS novo a cada deploy (cache-busting). Bump a cada mudança de JS. -->
 <script src="../config.js?v=2026053102"></script>
 <script src="../shared/js/db.js?v=20261116"></script>
+<script src="../shared/js/categorias.js?v=20261119l"></script>
 <script src="../shared/js/icons.js?v=2026053102"></script>
 <script src="../shared/js/calc-fiscal.js?v=2026053102"></script>
 
 <!-- ── Módulo Financeiro (ordem importa) ── -->
-<script src="./scripts/state.js?v=20261117"></script>
+<script src="./scripts/state.js?v=20261119l"></script>
 <script src="./scripts/utils.js?v=20261117"></script>
 <script src="./scripts/auth.js?v=2026053102"></script>
 <script src="./scripts/api.js?v=2026072701"></script>
-<script src="./scripts/handlers.js?v=2026060403"></script>
+<script src="./scripts/handlers.js?v=20261119k"></script>
 <script src="./scripts/noivas.js?v=2026053102"></script>
-<script src="./scripts/modals.js?v=2026072701"></script>
-<script src="./scripts/views.js?v=2026072701"></script>
-<script src="./scripts/chat.js?v=2026060402"></script>
-<script src="./scripts/main.js?v=20261018"></script>
+<script src="./scripts/modals.js?v=20261119k"></script>
+<script src="./scripts/views.js?v=20261119k"></script>
+<script src="./scripts/chat.js?v=20261119k"></script>
+<script src="./scripts/main.js?v=20261119k"></script>
 
 <!-- ── Import bancário (fluxo movido para a aba Saídas) ── -->
 <script src="./scripts/fiscal/fiscal-state.js?v=2026053102"></script>

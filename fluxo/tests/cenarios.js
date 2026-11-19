@@ -325,11 +325,12 @@ const ctxM = (mes, hoje) => run(`stCtx(${JSON.stringify(mes)}, ${JSON.stringify(
 
   titulo('15. Categorias por conta + gasto pessoal pago pela PJ');
   const catPJ = ST.cfg.categorias.PJ.map(c => c.nome);
-  igual('PJ só com RAIO X PJ', catPJ.includes('Assistente') || catPJ.includes('Mercado'), false);
+  igual('PJ sem categorias pessoais (Mercado)', catPJ.includes('Mercado'), false);
+  igual('PJ = mesma lista do Financeiro (Equipe, Assistente, Modelos, Marketing sem caixinha)', ['Equipe', 'Assistente', 'Modelos', 'Marketing'].every(c => catPJ.includes(c) && !FX.caixinhaDaCategoria(ST.contas, 'PJ', c, ST.cfg)), true);
   igual('PJ tem Deslocamento, Reposição, DAS', ['Deslocamento', 'Reposição', 'Investimentos', 'DAS'].every(c => catPJ.includes(c)), true);
   const cfgV1 = { versao: 1, categorias: { PJ: [{ nome: 'Assistente', grupo: 'Operação' }, { nome: 'Uniforme', grupo: 'Minhas' }], PF: [] } };
   run('stAtualizarCfg')(cfgV1);
-  igual('config antiga atualizada mantendo a categoria criada por você', [cfgV1.versao, cfgV1.categorias.PJ.some(c => c.nome === 'Assistente'), cfgV1.categorias.PJ.some(c => c.nome === 'Uniforme')], [6, false, true]);
+  igual('config antiga atualizada mantendo a categoria criada por você', [cfgV1.versao, (cfgV1.categorias.PJ.find(c => c.nome === 'Assistente') || {}).grupo, cfgV1.categorias.PJ.some(c => c.nome === 'Uniforme'), cfgV1.categorias.PJ[cfgV1.categorias.PJ.length - 1].nome], [7, 'Atendimento', true, 'Uniforme']);
   const gastosPJantes = FX.resumo('PJ', ctxM('2027-01', '2027-01-31')).gastos;
   const gastosPFantes = FX.resumo('PF', ctxM('2027-01', '2027-01-31')).gastos;
   const pjAntesP = saldo(pjC, '2027-01-31');
@@ -381,7 +382,7 @@ const ctxM = (mes, hoje) => run(`stCtx(${JSON.stringify(mes)}, ${JSON.stringify(
     palavrasCategoria: { PJ: [['sephora', 'Reposição/Investimento de material']] }, regrasExtrato: { PJ: [{ chave: 'x', categoria: 'Equipamentos' }] } };
   run('stAtualizarCfg')(cfgV3);
   igual('config salva renomeada (categorias, palavras, regras)', [cfgV3.categorias.PJ.map(c => c.nome), cfgV3.palavrasCategoria.PJ[0][1], cfgV3.regrasExtrato.PJ[0].categoria],
-    [['Reposição', 'Investimentos'], 'Reposição', 'Investimentos']);
+    [['Reposição', 'Investimentos', 'Equipe', 'Assistente', 'Modelos', 'Marketing'], 'Reposição', 'Investimentos']);
   DBT.saidas.push({ id: 'velha-rep', dataPag: '2027-01-21', tipo: 'Reposição/Investimento de material', valor: '120', forma: 'PIX', status: 'Pago', natureza: 'PROFISSIONAL' });
   ST.saidas = await run('DB').saidas.list(); run('stInvalidar()');
   const mv = run('stMovs()').find(m => m.id === 'velha-rep');

@@ -186,6 +186,19 @@ async function toggleStatus(id) {
 // ── ACTIONS: SAÍDAS ──
 function toggleSaidasForm() { syncF(); saidasFormOpen=!saidasFormOpen; render(); }
 
+// Saída "Pessoal" (gasto pessoal pago pela conta PJ): o gatilho do banco cria o
+// gasto PF espelhado (sync_<id>) como "Outros". Aqui grava a categoria pessoal
+// escolhida — mesmo jeito do Meu dinheiro (o gatilho não muda a categoria depois).
+async function gravarCategoriaPF(s, cat) {
+    if (!cat || !window.DB || !DB.pessoal) return;
+    if (String(s.natureza || '').toUpperCase() !== 'PESSOAL' || s.transferenciaParaMim) return;
+    try {
+        await DB.pessoal.saidas.upsert({ id: 'sync_' + s.id, usuarioId: null, data: s.dataPag,
+            descricao: String(s.obs || '').trim() || 'Lançado pelo Financeiro', valor: Math.abs(Number(s.valor) || 0),
+            categoria: cat, forma: s.forma || '', origem: 'sincronizado', saidaOrigemId: s.id });
+    } catch (e) { console.warn('Categoria pessoal não gravada', e); }
+}
+
 async function saveSaida() {
     if (_savingSaida) return;
     _savingSaida = true;
@@ -208,6 +221,7 @@ async function saveSaida() {
                 transferenciaParaMim:transfMim,
                 createdAt:new Date().toISOString() };
             if (!await sbCall({action:'save', table:'saidas', data: encodeURIComponent(JSON.stringify(saida))})) return;
+            await gravarCategoriaPF(saida, Fs.catPF);
             saidas.unshift(saida); cacheSaidas();
             toast('Saída salva!');
             initFs(); Object.assign(Fs,k);
@@ -232,6 +246,7 @@ async function saveSaida() {
                     return;
                 }
                 salvas.push(s);
+                await gravarCategoriaPF(s, Fs.catPF);
             }
             [...novasSaidas].reverse().forEach(s=>saidas.unshift(s)); cacheSaidas();
             toast(rec==='fixa' ? `Saída fixa criada (12 meses)!` : `${totalMeses} parcelas criadas!`);

@@ -437,10 +437,12 @@ function openEditSaida(id) {
     <div id="es-tipo-wrap" style="display:${natAtual==='PESSOAL'?'none':'block'}">
       <div class="fg"><label class="fl">Tipo de Despesa</label>
         <select class="fi" id="es-tipo-sel">
-          ${tiposProf.map(t=>`<option value="${t}" ${s.tipo===t?'selected':''}>${t}</option>`).join('')}
+          ${optTiposDespesa(s.tipo)}
         </select>
       </div>
     </div>
+    ${optCategoriasPF('') ? `<div id="es-catpf-wrap" class="fg" style="display:${natAtual==='PESSOAL'&&!s.transferenciaParaMim?'block':'none'}"><label class="fl">Categoria pessoal</label>
+      <select class="fi" id="es-catpf">${optCategoriasPF('').replace('Categoria pessoal…', 'Manter a categoria atual')}</select></div>` : ''}
     <div class="fg"><label class="fl">Valor (R$)</label><div class="vwrap"><span class="vpfx">R$</span><input class="fi" type="number" id="es-valor" value="${s.valor||''}" step="0.01" min="0" inputmode="decimal"></div></div>
     <div class="fg"><label class="fl">Forma</label><div class="bg" style="flex-wrap:wrap">
         ${['PIX','Débito','Transferência','Crédito','Dinheiro'].map(f=>`<button class="bt ${s.forma===f?'on':''}" onclick="edPickSaidaForma('${f}',this)">${f}</button>`).join('')}
@@ -482,6 +484,8 @@ function edPickNatureza(value, btn) {
     }
     const wrap = document.getElementById('es-tipo-wrap');
     if (wrap) wrap.style.display = value === 'PESSOAL' ? 'none' : 'block';
+    const cpf = document.getElementById('es-catpf-wrap');
+    if (cpf) cpf.style.display = value === 'PESSOAL' ? 'block' : 'none';
     edToggleTransfMimVis();
 }
 
@@ -516,6 +520,8 @@ async function saveEditSaida(id) {
         natureza: natChosen,
         transferenciaParaMim: transfMim,
     };
+    const catPFEl = document.getElementById('es-catpf');
+    const catPFEd = catPFEl ? catPFEl.value : '';   // vazio = manter a categoria pessoal atual
     const scope = s.grupoId ? (_pick['escopo'] || 'so-esta') : 'so-esta';
     let toEdit;
     if (scope === 'so-esta') {
@@ -543,6 +549,7 @@ async function saveEditSaida(id) {
         }
         if (!await sbCall({action:'save', table:'saidas', data:encodeURIComponent(JSON.stringify(updated))})) break;
         saidas[idx] = updated; okCount++;
+        await gravarCategoriaPF(updated, catPFEd);
     }
     if (!okCount) return;
     cacheSaidas(); closeModal(); render();
