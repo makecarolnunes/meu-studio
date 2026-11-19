@@ -102,7 +102,7 @@ const ctxM = (mes, hoje) => run(`stCtx(${JSON.stringify(mes)}, ${JSON.stringify(
   titulo('3. Semanada PF de R$ 350 + gastos reais (semana 1)');
   const pfSem = conta('PF', 'caixinha', 'semanada');
   await AC.registrarGasto({ entidade: 'PF', valor: 120, data: '2026-12-02', contaId: pfSem.id, categoria: 'Mercado', descricao: 'Mercado' });
-  await AC.registrarGasto({ entidade: 'PF', valor: 80, data: '2026-12-04', contaId: pfC.id, caixinhaId: pfSem.id, categoria: 'Delivery', descricao: 'iFood' });
+  await AC.registrarGasto({ entidade: 'PF', valor: 80, data: '2026-12-04', contaId: pfC.id, caixinhaId: pfSem.id, categoria: 'Delivery', descricao: 'iFood', resgatar: true });
   await AC.registrarGasto({ entidade: 'PF', valor: 60, data: '2026-12-06', contaId: pfSem.id, categoria: 'Transporte', descricao: 'Uber' });
   let sm = FX.semanadas('PF', ctxM(DEZ, '2026-12-09'));
   igual('S1 reservado', sm.linhas[0].reservado, 350);
@@ -177,7 +177,7 @@ const ctxM = (mes, hoje) => run(`stCtx(${JSON.stringify(mes)}, ${JSON.stringify(
 
   titulo('7. Pagar conta com dinheiro reservado (Luz pela caixinha Despesas fixas)');
   const pfFix = conta('PF', 'caixinha', 'fixas');
-  await AC.pagarItem(itemDe(DEZ, 'Luz', 'PF').id, { valor: 262.40, data: '2026-12-10', contaId: pfC.id });
+  await AC.pagarItem(itemDe(DEZ, 'Luz', 'PF').id, { valor: 262.40, data: '2026-12-10', contaId: pfC.id, resgatar: true });
   const comp = FX.composicao(pfFix, ctxM(DEZ, '2026-12-31'));
   const luz = comp.find(c => c.descricao === 'Luz');
   igual('Luz previsto', luz.previsto, 250);
@@ -250,7 +250,7 @@ const ctxM = (mes, hoje) => run(`stCtx(${JSON.stringify(mes)}, ${JSON.stringify(
   // gasto lançado só com a categoria → liga ao item e usa a caixinha certa
   const fixJanAntes = saldo(pfFix, '2027-01-31');
   const corrJanAntes = saldo(pfC, '2027-01-31');
-  const rT = await AC.registrarGasto({ entidade: 'PF', valor: 65, data: '2027-01-07', contaId: pfC.id, categoria: 'Telefone', descricao: 'Vivo' });
+  const rT = await AC.registrarGasto({ entidade: 'PF', valor: 65, data: '2027-01-07', contaId: pfC.id, categoria: 'Telefone', descricao: 'Vivo', resgatar: true });
   const telJan = ST.itens.find(i => i.mes === '2027-01' && i.descricao === 'Telefone');
   igual('Telefone ligado ao item do plano sozinho', rT.planoItemId, telJan.id);
   igual('caixinha deduzida: Despesas fixas', nomeC(rT.caixinhaId), 'Despesas fixas');
@@ -521,7 +521,7 @@ const ctxM = (mes, hoje) => run(`stCtx(${JSON.stringify(mes)}, ${JSON.stringify(
   await AC.pagarItem(itConta.id, { valor: String(itConta.valor), data: '2027-04-06', contaId: pfC.id, resgatar: true });
   igual('conta paga com a reserva da caixinha: "Livre no mês" não muda', FX.r2(FX.resumo('PF', cA('2027-04-06')).disponivel - livreAntes), 0);
   const livreSem = FX.resumo('PF', cA('2027-04-06')).disponivel;
-  await AC.registrarGasto({ entidade: 'PF', valor: '30', data: '2027-04-06', descricao: 'Lanche', categoria: 'Mercado', contaId: pfC.id });
+  await AC.registrarGasto({ entidade: 'PF', valor: '30', data: '2027-04-06', descricao: 'Lanche', categoria: 'Mercado', contaId: pfC.id, resgatar: true });
   igual('semanada gasta direto da conta: "Livre no mês" não cai duas vezes', FX.r2(FX.resumo('PF', cA('2027-04-06')).disponivel - livreSem), 0);
   const itParc = itensA('2027-04-06').find(i => i.tipo === 'pagamento' && i.caixinhaId === fixasPF.id && FX.PENDENTE(i._status) && i.valor > 50);
   await AC.pagarItem(itParc.id, { valor: '50', data: '2027-04-06', contaId: pfC.id, resgatar: false });
@@ -630,6 +630,10 @@ const ctxM = (mes, hoje) => run(`stCtx(${JSON.stringify(mes)}, ${JSON.stringify(
     const s0 = sCx(), nT = DBT.fin_transferencias ? DBT.fin_transferencias.length : 0;
     const rg = await AC.registrarGasto({ entidade: 'PF', valor: String(FX.r2(Math.max(0, s0) + 40)), data: '2027-04-13', categoria: 'Roupas', descricao: 'Loja', resgatar: true });
     igual('resgate só do que a caixinha tem (sem saldo negativo)', [rg.caixinhaId === cxSaz.id, FX.r2(sCx()) >= -0.005], [true, true]);
+    const semM = ST.contas.find(c => c.entidade === 'PF' && c.finalidade === 'semanada');
+    await AC.transferir({ valor: 50, data: '2027-04-13', origemId: ST.contas.find(c => c.entidade === 'PF' && c.tipo === 'corrente').id, destinoId: semM.id, descricao: 'Porquinho' });
+    const rSem = await AC.registrarGasto({ entidade: 'PF', valor: '20', data: '2027-04-13', categoria: 'Mercado', descricao: 'Padaria' });
+    igual('gasto sem marcar resgate: caixinha com saldo não ganha resgate sozinha', [rSem.resgate, nomeC(rSem.caixinhaId)], [null, semM.nome]);
     await AC.classificar('saidas_pessoal', rg.id, { categoria: 'Cosméticos', planoItemId: '-' });
     const mR = run('stMovs()').find(m => m.key === 'saidas_pessoal:' + rg.id);
     igual('categoria trocada no próprio registro, caixinha segue a categoria', [mR.categoria, nomeC(mR.caixinhaId), mR.planoItemId], ['Cosméticos', cxSaz.nome, null]);

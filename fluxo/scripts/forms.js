@@ -73,7 +73,7 @@ function formExecutar(itemId) {
   } else if (i.tipo === 'pagamento') {
     const contaPadr = cx ? (FX.contaPadrao(ST.contas, i.entidade, 'corrente') || {}).id : (i.contaId || (FX.contaPadrao(ST.contas, i.entidade, 'corrente') || {}).id);
     corpo = campo('Pago com', `<select class="fi" id="ex-conta" onchange="exAtualizaResgate()">${optContas(i.entidade, ['corrente', 'caixinha', 'cartao', 'especie'], contaPadr)}</select>`) +
-      (cx ? `<label class="chk" id="ex-resg-wrap"><input type="checkbox" id="ex-resgatar" ${FX.saldoConta(cx, stMovs(), stHoje(), ST.cfg || FX_MODELO.config).saldo > 0.01 ? 'checked' : ''}> Usar a reserva de <b>${esc(cx.nome)}</b>${info('Registra o resgate da caixinha para a conta.')}</label>` : '') +
+      (cx && FX.saldoConta(cx, stMovs(), stHoje(), ST.cfg || FX_MODELO.config).saldo > 0.01 ? `<label class="chk" id="ex-resg-wrap"><input type="checkbox" id="ex-resgatar"> Tirei da caixinha <b>${esc(cx.nome)}</b>${info('Marque só se você resgatou da caixinha no banco para pagar.')}</label>` : '') +
       `<div class="nota" id="ex-nota-cartao" style="display:none">No cartão: a despesa entra hoje e a reserva continua na caixinha até você pagar a fatura (Caixinhas › cartão › Pagar).</div>` +
       `<label class="chk"><input type="checkbox" id="ex-resto"> Ainda vou pagar o resto${info('A conta fecha com o valor pago. Marcando, a diferença vira outra conta neste mês.')}</label>`;
   } else if (i.tipo === 'prolabore') {
@@ -239,7 +239,6 @@ function formGasto(ent, caixinhaId) {
     ${campo('De qual reserva (caixinha)', `<select class="fi" id="g-cx" onchange="gAtualiza()"><option value="">Automática pela categoria</option><option value="-">Nenhuma (direto da conta)</option>${optContas(ent, ['caixinha'], caixinhaId)}</select>`)}
     <div class="muted sm" id="g-cx-auto"></div>
     ${campo('Pago com', `<select class="fi" id="g-conta" onchange="gAtualiza()">${optContas(ent, ['caixinha', 'corrente', 'cartao', 'especie'], caixinhaId || (FX.contaPadrao(ST.contas, ent, 'corrente') || {}).id)}</select>`)}
-    <label class="chk" id="g-resg-wrap" style="display:none"><input type="checkbox" id="g-resgatar" checked> Registrar resgate da caixinha para a conta</label>
     ${pend.length ? campo('É um item do plano?', `<select class="fi" id="g-item"><option value="">Automático (pela categoria)</option><option value="-">Não</option>${pend.map(i => `<option value="${i.id}">${dm(i._data)} · ${esc(FX.nomeItem(i))} (${brl(i._falta)})</option>`).join('')}</select>`) : ''}
     ${rodape(`acGasto('${ent}')`, 'Registrar gasto')}`);
   window._gEnt = ent;
@@ -253,22 +252,14 @@ function gPessoal() {
 }
 function gAtualiza() {
   const ent = window._gEnt || UI.ent;
-  let cx = $v('g-cx');
-  const conta = stConta($v('g-conta'));
+  // Sem "resgate" aqui (Carol, 2026-11-19): o gasto sai da conta escolhida e só
+  // conta no orçamento da caixinha. Resgate de verdade vem do extrato do banco
+  // ou de Caixinhas › Tirar dinheiro — nunca criado sozinho pelo gasto.
   const info = document.getElementById('g-cx-auto');
-  if (!cx && info) {
+  if (!$v('g-cx') && info) {
     const auto = FX.caixinhaDaCategoria(ST.contas, ent, $v('g-cat'), ST.cfg || FX_MODELO.config);
-    info.innerHTML = auto ? 'Vai usar: <b>' + esc(auto.nome) + '</b> ' + autoTag() : 'Sem caixinha: sai direto da conta.';
-    cx = auto ? auto.id : '';
+    info.innerHTML = auto ? 'Conta na caixinha <b>' + esc(auto.nome) + '</b> ' + autoTag() : 'Sem caixinha: sai direto da conta.';
   } else if (info) info.innerHTML = '';
-  if (cx === '-') cx = '';
-  const w = document.getElementById('g-resg-wrap');
-  // só oferece "resgate" se a caixinha tem dinheiro (vazia = sai direto da conta)
-  const cxC = cx && stConta(cx);
-  const temSaldo = cxC && FX.saldoConta(cxC, stMovs(), stHoje(), ST.cfg || FX_MODELO.config).saldo > 0.01;
-  if (w) w.style.display = cx && temSaldo && conta && cx !== conta.id && (conta.tipo === 'corrente' || conta.tipo === 'especie') ? '' : 'none';
-  const ck = document.getElementById('g-resgatar');
-  if (ck && !temSaldo) ck.checked = false;
 }
 function acGasto(ent) {
   const itemId = $v('g-item');
@@ -278,7 +269,7 @@ function acGasto(ent) {
   const data = $v('g-data');
   executar(() => AC.registrarGasto({ entidade: ent, valor: $v('g-valor'), data, descricao: $v('g-desc'),
     categoria: $v('g-cat'), caixinhaId: $v('g-cx') || (it && it.caixinhaId) || null, contaId: $v('g-conta'),
-    resgatar: $v('g-resgatar') === true, planoItemId: itemId || null, dividaId: it ? it.dividaId : null }))
+    planoItemId: itemId || null, dividaId: it ? it.dividaId : null }))
     .then(r => { if (r !== undefined) toast(resumoGastoSemana(ent, data)); });
 }
 // Depois de um gasto: como ficou a semanada daquela semana

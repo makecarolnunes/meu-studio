@@ -289,7 +289,7 @@ const AC = (function () {
   // contaId = de onde o dinheiro saiu (corrente, caixinha, cartão, espécie)
   // caixinhaId = qual reserva banca o gasto (finalidade)
   // resgatar = se saiu da corrente mas é dinheiro da caixinha, registra
-  //            o resgate caixinha → corrente (como no app do banco).
+  //            o resgate caixinha → corrente (só quando marcado: resgatar === true).
   async function registrarGasto(d) {
     const ent = d.entidade;
     if (ent === 'PF' && !ST.pfLiberado) throw _erro('Entre no financeiro pessoal para lançar gastos PF.');
@@ -338,7 +338,7 @@ const AC = (function () {
     const cxR = caixinhaId && stConta(caixinhaId);
     const temNaCx = cxR ? r2(Math.max(0, FX.saldoConta(cxR, stMovs(), data > stHoje() ? data : stHoje(), ST.cfg || FX_MODELO.config).saldo)) : 0;
     const valorResg = r2(Math.min(valor, temNaCx));
-    if (caixinhaId && caixinhaId !== conta.id && conta.tipo !== 'cartao' && d.resgatar !== false && valorResg > FX.EPS) {
+    if (caixinhaId && caixinhaId !== conta.id && conta.tipo !== 'cartao' && d.resgatar === true && valorResg > FX.EPS) {
       resgate = await transferir({ valor: valorResg, data, origemId: caixinhaId, destinoId: conta.id, tipo: 'resgate',
         descricao: `Resgate p/ ${desc}`, vinculoId: `${tabela}:${regId}`, origem: 'sistema' });
     }
