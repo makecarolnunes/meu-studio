@@ -58,7 +58,7 @@ se a migration não estiver aplicada, o Financeiro e os Orçamentos quebrariam.
 1. **Previsto ≠ realizado.** Item do plano só fica `feito` com movimentação ligada (`planoItemId`). Nunca marcar feito por data.
 2. **Transferência não é despesa.** `classe:'transferencia'|'ajuste'` fica fora de gastos/receitas.
 3. **Cartão:** compra = despesa (conta = cartão, data da compra). Fatura = transferência conta/caixinha → cartão.
-4. **Pagamento com reserva:** saída na corrente + resgate automático caixinha → corrente (`vinculoId`). Gasto direto da caixinha: conta = caixinha, sem resgate.
+4. **Pagamento com reserva:** saída na corrente + resgate caixinha → corrente (`vinculoId`) só quando ela marca que resgatou (ver 36). Gasto direto da caixinha: conta = caixinha, sem resgate.
 5. **Pró-labore:** `AC.pagarProlabore` grava saída PJ (`tipo 'Pró-labore'`, `natureza 'PESSOAL'`, `transferenciaParaMim`) e a entrada PF com id `'sync_'+saidaId` — o mesmo do trigger. Nunca criar entrada PF de pró-labore com outro id.
 6. **Saldo:** `saldo_inicial` (conciliação) + movimentos com `data > data_saldo_inicial`. Sem conciliação → só movimentos desde `cfg.inicioFluxo`, marcado "não conferido". Nunca semear saldo.
 7. **PF `saidas_pessoal` com `origem='sincronizado'`** = paga pela conta PJ: conta como gasto PF, não mexe em conta PF.
