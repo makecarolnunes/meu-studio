@@ -349,6 +349,8 @@ function linhaEvento(e) {
       : e.tipo === 'caixinha' ? 'contas do mês'
       : e.tipo === 'fatura' ? 'sem reserva no cartão'
       : e.tipo === 'previsto' ? 'previsto no Financeiro' : 'pagar';
+    if (e.obrigatoria && cx) sub = `conta da ${cx.nome}`;
+    if (e.semContas > 0.01) sub += ' · se sobrar';
     if (e.coberto > 0.01) sub += ` · ${brl(e.coberto)} já na caixinha`;
     if (atras) sub += ' · ' + atras;
     if (e.tipo === 'semanada' || e.tipo === 'caixinha') { botao = `<button class="btn mini sec" onclick="abrirCaixinha('${cx.id}')">Ver</button>`; }
@@ -358,7 +360,7 @@ function linhaEvento(e) {
   return `<div class="q-ev ${entra ? 'ev-in' : 'ev-out cob-' + e.cobertura}">
     <div class="q-d">${e.data === hoje ? 'hoje' : dm(e.data)}</div>
     <div class="q-m" ${abrir ? `onclick="${abrir}"` : ''}><div class="q-t">${c ? `<span class="q-ic" title="${c[1]}">${c[0]}</span>` : '<span class="q-ic">+</span>'}${esc(e.titulo)}</div><div class="q-s">${esc(sub)}</div></div>
-    <div class="q-r"><b>${brl(entra ? e.valor : -e.valor, true)}</b>${botao}</div>
+    <div class="q-r"><b class="${!entra && e.valor <= 0.01 ? 'muted' : ''}">${brl(entra ? e.valor : -(e.valor > 0.01 ? e.valor : e.coberto || 0), true)}</b>${botao}</div>
   </div>`;
 }
 
@@ -474,6 +476,9 @@ function cartaoCaixinha(c, P) {
   } else {
     const pend = P.acoes.filter(a => a.tipo === 'item' && a.item.tipo === 'aporte' && a.item.caixinhaId === cx.id);
     const reservar = pend.length ? `formExecutar('${pend[0].item.id}')` : `formTransferencia('${cx.entidade}', null, '${cx.id}')`;
+    // contas com data dentro da caixinha de juntar (ex.: Consultoria na Sazonais): obrigatórias
+    const contasCx = FX.composicao(cx, stCtx(UI.mes)).filter(x => FX.PENDENTE(x.status))
+      .sort((a, b) => (a.vencimento < b.vencimento ? -1 : 1));
     erro = c.estourou;
     topo = c.falta > 0.01 ? destaque(brl(c.falta), 'falta guardar', 't-alerta')
       : c.meta > 0 ? destaque('✓ ' + brl(c.destinado), 'destinado no mês', 't-ok') : destaque(brl(c.saldoAtual), 'na caixinha');
@@ -484,8 +489,11 @@ function cartaoCaixinha(c, P) {
         ${saldoHoje}</div>
       ${c.meta > 0 ? barra(c.destinado, c.meta, c.falta > 0.01 ? 'andamento' : 'ok') : ''}${deOnde}
       ${c.estourou && !ano ? `<div class="t-erro sm">Usou ${brl(c.acima)} além do planejado para esta caixinha.</div>` : ''}
+      ${contasCx.length ? `<div class="cx-conta">${contasCx.map(x => `<div class="mini-l lnk-l" onclick="formItem('${x.item.id}')"><span><b>A pagar</b> · ${esc(x.descricao)}${info('Conta com data dentro desta caixinha: precisa ser paga. O resto da meta você guarda se sobrar.')}</span>
+          <span class="muted">${x.vencimento < stHoje() ? 'venceu' : 'vence'} ${dm(x.vencimento)}</span><b class="${x.vencimento < stHoje() ? 't-erro' : 't-alerta'}">${brlc(x.previsto - x.pago)}</b></div>`).join('')}</div>` : ''}
       ${ano ? blocoAno(ano) : ''}`;
-    if (c.falta > 0.01 || !c.meta) botao = `<button class="btn mini" onclick="${reservar}">Guardar${c.falta > 0.01 ? ' ' + brlc(pend.length ? pend[0].item._falta : c.falta) : ''}</button>`;
+    if (c.falta > 0.01 || !c.meta) botao = `<button class="btn mini ${contasCx.length ? 'sec' : ''}" onclick="${reservar}">Guardar${c.falta > 0.01 && !contasCx.length ? ' ' + brlc(pend.length ? pend[0].item._falta : c.falta) : ''}</button>`;
+    if (contasCx.length) botao = `<button class="btn mini" onclick="formExecutar('${contasCx[0].item.id}')">Pagar ${esc(contasCx[0].descricao)}</button>` + botao;
   }
   return `<section class="card cx ${erro ? 'cx-erro' : ''} ${ano ? 'cx-anual' : ''}" id="cx-${cx.id}">
     <div class="cx-h" onclick="toggleAberto('${cx.id}')">

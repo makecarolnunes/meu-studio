@@ -518,3 +518,5 @@ textarea.fi { resize: vertical; font-size: 15px; }
 .q-tb { margin: 8px 16px 12px; }
 .cx-orig { margin-top: -2px; margin-bottom: 4px; }
 @media (max-width: 480px) { .cx-ano .grid4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.cx-conta { margin: 6px 0 2px; padding: 4px 10px; border-radius: 10px; background: var(--warning-soft); }
+.cx-conta .mini-l { border: 0; }

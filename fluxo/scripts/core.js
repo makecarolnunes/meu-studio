@@ -446,6 +446,28 @@ const FX = (function () {
       const ref = aps.find(i => PENDENTE(i._status)) || aps[0];
       usar(ref._data, r2(plan - usado), { tipo: 'caixinha', item: ref, titulo: c.nome });
     });
+    // Caixinha de juntar com CONTA de data marcada (ex.: Consultoria financeira na
+    // Sazonais): a conta é obrigatória — vira saída própria (menos o que já está
+    // na caixinha). O "guardar" da caixinha fica só com o resto (roupas, presentes…
+    // que você guarda se sobrar), para a conta não contar duas vezes.
+    contas.filter(c => c.entidade === entidade && c.tipo === 'caixinha' && c.ativa !== false && modoCaixinha(c) === 'guardar').forEach(c => {
+      const pags = todos.filter(i => i.tipo === 'pagamento' && i.caixinhaId === c.id && i.entidade === entidade && PENDENTE(i._status) && i._falta > EPS);
+      if (!pags.length) return;
+      let saldo = Math.max(0, saldoConta(c, movs, ate, cfg).saldo), separada = 0;
+      pags.forEach(i => {
+        const cob = r2(Math.min(saldo, i._falta)); saldo = r2(saldo - cob);
+        const v = r2(Math.max(0, i._falta - cob));
+        separada = r2(separada + v);
+        // aparece mesmo coberta pela caixinha (valor 0 na conta): é conta que precisa ser paga
+        out.push({ data: quando(i._data), venc: i._data, valor: v, tipo: 'pagamento', item: i, titulo: nomeItem(i), caixinha: c, coberto: cob, obrigatoria: true });
+      });
+      out.filter(e => e.tipo === 'aporte' && e.caixinha && e.caixinha.id === c.id).forEach(e => {
+        const tira = r2(Math.min(e.valor, separada));
+        if (tira <= EPS) return;
+        e.valor = r2(e.valor - tira); e.semContas = r2((e.semContas || 0) + tira); separada = r2(separada - tira);
+      });
+    });
+    for (let k = out.length - 1; k >= 0; k--) if (out[k].tipo === 'aporte' && out[k].valor <= EPS) out.splice(k, 1);
     if (entidade === 'PJ') {
       const ligadas = new Set(todos.map(i => i.id));
       movs.filter(m => m.tabela === 'saidas' && !m.realizado && mesDe(m.data) === mes && m.data >= hoje && !(m.planoItemId && ligadas.has(m.planoItemId)))
@@ -487,7 +509,7 @@ const FX = (function () {
       e.saldoApos = s;
       if (e.lado === 'sai') {
         caixa = r2(caixa - e.valor);
-        e.cobertura = caixa >= -EPS ? 'agora' : s >= -EPS ? 'depois' : 'falta';
+        e.cobertura = e.valor <= EPS || caixa >= -EPS ? 'agora' : s >= -EPS ? 'depois' : 'falta';   // valor 0 = paga com a caixinha
         if (e.cobertura === 'falta' && !primeiraFalta) primeiraFalta = e.data;
       }
       if (s < min) min = s;

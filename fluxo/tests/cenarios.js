@@ -656,6 +656,23 @@ const ctxM = (mes, hoje) => run(`stCtx(${JSON.stringify(mes)}, ${JSON.stringify(
     igual('conta fixa paga direto: pertence a Despesas fixas, saldo da caixinha não muda', [nomeC(mf.caixinhaId), mf.valorDireto, FX.r2(FX.saldoConta(cxFix, run('stMovs()'), '2027-12-31', ST.cfg).saldo - sFix0)], [cxFix.nome, 45, 0]);
   }
 
+  titulo('Conta com data dentro da Sazonais (Consultoria) é obrigatória; o resto da Sazonais é "se sobrar"');
+  {
+    const MAR = '2027-03', cM = ctxM(MAR, '2027-03-20');
+    const cxSaz = ST.contas.find(c => c.entidade === 'PF' && c.finalidade === 'sazonais');
+    const its = FX.itensDoMes(ST.itens, MAR, cM.movs, cM.hoje, cM.cfg);
+    const cons = its.find(i => i.descricao === 'Consultoria financeira' && FX.PENDENTE(i._status));
+    const ap = its.find(i => i.tipo === 'aporte' && i.caixinhaId === cxSaz.id && FX.PENDENTE(i._status));
+    const nec = FX.necessidades('PF', cM);
+    const eCons = nec.find(e => e.item && cons && e.item.id === cons.id);
+    const eAp = nec.find(e => e.tipo === 'aporte' && e.caixinha && e.caixinha.id === cxSaz.id);
+    const saldoSaz = Math.max(0, FX.saldoConta(cxSaz, cM.movs, cM.hoje, cM.cfg).saldo);
+    const sepCons = cons ? FX.r2(Math.max(0, cons._falta - saldoSaz)) : 0;
+    igual('consultoria pendente aparece como saída própria e obrigatória', [!!cons, !!eCons, !!(eCons && eCons.obrigatoria), eCons ? eCons.valor : null, cons ? cons._status + '|' + cons._falta : null], [true, true, true, sepCons, cons ? cons._status + '|' + cons._falta : null]);
+    igual('guardar da Sazonais fica só com o resto (sem contar a conta duas vezes)', FX.r2((eAp ? eAp.valor : 0) + (eCons ? eCons.valor : 0)),
+      FX.r2(Math.max(ap ? ap._falta : 0, sepCons)));
+  }
+
   titulo('Plano: quanto tenho, comprometido, para onde vai e se o mês fecha');
   {
     // linha do tempo pura
