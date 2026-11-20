@@ -419,7 +419,9 @@ const FX = (function () {
   //   · semanada: o que ainda dá para gastar nas semanas que faltam − saldo dela
   //   · PJ: saídas "Previsto" do Financeiro que não são item do plano
   // Aporte para semanada/contas nunca soma com o pagamento (desconto em dobro).
-  function necessidades(entidade, ctx, todos) {
+  // opc.semSaldoCaixinha: mês seguinte (o que está guardado hoje já foi usado no mês atual)
+  function necessidades(entidade, ctx, todos, opc) {
+    const usaCx = !(opc && opc.semSaldoCaixinha);
     const { contas, movs, mes, hoje, cfg } = ctx;
     todos = todos || itensDoMes(ctx.itens, mes, movs, hoje, cfg);
     const fim = ultimoDia(mes), ate = hoje < fim ? hoje : fim;
@@ -429,7 +431,7 @@ const FX = (function () {
       .forEach(i => out.push({ data: quando(i._data), venc: i._data, valor: i._falta, tipo: i.tipo, item: i, titulo: nomeItem(i),
         caixinha: i.caixinhaId ? contas.find(c => c.id === i.caixinhaId) || null : null }));
     contas.filter(c => c.entidade === entidade && c.tipo === 'caixinha' && c.ativa !== false && modoCaixinha(c) !== 'guardar').forEach(c => {
-      let saldo = Math.max(0, saldoConta(c, movs, ate, cfg).saldo);
+      let saldo = usaCx ? Math.max(0, saldoConta(c, movs, ate, cfg).saldo) : 0;
       const usar = (data, valor, base) => {
         const cob = Math.min(saldo, Math.max(0, valor));
         saldo = r2(saldo - cob);
@@ -464,7 +466,7 @@ const FX = (function () {
     contas.filter(c => c.entidade === entidade && c.tipo === 'caixinha' && c.ativa !== false && modoCaixinha(c) === 'guardar').forEach(c => {
       const pags = todos.filter(i => i.tipo === 'pagamento' && i.caixinhaId === c.id && i.entidade === entidade && PENDENTE(i._status) && i._falta > EPS);
       if (!pags.length) return;
-      let saldo = Math.max(0, saldoConta(c, movs, ate, cfg).saldo), separada = 0;
+      let saldo = usaCx ? Math.max(0, saldoConta(c, movs, ate, cfg).saldo) : 0, separada = 0;
       pags.forEach(i => {
         const cob = r2(Math.min(saldo, i._falta)); saldo = r2(saldo - cob);
         const v = r2(Math.max(0, i._falta - cob));
@@ -535,7 +537,7 @@ const FX = (function () {
   //   podeHoje  → só com o que está na conta PJ hoje
   //   podeNoMes → contando também os clientes previstos no mês
   // A PF só conta como "vai entrar" o pró-labore que a PJ consegue pagar.
-  const PRIORIDADE = { pagamento: 0, previsto: 0, fatura: 0, prolabore: 1, caixinha: 2, aporte: 2, semanada: 3 };
+  const PRIORIDADE = { pagamento: 0, previsto: 0, fatura: 0, prolabore: 1, caixinha: 2, aporte: 2, semanada: 3, simulado: 4 };
   const prioridade = t => PRIORIDADE[t] != null ? PRIORIDADE[t] : 2;
   function ponteProlabore(ctx, todos) {
     const { contas, mes, hoje } = ctx;
@@ -620,6 +622,113 @@ const FX = (function () {
       livre, comprometido: r2(Math.max(0, res.saldoBancario - livre)),
       falta: L.minimo < -EPS ? { valor: r2(-L.minimo), data: L.primeiraFalta } : null,
     });
+  }
+
+  // ── CALENDÁRIO (Carol, 2026-11-19) ──────────────────────
+  // "Se eu gastar hoje, vai faltar para as contas do dia 1º? E do dia 15?"
+  // Junta PJ + PF (o pró-labore é só dinheiro passando de uma conta para a
+  // outra, então sai dos dois lados) de hoje até o fim do mês seguinte:
+  //   entra → clientes "Previsto" (PJ) e receitas do plano (PF)
+  //   sai   → grupo 'conta' (obrigatório: contas do plano, saídas previstas do
+  //           Financeiro, fatura, conta com data em caixinha de juntar)
+  //           grupo 'semanada' e grupo 'guardar' (aporte em caixinha de juntar)
+  //           entram só se pedidos em opc.incluir
+  // Mês seguinte sem plano criado: usa o modelo (prévia, nada é gravado).
+  // opc.simular = { valor, data } → compra simulada; `desde` = primeiro dia em
+  // que a compra cabe sem faltar dinheiro para nada do calendário.
+  const GRUPO_EV = { pagamento: 'conta', previsto: 'conta', fatura: 'conta', caixinha: 'conta', semanada: 'semanada', aporte: 'guardar', simulado: 'simulado' };
+  function eventosCalendario(ctx, opc) {
+    const { movs, hoje, cfg } = ctx;
+    const mes0 = mesDe(hoje), mes1 = addMes(mes0, 1);
+    const ents = opc.entidades || ['PJ', 'PF'];
+    const ctx0 = Object.assign({}, ctx, { mes: mes0 });
+    const todos0 = itensDoMes(ctx.itens, mes0, movs, hoje, cfg);
+    let itens1 = ctx.itens.filter(i => i.mes === mes1), previa = false;
+    if (!itens1.length) {
+      let n = 0;
+      itens1 = copiarItens(ctx.itens.filter(i => i.mes === 'modelo'), mes1, 'previa', () => 'previa_' + (n++));
+      previa = itens1.length > 0;
+    }
+    const itensC1 = ctx.itens.filter(i => i.mes !== mes1).concat(itens1);
+    const ctx1 = Object.assign({}, ctx, { mes: mes1, itens: itensC1 });
+    const todos1 = itensDoMes(itensC1, mes1, movs, hoje, cfg);
+    const saldos = {}, entra = [], sai = [];
+    ents.forEach(ent => {
+      const res = resumo(ent, ctx0);
+      saldos[ent] = res.saldoBancario;
+      const s0 = necessidades(ent, ctx0, todos0);
+      if (res.faturaACobrir > EPS) s0.push({ data: hoje, venc: hoje, valor: res.faturaACobrir, tipo: 'fatura', titulo: 'Fatura do cartão' });
+      s0.concat(necessidades(ent, ctx1, todos1, { semSaldoCaixinha: true })).forEach(e => {
+        if (e.tipo === 'prolabore' || e.valor <= EPS) return;
+        sai.push(Object.assign(e, { entidade: ent, grupo: e.obrigatoria ? 'conta' : (GRUPO_EV[e.tipo] || 'conta') }));
+      });
+      entradasPrevistas(ent, ctx0, todos0).concat(entradasPrevistas(ent, ctx1, todos1).filter(e => e.venc >= mes1 + '-01')).forEach(e => {
+        if (e.tipo === 'prolabore' || e.valor <= EPS) return;
+        entra.push(Object.assign(e, { entidade: ent }));
+      });
+    });
+    return { saldos, inicio: r2(ents.reduce((t, e) => t + saldos[e], 0)), entra, sai, fim: ultimoDia(mes1), mes0, mes1, previa };
+  }
+  function calendario(ctx, opc) {
+    opc = opc || {};
+    const base = opc._base || eventosCalendario(ctx, opc);
+    const inc = Object.assign({ semanada: false, guardar: false }, opc.incluir || {});
+    const hoje = ctx.hoje;
+    const saiBase = base.sai.filter(e => e.grupo === 'conta' || inc[e.grupo]);
+    const sim = opc.simular && num(opc.simular.valor) > EPS ? { valor: r2(num(opc.simular.valor)), data: opc.simular.data && opc.simular.data > hoje ? opc.simular.data : hoje } : null;
+    const evSim = d => ({ data: d, venc: d, valor: sim.valor, tipo: 'simulado', grupo: 'simulado', titulo: opc.simular.titulo || 'Compra (simulação)' });
+    const copia = arr => arr.map(e => Object.assign({}, e));
+    // dias: saldo no fim de cada dia (de hoje até o fim do mês seguinte)
+    const diasDe = L => {
+      const dias = [];
+      let s = base.inicio, k = 0;
+      const ev = L.eventos;
+      for (let d = hoje; d <= base.fim; d = addDias(d, 1)) {
+        const doDia = [];
+        while (k < ev.length && ev[k].data === d) { doDia.push(ev[k]); s = ev[k].saldoApos; k++; }
+        const minDia = doDia.reduce((m, e) => Math.min(m, e.saldoApos), doDia.length ? Infinity : s);
+        dias.push({ data: d, saldo: r2(s), minimo: r2(minDia), eventos: doDia,
+          entra: somaV(doDia.filter(e => e.lado === 'entra')), sai: somaV(doDia.filter(e => e.lado === 'sai')),
+          falta: doDia.some(e => e.cobertura === 'falta') || minDia < -EPS });
+      }
+      return dias;
+    };
+    const L0 = linhaDoTempo(base.inicio, copia(base.entra), copia(saiBase));
+    const L = sim ? linhaDoTempo(base.inicio, copia(base.entra), copia(saiBase).concat([evSim(sim.data)])) : L0;
+    const dias0 = diasDe(L0), dias = sim ? diasDe(L) : dias0;
+    const ev = L.eventos;
+    const out = {
+      inicio: base.inicio, saldos: base.saldos, eventos: ev, dias, fim: L.fim, minimo: L.minimo,
+      diaMinimo: (dias.slice().sort((a, b) => a.minimo - b.minimo || a.data.localeCompare(b.data))[0] || {}).data || hoje,
+      falta: L.minimo < -EPS ? { valor: r2(-L.minimo), data: L.primeiraFalta || (dias.find(x => x.minimo < -EPS) || {}).data } : null,
+      previa: base.previa, mes0: base.mes0, mes1: base.mes1, ate: base.fim,
+      soma: { conta: somaV(saiBase.filter(e => e.grupo === 'conta')), semanada: somaV(base.sai.filter(e => e.grupo === 'semanada')),
+        guardar: somaV(base.sai.filter(e => e.grupo === 'guardar')), entra: somaV(base.entra) },
+    };
+    if (sim) {
+      // Comprar no dia D tira o valor de todos os saldos daí em diante. Cabe se o
+      // menor saldo (sem a compra) do fim do dia D em diante é >= valor — mesmo
+      // que antes de D já falte (essa falta existe com ou sem a compra).
+      const suf = new Array(dias0.length);   // suf[i] = menor saldo do fim do dia i em diante
+      let mv = Infinity, md = null;           // menor saldo dos dias depois de i
+      for (let i = dias0.length - 1; i >= 0; i--) {
+        const d = dias0[i];
+        suf[i] = mv < d.saldo ? { v: r2(mv), data: md } : { v: d.saldo, data: d.data };
+        if (d.minimo <= mv) { mv = d.minimo; md = d.data; }
+      }
+      const idx = d => dias0.findIndex(x => x.data === d);
+      const s0 = suf[idx(sim.data)] || { v: 0, data: sim.data };
+      const iDesde = suf.findIndex((x, i) => i >= idx(sim.data) && x.v >= sim.valor - EPS);
+      const iDesdeHoje = suf.findIndex(x => x.v >= sim.valor - EPS);
+      out.simulacao = {
+        valor: sim.valor, data: sim.data, ok: s0.v >= sim.valor - EPS,
+        depois: r2(s0.v - sim.valor), dataPior: s0.data,                       // menor saldo depois da compra
+        falta: s0.v < sim.valor - EPS ? { valor: r2(sim.valor - Math.max(0, s0.v)), data: s0.data } : null,
+        desde: iDesde >= 0 ? dias0[iDesde].data : null,                        // primeiro dia (a partir da data escolhida) em que cabe
+        antes: iDesdeHoje >= 0 && dias0[iDesdeHoje].data < sim.data ? dias0[iDesdeHoje].data : null,
+      };
+    }
+    return out;
   }
 
   // ── CAIXINHAS ───────────────────────────────────────────
@@ -1310,7 +1419,7 @@ const FX = (function () {
   return {
     EPS, r2, num, parseValor, diasNoMes, dataDoDia, mesDe, diaDe, addMes, addDias, difDias, ultimoDia,
     semanas, semanaDe, contaPadrao, caixinhaPorFinalidade, normalizar, efeito, saldoConta,
-    realizadoDoItem, statusItem, PENDENTE, itensDoMes, recebidoPF, consomeConta, distribuicoesPF, modoCaixinha, aporteOpcional, necessidades, entradasPrevistas, linhaDoTempo, ponteProlabore, quadroMes,
+    realizadoDoItem, statusItem, PENDENTE, itensDoMes, recebidoPF, consomeConta, distribuicoesPF, modoCaixinha, aporteOpcional, necessidades, entradasPrevistas, linhaDoTempo, ponteProlabore, quadroMes, eventosCalendario, calendario,
     resumo, caixinha, composicao, semanadas, atendimentosPorData, receitaMaquiagem, divida,
     semanaFoco, metasCaixinhas, painelMes, proximasAcoes, hashRef, cicloAno, caixinhaAnual, anoCaixinha,
     casarExtrato, refExtrato, analiseMes, historico, copiarItens, checarPlano,

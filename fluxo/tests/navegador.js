@@ -170,7 +170,7 @@ const titulo = t => console.log('\n■ ' + t);
     await telaOk('Conferir com o banco', true, 'conciliar');
     check('barra inferior marca "Movimentos" na tela Conferir', await b.js(`document.querySelector('#tabs button[data-tab="movs"]').classList.contains('on')`));
     await b.foto(path.join(SAIDA, 'celular-conciliar.png'), true);
-    for (const [k, alvo] of [[1, 'conciliar'], [2, 'dividas'], [3, 'analises'], [4, 'plano']]) {
+    for (const [k, alvo] of [[1, 'calendario'], [2, 'conciliar'], [3, 'dividas'], [4, 'analises'], [5, 'plano']]) {
       await tocar('#tabs button[data-tab="mais"]', true);
       r = await tocar(`#view .card.lista .aj:nth-child(${k})`, true);
       check(`Mais › item ${k} por toque`, r.ok, r.motivo);
@@ -178,6 +178,19 @@ const titulo = t => console.log('\n■ ' + t);
       await b.foto(path.join(SAIDA, `celular-mais-${k}-${alvo}.png`), true);
     }
     await b.js('UI.modelo=false;render()');
+    // Plano ⇄ Calendário (chave no topo) + simular compra
+    await tocar('#tabs button[data-tab="plano"]', true);
+    r = await tocar('.seg-plano button:nth-child(2)', true);
+    check('Plano › Calendário por toque', r.ok && (await b.js('UI.tab')) === 'calendario', r.motivo);
+    check('barra inferior marca "Plano" no Calendário', await b.js(`document.querySelector('#tabs button[data-tab="plano"]').classList.contains('on')`));
+    await b.js(`document.getElementById('cs-valor').value='120'`);
+    r = await tocar('.cal-bts .btn', true);
+    check('Calendário: simular compra por toque', r.ok && (await b.js('!!UI.cal.sim && UI.cal.sim.valor === 120')) && (await b.js("!!document.querySelector('.ev-sim')")), r.motivo);
+    await telaOk('Calendário com simulação', true, 'calendario');
+    await b.foto(path.join(SAIDA, 'celular-calendario.png'), true);
+    await b.js('calLimpar()');
+    r = await tocar('.seg-plano button:nth-child(1)', true);
+    check('Calendário › Mês por toque', r.ok && (await b.js('UI.tab')) === 'plano', r.motivo);
     // PF / PJ e mês
     await tocar('#tabs button[data-tab="inicio"]', true);
     r = await tocar('#seg-ent button:nth-child(2)', true);
@@ -236,7 +249,7 @@ const titulo = t => console.log('\n■ ' + t);
     check('barra inferior escondida', !(await visivel('#tabs')));
     check('botão + flutuante escondido', !(await visivel('.fab')));
     const ids = await b.js(`[...document.querySelectorAll('#lateral .lat-nav button[data-tab]')].map(x => x.dataset.tab)`);
-    check('menu lateral tem todas as seções', ['inicio', 'plano', 'caixinhas', 'movs', 'conciliar', 'dividas', 'analises', 'ajustes'].every(i => ids.includes(i)), ids.join(','));
+    check('menu lateral tem todas as seções', ['inicio', 'plano', 'calendario', 'caixinhas', 'movs', 'conciliar', 'dividas', 'analises', 'ajustes'].every(i => ids.includes(i)), ids.join(','));
     for (const id of ids) {
       r = await tocar(`#lateral button[data-tab="${id}"]`, false);
       check(`clique em "${id}"`, r.ok, r.motivo);

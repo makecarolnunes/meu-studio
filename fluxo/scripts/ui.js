@@ -7,7 +7,7 @@
 // ════════════════════════════════════════════════════════════
 
 const UI = {
-  tab: 'inicio',         // inicio | plano | caixinhas | movs | conciliar | mais | dividas | analises | ajustes
+  tab: 'inicio',         // inicio | plano | calendario | caixinhas | movs | conciliar | mais | dividas | analises | ajustes
   ent: 'PF',             // PF | PJ — vale para todas as telas
   mes: stHoje().slice(0, 7),
   modelo: false,         // Plano: editando o modelo
@@ -36,12 +36,14 @@ const ICO = {
   cartao: _sv('<rect x="3" y="5" width="18" height="14" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="7" y1="15" x2="11" y2="15"/>'),
   grafico: _sv('<line x1="4" y1="20" x2="20" y2="20"/><rect x="6" y="11" width="3" height="7"/><rect x="11" y="7" width="3" height="11"/><rect x="16" y="13" width="3" height="5"/>'),
   ajuste: _sv('<line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/><circle cx="9" cy="6" r="2" fill="var(--surface)"/><circle cx="15" cy="12" r="2" fill="var(--surface)"/><circle cx="8" cy="18" r="2" fill="var(--surface)"/>'),
+  cal: _sv('<rect x="3" y="5" width="18" height="16" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="3" x2="8" y2="7"/><line x1="16" y1="3" x2="16" y2="7"/>'),
   mais: _sv('<circle cx="5" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="19" cy="12" r="1.4"/>'),
 };
 // grupo = seção do menu lateral (a sequência Planejar → Acompanhar → Conciliar)
 const NAV = [
   { id: 'inicio',    rot: 'Hoje',                 ico: 'casa',    grupo: '' },
   { id: 'plano',     rot: 'Plano do mês',         ico: 'plano',   grupo: 'Planejar e distribuir' },
+  { id: 'calendario', rot: 'Calendário',          ico: 'cal',     grupo: 'Planejar e distribuir' },
   { id: 'caixinhas', rot: 'Caixinhas',            ico: 'caixa',   grupo: 'Gastar e acompanhar' },
   { id: 'movs',      rot: 'Movimentos',           ico: 'setas',   grupo: 'Gastar e acompanhar' },
   { id: 'conciliar', rot: 'Conferir com o banco', ico: 'banco',   grupo: 'Conciliar' },
@@ -52,7 +54,7 @@ const NAV = [
 // celular: 5 botões; "Movimentos" e "Mais" agrupam as telas vizinhas
 const NAV_BAIXO = [
   { id: 'inicio', rot: 'Hoje', ico: 'casa' },
-  { id: 'plano', rot: 'Plano', ico: 'plano' },
+  { id: 'plano', rot: 'Plano', ico: 'plano', inclui: ['calendario'] },
   { id: 'caixinhas', rot: 'Caixinhas', ico: 'caixa' },
   { id: 'movs', rot: 'Movimentos', ico: 'setas', inclui: ['conciliar'] },
   { id: 'mais', rot: 'Mais', ico: 'mais', inclui: ['dividas', 'analises', 'ajustes'] },

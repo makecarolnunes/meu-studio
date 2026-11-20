@@ -12,7 +12,7 @@
 // ════════════════════════════════════════════════════════════
 
 const TELAS = { inicio: telaInicio, plano: telaPlano, caixinhas: telaCaixinhas, movs: telaMovs, conciliar: telaConciliar,
-  mais: telaMais, dividas: telaDividas, analises: telaAnalises, ajustes: telaAjustes };
+  mais: telaMais, dividas: telaDividas, analises: telaAnalises, ajustes: telaAjustes, calendario: telaCalendario };
 
 function render() {
   UI.tab = TAB_ALIAS[UI.tab] || UI.tab;
@@ -240,6 +240,7 @@ function telaPlano() {
       <button class="lnk" onclick="UI.modelo=true;render()">Ver / editar o modelo</button></div>`;
   }
   if (pfTravada()) return h + cartaoPFBloqueado();
+  if (UI.mes === stHoje().slice(0, 7)) h += segPlano('plano');
   const ctx = stCtx(UI.mes);
   const Q = painel().quadro;
   const todos = FX.itensDoMes(ST.itens, UI.mes, ctx.movs, ctx.hoje, ctx.cfg);
@@ -352,7 +353,7 @@ function linhaEvento(e) {
       : e.tipo === 'semanada' ? 'para gastar na semana'
       : e.tipo === 'caixinha' ? 'contas do mês'
       : e.tipo === 'fatura' ? 'sem reserva no cartão'
-      : e.tipo === 'previsto' ? 'previsto no Financeiro' : 'pagar';
+      : e.tipo === 'previsto' ? 'previsto no Financeiro' : e.tipo === 'simulado' ? 'simulação · não gravada' : 'pagar';
     if (e.obrigatoria && cx) sub = `conta da ${cx.nome}`;
     if (e.semContas > 0.01) sub += ' · se sobrar';
     if (e.coberto > 0.01) sub += ` · ${brl(e.coberto)} já na caixinha`;
@@ -360,8 +361,9 @@ function linhaEvento(e) {
     if (e.tipo === 'semanada' || e.tipo === 'caixinha') { botao = `<button class="btn mini sec" onclick="abrirCaixinha('${cx.id}')">Ver</button>`; }
     else if (it) { botao = `<button class="btn mini" onclick="formExecutar('${it.id}')">${ACAO_LABEL[it.tipo] === 'Pagar' && it.tipo === 'prolabore' ? 'Transferir' : ACAO_LABEL[it.tipo]}</button>`; abrir = `formItem('${it.id}')`; }
   }
+  if (e.entidade) sub = e.entidade + (sub ? ' · ' + sub : '');   // calendário: PJ + PF juntas
   const c = !entra && COB[e.cobertura];
-  return `<div class="q-ev ${entra ? 'ev-in' : 'ev-out cob-' + e.cobertura}">
+  return `<div class="q-ev ${entra ? 'ev-in' : 'ev-out cob-' + e.cobertura}${e.tipo === 'simulado' ? ' ev-sim' : ''}">
     <div class="q-d">${e.data === hoje ? 'hoje' : dm(e.data)}</div>
     <div class="q-m" ${abrir ? `onclick="${abrir}"` : ''}><div class="q-t">${c ? `<span class="q-ic" title="${c[1]}">${c[0]}</span>` : '<span class="q-ic">+</span>'}${esc(e.titulo)}</div><div class="q-s">${esc(sub)}</div></div>
     <div class="q-r"><b class="${!entra && e.valor <= 0.01 ? 'muted' : ''}">${brl(entra ? e.valor : -(e.valor > 0.01 ? e.valor : e.coberto || 0), true)}</b>${botao}</div>
@@ -819,6 +821,7 @@ function opcoesCliente(p) {
 const itemMenu = (t, d, fn, ico) => `<button class="aj" onclick="${fn}">${ico ? ICO[ico] : ''}<span><b>${t}</b><span>${d}</span></span><i>›</i></button>`;
 function telaMais() {
   return titulo('Mais') + `<div class="card lista">
+    ${itemMenu('Calendário', 'Saldo dia a dia até o mês que vem · simular uma compra', "go('calendario')", 'cal')}
     ${itemMenu('Conferir com o banco', 'Importar extrato e conferir saldos', "go('conciliar')", 'banco')}
     ${itemMenu('Dívidas', 'Saldos, parcelas e simulação de quitação', "go('dividas')", 'cartao')}
     ${itemMenu('Análises', 'Plano × realizado, semanadas, evolução', "go('analises')", 'grafico')}
@@ -843,6 +846,124 @@ function listaContas() {
     `<div class="kv sm" onclick="formConta('${c.id}')"><span>${esc(c.nome)} ${c.ativa === false ? '(inativa)' : ''}</span><b>${c.tipo}${c.padrao ? ' · padrão' : ''}${c.finalidade ? ' · ' + c.finalidade : ''}</b></div>`).join('')}`).join('')}
     <button class="lnk sm" onclick="formConta(null)">+ Nova conta ou caixinha</button></div>`;
 }
+
+// ══ CALENDÁRIO ═══════════════════════════════════════════
+// "Se eu comprar isso hoje, sobra para as contas do dia 1º? E do dia 15?"
+// PJ + PF juntas, de hoje até o fim do mês que vem (FX.calendario).
+// Plano do mês ⇄ Calendário (mesma aba no celular)
+const segPlano = on => `<div class="seg seg-plano"><button class="${on === 'plano' ? 'on' : ''}" onclick="go('plano')">Mês</button><button class="${on === 'calendario' ? 'on' : ''}" onclick="go('calendario')">Calendário</button></div>`;
+const DIA_SEM = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
+function calEstado() {
+  return UI.cal = UI.cal || { incluir: { semanada: false, guardar: false }, sim: null, mes: null, dia: null };
+}
+function telaCalendario() {
+  const C = calEstado();
+  const ents = ST.pfLiberado ? ['PJ', 'PF'] : ['PJ'];
+  const K = FX.calendario(stCtx(stHoje().slice(0, 7)), { entidades: ents, incluir: C.incluir, simular: C.sim });
+  const h = titulo('Calendário', 'De hoje até o fim do mês que vem, ' + (ents.length > 1 ? 'PJ e PF juntas' : 'só PJ (PF bloqueada)') + '.\n' +
+    'Entra: clientes previstos e receitas do plano.\nSai: contas do plano e saídas previstas — o obrigatório. Semanada e caixinhas de juntar só se você ligar.\n' +
+    'Pró-labore não conta: é o dinheiro passando da PJ para a PF.' + (K.previa ? '\nO mês que vem ainda não tem plano: usa o modelo.' : ''));
+  return h + segPlano('calendario') + `<div class="cols">
+    <div>${cartaoCalHoje(K, ents)}${cartaoCalSim(K)}</div>
+    <div>${cartaoCalGrade(K)}${cartaoCalLista(K)}</div>
+  </div>`;
+}
+function cartaoCalHoje(K, ents) {
+  const C = calEstado(), hoje = stHoje();
+  const tg = (g, rot) => `<button class="${C.incluir[g] ? 'on' : ''}" onclick="calInc('${g}')" aria-pressed="${!!C.incluir[g]}">${rot}${K.soma[g] > 0.01 ? ` <small>${kCurto(K.soma[g])}</small>` : ''}</button>`;
+  return `<section class="card cal-hoje">
+    <h3>Hoje${ents.length > 1 ? ' · PJ + PF' : ''}${info(ents.map(e => e + ': ' + brl(K.saldos[e])).join('\n'))}</h3>
+    <div class="hero-v">${brl(K.inicio)}</div>
+    ${ents.length > 1 ? `<div class="muted sm">${ents.map(e => `${e} ${brl(K.saldos[e])}`).join(' · ')}</div>` : ''}
+    <div class="chips cal-inc"><button class="on fixo" disabled>Contas <small>${kCurto(K.soma.conta)}</small></button>${tg('semanada', 'Semanada')}${tg('guardar', 'Guardar')}</div>
+    ${K.falta ? `<div class="q-st erro"><span><b>Falta dinheiro</b> ${K.falta.data === hoje ? 'já hoje' : 'a partir de ' + dm(K.falta.data)}</span>${info('O dinheiro de hoje + o que entra até essa data não cobre o que sai até ela.\nO quanto falta no pior dia está em Menor saldo.\nPara resolver: receber antes, mudar a data de alguma conta ou deixar algo para depois.' + (C.sim ? '\nConta com a compra simulada.' : ''))}</div>`
+      : `<div class="q-st ok">✓ Cobre tudo até ${dm(K.ate)}</div>`}
+    <div class="kv sm"><span>Menor saldo</span><b class="${K.minimo < 0 ? 'neg' : ''}">${brl(K.minimo)} · ${dm(K.diaMinimo)}</b></div>
+    <div class="kv sm"><span>Vai entrar até ${dm(K.ate)}</span><b class="q-in">${brl(K.soma.entra)}</b></div>
+  </section>`;
+}
+function cartaoCalSim(K) {
+  const C = calEstado(), S = K.simulacao;
+  let r = '';
+  if (S) {
+    r = S.ok
+      ? `<div class="q-st ok"><span>✓ Cabe em ${dm(S.data)}</span></div>
+         <div class="kv sm"><span>Menor saldo depois${info('Contando a compra, o menor saldo do dia da compra até ' + dm(K.ate) + '.')}</span><b>${brl(S.depois)} · ${dm(S.dataPior)}</b></div>`
+      : `<div class="q-st erro"><span><b>Faltam ${brl(S.falta.valor)}</b> em ${dm(S.falta.data)}</span>${info('Comprando em ' + dm(S.data) + ', o dinheiro não dá para o que vence até ' + dm(S.falta.data) + '.')}</div>
+         ${S.desde ? `<div class="q-st ok"><span>Cabe a partir de ${dm(S.desde)}</span><button class="btn mini sec" onclick="calSimData('${S.desde}')">Ver</button></div>`
+           : `<div class="q-st alerta"><span>Não cabe até ${dm(K.ate)}</span>${info('Nem esperando: depois das entradas previstas, ainda falta para as contas. Dá para mudar o plano (data ou valor de alguma conta) ou esperar novas clientes.')}</div>`}`;
+  }
+  return `<section class="card cal-sim">
+    <h3>E se eu gastar…${info('Simula uma compra: nada é gravado.\nMostra se ainda sobra para as contas até ' + dm(K.ate) + ' e, se não, a partir de quando cabe.')}</h3>
+    <div class="two">
+      <div><label class="fl">Valor</label><div class="vwrap"><span>R$</span><input class="fi" id="cs-valor" inputmode="decimal" placeholder="0,00" value="${S ? valIn(S.valor) : ''}"></div></div>
+      <div><label class="fl">Quando</label><input class="fi" type="date" id="cs-data" min="${stHoje()}" max="${K.ate}" value="${S ? S.data : stHoje()}"></div>
+    </div>
+    <div class="cal-bts"><button class="btn" onclick="calSimular()">Simular</button>${S ? '<button class="btn ghost" onclick="calLimpar()">Limpar</button>' : ''}</div>
+    ${r}
+  </section>`;
+}
+const kCurto = v => { const a = Math.abs(v), s = v < -0.5 ? '−' : '';
+  return s + (a >= 1000 ? (a / 1000).toFixed(a >= 10000 ? 0 : 1).replace('.0', '').replace('.', ',') + 'k' : String(Math.round(a))); };
+function cartaoCalGrade(K) {
+  const C = calEstado(), hoje = stHoje();
+  const mes = C.mes && (C.mes === K.mes0 || C.mes === K.mes1) ? C.mes : K.mes0;
+  const porDia = {};
+  K.dias.forEach(d => { porDia[d.data] = d; });
+  const nDias = Number(FX.ultimoDia(mes).slice(8, 10));
+  // mês atual: começa na semana de hoje (semanas que já passaram não importam aqui)
+  const n0 = mes === hoje.slice(0, 7) ? Math.max(1, Number(hoje.slice(8, 10)) - new Date(hoje + 'T12:00:00').getDay()) : 1;
+  const prim = new Date(`${mes}-${String(n0).padStart(2, '0')}T12:00:00`).getDay();
+  const sel = C.dia || hoje;
+  let cel = '';
+  for (let k = 0; k < prim; k++) cel += '<i></i>';
+  for (let n = n0; n <= nDias; n++) {
+    const data = `${mes}-${String(n).padStart(2, '0')}`, d = porDia[data];
+    if (!d) { cel += `<i class="cal-d pass"><span>${n}</span></i>`; continue; }
+    const temConta = d.eventos.some(e => e.lado === 'sai' && e.tipo !== 'simulado');
+    const temSim = d.eventos.some(e => e.tipo === 'simulado');
+    const cls = d.minimo < -0.01 ? 'neg' : d.saldo < 0.01 ? '' : 'ok';
+    cel += `<button class="cal-d ${cls} ${data === sel ? 'sel' : ''} ${data === hoje ? 'hj' : ''}" onclick="calDia('${data}')" aria-label="${dm(data)}: ${brl(d.saldo)}">
+      <span>${n}</span><small>${kCurto(d.saldo)}</small>
+      <em>${d.entra > 0.01 ? '<i class="m-in"></i>' : ''}${temConta ? '<i class="m-out"></i>' : ''}${temSim ? '<i class="m-sim"></i>' : ''}</em></button>`;
+  }
+  const outro = mes === K.mes0 ? K.mes1 : K.mes0;
+  return `<section class="card cal-grade">
+    <div class="row cal-cab">
+      <button class="ico" onclick="calMes('${K.mes0}')" ${mes === K.mes0 ? 'disabled' : ''} aria-label="Mês anterior">‹</button>
+      <h3>${nomeMes(mes)}${info('Número pequeno = saldo no fim do dia (PJ + PF).\nVermelho: falta dinheiro nesse dia.\nPonto azul: entra · grafite: conta · roxo: a compra simulada.\nToque num dia para ver o que acontece a partir dele.')}</h3>
+      <button class="ico" onclick="calMes('${K.mes1}')" ${mes === K.mes1 ? 'disabled' : ''} aria-label="Próximo mês">›</button>
+    </div>
+    <div class="cal-sem">${DIA_SEM.map(d => `<span>${d}</span>`).join('')}</div>
+    <div class="cal-g">${cel}</div>
+  </section>`;
+}
+function cartaoCalLista(K) {
+  const C = calEstado(), hoje = stHoje();
+  const ini = C.dia && C.dia >= hoje ? C.dia : hoje;
+  const k = 'cal-lista', todos = UI.aberto[k], lim = 8;
+  const dias = K.dias.filter(d => d.data >= ini && d.eventos.length);
+  const vis = todos ? dias : dias.slice(0, lim);
+  const dt = d => { const w = new Date(d + 'T12:00:00').getDay(); return `${d === hoje ? 'hoje' : DIA_SEM[w]} ${dm(d)}`; };
+  return `<section class="card q-cam cal-lista">
+    <h3>${ini === hoje ? 'Próximos dias' : 'A partir de ' + dm(ini)}${info('Cada dia mostra o que entra e sai e com quanto você fica no fim do dia (PJ + PF).\n✓ a conta já cobre · ◷ cobre quando entrar o previsto · ! falta dinheiro')}</h3>
+    ${ini !== hoje ? `<button class="lnk sm" onclick="calDia(null)">Voltar para hoje</button>` : ''}
+    ${dias.length ? vis.map(d => `<div class="cal-dia ${d.falta ? 'neg' : ''}"><span>${dt(d.data)}</span><b class="${d.saldo < 0 ? 'neg' : ''}">fica ${brl(d.saldo)}</b></div>${d.eventos.map(linhaEvento).join('')}`).join('')
+      : `<div class="ok-linha">✓ Nada para entrar ou sair até ${dm(K.ate)}.</div>`}
+    ${dias.length > lim ? `<button class="lnk sm mais-l" onclick="UI.aberto['${k}']=!UI.aberto['${k}'];render()">${todos ? 'Mostrar menos' : `Ver até ${dm(K.ate)} · mais ${dias.length - lim} dias`}</button>` : ''}
+  </section>`;
+}
+function calInc(g) { const C = calEstado(); C.incluir[g] = !C.incluir[g]; render(); }
+function calMes(m) { calEstado().mes = m; render(); }
+function calDia(d) { const C = calEstado(); C.dia = d; if (d) C.mes = d.slice(0, 7); render(); }
+function calSimular() {
+  const v = FX.parseValor($v('cs-valor') || '');
+  if (!(v > 0)) return toast('Digite o valor', true);
+  calEstado().sim = { valor: v, data: $v('cs-data') || stHoje() };
+  render();
+}
+function calSimData(d) { const C = calEstado(); if (C.sim) C.sim.data = d; C.dia = d; C.mes = d.slice(0, 7); render(); }
+function calLimpar() { calEstado().sim = null; render(); }
 
 // ══ ANÁLISES ═════════════════════════════════════════════
 function telaAnalises() {

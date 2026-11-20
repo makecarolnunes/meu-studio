@@ -693,6 +693,35 @@ const ctxM = (mes, hoje) => run(`stCtx(${JSON.stringify(mes)}, ${JSON.stringify(
     igual('PJ: a 1ª encerrada não aparece como "Transferir"', QJ.eventos.some(e => e.item && e.item.id === p1b.id), false);
   }
 
+  titulo('Calendário: PJ + PF dia a dia até o fim do mês que vem, com simulação de compra');
+  {
+    const c = cA('2027-04-13');
+    const K = FX.calendario(c);
+    igual('começa com PJ + PF de hoje', K.inicio, FX.r2(FX.resumo('PJ', c).saldoBancario + FX.resumo('PF', c).saldoBancario));
+    igual('vai de hoje até o fim do mês que vem', [K.dias[0].data, K.dias[K.dias.length - 1].data], ['2027-04-13', '2027-05-31']);
+    igual('pró-labore não entra nem sai (PJ → PF é o mesmo dinheiro)', K.eventos.some(e => e.tipo === 'prolabore'), false);
+    igual('padrão: só o obrigatório (sem semanada nem guardar)', K.eventos.some(e => e.grupo === 'semanada' || e.grupo === 'guardar'), false);
+    igual('fim = hoje + entra − sai', K.fim, FX.r2(K.inicio + K.eventos.reduce((t, e) => t + (e.lado === 'entra' ? e.valor : -e.valor), 0)));
+    igual('saldo do último dia = fim', K.dias[K.dias.length - 1].saldo, K.fim);
+    const KS = FX.calendario(c, { incluir: { semanada: true } });
+    igual('ligar a semanada acrescenta as semanas', [KS.eventos.some(e => e.grupo === 'semanada'), KS.fim < K.fim], [true, true]);
+    igual('mês que vem sem plano usa o modelo (prévia)', K.previa, !ST.planos.some(p => p.mes === '2027-05') && ST.itens.some(i => i.mes === 'modelo'));
+    igual('mês que vem tem contas', K.eventos.some(e => e.data >= '2027-05-01' && e.grupo === 'conta'), true);
+    const grande = FX.calendario(c, { simular: { valor: 1e7, data: '2027-04-13' } }).simulacao;
+    igual('compra enorme: não cabe em nenhum dia', [grande.ok, grande.desde, grande.falta.valor > 0], [false, null, true]);
+    const p = FX.calendario(c, { simular: { valor: 50, data: '2027-04-13' } }).simulacao;
+    if (p.desde) igual('comprar no dia em que "cabe" fica ok', FX.calendario(c, { simular: { valor: 50, data: p.desde } }).simulacao.ok, true);
+    igual('compra que cabe: menor saldo depois = sem a compra − valor', p.ok ? p.depois >= -0.005 : !!p.falta, true);
+    // conta simples: saldo 100, conta de 80 no dia 2, cliente 200 no dia 5, compra de 50
+    const base = { inicio: 100, saldos: { PJ: 100 }, entra: [{ data: '2027-04-05', venc: '2027-04-05', valor: 200, tipo: 'cliente', entidade: 'PJ' }],
+      sai: [{ data: '2027-04-02', venc: '2027-04-02', valor: 80, tipo: 'pagamento', grupo: 'conta', entidade: 'PJ' }], fim: '2027-04-10', mes0: '2027-04', mes1: '2027-05' };
+    const cS = Object.assign({}, c, { hoje: '2027-04-01' });
+    const s1 = FX.calendario(cS, { _base: base, simular: { valor: 50, data: '2027-04-01' } }).simulacao;
+    igual('compra de 50 hoje: falta 30 no dia da conta; cabe a partir do dia do cliente', [s1.ok, s1.falta.valor, s1.falta.data, s1.desde], [false, 30, '2027-04-02', '2027-04-05']);
+    const s2 = FX.calendario(cS, { _base: base, simular: { valor: 20, data: '2027-04-01' } }).simulacao;
+    igual('compra de 20 hoje: cabe, sobra 0 no dia da conta', [s2.ok, s2.depois, s2.dataPior], [true, 0, '2027-04-02']);
+  }
+
   titulo('Plano: quanto tenho, comprometido, para onde vai e se o mês fecha');
   {
     // linha do tempo pura
@@ -751,7 +780,7 @@ const ctxM = (mes, hoje) => run(`stCtx(${JSON.stringify(mes)}, ${JSON.stringify(
   let erros = 0;
   const tenta = (nome, code) => { try { run(code); } catch (e) { erros++; console.log(`   ✗ ${nome}: ${e.stack.split('\n').slice(0, 3).join(' | ')}`); } };
   for (const mes of ['2026-12', '2027-01', '2026-11']) for (const ent of ['PF', 'PJ'])
-    for (const tab of ['inicio', 'plano', 'caixinhas', 'movs', 'conciliar', 'mais', 'dividas', 'analises', 'ajustes', 'mes', 'pendencias'])
+    for (const tab of ['inicio', 'plano', 'calendario', 'caixinhas', 'movs', 'conciliar', 'mais', 'dividas', 'analises', 'ajustes', 'mes', 'pendencias'])
       tenta(`${tab}/${ent}/${mes}`, `UI.mes='${mes}';UI.ent='${ent}';UI.tab='${tab}';UI.modelo=false;UI.aberto={};render();`);
   tenta('modelo', `UI.tab='plano';UI.modelo=true;render();UI.modelo=false`);
   tenta('ajustes abertos', `UI.tab='ajustes';UI.aberto={contas:true,dividas:true};render()`);
