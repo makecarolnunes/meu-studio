@@ -92,10 +92,10 @@ entries.filter(e =>
 )
 ```
 
-### buildContext — exclusão de auto em cálculos
+### buildContext — só o restante em aberto fica fora dos cálculos
 ```js
-// Saldo restante exclui entradas auto
-const pgM = pg.filter(e => !(e.auto === true || e.auto === 'true'));
+// auto Realizado é pagamento; só auto Previsto é saldo em aberto
+const pgM = pg.filter(e => !ehRestanteAberto(e));
 ```
 
 ---

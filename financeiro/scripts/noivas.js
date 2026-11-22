@@ -8,6 +8,12 @@ function toggleNoivaDetail(id) {
     render();
 }
 
+// Só o auto ainda Previsto é "saldo em aberto". Depois de Realizado é pagamento
+// como outro qualquer: se não contar como pago, o restante é recriado em dobro.
+function ehRestanteAberto(e) {
+    return (e.auto===true || e.auto==='true') && e.status==='Previsto';
+}
+
 // Recalcula a entrada "Restante Previsto" de uma noiva.
 // Aceita ID ou nome da noiva como fallback.
 async function recalcRestaNoiva(noivaIdOrNome) {
@@ -20,14 +26,14 @@ async function recalcRestaNoiva(noivaIdOrNome) {
 
     const pgtos = entries.filter(e =>
         (e.noivaId === noivaId || (e.origem==='Noiva' && e.cliente.trim().toLowerCase()===noiva.nome.trim().toLowerCase()))
-        && !(e.auto===true || e.auto==='true')
+        && !ehRestanteAberto(e)
     );
     const totalPagos = pgtos.reduce((t,e) => t + Number(e.valor||0), 0);
     const restante   = Math.max(0, contrato - totalPagos);
 
     const autoIdx = entries.findIndex(e =>
         (e.noivaId === noivaId || (e.origem==='Noiva' && e.cliente.trim().toLowerCase()===noiva.nome.trim().toLowerCase()))
-        && (e.auto===true || e.auto==='true') && e.status==='Previsto'
+        && ehRestanteAberto(e)
     );
 
     if (autoIdx >= 0) {
@@ -313,7 +319,7 @@ async function saveNoivaPgto(noivaId, nomeCli) {
         const contrato = Number(noiva.valorContrato||0);
         const pgtos = entries.filter(e=>
             (e.noivaId===noiva.id||(e.origem==='Noiva'&&e.cliente.trim().toLowerCase()===noiva.nome.trim().toLowerCase()))
-            && !(e.auto===true||e.auto==='true'));
+            && !ehRestanteAberto(e));
         const comprometido = pgtos.reduce((t,e)=>t+Number(e.valor||0),0);
         const disponivel = contrato - comprometido;
         if (Number(valor) > disponivel + 0.01) {

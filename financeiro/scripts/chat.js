@@ -120,7 +120,7 @@ function buildContext() {
 
     const noivasCtx = noivas.map(n=>{
         const pg  = entries.filter(e=>e.noivaId===n.id||(e.origem==='Noiva'&&e.cliente.trim().toLowerCase()===n.nome.trim().toLowerCase()));
-        const pgM = pg.filter(e=>!(e.auto===true||e.auto==='true'));
+        const pgM = pg.filter(e=>!ehRestanteAberto(e));
         const pago = pgM.filter(e=>e.status==='Realizado').reduce((t,e)=>t+Number(e.valor||0),0);
         const prev = pgM.filter(e=>e.status==='Previsto').reduce((t,e)=>t+Number(e.valor||0),0);
         const contrato = Number(n.valorContrato||0);
@@ -266,7 +266,7 @@ async function executeChatTool(name, input) {
                     const contrato = Number(noiva.valorContrato||0);
                     const pgtos = entries.filter(e=>
                         (e.noivaId===noiva.id||(e.origem==='Noiva'&&e.cliente.trim().toLowerCase()===noiva.nome.trim().toLowerCase()))
-                        && !(e.auto===true||e.auto==='true'));
+                        && !ehRestanteAberto(e));
                     const comprometido = pgtos.reduce((s,e)=>s+Number(e.valor||0),0);
                     const disponivel = contrato - comprometido;
                     if (Number(input.valor||0) > disponivel + 0.01) {
@@ -376,7 +376,7 @@ async function executeChatTool(name, input) {
                         const pgtos = entries.filter(e=>
                             e.id !== old.id &&
                             (e.noivaId===noiva.id||(e.origem==='Noiva'&&e.cliente.trim().toLowerCase()===noiva.nome.trim().toLowerCase()))
-                            && !(e.auto===true||e.auto==='true'));
+                            && !ehRestanteAberto(e));
                         const comprometido = pgtos.reduce((s,e)=>s+Number(e.valor||0),0);
                         if (Number(input.valor) > contrato - comprometido + 0.01) {
                             return `ERRO: Novo valor excede o disponível no contrato de ${noiva.nome}.`;
