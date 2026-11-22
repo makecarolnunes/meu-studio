@@ -3,7 +3,7 @@
 // Cálculos do teto MEI + 3 cenários + render do Painel.
 //
 // Cenários:
-//   CONSERVADOR = Realizado (entries com status=Realizado, !auto)
+//   CONSERVADOR = Realizado (entries com status=Realizado, inclusive auto)
 //   PROVÁVEL    = Conservador + Previsto (entries com status=Previsto,
 //                 inclui auto:true das noivas e previstos manuais)
 //   OTIMISTA    = Provável + Orçamentos em negociação

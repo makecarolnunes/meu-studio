@@ -97,7 +97,7 @@
   function faturamentoAno(entries, year){
     if(window.mkFiscal && mkFiscal.faturamentoRealizadoAno) return mkFiscal.faturamentoRealizadoAno(entries, year);
     var t=0; (entries||[]).forEach(function(e){
-      if(!e || e.auto || e.status!=='Realizado') return;
+      if(!e || e.status!=='Realizado') return;
       var d=parseDate(e.dataPag); if(!d || d.getFullYear()!==year) return;
       t += parseFloat(e.valor)||0;
     }); return t;

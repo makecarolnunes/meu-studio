@@ -5,11 +5,11 @@
 //   - financeiro/scripts/fiscal/fiscal-mei.js (Painel Fiscal)
 //
 // Regra canônica de FATURAMENTO REALIZADO:
-//   entries com (status === 'Realizado') AND (!auto)
+//   entries com status === 'Realizado' (inclusive auto)
 //   filtradas pelo ano de e.dataPag
 //
-// Por que !auto: entries com auto=true são "Restante Previsto"
-// (saldo a receber das noivas). Nunca devem entrar no faturamento.
+// auto=true só diz que o sistema criou o lançamento (restante de sinal ou de
+// noiva). Enquanto Previsto não entra; Realizado é dinheiro recebido e entra.
 // ════════════════════════════════════════════════════════════
 
 (function () {
@@ -30,7 +30,6 @@
     let total = 0;
     for (const e of entries) {
       if (!e) continue;
-      if (e.auto) continue;
       if (e.status !== 'Realizado') continue;
       const d = _toDate(e.dataPag);
       if (!d || d.getFullYear() !== ano) continue;
@@ -58,7 +57,7 @@
     const m = new Array(12).fill(0);
     if (!Array.isArray(entries)) return m;
     for (const e of entries) {
-      if (!e || e.auto) continue;
+      if (!e) continue;
       if (e.status !== 'Realizado') continue;
       const d = _toDate(e.dataPag);
       if (!d || d.getFullYear() !== ano) continue;
